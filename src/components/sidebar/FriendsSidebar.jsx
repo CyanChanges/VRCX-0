@@ -1,9 +1,16 @@
-import { ChevronDownIcon, ClockIcon, UserIcon } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import {
+    AlertTriangleIcon,
+    ChevronDownIcon,
+    ClockIcon,
+    LockIcon,
+    UserIcon
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
-import { Location } from '@/components/Location.jsx';
+import { RegionCodeBadge } from '@/components/location/RegionCodeBadge.jsx';
+import { useLocationMetadataBatch } from '@/components/location/useLocationMetadata.js';
 import { useVirtualSidebarRows } from '@/components/sidebar/virtualSidebarRows.js';
 import { timeToText } from '@/lib/dateTime.js';
 import { getNameColour, userImage } from '@/lib/entityMedia.js';
@@ -16,7 +23,11 @@ import {
     userProfileRepository,
     vrchatSearchRepository
 } from '@/repositories/index.js';
-import { openUserDialog } from '@/services/dialogService.js';
+import {
+    openGroupDialog,
+    openUserDialog,
+    openWorldDialog
+} from '@/services/dialogService.js';
 import { tryOpenLaunchLocation } from '@/services/directAccessService.js';
 import { selfInviteToInstance } from '@/services/launchService.js';
 import {
@@ -28,9 +39,17 @@ import { getFriendsSortFunction } from '@/shared/utils/friend.js';
 import { isRealInstance } from '@/shared/utils/instance.js';
 import { checkCanInvite, checkCanInviteSelf } from '@/shared/utils/invite.js';
 import {
+    getLocationText,
     parseLocation,
-    resolveFriendPresenceLocation
+    resolveFriendPresenceLocation,
+    translateAccessType
 } from '@/shared/utils/location.js';
+import { accessTypeLocaleKeyMap } from '@/shared/constants/accessType.js';
+import {
+    buildCurrentUserPresenceView,
+    mergeCurrentUserPresenceFields
+} from '@/shared/utils/currentUserPresence.js';
+import { computeTrustLevel } from '@/shared/utils/userTransforms.js';
 import { useFavoriteStore } from '@/state/favoriteStore.js';
 import { useFriendRosterStore } from '@/state/friendRosterStore.js';
 import { useModalStore } from '@/state/modalStore.js';
@@ -51,6 +70,7 @@ import {
     ContextMenuTrigger
 } from '@/ui/shadcn/context-menu';
 import { Spinner } from '@/ui/shadcn/spinner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 const groupToggleKeys = {
     me: 'isFriendsGroupMe',
@@ -190,14 +210,30 @@ function applyCurrentUserSnapshot(nextUser) {
     if (!nextUser?.id) {
         return;
     }
+    const previousUser = useRuntimeStore.getState().auth.currentUserSnapshot;
+    const mergedUser = mergeCurrentUserPresenceFields(nextUser, previousUser);
     useRuntimeStore.getState().setAuthBootstrap({
-        currentUserId: nextUser.id,
-        currentUserDisplayName: nextUser.displayName || nextUser.username || '',
-        currentUserSnapshot: nextUser
+        currentUserId: mergedUser.id,
+        currentUserDisplayName:
+            mergedUser.displayName || mergedUser.username || '',
+        currentUserSnapshot: mergedUser
     });
 }
 
 function resolveTrustNameColour(friend, trustColor) {
+    if (!friend?.$trustClass && Array.isArray(friend?.tags)) {
+        const trust = computeTrustLevel(friend.tags, friend.developerType || '');
+        return getTrustColor(
+            {
+                ...friend,
+                $trustClass: trust.trustClass,
+                $isModerator: trust.isModerator,
+                $isTroll: trust.isTroll,
+                $isProbableTroll: trust.isProbableTroll
+            },
+            trustColor
+        );
+    }
     return getTrustColor(friend, trustColor);
 }
 
@@ -414,8 +450,54 @@ function sameInstanceLocationTag(friend, lastLocation) {
     return isRealInstance(locationTag) ? locationTag : '';
 }
 
-function buildSameInstanceGroups(rows, prefs, lastLocation) {
+function readFriendInstanceEpoch(source, isTraveling) {
+    const locationEpoch =
+        source?.$location_at || source?.locationAt || source?.location_at;
+    if (!isTraveling) {
+        return locationEpoch;
+    }
+    return (
+        source?.$travelingToTime ||
+        source?.travelingToTime ||
+        source?.traveling_to_time ||
+        locationEpoch
+    );
+}
+
+function sameInstanceFallbackKey(locationTag, friend) {
+    const friendId = normalizeId(friend?.id);
+    return `${locationTag}:${friendId || normalizeId(readFriendRef(friend)?.id)}`;
+}
+
+function withSameInstanceJoinTime(friend, locationTag, fallbackJoinTimes) {
+    const source = readFriendStatusSource(friend);
+    if (timestampMsFromValue(readFriendInstanceEpoch(source, false))) {
+        return friend;
+    }
+    const fallbackKey = sameInstanceFallbackKey(locationTag, friend);
+    if (!fallbackJoinTimes.has(fallbackKey)) {
+        fallbackJoinTimes.set(fallbackKey, Date.now());
+    }
+    const fallbackJoinTime = fallbackJoinTimes.get(fallbackKey);
+    const ref = readFriendRef(friend);
+    if (ref && ref !== friend) {
+        return {
+            ...friend,
+            ref: {
+                ...ref,
+                $location_at: fallbackJoinTime
+            }
+        };
+    }
+    return {
+        ...friend,
+        $location_at: fallbackJoinTime
+    };
+}
+
+function buildSameInstanceGroups(rows, prefs, lastLocation, fallbackJoinTimes) {
     const groupsByLocation = new Map();
+    const activeFallbackKeys = new Set();
     for (const friend of sortRows(rows, prefs)) {
         const locationTag = sameInstanceLocationTag(friend, lastLocation);
         if (!locationTag) {
@@ -424,7 +506,27 @@ function buildSameInstanceGroups(rows, prefs, lastLocation) {
         if (!groupsByLocation.has(locationTag)) {
             groupsByLocation.set(locationTag, []);
         }
-        groupsByLocation.get(locationTag).push(friend);
+        const source = readFriendStatusSource(friend);
+        const needsFallback = !timestampMsFromValue(
+            readFriendInstanceEpoch(source, false)
+        );
+        groupsByLocation
+            .get(locationTag)
+            .push(
+                withSameInstanceJoinTime(
+                    friend,
+                    locationTag,
+                    fallbackJoinTimes
+                )
+            );
+        if (needsFallback) {
+            activeFallbackKeys.add(sameInstanceFallbackKey(locationTag, friend));
+        }
+    }
+    for (const key of fallbackJoinTimes.keys()) {
+        if (!activeFallbackKeys.has(key)) {
+            fallbackJoinTimes.delete(key);
+        }
     }
     return Array.from(groupsByLocation.entries())
         .filter(([, groupRows]) => groupRows.length > 1)
@@ -664,8 +766,11 @@ function statusPresetLabel(preset, t) {
 
 function FriendInstanceTimer({ epoch, traveling = false }) {
     const [now, setNow] = useState(() => Date.now());
+    const timeUnitLabels = useShellStore((state) => state.timeUnitLabels);
     const normalizedEpoch = timestampMsFromValue(epoch);
-    const text = normalizedEpoch ? timeToText(now - normalizedEpoch) : '-';
+    const text = normalizedEpoch
+        ? timeToText(now - normalizedEpoch, false, timeUnitLabels)
+        : '-';
 
     useEffect(() => {
         const intervalId = window.setInterval(() => {
@@ -682,45 +787,33 @@ function FriendInstanceTimer({ epoch, traveling = false }) {
     );
 }
 
-function FriendRow({
+function sidebarLocationTarget(location, traveling) {
+    const normalizedLocation = normalizeId(location);
+    if (
+        typeof traveling !== 'undefined' &&
+        normalizedLocation === 'traveling'
+    ) {
+        return normalizeId(traveling);
+    }
+    return normalizedLocation;
+}
+
+function friendLocationHint(displaySource) {
+    return (
+        displaySource?.worldName ||
+        displaySource?.$worldName ||
+        displaySource?.travelingToWorld ||
+        displaySource?.$travelingToWorld ||
+        ''
+    );
+}
+
+function resolveFriendRowLocationState({
     friend,
-    isCurrentUser,
-    isGroupByInstance = false,
-    statusPresets = [],
-    canSendInvite,
-    canRequestInvite,
-    canBoop,
-    canUseFriendInstance,
-    actions,
-    t,
-    randomUserColours = false,
-    isDarkMode = false,
-    trustColor = TRUST_COLOR_DEFAULTS,
-    currentUserSnapshot = null,
-    recentActionVersion = 0
+    isCurrentUser = false,
+    isGroupByInstance = false
 }) {
     const displaySource = readFriendRef(friend);
-    const imageUrl = userImage(displaySource, true, '64');
-    const displayName =
-        displaySource?.displayName ||
-        displaySource?.username ||
-        friend?.displayName ||
-        friend?.username ||
-        friend?.id ||
-        'Unknown';
-    const nameStyle =
-        randomUserColours && friend?.id
-            ? { color: getNameColour(friend.id, isDarkMode) }
-            : {
-                  color:
-                      displaySource?.$userColour ||
-                      resolveTrustNameColour(displaySource, trustColor)
-              };
-    const statusDotClassName = resolveSidebarStatusDotClassName(
-        friend,
-        currentUserSnapshot,
-        isCurrentUser
-    );
     const statusSource = readFriendStatusSource(friend);
     const friendState = normalizeLocationStatus(
         statusSource?.stateBucket || statusSource?.state
@@ -749,21 +842,313 @@ function FriendRow({
     const groupByInstanceTimerVisible = Boolean(
         isGroupByInstance && !isActiveOrOffline && !statusSource?.pendingOffline
     );
-    const groupByInstanceEpoch = isTraveling
-        ? statusSource?.$travelingToTime ||
-          statusSource?.travelingToTime ||
-          statusSource?.traveling_to_time
-        : statusSource?.$location_at ||
-          statusSource?.locationAt ||
-          statusSource?.location_at;
+    const groupByInstanceEpoch = readFriendInstanceEpoch(
+        statusSource,
+        isTraveling
+    );
     const showLocationSubline = Boolean(
         displayLocation &&
-        !statusSource?.pendingOffline &&
-        !groupByInstanceTimerVisible &&
-        (!isActiveOrOffline ||
-            parsedFriendLocation.isRealInstance ||
-            isTraveling)
+            !statusSource?.pendingOffline &&
+            !groupByInstanceTimerVisible &&
+            (!isActiveOrOffline ||
+                parsedFriendLocation.isRealInstance ||
+                isTraveling)
     );
+
+    return {
+        displaySource,
+        statusSource,
+        friendState,
+        friendLocation,
+        parsedFriendLocation,
+        isTraveling,
+        displayLocation,
+        displayTraveling,
+        groupByInstanceTimerVisible,
+        groupByInstanceEpoch,
+        showLocationSubline,
+        metadataCurrentLocation: sidebarLocationTarget(
+            displayLocation,
+            displayTraveling
+        ),
+        metadataHint: friendLocationHint(displaySource)
+    };
+}
+
+function StaticLocationTooltip({ disabled = false, content = '', children }) {
+    if (disabled || !content) {
+        return children;
+    }
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{children}</TooltipTrigger>
+            <TooltipContent>{content}</TooltipContent>
+        </Tooltip>
+    );
+}
+
+function StaticSidebarLocation({
+    location,
+    traveling,
+    hint = '',
+    link = false,
+    showGroupLink = false,
+    metadata,
+    t,
+    showInstanceIdInLocation = false,
+    ageGatedInstancesVisible = false,
+    className = ''
+}) {
+    const currentLocation = sidebarLocationTarget(location, traveling);
+    const parsedLocation = useMemo(
+        () => parseLocation(currentLocation),
+        [currentLocation]
+    );
+    const accessTypeLabel = translateAccessType(
+        parsedLocation.accessTypeName,
+        t,
+        accessTypeLocaleKeyMap
+    );
+    const worldNameHint = metadata?.worldNameHint || '';
+    const worldName = metadata?.worldName || '';
+    const worldDialogTitle = worldName || worldNameHint || undefined;
+    const text = getLocationText(parsedLocation, {
+        hint: metadata ? worldNameHint : hint,
+        worldName,
+        accessTypeLabel,
+        t
+    });
+    const instanceName = metadata?.instanceName || '';
+    const tooltipContent = instanceName
+        ? `${t('dialog.new_instance.instance_id')}: #${instanceName}`
+        : '';
+    const isAgeRestricted = Boolean(
+        parsedLocation.ageGate && !ageGatedInstancesVisible
+    );
+    const showInstanceName = Boolean(
+        showInstanceIdInLocation && instanceName
+    );
+    const isLocationLink = Boolean(
+        link &&
+            !parsedLocation.isPrivate &&
+            !parsedLocation.isOffline &&
+            currentLocation &&
+            parsedLocation.worldId
+    );
+
+    function openWorld(event) {
+        event?.stopPropagation?.();
+        if (!isLocationLink) {
+            return;
+        }
+        const worldDialogTarget =
+            parsedLocation.isRealInstance && parsedLocation.tag
+                ? parsedLocation.tag
+                : parsedLocation.worldId;
+        openWorldDialog({
+            worldId: worldDialogTarget,
+            title: worldDialogTitle
+        });
+    }
+
+    function openWorldFromKeyboard(event) {
+        if (!isLocationLink || (event.key !== 'Enter' && event.key !== ' ')) {
+            return;
+        }
+        event.preventDefault();
+        openWorld(event);
+    }
+
+    function openGroup(event) {
+        event?.stopPropagation?.();
+        const groupId = normalizeId(parsedLocation.groupId);
+        if (!groupId) {
+            return;
+        }
+        openGroupDialog({
+            groupId,
+            title: metadata?.groupName || undefined
+        });
+    }
+
+    if (!text) {
+        return <span className="text-transparent">-</span>;
+    }
+
+    if (isAgeRestricted) {
+        return (
+            <StaticLocationTooltip
+                content={t('dialog.user.info.instance_age_restricted_tooltip')}
+            >
+                <span
+                    className={cn(
+                        'text-muted-foreground inline-flex min-w-0 items-center gap-1',
+                        className
+                    )}
+                >
+                    <LockIcon className="size-3.5 shrink-0" />
+                    <span className="min-w-0 truncate">
+                        {t('dialog.user.info.instance_age_restricted')}
+                    </span>
+                </span>
+            </StaticLocationTooltip>
+        );
+    }
+
+    return (
+        <span
+            className={cn(
+                'inline-flex max-w-full min-w-0 items-center',
+                className
+            )}
+        >
+            <RegionCodeBadge region={metadata?.region || ''} />
+            <StaticLocationTooltip
+                disabled={!tooltipContent || showInstanceName}
+                content={tooltipContent}
+            >
+                <span
+                    role={isLocationLink ? 'button' : undefined}
+                    tabIndex={isLocationLink ? 0 : undefined}
+                    className={cn(
+                        'x-location inline-flex max-w-full min-w-0 flex-nowrap items-center truncate overflow-hidden text-left',
+                        isLocationLink
+                            ? 'cursor-pointer hover:underline'
+                            : 'cursor-default'
+                    )}
+                    onClick={openWorld}
+                    onKeyDown={openWorldFromKeyboard}
+                >
+                    {normalizeLocationStatus(location) === 'traveling' ? (
+                        <Spinner
+                            aria-hidden="true"
+                            aria-label={undefined}
+                            role="presentation"
+                            className="mr-1 size-3.5 shrink-0"
+                        />
+                    ) : null}
+                    <span className="min-w-0 flex-1 truncate">
+                        <span>{text}</span>
+                        {showInstanceName ? (
+                            <span className="ml-1">{`\u00b7 #${instanceName}`}</span>
+                        ) : null}
+                    </span>
+                </span>
+            </StaticLocationTooltip>
+            {showGroupLink && metadata?.groupName ? (
+                <Button
+                    type="button"
+                    variant="link"
+                    className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit"
+                    onClick={openGroup}
+                    onKeyDown={(event) => event.stopPropagation()}
+                >
+                    ({metadata.groupName})
+                </Button>
+            ) : null}
+            {metadata?.isClosed ? (
+                <StaticLocationTooltip
+                    content={t('dialog.user.info.instance_closed')}
+                >
+                    <AlertTriangleIcon className="text-muted-foreground ml-2 inline-block size-3.5 shrink-0" />
+                </StaticLocationTooltip>
+            ) : null}
+            {parsedLocation.strict ? (
+                <LockIcon className="text-muted-foreground ml-2 inline-block size-3.5 shrink-0" />
+            ) : null}
+        </span>
+    );
+}
+
+function buildSidebarLocationMetadataEntry(row) {
+    if (row?.type === 'instance-header') {
+        const currentLocation = sidebarLocationTarget(row.location);
+        return {
+            key: row.key,
+            locationInfo: parseLocation(currentLocation),
+            currentLocation
+        };
+    }
+
+    if (row?.type !== 'friend') {
+        return null;
+    }
+
+    const locationState = resolveFriendRowLocationState({
+        friend: row.friend,
+        isCurrentUser: row.isCurrentUser,
+        isGroupByInstance: row.isGroupByInstance
+    });
+    if (!locationState.showLocationSubline) {
+        return null;
+    }
+
+    return {
+        key: row.key,
+        locationInfo: parseLocation(locationState.metadataCurrentLocation),
+        currentLocation: locationState.metadataCurrentLocation,
+        hint: locationState.metadataHint
+    };
+}
+
+function FriendRow({
+    friend,
+    isCurrentUser,
+    isGroupByInstance = false,
+    statusPresets = [],
+    canSendInvite,
+    canRequestInvite,
+    canBoop,
+    canUseFriendInstance,
+    actions,
+    t,
+    randomUserColours = false,
+    isDarkMode = false,
+    trustColor = TRUST_COLOR_DEFAULTS,
+    currentUserSnapshot = null,
+    recentActionVersion = 0,
+    locationMetadata = null,
+    showInstanceIdInLocation = false,
+    ageGatedInstancesVisible = false
+}) {
+    const displaySource = readFriendRef(friend);
+    const imageUrl = userImage(displaySource, true, '64');
+    const displayName =
+        displaySource?.displayName ||
+        displaySource?.username ||
+        friend?.displayName ||
+        friend?.username ||
+        friend?.id ||
+        'Unknown';
+    const nameStyle =
+        randomUserColours && friend?.id
+            ? { color: getNameColour(friend.id, isDarkMode) }
+            : {
+                  color:
+                      displaySource?.$userColour ||
+                      resolveTrustNameColour(displaySource, trustColor)
+              };
+    const statusDotClassName = resolveSidebarStatusDotClassName(
+        friend,
+        currentUserSnapshot,
+        isCurrentUser
+    );
+    const {
+        statusSource,
+        friendLocation,
+        parsedFriendLocation,
+        isTraveling,
+        displayLocation,
+        displayTraveling,
+        groupByInstanceTimerVisible,
+        groupByInstanceEpoch,
+        showLocationSubline,
+        metadataHint
+    } = resolveFriendRowLocationState({
+        friend,
+        isCurrentUser,
+        isGroupByInstance
+    });
     const canUseFriendLocation = Boolean(
         canUseFriendInstance &&
         parsedFriendLocation.isRealInstance &&
@@ -822,19 +1207,18 @@ function FriendRow({
                                         traveling={isTraveling}
                                     />
                                 ) : showLocationSubline ? (
-                                    <Location
+                                    <StaticSidebarLocation
                                         location={displayLocation}
                                         traveling={displayTraveling}
-                                        hint={
-                                            displaySource?.worldName ||
-                                            displaySource?.$worldName ||
-                                            displaySource?.travelingToWorld ||
-                                            displaySource?.$travelingToWorld ||
-                                            ''
+                                        hint={metadataHint}
+                                        metadata={locationMetadata}
+                                        t={t}
+                                        showInstanceIdInLocation={
+                                            showInstanceIdInLocation
                                         }
-                                        link={false}
-                                        stopPropagation
-                                        asButton={false}
+                                        ageGatedInstancesVisible={
+                                            ageGatedInstancesVisible
+                                        }
                                     />
                                 ) : (
                                     subline
@@ -920,13 +1304,25 @@ function FriendSectionHeader({ id, title, count, open, onToggle }) {
     );
 }
 
-function InstanceHeaderRow({ location, count }) {
+function InstanceHeaderRow({
+    location,
+    count,
+    metadata = null,
+    t,
+    showInstanceIdInLocation = false,
+    ageGatedInstancesVisible = false
+}) {
     return (
         <div className="mb-1 flex items-center px-1.5 text-xs">
-            <Location
+            <StaticSidebarLocation
                 className="inline text-xs"
                 location={location}
-                asButton={false}
+                link
+                showGroupLink
+                metadata={metadata}
+                t={t}
+                showInstanceIdInLocation={showInstanceIdInLocation}
+                ageGatedInstancesVisible={ageGatedInstancesVisible}
             />
             <span className="ml-1.5">{`(${count})`}</span>
         </div>
@@ -979,13 +1375,25 @@ export function FriendsSidebar({ prefs }) {
         (state) => state.randomUserColours
     );
     const trustColor = usePreferencesStore((state) => state.trustColor);
+    const preferencesHydrated = usePreferencesStore(
+        (state) => state.preferencesHydrated
+    );
+    const ageGatedInstancesVisiblePreference = usePreferencesStore(
+        (state) => state.isAgeGatedInstancesVisible
+    );
+    const showInstanceIdInLocation = usePreferencesStore(
+        (state) => state.showInstanceIdInLocation
+    );
     const [openGroups, setOpenGroups] = useState(defaultGroupState);
     const [statusPresets, setStatusPresets] = useState([]);
     const [recentActionVersion, setRecentActionVersion] = useState(0);
+    const sameInstanceFallbackJoinTimesRef = useRef(new Map());
     const isDarkMode =
         themeMode === 'dark' ||
         (typeof document !== 'undefined' &&
             document.documentElement.classList.contains('dark'));
+    const ageGatedInstancesVisible =
+        preferencesHydrated && ageGatedInstancesVisiblePreference;
     const currentInviteLocation = useMemo(
         () => resolveCurrentInviteLocation(gameState, currentUser),
         [currentUser, gameState]
@@ -1155,7 +1563,12 @@ export function FriendsSidebar({ prefs }) {
         if (!prefs.sidebarGroupByInstance) {
             return [];
         }
-        return buildSameInstanceGroups(rows, prefs, currentLocationSnapshot);
+        return buildSameInstanceGroups(
+            rows,
+            prefs,
+            currentLocationSnapshot,
+            sameInstanceFallbackJoinTimesRef.current
+        );
     }, [currentLocationSnapshot, prefs, rows]);
     const sameInstanceIds = useMemo(
         () =>
@@ -1688,14 +2101,21 @@ export function FriendsSidebar({ prefs }) {
         });
         if (openGroups.me) {
             if (currentUser) {
+                const currentUserRow = buildCurrentUserPresenceView(
+                    currentUser,
+                    {
+                        gameState,
+                        gameLogDisabled: Boolean(prefs.gameLogDisabled)
+                    }
+                );
                 pushFriendRows(
                     nextRows,
                     'me',
                     [
                         {
-                            ...currentUser,
+                            ...currentUserRow,
                             stateBucket:
-                                resolveCurrentUserStateBucket(currentUser)
+                                resolveCurrentUserStateBucket(currentUserRow)
                         }
                     ],
                     { isCurrentUser: true }
@@ -1808,10 +2228,12 @@ export function FriendsSidebar({ prefs }) {
         detail,
         favoriteGroupSections,
         favoriteRows,
+        gameState,
         loadStatus,
         offlineRows,
         onlineRows,
         openGroups,
+        prefs.gameLogDisabled,
         prefs.isSameInstanceAboveFavorites,
         prefs.isSidebarDivideByFriendGroup,
         rows.length,
@@ -1823,11 +2245,23 @@ export function FriendsSidebar({ prefs }) {
         virtualRows,
         estimateFriendSidebarRowSize
     );
+    const visibleLocationMetadataEntries = useMemo(
+        () =>
+            virtualItems
+                .map((item) => buildSidebarLocationMetadataEntry(item.row))
+                .filter(Boolean),
+        [virtualItems]
+    );
+    const locationMetadataByKey = useLocationMetadataBatch(
+        visibleLocationMetadataEntries,
+        { endpoint: currentEndpoint }
+    );
 
     function renderFriendVirtualRow(
         friend,
         isCurrentUser = false,
-        isGroupByInstance = false
+        isGroupByInstance = false,
+        metadataKey = ''
     ) {
         const source = readFriendStatusSource(friend);
         const state = normalizeLocationStatus(
@@ -1870,6 +2304,9 @@ export function FriendsSidebar({ prefs }) {
                 trustColor={trustColor}
                 currentUserSnapshot={currentUser}
                 recentActionVersion={recentActionVersion}
+                locationMetadata={locationMetadataByKey.get(metadataKey)}
+                showInstanceIdInLocation={showInstanceIdInLocation}
+                ageGatedInstancesVisible={ageGatedInstancesVisible}
             />
         );
     }
@@ -1897,6 +2334,10 @@ export function FriendsSidebar({ prefs }) {
                     <InstanceHeaderRow
                         location={row.location}
                         count={row.count}
+                        metadata={locationMetadataByKey.get(row.key)}
+                        t={t}
+                        showInstanceIdInLocation={showInstanceIdInLocation}
+                        ageGatedInstancesVisible={ageGatedInstancesVisible}
                     />
                 );
             case 'message':
@@ -1917,7 +2358,8 @@ export function FriendsSidebar({ prefs }) {
                 return renderFriendVirtualRow(
                     row.friend,
                     row.isCurrentUser,
-                    row.isGroupByInstance
+                    row.isGroupByInstance,
+                    row.key
                 );
         }
     }
