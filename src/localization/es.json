@@ -221,7 +221,7 @@
                 "tips": {
                     "online_time": "El tiempo en línea se refiere al tiempo de juego registrado por VRCX-0 para el día actual.",
                     "click_Y_axis": "Haz clic en la etiqueta del eje Y para navegar a los detalles de la instancia o abrir el diálogo de Usuario.",
-                    "click_instance_name": "Haz clic en el nombre de la instancia para abrir el diálogo de Información de Instancia Anterior."
+                    "click_instance_name": "Click instance name to open Instance Details."
                 },
                 "settings": {
                     "header": "Configuraciones",
@@ -516,8 +516,7 @@
                     "launch_commands": {
                         "header": "Comandos de Lanzamiento (Enlaces Profundos)",
                         "show_confirmation_on_switch_avatar_enable": "Mostrar diálogo de confirmación antes de cambiar avatares",
-                        "show_confirmation_on_switch_avatar_tooltip": "Cuando está deshabilitado, VRCX-0 no se pondrá al frente al cambiar avatares y no pedirá confirmación",
-                        "website_userscript": "Userscript del Sitio Web de VRC"
+                        "show_confirmation_on_switch_avatar_tooltip": "Cuando está deshabilitado, VRCX-0 no se pondrá al frente al cambiar avatares y no pedirá confirmación"
                     },
                     "screenshot_helper": {
                         "header": "Asistente de Captura de Pantalla",
@@ -615,7 +614,7 @@
                 "send_friend_request": "Enviar Solicitud de Amistad",
                 "show_avatar_author": "Mostrar Autor del Avatar",
                 "show_fallback_avatar": "Mostrar Detalles del Avatar de Respaldo",
-                "show_previous_instances": "Mostrar Instancias Anteriores",
+                "show_previous_instances": "Show Instance History",
                 "moderation_block": "Bloquear",
                 "moderation_unblock": "Desbloquear",
                 "moderation_mute": "Silenciar",
@@ -679,7 +678,7 @@
                 "instance_closed": "cerrado",
                 "close_instance": "Cerrar Instancia",
                 "instance_age_gated": "Restringido por Edad",
-                "open_previous_instance": "Abrir Instancia Anterior"
+                "open_previous_instance": "Open Instance History"
             },
             "groups": {
                 "header": "Grupos",
@@ -757,7 +756,7 @@
                 "new_instance_and_self_invite": "Nueva Instancia y Auto Invitar",
                 "make_home": "Establecer como Inicio",
                 "reset_home": "Restablecer Inicio",
-                "show_previous_instances": "Mostrar Instancias Anteriores",
+                "show_previous_instances": "Show Instance History",
                 "rename": "Renombrar",
                 "change_description": "Cambiar Descripción",
                 "change_capacity": "Cambiar Capacidad",
@@ -1071,7 +1070,7 @@
             "selected_users": "Usuarios Seleccionados"
         },
         "invite_message": {
-            "header": "Enviar Mensaje de Invitación",
+            "header": "Send With Message",
             "confirmation": "¿Estás seguro de que quieres enviar?",
             "select_image": "Seleccionar Imagen",
             "clear_selected_image": "Limpiar Imagen Seleccionada",
@@ -1080,36 +1079,36 @@
             "confirm": "Confirmar"
         },
         "invite_request_message": {
-            "header": "Enviar Mensaje de Solicitud de Invitación",
+            "header": "Request With Message",
             "cancel": "Cancelar",
             "refresh": "Actualizar"
         },
         "invite_response_message": {
-            "header": "Enviar Mensaje de Respuesta a Invitación",
+            "header": "Invite Response",
             "confirmation": "¿Estás seguro de que quieres enviar?",
             "cancel": "Cancelar",
             "refresh": "Actualizar",
             "confirm": "Confirmar"
         },
         "invite_request_response_message": {
-            "header": "Enviar Mensaje de Respuesta a Solicitud de Invitación",
+            "header": "Request Invite Response",
             "cancel": "Cancelar",
             "refresh": "Actualizar"
         },
         "edit_invite_message": {
-            "header": "Editar Mensaje de Invitación",
+            "header": "Edit Message Template",
             "description": "Tiempo de espera de edición de 1 hora.",
             "cancel": "Cancelar",
             "save": "Guardar"
         },
         "edit_send_invite_message": {
-            "header": "Editar y Enviar Mensaje de Invitación",
+            "header": "Edit and Send Message Template",
             "description": "Tiempo de espera de edición de 1 hora.",
             "cancel": "Cancelar",
             "send": "Enviar"
         },
         "edit_send_invite_response_message": {
-            "header": "Editar y Enviar Mensaje de Respuesta a Invitación",
+            "header": "Edit and Send Response",
             "description": "Tiempo de espera de edición de 1 hora.",
             "cancel": "Cancelar",
             "send": "Enviar"
@@ -1314,9 +1313,9 @@
             "close": "Cerrar"
         },
         "previous_instances": {
-            "header": "Instancias Anteriores",
-            "info": "Información de Instancia Anterior",
-            "search_placeholder": "Buscar"
+            "header": "Instance History",
+            "info": "Instance Details",
+            "search_placeholder": "Search instance history"
         },
         "group_member_moderation": {
             "header": "Moderación de Miembros del Grupo",

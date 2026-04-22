@@ -284,7 +284,7 @@
                 "tips": {
                     "online_time": "Online time refers to the game time recorded by VRCX-0 for the current day.",
                     "click_Y_axis": "Click Y-axis label to navigate to the instance details or open User dialog.",
-                    "click_instance_name": "Click instance name to open Previous Instance Info dialog."
+                    "click_instance_name": "Click instance name to open Instance Details."
                 },
                 "settings": {
                     "header": "Ustawienia",
@@ -368,8 +368,8 @@
             },
             "other": {
                 "header": "Inne",
-                "edit_invite_message": "Edytuj wiadomości zaproszeń",
-                "edit_invite_message_description": "Edytuj wiadomości zaproszeń i odpowiedzi zaproszeń"
+                "edit_invite_message": "Message Templates",
+                "edit_invite_message_description": "Edit invite and request message templates"
             }
         },
         "profile": {
@@ -696,8 +696,7 @@
                     "launch_commands": {
                         "header": "Komendy uruchomieniowe (Głębokie linkowanie)",
                         "show_confirmation_on_switch_avatar_enable": "Pokaż okno dialogowe potwierdzenia przed zmianą awatara",
-                        "show_confirmation_on_switch_avatar_tooltip": "Gdy opcja jest wyłączona, VRCX-0 nie pojawi się na pierwszym planie podczas zmiany awatarów i nie poprosi o potwierdzenie.",
-                        "website_userscript": "Skrypt dla strony VRC"
+                        "show_confirmation_on_switch_avatar_tooltip": "Gdy opcja jest wyłączona, VRCX-0 nie pojawi się na pierwszym planie podczas zmiany awatarów i nie poprosi o potwierdzenie."
                     },
                     "screenshot_helper": {
                         "header": "Pomocnik zrzutów ekranu",
@@ -802,7 +801,7 @@
                 "send_friend_request": "Wyślij zaproszenie do znajomych",
                 "show_avatar_author": "Pokaż autora awatara",
                 "show_fallback_avatar": "Pokaż szczegóły awatara zastępczego",
-                "show_previous_instances": "Pokaż poprzednie instancje",
+                "show_previous_instances": "Show Instance History",
                 "moderation_block": "Zablokuj",
                 "moderation_unblock": "Odblokuj",
                 "moderation_mute": "Wycisz",
@@ -868,7 +867,7 @@
                 "instance_closed": "zamknięta",
                 "close_instance": "Zamknij instancję",
                 "instance_age_gated": "weryfikacja wiekowa",
-                "open_previous_instance": "Otwórz poprzednią instancję",
+                "open_previous_instance": "Open Instance History",
                 "show_mutual_friends": "Pokaż wspólnych znajomych"
             },
             "groups": {
@@ -956,7 +955,7 @@
                 "new_instance_and_open_ingame": "Nowa instancja i otwórz w grze",
                 "make_home": "Ustaw dom",
                 "reset_home": "Resetuj dom",
-                "show_previous_instances": "Pokaż poprzednie instancje",
+                "show_previous_instances": "Show Instance History",
                 "rename": "Zmień nazwę",
                 "change_description": "Zmień opis",
                 "change_capacity": "Zmień pojemność",
@@ -1295,7 +1294,7 @@
             "invite": "Zaproś"
         },
         "invite_message": {
-            "header": "Wyślij zaproszenie z wiadomością",
+            "header": "Send With Message",
             "confirmation": "Czy na pewno chcesz wysłać?",
             "select_image": "Wybierz obrazek",
             "clear_selected_image": "Wyczyść zaznaczony obrazek",
@@ -1304,43 +1303,43 @@
             "confirm": "Potwierdź"
         },
         "invite_request_message": {
-            "header": "Wyślij prośbę o zaproszenie z wiadomością",
+            "header": "Request With Message",
             "cancel": "Anuluj",
             "refresh": "Odśwież"
         },
         "invite_response_message": {
-            "header": "Wyślij odpowiedź na zaproszenie z wiadomością",
+            "header": "Invite Response",
             "confirmation": "Czy na pewno chcesz wysłać?",
             "cancel": "Anuluj",
             "refresh": "Odśwież",
             "confirm": "Potwierdź"
         },
         "invite_request_response_message": {
-            "header": "Wyślij odpowiedź na prośbę o zaproszenie z wiadomością",
+            "header": "Request Invite Response",
             "cancel": "Anuluj",
             "refresh": "Odśwież"
         },
         "edit_invite_messages": {
-            "header": "Edytuj wiadomości zaproszeń",
+            "header": "Message Templates",
             "invite_message_tab": "Zaproszenie",
-            "invite_request_tab": "Prośba o zaproszenie",
-            "invite_request_response_tab": "Odpowiedź na prośbe o zaproszenie",
+            "invite_request_tab": "Request Invite",
+            "invite_request_response_tab": "Request Invite Response",
             "invite_response_tab": "Odpowiedź na zaproszenie"
         },
         "edit_invite_message": {
-            "header": "Edytuj wiadomość zaproszenia",
+            "header": "Edit Message Template",
             "description": "Limit edytowania na 1 godzinę.",
             "cancel": "Anuluj",
             "save": "Zapisz"
         },
         "edit_send_invite_message": {
-            "header": "Edytuj i wyślij zaproszenie z wiadomością",
+            "header": "Edit and Send Message Template",
             "description": "Limit edytowania na 1 godzinę.",
             "cancel": "Anuluj",
             "send": "Wyślij"
         },
         "edit_send_invite_response_message": {
-            "header": "Edytuj i wyślij odpowiedź na zaproszenie z wiadomością",
+            "header": "Edit and Send Response",
             "description": "Limit edytowania na 1 godzinę.",
             "cancel": "Anuluj",
             "send": "Wyślij"
@@ -1586,9 +1585,9 @@
             "close": "Zamknij"
         },
         "previous_instances": {
-            "header": "Poprzednie instancje",
-            "info": "Informacje o poprzedniej instancji",
-            "search_placeholder": "Szukaj"
+            "header": "Instance History",
+            "info": "Instance Details",
+            "search_placeholder": "Search instance history"
         },
         "group_member_moderation": {
             "header": "Moderowanie członków grupy",

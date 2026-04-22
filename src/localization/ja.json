@@ -497,7 +497,7 @@
                 "tips": {
                     "online_time": "オンライン時間とは、VRCX-0 が記録した当日のゲームプレイ時間です。",
                     "click_Y_axis": "Y軸ラベルをクリックで、インスタンスの詳細へジャンプ、またはユーザーダイアログを表示できます。",
-                    "click_instance_name": "インスタンス名をクリックで、以前のインスタンス情報ダイアログを表示できます。"
+                    "click_instance_name": "Click instance name to open Instance Details."
                 },
                 "settings": {
                     "header": "設定",
@@ -648,8 +648,8 @@
             },
             "other": {
                 "header": "その他",
-                "edit_invite_message": "招待メッセージの編集",
-                "edit_invite_message_description": "招待送信用と、招待返信用のメッセージを編集"
+                "edit_invite_message": "Message Templates",
+                "edit_invite_message_description": "Edit invite and request message templates"
             }
         },
         "profile": {
@@ -1127,8 +1127,7 @@
                     "launch_commands": {
                         "header": "VRCX-0の起動コマンド (Deep Links)",
                         "show_confirmation_on_switch_avatar_enable": "アバターの切り替え時に、確認ダイアログを表示",
-                        "show_confirmation_on_switch_avatar_tooltip": "無効の場合、アバターの切り替え時に VRCX-0 が確認を求める事はありません。",
-                        "website_userscript": "VRC Webサイト Userscript"
+                        "show_confirmation_on_switch_avatar_tooltip": "無効の場合、アバターの切り替え時に VRCX-0 が確認を求める事はありません。"
                     },
                     "screenshot_helper": {
                         "header": "スクリーンショット ヘルパー",
@@ -1268,7 +1267,7 @@
                 "send_friend_request": "フレンドリクエストを送信",
                 "show_avatar_author": "アバター制作者を表示",
                 "show_fallback_avatar": "フォールバックアバターの詳細を表示",
-                "show_previous_instances": "以前のインスタンス",
+                "show_previous_instances": "Show Instance History",
                 "moderation_block": "ブロック",
                 "moderation_unblock": "ブロック解除",
                 "moderation_mute": "ミュート",
@@ -1341,7 +1340,7 @@
                 "instance_age_restricted_tooltip": "年齢制限のあるインスタンス",
                 "close_instance": "インスタンスを閉じる",
                 "instance_age_gated": "年齢制限あり",
-                "open_previous_instance": "前回のインスタンスを開く",
+                "open_previous_instance": "Open Instance History",
                 "show_mutual_friends": "共通のフレンドを公開",
                 "show_discord_connections": "連携した Discord を公開"
             },
@@ -1482,7 +1481,7 @@
                 "new_instance_and_open_ingame": "インスタンスを作成してゲーム内で開く",
                 "make_home": "ホームに設定",
                 "reset_home": "ホームをリセット",
-                "show_previous_instances": "以前のインスタンス",
+                "show_previous_instances": "Show Instance History",
                 "rename": "名前を変更",
                 "change_description": "説明を変更",
                 "change_capacity": "最大人数を変更",
@@ -1836,7 +1835,7 @@
             "invite": "招待"
         },
         "invite_message": {
-            "header": "メッセージ付き招待を送信",
+            "header": "Send With Message",
             "confirmation": "本当に送信しますか？",
             "select_image": "画像を選択",
             "clear_selected_image": "選択した画像をクリア",
@@ -1845,44 +1844,44 @@
             "confirm": "確定"
         },
         "invite_request_message": {
-            "header": "メッセージ付き招待リクエストを送信",
+            "header": "Request With Message",
             "confirmation": "本当に送信しますか？",
             "cancel": "キャンセル",
             "refresh": "更新"
         },
         "invite_response_message": {
-            "header": "招待に返信",
+            "header": "Invite Response",
             "confirmation": "本当に送信しますか？",
             "cancel": "キャンセル",
             "refresh": "更新",
             "confirm": "確定"
         },
         "invite_request_response_message": {
-            "header": "招待リクエストに返信",
+            "header": "Request Invite Response",
             "cancel": "キャンセル",
             "refresh": "更新"
         },
         "edit_invite_messages": {
-            "header": "招待メッセージを編集",
+            "header": "Message Templates",
             "invite_message_tab": "招待",
-            "invite_request_tab": "招待リクエスト",
-            "invite_request_response_tab": "招待リクエストへの返信",
+            "invite_request_tab": "Request Invite",
+            "invite_request_response_tab": "Request Invite Response",
             "invite_response_tab": "招待への返信"
         },
         "edit_invite_message": {
-            "header": "招待メッセージを編集",
+            "header": "Edit Message Template",
             "description": "編集後は1時間クールダウンが必要です。",
             "cancel": "キャンセル",
             "save": "保存"
         },
         "edit_send_invite_message": {
-            "header": "招待メッセージを編集して送信",
+            "header": "Edit and Send Message Template",
             "description": "編集後は1時間クールダウンが必要です。",
             "cancel": "キャンセル",
             "send": "送信"
         },
         "edit_send_invite_response_message": {
-            "header": "招待への返信メッセージを編集して送信",
+            "header": "Edit and Send Response",
             "description": "編集後は1時間クールダウンが必要です。",
             "cancel": "キャンセル",
             "send": "送信"
@@ -2170,11 +2169,11 @@
             "close": "閉じる"
         },
         "previous_instances": {
-            "header": "以前のインスタンス",
-            "info": "以前のインスタンス情報",
-            "search_placeholder": "検索...",
-            "table_view": "テーブル表示",
-            "chart_view": "チャート表示"
+            "header": "Instance History",
+            "info": "Instance Details",
+            "search_placeholder": "Search instance history",
+            "table_view": "Players",
+            "chart_view": "Timeline"
         },
         "group_member_moderation": {
             "header": "グループメンバーを管理",

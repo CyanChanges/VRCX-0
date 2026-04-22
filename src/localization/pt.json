@@ -495,7 +495,7 @@
                 "tips": {
                     "online_time": "O tempo online refere-se ao tempo de jogo registrado pelo VRCX-0 para o dia atual.",
                     "click_Y_axis": "Clique no rótulo do eixo Y para navegar até os detalhes da instância ou abrir o diálogo de Usuário.",
-                    "click_instance_name": "Clique no nome da instância para abrir o diálogo de Informações de Instância Anterior."
+                    "click_instance_name": "Click instance name to open Instance Details."
                 },
                 "settings": {
                     "header": "Configurações",
@@ -646,8 +646,8 @@
             },
             "other": {
                 "header": "Outros",
-                "edit_invite_message": "Editar Mensagens de Convite",
-                "edit_invite_message_description": "Editar mensagens de convite e resposta de convite"
+                "edit_invite_message": "Message Templates",
+                "edit_invite_message_description": "Edit invite and request message templates"
             }
         },
         "profile": {
@@ -1116,8 +1116,7 @@
                     "launch_commands": {
                         "header": "Comandos de Inicialização (Deep Links)",
                         "show_confirmation_on_switch_avatar_enable": "Mostrar Diálogo de Confirmação Antes de Trocar de Avatar",
-                        "show_confirmation_on_switch_avatar_tooltip": "Quando desativado, o VRCX-0 não virá para a frente ao trocar de avatar e pedirá confirmação",
-                        "website_userscript": "Userscript do Site VRC"
+                        "show_confirmation_on_switch_avatar_tooltip": "Quando desativado, o VRCX-0 não virá para a frente ao trocar de avatar e pedirá confirmação"
                     },
                     "screenshot_helper": {
                         "header": "Assistente de Captura de Tela",
@@ -1257,7 +1256,7 @@
                 "send_friend_request": "Enviar Pedido de Amizade",
                 "show_avatar_author": "Mostrar Autor do Avatar",
                 "show_fallback_avatar": "Mostrar Detalhes do Avatar de Substitutos",
-                "show_previous_instances": "Mostrar Instâncias Anteriores",
+                "show_previous_instances": "Show Instance History",
                 "moderation_block": "Bloquear",
                 "moderation_unblock": "Desbloquear",
                 "moderation_mute": "Silenciar",
@@ -1330,7 +1329,7 @@
                 "instance_age_restricted_tooltip": "Em uma instância com restrição de idade",
                 "close_instance": "Encerrar Instância",
                 "instance_age_gated": "Restrição de Idade",
-                "open_previous_instance": "Abrir Instâncias Anteriores",
+                "open_previous_instance": "Open Instance History",
                 "show_mutual_friends": "Mostrar Amigos Mútuos",
                 "show_discord_connections": "Mostrar Conexões do Discord"
             },
@@ -1465,7 +1464,7 @@
                 "new_instance_and_open_ingame": "Nova Instância e Abrir no Jogo",
                 "make_home": "Definir como Inicial",
                 "reset_home": "Redefinir Inicial",
-                "show_previous_instances": "Mostrar Instâncias Anteriores",
+                "show_previous_instances": "Show Instance History",
                 "rename": "Renomear",
                 "change_description": "Alterar Descrição",
                 "change_capacity": "Alterar Capacidade",
@@ -1819,7 +1818,7 @@
             "invite": "Convidar"
         },
         "invite_message": {
-            "header": "Enviar Mensagem de Convite",
+            "header": "Send With Message",
             "confirmation": "Tem certeza que deseja enviar?",
             "select_image": "Selecionar Imagem",
             "clear_selected_image": "Limpar Imagem Selecionada",
@@ -1828,43 +1827,43 @@
             "confirm": "Confirmar"
         },
         "invite_request_message": {
-            "header": "Enviar Mensagem de Solicitação de Convite",
+            "header": "Request With Message",
             "cancel": "Cancelar",
             "refresh": "Atualizar"
         },
         "invite_response_message": {
-            "header": "Enviar Mensagem de Resposta de Convite",
+            "header": "Invite Response",
             "confirmation": "Tem certeza que deseja enviar?",
             "cancel": "Cancelar",
             "refresh": "Atualizar",
             "confirm": "Confirmar"
         },
         "invite_request_response_message": {
-            "header": "Enviar Mensagem de Resposta de Solicitação de Convite",
+            "header": "Request Invite Response",
             "cancel": "Cancelar",
             "refresh": "Atualizar"
         },
         "edit_invite_messages": {
-            "header": "Editar Mensagens de Convite",
+            "header": "Message Templates",
             "invite_message_tab": "Convite",
-            "invite_request_tab": "Solicitação de Convite",
-            "invite_request_response_tab": "Resposta de Solicitação de Convite",
+            "invite_request_tab": "Request Invite",
+            "invite_request_response_tab": "Request Invite Response",
             "invite_response_tab": "Resposta de Convite"
         },
         "edit_invite_message": {
-            "header": "Editar Mensagem de Convite",
+            "header": "Edit Message Template",
             "description": "1 hora de cooldown para edição.",
             "cancel": "Cancelar",
             "save": "Salvar"
         },
         "edit_send_invite_message": {
-            "header": "Editar e Enviar Mensagem de Convite",
+            "header": "Edit and Send Message Template",
             "description": "1 hora de cooldown para edição.",
             "cancel": "Cancelar",
             "send": "Enviar"
         },
         "edit_send_invite_response_message": {
-            "header": "Editar e Enviar Mensagem de Resposta de Convite",
+            "header": "Edit and Send Response",
             "description": "1 hora de cooldown para edição.",
             "cancel": "Cancelar",
             "send": "Enviar"
@@ -2152,11 +2151,11 @@
             "close": "Fechar"
         },
         "previous_instances": {
-            "header": "Instâncias Anteriores",
-            "info": "Informações de Instância Anterior",
-            "search_placeholder": "Pesquisar",
-            "table_view": "Visualização em Tabela",
-            "chart_view": "Visualização em Gráfico"
+            "header": "Instance History",
+            "info": "Instance Details",
+            "search_placeholder": "Search instance history",
+            "table_view": "Players",
+            "chart_view": "Timeline"
         },
         "group_member_moderation": {
             "header": "Moderação de Membro do Grupo",

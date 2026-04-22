@@ -26,7 +26,13 @@ import {
     VolumeXIcon,
     XIcon
 } from 'lucide-react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState
+} from 'react';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
@@ -116,7 +122,7 @@ import {
     EntityInfoGrid,
     EntityRawJson
 } from './EntityDialogScaffold.jsx';
-import { PreviousInstancesTableDialog } from './PreviousInstancesTableDialog.jsx';
+import { PreviousInstancesPanel } from './PreviousInstancesTableDialog.jsx';
 import {
     firstNonGroupIdText,
     formatDate,
@@ -752,6 +758,25 @@ function FavoriteWorldGroups({
 
 let lastUserDialogTab = 'info';
 
+const emptyUserDialogRemoteData = Object.freeze({
+    groups: Object.freeze([]),
+    mutual: Object.freeze([]),
+    worlds: Object.freeze([]),
+    favoriteWorldGroups: Object.freeze([]),
+    favoriteWorlds: Object.freeze([]),
+    avatars: Object.freeze([])
+});
+
+const emptyUserDialogStatus = Object.freeze({});
+
+const emptyUserDialogSearch = Object.freeze({
+    mutual: '',
+    groups: '',
+    worlds: '',
+    favoriteWorlds: '',
+    avatars: ''
+});
+
 export function UserDialogTabbedView({
     profile,
     memo,
@@ -832,24 +857,10 @@ export function UserDialogTabbedView({
     const prompt = useModalStore((state) => state.prompt);
     const confirm = useModalStore((state) => state.confirm);
     const [activeTab, setActiveTab] = useState('info');
-    const [previousInstancesOpen, setPreviousInstancesOpen] = useState(false);
-    const [remoteData, setRemoteData] = useState({
-        groups: [],
-        mutual: [],
-        worlds: [],
-        favoriteWorldGroups: [],
-        favoriteWorlds: [],
-        avatars: []
-    });
-    const [remoteStatus, setRemoteStatus] = useState({});
-    const [remoteErrors, setRemoteErrors] = useState({});
-    const [search, setSearch] = useState({
-        mutual: '',
-        groups: '',
-        worlds: '',
-        favoriteWorlds: '',
-        avatars: ''
-    });
+    const [remoteData, setRemoteData] = useState(emptyUserDialogRemoteData);
+    const [remoteStatus, setRemoteStatus] = useState(emptyUserDialogStatus);
+    const [remoteErrors, setRemoteErrors] = useState(emptyUserDialogStatus);
+    const [search, setSearch] = useState(emptyUserDialogSearch);
     const [worldSort, setWorldSort] = useState('updated');
     const [worldOrder, setWorldOrder] = useState('descending');
     const [avatarSort, setAvatarSort] = useState('name');
@@ -894,21 +905,39 @@ export function UserDialogTabbedView({
         visibleProfileAvatars,
         tabs,
         groupSearchActive
-    } = buildUserDialogListViewData({
-        profile,
-        remoteData,
-        remoteStatus,
-        friendsById,
-        search,
-        mutualSort,
-        groupSort,
-        isCurrentUser,
-        inGameGroupOrder,
-        selectedGroupIds,
-        effectiveAvatarReleaseStatus,
-        avatarSort,
-        currentUserHasSharedConnectionsOptOut
-    });
+    } = useMemo(
+        () =>
+            buildUserDialogListViewData({
+                profile,
+                remoteData,
+                remoteStatus,
+                friendsById,
+                search,
+                mutualSort,
+                groupSort,
+                isCurrentUser,
+                inGameGroupOrder,
+                selectedGroupIds,
+                effectiveAvatarReleaseStatus,
+                avatarSort,
+                currentUserHasSharedConnectionsOptOut
+            }),
+        [
+            avatarSort,
+            currentUserHasSharedConnectionsOptOut,
+            effectiveAvatarReleaseStatus,
+            friendsById,
+            groupSort,
+            inGameGroupOrder,
+            isCurrentUser,
+            mutualSort,
+            profile,
+            remoteData,
+            remoteStatus,
+            search,
+            selectedGroupIds
+        ]
+    );
     const isRecentDialogAction = (actionType) =>
         recentActionVersion >= 0 && isActionRecent(profile.id, actionType);
     const recentDialogShortcut = (actionType) =>
@@ -925,23 +954,10 @@ export function UserDialogTabbedView({
             avatarSort,
             avatarReleaseStatus: effectiveAvatarReleaseStatus
         };
-        setRemoteData({
-            groups: [],
-            mutual: [],
-            worlds: [],
-            favoriteWorldGroups: [],
-            favoriteWorlds: [],
-            avatars: []
-        });
-        setRemoteStatus({});
-        setRemoteErrors({});
-        setSearch({
-            mutual: '',
-            groups: '',
-            worlds: '',
-            favoriteWorlds: '',
-            avatars: ''
-        });
+        setRemoteData(emptyUserDialogRemoteData);
+        setRemoteStatus(emptyUserDialogStatus);
+        setRemoteErrors(emptyUserDialogStatus);
+        setSearch(emptyUserDialogSearch);
         const nextTab = resolveTabValue(tabs, lastUserDialogTab);
         lastUserDialogTab = nextTab;
         setActiveTab(nextTab);
@@ -2304,7 +2320,7 @@ export function UserDialogTabbedView({
                                                 }
                                                 onSelect={onInvite}
                                             >
-                                                Invite
+                                                Send Invite
                                             </EntityActionItem>
                                             <EntityActionItem
                                                 icon={MessageSquareIcon}
@@ -2317,7 +2333,7 @@ export function UserDialogTabbedView({
                                                 }
                                                 onSelect={onInviteMessage}
                                             >
-                                                Invite Message
+                                                Send With Message
                                             </EntityActionItem>
                                             <EntityActionItem
                                                 icon={MailIcon}
@@ -2343,7 +2359,7 @@ export function UserDialogTabbedView({
                                                     onInviteRequestMessage
                                                 }
                                             >
-                                                Request Invite Message
+                                                Request With Message
                                             </EntityActionItem>
                                             <EntityActionItem
                                                 icon={MousePointerIcon}
@@ -2386,10 +2402,10 @@ export function UserDialogTabbedView({
                                         icon={MapPinIcon}
                                         disabled={!previousInstances.length}
                                         onSelect={() =>
-                                            setPreviousInstancesOpen(true)
+                                            changeTab('instance-history')
                                         }
                                     >
-                                        Previous Instances
+                                        Instance History
                                     </EntityActionItem>
                                     <EntityActionItem
                                         icon={BanIcon}
@@ -2568,7 +2584,7 @@ export function UserDialogTabbedView({
                                             )}
                                             onRefresh={onRefreshLocation}
                                             onHistory={() =>
-                                                setPreviousInstancesOpen(true)
+                                                changeTab('instance-history')
                                             }
                                         />
                                     </>
@@ -2799,7 +2815,7 @@ export function UserDialogTabbedView({
                                 value={formatStatsDuration(userTimeSpent)}
                                 onClick={
                                     previousInstances.length
-                                        ? () => setPreviousInstancesOpen(true)
+                                        ? () => changeTab('instance-history')
                                         : undefined
                                 }
                             />
@@ -2815,7 +2831,7 @@ export function UserDialogTabbedView({
                                     onClick={
                                         previousInstances.length
                                             ? () =>
-                                                  setPreviousInstancesOpen(true)
+                                                  changeTab('instance-history')
                                             : undefined
                                     }
                                 />
@@ -3543,6 +3559,19 @@ export function UserDialogTabbedView({
                     />
                 </EntityDialogTabContent>
                 <EntityDialogTabContent
+                    value="instance-history"
+                    className="flex min-h-0 flex-col"
+                >
+                    <PreviousInstancesPanel
+                        title="Instance History"
+                        instances={previousInstances}
+                        variant="user"
+                        targetRef={profile}
+                        onRowsChange={onPreviousInstancesChange}
+                        className="flex-1"
+                    />
+                </EntityDialogTabContent>
+                <EntityDialogTabContent
                     value="activity"
                     className="flex flex-col gap-4"
                 >
@@ -3564,15 +3593,6 @@ export function UserDialogTabbedView({
                     />
                 </EntityDialogTabContent>
             </EntityDialogTabs>
-            <PreviousInstancesTableDialog
-                open={previousInstancesOpen}
-                onOpenChange={setPreviousInstancesOpen}
-                title={`Previous Instances - ${profile.displayName || profile.username || 'User'}`}
-                instances={previousInstances}
-                variant="user"
-                targetRef={profile}
-                onRowsChange={onPreviousInstancesChange}
-            />
         </EntityDialogScaffold>
     );
 }
