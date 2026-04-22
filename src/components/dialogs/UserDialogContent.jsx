@@ -17,6 +17,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 
+import { EmptyState as AppEmptyState } from '@/components/layout/PageScaffold.jsx';
 import { convertFileUrlToImageUrl } from '@/lib/entityMedia.js';
 import { userFacingErrorMessage } from '@/lib/errorDisplay.js';
 import { userStatusIndicatorClassName } from '@/lib/userStatus.js';
@@ -43,11 +44,11 @@ import {
     recordRecentAction,
     subscribeRecentActions
 } from '@/services/recentActionService.js';
-import { checkCanInvite } from '@/shared/utils/invite.js';
 import {
     buildCurrentUserPresenceView,
     mergeCurrentUserPresenceFields
 } from '@/shared/utils/currentUserPresence.js';
+import { checkCanInvite } from '@/shared/utils/invite.js';
 import {
     parseLocation,
     resolveFriendPresenceLocation
@@ -481,19 +482,12 @@ function resolveFriendRequestState(profile) {
 
 function UserDialogEmptyState({ title, description, loading = false }) {
     return (
-        <div className="bg-muted/20 flex min-h-56 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-sm flex-col gap-2">
-                {loading ? (
-                    <div className="flex justify-center">
-                        <Spinner className="text-muted-foreground size-5" />
-                    </div>
-                ) : null}
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-56"
+            title={title}
+            description={description}
+            icon={loading ? Spinner : undefined}
+        />
     );
 }
 
@@ -550,16 +544,13 @@ export function UserDialogContent({ userId, seedData = null, openNonce = 0 }) {
         gameState,
         gameLogDisabled
     };
-    const withCurrentUserPresence = useCallback(
-        (nextProfile) => {
-            const context = currentUserPresenceRef.current;
-            if (!context.isTargetCurrentUser) {
-                return nextProfile;
-            }
-            return buildCurrentUserPresenceView(nextProfile, context);
-        },
-        []
-    );
+    const withCurrentUserPresence = useCallback((nextProfile) => {
+        const context = currentUserPresenceRef.current;
+        if (!context.isTargetCurrentUser) {
+            return nextProfile;
+        }
+        return buildCurrentUserPresenceView(nextProfile, context);
+    }, []);
     const targetKey = useMemo(
         () => dialogTargetKey(currentEndpoint, normalizedUserId),
         [currentEndpoint, normalizedUserId]
@@ -1133,14 +1124,12 @@ export function UserDialogContent({ userId, seedData = null, openNonce = 0 }) {
 
         const revision = moderationRevisionRef.current;
         const localModerationPromise = currentUserId
-            ? userSessionRepository
-                  .ensureUserTables(currentUserId)
-                  .then(() =>
-                      vrchatModerationRepository.getLocalModeration({
-                          ownerUserId: currentUserId,
-                          userId: normalizedUserId
-                      })
-                  )
+            ? userSessionRepository.ensureUserTables(currentUserId).then(() =>
+                  vrchatModerationRepository.getLocalModeration({
+                      ownerUserId: currentUserId,
+                      userId: normalizedUserId
+                  })
+              )
             : vrchatModerationRepository.getLocalModeration({
                   ownerUserId: '',
                   userId: normalizedUserId
@@ -3473,9 +3462,12 @@ export function UserDialogContent({ userId, seedData = null, openNonce = 0 }) {
                     </DialogHeader>
                     <FieldGroup>
                         <Field>
-                            <FieldLabel>Status description</FieldLabel>
+                            <FieldLabel htmlFor="user-social-status-description">
+                                Status description
+                            </FieldLabel>
                             <div className="flex items-center gap-2">
                                 <Input
+                                    id="user-social-status-description"
                                     value={socialStatusDraft.statusDescription}
                                     maxLength={32}
                                     placeholder="Status description"

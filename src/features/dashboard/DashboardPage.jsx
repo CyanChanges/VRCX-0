@@ -562,8 +562,7 @@ export function DashboardPage() {
     const dashboardRowPanelIds = useMemo(
         () =>
             (Array.isArray(dashboard?.rows) ? dashboard.rows : []).map(
-                (row) =>
-                    `dashboard-${id}-row-panel-${getDashboardRowKey(row)}`
+                (row) => `dashboard-${id}-row-panel-${getDashboardRowKey(row)}`
             ),
         [dashboard?.rows, id]
     );
@@ -995,7 +994,10 @@ export function DashboardPage() {
                                 aria-label="Show add row options"
                                 onClick={() => setShowAddRowOptions(true)}
                             >
-                                <PlusIcon className="size-6 opacity-50" />
+                                <PlusIcon
+                                    data-icon="icon"
+                                    className="opacity-50"
+                                />
                             </Button>
                         )}
                     </>

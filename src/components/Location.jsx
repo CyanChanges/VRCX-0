@@ -427,7 +427,7 @@ export function Location({
                             className={cn(
                                 'x-location inline-flex max-w-full min-w-0 flex-nowrap items-center truncate overflow-hidden text-left',
                                 isLocationLink
-                                    ? 'cursor-pointer text-inherit underline-offset-4 hover:text-primary'
+                                    ? 'hover:text-primary cursor-pointer text-inherit underline-offset-4'
                                     : 'cursor-default'
                             )}
                             onClick={openWorld}
@@ -454,7 +454,7 @@ export function Location({
                         <Button
                             type="button"
                             variant="ghost"
-                            className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit hover:text-primary"
+                            className="hover:text-primary ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit"
                             onClick={openGroup}
                             onKeyDown={(event) => event.stopPropagation()}
                         >
@@ -511,14 +511,14 @@ export function Location({
                             disabled={!canOpenWorld}
                             onSelect={openWorld}
                         >
-                            <ExternalLinkIcon className="size-4" />
+                            <ExternalLinkIcon />
                             {t('common.actions.view_details')}
                         </ContextMenuItem>
                         <ContextMenuItem
                             disabled={!shareUrl}
                             onSelect={copyShareLink}
                         >
-                            <Share2Icon className="size-4" />
+                            <Share2Icon />
                             {t('dialog.world.actions.share')}
                         </ContextMenuItem>
                         <ContextMenuItem
@@ -527,7 +527,7 @@ export function Location({
                                 void copyTextToClipboard(currentLocation)
                             }
                         >
-                            <CopyIcon className="size-4" />
+                            <CopyIcon />
                             Copy location
                         </ContextMenuItem>
                     </ContextMenuGroup>
@@ -537,14 +537,14 @@ export function Location({
                             disabled={!parsedLocation.worldId}
                             onSelect={() => newInstance(false)}
                         >
-                            <FlagIcon className="size-4" />
+                            <FlagIcon />
                             {t('dialog.world.actions.new_instance')}
                         </ContextMenuItem>
                         <ContextMenuItem
                             disabled={!parsedLocation.worldId}
                             onSelect={() => newInstance(true)}
                         >
-                            <MessageSquareIcon className="size-4" />
+                            <MessageSquareIcon />
                             {t(
                                 'dialog.world.actions.new_instance_and_self_invite'
                             )}
@@ -567,7 +567,7 @@ export function Location({
                                 void showPreviousInstances();
                             }}
                         >
-                            <HistoryIcon className="size-4" />
+                            <HistoryIcon />
                             {t('dialog.world.actions.show_previous_instances')}
                         </ContextMenuItem>
                     </ContextMenuGroup>
@@ -579,7 +579,7 @@ export function Location({
                                     disabled={!canUseCurrentInstance}
                                     onSelect={launchCurrentInstance}
                                 >
-                                    <ExternalLinkIcon className="size-4" />
+                                    <ExternalLinkIcon />
                                     Launch in VRChat
                                 </ContextMenuItem>
                                 <ContextMenuItem
@@ -588,7 +588,7 @@ export function Location({
                                         void selfInviteCurrentInstance()
                                     }
                                 >
-                                    <MessageSquareIcon className="size-4" />
+                                    <MessageSquareIcon />
                                     Self invite
                                 </ContextMenuItem>
                             </ContextMenuGroup>

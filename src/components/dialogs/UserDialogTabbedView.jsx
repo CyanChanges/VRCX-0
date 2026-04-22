@@ -8,6 +8,7 @@ import {
     DownloadIcon,
     EyeIcon,
     ExternalLinkIcon,
+    HistoryIcon,
     LanguagesIcon,
     LogOutIcon,
     MailIcon,
@@ -26,13 +27,7 @@ import {
     VolumeXIcon,
     XIcon
 } from 'lucide-react';
-import {
-    useEffect,
-    useLayoutEffect,
-    useMemo,
-    useRef,
-    useState
-} from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
@@ -89,6 +84,7 @@ import { Button } from '@/ui/shadcn/button';
 import { Checkbox } from '@/ui/shadcn/checkbox';
 import {
     DropdownMenu,
+    DropdownMenuCheckboxItem,
     DropdownMenuContent,
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -96,6 +92,11 @@ import {
     DropdownMenuTrigger
 } from '@/ui/shadcn/dropdown-menu';
 import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
+import {
+    HoverCard,
+    HoverCardContent,
+    HoverCardTrigger
+} from '@/ui/shadcn/hover-card';
 import { Input } from '@/ui/shadcn/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import {
@@ -186,6 +187,86 @@ function UserTitleLanguages({ languages }) {
                 );
             })}
         </span>
+    );
+}
+
+function PreviousDisplayNamesBadge({ names }) {
+    if (!names.length) {
+        return null;
+    }
+
+    const label = `${names.length} previous ${
+        names.length === 1 ? 'name' : 'names'
+    }`;
+    const primaryName = names[0]?.displayName || label;
+
+    return (
+        <HoverCard openDelay={150}>
+            <HoverCardTrigger asChild>
+                <Badge
+                    asChild
+                    variant="outline"
+                    className="bg-background max-w-52 cursor-default text-xs"
+                >
+                    <button type="button" aria-label={label}>
+                        <HistoryIcon data-icon="inline-start" />
+                        <span className="min-w-0 truncate">{primaryName}</span>
+                        {names.length > 1 ? (
+                            <span className="text-muted-foreground shrink-0">
+                                +{names.length - 1}
+                            </span>
+                        ) : null}
+                    </button>
+                </Badge>
+            </HoverCardTrigger>
+            <HoverCardContent align="start" className="w-72 p-0">
+                <div className="flex flex-col">
+                    <div className="border-border flex items-center justify-between gap-3 border-b px-3 py-2">
+                        <div className="text-sm font-medium">
+                            Previous display names
+                        </div>
+                        <Badge variant="secondary">{names.length}</Badge>
+                    </div>
+                    <div className="flex max-h-64 flex-col overflow-auto p-1">
+                        {names.map((entry, index) => (
+                            <div
+                                key={`${entry.displayName}:${entry.updated_at || index}`}
+                                className="flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-1.5"
+                            >
+                                <span className="min-w-0 truncate font-medium">
+                                    {entry.displayName}
+                                </span>
+                                {entry.updated_at ? (
+                                    <span className="text-muted-foreground shrink-0 text-xs">
+                                        {formatStatsDate(entry.updated_at)}
+                                    </span>
+                                ) : null}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </HoverCardContent>
+        </HoverCard>
+    );
+}
+
+function SelfPreferenceCheckboxItem({
+    label,
+    checked,
+    disabled = false,
+    onToggle
+}) {
+    return (
+        <DropdownMenuCheckboxItem
+            checked={checked}
+            disabled={disabled || !onToggle}
+            onCheckedChange={() => onToggle?.()}
+        >
+            <span className="min-w-0 flex-1">{label}</span>
+            <span className="text-muted-foreground mr-4 shrink-0 text-xs">
+                {checked ? 'Allow' : 'Deny'}
+            </span>
+        </DropdownMenuCheckboxItem>
     );
 }
 
@@ -308,27 +389,24 @@ function UserGroupCard({
                         className="size-9 shrink-0 rounded-full object-cover"
                     />
                 ) : (
-                    <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full">
-                        <UsersIcon
-                            data-icon="inline-start"
-                            className="text-muted-foreground size-4"
-                        />
+                    <span className="bg-muted flex size-9 shrink-0 items-center justify-center rounded-full [&>svg]:size-4">
+                        <UsersIcon className="text-muted-foreground" />
                     </span>
                 )}
                 <span className="min-w-0 flex-1 overflow-hidden">
                     <span className="block truncate leading-snug font-medium">
                         {label || '—'}
                     </span>
-                    <span className="text-muted-foreground inline-flex max-w-full items-center truncate text-xs">
+                    <span className="text-muted-foreground inline-flex max-w-full items-center truncate text-xs [&>svg]:size-3.5">
                         {group?.isRepresenting || group?.is_representing ? (
                             <TagIcon
-                                className="mr-1.5 size-3.5 shrink-0"
+                                className="mr-1.5 shrink-0"
                                 aria-label="Representing"
                             />
                         ) : null}
                         {visibility !== 'visible' ? (
                             <EyeIcon
-                                className="mr-1.5 size-3.5 shrink-0"
+                                className="mr-1.5 shrink-0"
                                 aria-label={`Visibility ${visibility}`}
                             />
                         ) : null}
@@ -560,11 +638,8 @@ function EntityList({
                                     className="size-9 rounded-full object-cover"
                                 />
                             ) : (
-                                <span className="bg-muted flex size-9 items-center justify-center rounded-full">
-                                    <UserIcon
-                                        data-icon="inline-start"
-                                        className="text-muted-foreground size-4"
-                                    />
+                                <span className="bg-muted flex size-9 items-center justify-center rounded-full [&>svg]:size-4">
+                                    <UserIcon className="text-muted-foreground" />
                                 </span>
                             )}
                             {dotClassName ? (
@@ -1189,7 +1264,6 @@ export function UserDialogTabbedView({
         : profile.pronouns;
     const {
         previousDisplayNames,
-        previousDisplayNamesTitle,
         statusStateText,
         userGroupSections,
         selectedGroupCount,
@@ -1849,15 +1923,9 @@ export function UserDialogTabbedView({
                             </span>
                         ) : null}
                         <UserTitleLanguages languages={profileLanguages} />
-                        {previousDisplayNames.length ? (
-                            <Badge
-                                variant="outline"
-                                className="shrink-0 text-xs"
-                                title={previousDisplayNamesTitle}
-                            >
-                                Names {previousDisplayNames.length}
-                            </Badge>
-                        ) : null}
+                        <PreviousDisplayNamesBadge
+                            names={previousDisplayNames}
+                        />
                     </>
                 }
                 subtitle={userSubtitle}
@@ -2250,6 +2318,41 @@ export function UserDialogTabbedView({
                                     >
                                         Edit Pronouns
                                     </EntityActionItem>
+                                    <EntityActionSeparator />
+                                    <SelfPreferenceCheckboxItem
+                                        label="Avatar Cloning"
+                                        checked={Boolean(
+                                            profile.allowAvatarCopying
+                                        )}
+                                        disabled={actionStatus !== 'idle'}
+                                        onToggle={onToggleSelfAvatarCopying}
+                                    />
+                                    <SelfPreferenceCheckboxItem
+                                        label="Booping"
+                                        checked={
+                                            profile.isBoopingEnabled !== false
+                                        }
+                                        disabled={actionStatus !== 'idle'}
+                                        onToggle={onToggleSelfBooping}
+                                    />
+                                    <SelfPreferenceCheckboxItem
+                                        label="Show Mutual Friends"
+                                        checked={
+                                            !profile.hasSharedConnectionsOptOut
+                                        }
+                                        disabled={actionStatus !== 'idle'}
+                                        onToggle={onToggleSelfSharedConnections}
+                                    />
+                                    <SelfPreferenceCheckboxItem
+                                        label="Show Discord Connections"
+                                        checked={
+                                            !profile.hasDiscordFriendsOptOut
+                                        }
+                                        disabled={actionStatus !== 'idle'}
+                                        onToggle={
+                                            onToggleSelfDiscordConnections
+                                        }
+                                    />
                                 </>
                             ) : null}
                             {!isCurrentUser ? (
@@ -2635,7 +2738,7 @@ export function UserDialogTabbedView({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto justify-start p-0 text-left text-xs hover:text-primary"
+                                    className="hover:text-primary h-auto justify-start p-0 text-left text-xs"
                                     onClick={() =>
                                         openAvatarDialog(
                                             currentAvatarDialogArgs
@@ -2660,7 +2763,7 @@ export function UserDialogTabbedView({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto max-w-full justify-start gap-2 p-0 text-left text-xs font-normal whitespace-normal text-inherit hover:text-primary"
+                                    className="hover:text-primary h-auto max-w-full justify-start gap-2 p-0 text-left text-xs font-normal whitespace-normal text-inherit"
                                     onClick={() =>
                                         openGroupDialog({
                                             groupId: representedGroup.groupId,
@@ -2841,62 +2944,7 @@ export function UserDialogTabbedView({
                                 />
                             </>
                         )}
-                        {isCurrentUser ? (
-                            <>
-                                <EntityInfoBlock
-                                    label="Avatar Cloning"
-                                    value={
-                                        profile.allowAvatarCopying
-                                            ? 'Allow'
-                                            : 'Deny'
-                                    }
-                                    onClick={
-                                        actionStatus === 'idle'
-                                            ? onToggleSelfAvatarCopying
-                                            : undefined
-                                    }
-                                />
-                                <EntityInfoBlock
-                                    label="Booping"
-                                    value={
-                                        profile.isBoopingEnabled === false
-                                            ? 'Deny'
-                                            : 'Allow'
-                                    }
-                                    onClick={
-                                        actionStatus === 'idle'
-                                            ? onToggleSelfBooping
-                                            : undefined
-                                    }
-                                />
-                                <EntityInfoBlock
-                                    label="Show Mutual Friends"
-                                    value={
-                                        profile.hasSharedConnectionsOptOut
-                                            ? 'Deny'
-                                            : 'Allow'
-                                    }
-                                    onClick={
-                                        actionStatus === 'idle'
-                                            ? onToggleSelfSharedConnections
-                                            : undefined
-                                    }
-                                />
-                                <EntityInfoBlock
-                                    label="Show Discord Connections"
-                                    value={
-                                        profile.hasDiscordFriendsOptOut
-                                            ? 'Deny'
-                                            : 'Allow'
-                                    }
-                                    onClick={
-                                        actionStatus === 'idle'
-                                            ? onToggleSelfDiscordConnections
-                                            : undefined
-                                    }
-                                />
-                            </>
-                        ) : (
+                        {!isCurrentUser ? (
                             <EntityInfoBlock
                                 label="Avatar Cloning"
                                 value={
@@ -2905,7 +2953,7 @@ export function UserDialogTabbedView({
                                         : 'Deny'
                                 }
                             />
-                        )}
+                        ) : null}
                         {visibleHomeLocationTarget ? (
                             <EntityInfoBlock label="Home Location" full>
                                 <Location
@@ -3455,7 +3503,7 @@ export function UserDialogTabbedView({
                         <Button
                             type="button"
                             variant="ghost"
-                            className="h-auto justify-start p-0 text-left hover:text-primary"
+                            className="hover:text-primary h-auto justify-start p-0 text-left"
                             onClick={() =>
                                 openAvatarDialog(currentAvatarDialogArgs)
                             }

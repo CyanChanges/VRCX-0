@@ -1,4 +1,8 @@
-import { MoreHorizontalIcon, RefreshCwIcon } from 'lucide-react';
+import {
+    ChevronRightIcon,
+    MoreHorizontalIcon,
+    RefreshCwIcon
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { userFacingErrorMessage } from '@/lib/errorDisplay.js';
@@ -370,7 +374,9 @@ function EntityBlank({ children = '—' }) {
 
 function EntityInfoGrid({ children, className }) {
     return (
-        <div className={cn('flex flex-wrap items-start px-2.5', className)}>
+        <div
+            className={cn('flex flex-wrap items-start gap-1 px-2.5', className)}
+        >
             {children}
         </div>
     );
@@ -391,28 +397,34 @@ function EntityInfoBlock({
             type={onClick ? 'button' : undefined}
             onClick={onClick}
             className={cn(
-                'flex items-center rounded-md p-1.5 text-left text-sm',
+                'group/info-item flex items-start rounded-lg px-2 py-1.5 text-left text-sm transition-colors outline-none [&>svg:not([class*=size-])]:size-3.5',
                 full ? 'w-full' : wide ? 'w-80' : 'w-44',
                 onClick
-                    ? 'cursor-pointer hover:bg-muted/50'
+                    ? 'hover:bg-muted focus-visible:border-ring focus-visible:ring-ring/50 cursor-pointer focus-visible:ring-3'
                     : 'cursor-default'
             )}
         >
             <div className="min-w-0 flex-1 overflow-hidden">
-                <span className="block truncate leading-snug font-medium">
+                <span className="text-muted-foreground block truncate text-xs leading-snug">
                     {label}
                 </span>
                 {children || (
                     <span
                         className={cn(
-                            'block truncate text-xs',
-                            mono ? 'font-mono' : ''
+                            'block truncate text-sm leading-snug font-medium',
+                            mono ? 'font-mono text-xs font-normal' : ''
                         )}
                     >
                         {value || '—'}
                     </span>
                 )}
             </div>
+            {onClick ? (
+                <ChevronRightIcon
+                    data-icon="inline-end"
+                    className="text-muted-foreground mt-0.5 ml-2 shrink-0 opacity-70 transition-transform group-hover/info-item:translate-x-0.5"
+                />
+            ) : null}
         </Component>
     );
 }

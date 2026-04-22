@@ -339,8 +339,11 @@ export function AvatarStylesDialog({
                         </Select>
                     </Field>
                     <Field>
-                        <FieldLabel>Author tags</FieldLabel>
+                        <FieldLabel htmlFor="avatar-styles-author-tags">
+                            Author tags
+                        </FieldLabel>
                         <Textarea
+                            id="avatar-styles-author-tags"
                             value={authorTags}
                             onChange={(event) =>
                                 setAuthorTags(event.target.value)

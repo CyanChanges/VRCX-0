@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { EmptyState as AppEmptyState } from '@/components/layout/PageScaffold.jsx';
 import { ImageCropDialog } from '@/components/media/ImageCropDialog.jsx';
 import {
     convertFileUrlToImageUrl,
@@ -49,7 +50,6 @@ import {
 } from '@/ui/shadcn/dialog';
 import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { Input } from '@/ui/shadcn/input';
-import { Label } from '@/ui/shadcn/label';
 import {
     Select,
     SelectContent,
@@ -77,19 +77,12 @@ import {
 
 function WorldDialogEmptyState({ title, description, loading = false }) {
     return (
-        <div className="bg-muted/20 flex min-h-56 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-sm flex-col gap-2">
-                {loading ? (
-                    <div className="flex justify-center">
-                        <Spinner className="text-muted-foreground size-5" />
-                    </div>
-                ) : null}
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-56"
+            title={title}
+            description={description}
+            icon={loading ? Spinner : undefined}
+        />
     );
 }
 
@@ -205,352 +198,400 @@ function WorldNewInstanceDialog({
                         <TabsTrigger value="Normal">Normal</TabsTrigger>
                         <TabsTrigger value="Legacy">Legacy</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="Normal" className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label>Access</Label>
-                            <Select
-                                value={form.accessType}
-                                disabled={Boolean(request?.created)}
-                                onValueChange={(value) =>
-                                    patchForm({ accessType: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {accessTypeOptions.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>Region</Label>
-                            <Select
-                                value={form.region}
-                                disabled={Boolean(request?.created)}
-                                onValueChange={(value) =>
-                                    patchForm({ region: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {regionOptions.map((region) => (
-                                            <SelectItem
-                                                key={region}
-                                                value={region}
-                                            >
-                                                {region}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {form.accessType === 'group' ? (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label>Group ID</Label>
-                                    <Input
-                                        value={form.groupId}
-                                        disabled={Boolean(request?.created)}
-                                        onChange={(event) =>
-                                            patchForm({
-                                                groupId: event.target.value
-                                            })
-                                        }
-                                    />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Group Access</Label>
-                                    <Select
-                                        value={form.groupAccessType}
-                                        disabled={Boolean(request?.created)}
-                                        onValueChange={(value) =>
-                                            patchForm({
-                                                groupAccessType: value
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {groupAccessTypeOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    )
-                                                )}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                {form.groupAccessType === 'members' ? (
-                                    <div className="grid gap-2">
-                                        <Label>Role IDs</Label>
+                    <TabsContent value="Normal">
+                        <FieldGroup className="gap-4">
+                            <Field>
+                                <FieldLabel>Access</FieldLabel>
+                                <Select
+                                    value={form.accessType}
+                                    disabled={Boolean(request?.created)}
+                                    onValueChange={(value) =>
+                                        patchForm({ accessType: value })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {accessTypeOptions.map((option) => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field>
+                                <FieldLabel>Region</FieldLabel>
+                                <Select
+                                    value={form.region}
+                                    disabled={Boolean(request?.created)}
+                                    onValueChange={(value) =>
+                                        patchForm({ region: value })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {regionOptions.map((region) => (
+                                                <SelectItem
+                                                    key={region}
+                                                    value={region}
+                                                >
+                                                    {region}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            {form.accessType === 'group' ? (
+                                <>
+                                    <Field>
+                                        <FieldLabel htmlFor="world-instance-group-id">
+                                            Group ID
+                                        </FieldLabel>
                                         <Input
-                                            value={form.roleIds}
+                                            id="world-instance-group-id"
+                                            value={form.groupId}
                                             disabled={Boolean(request?.created)}
                                             onChange={(event) =>
                                                 patchForm({
-                                                    roleIds: event.target.value
+                                                    groupId: event.target.value
                                                 })
                                             }
                                         />
-                                    </div>
-                                ) : null}
-                                <FieldGroup data-slot="checkbox-group">
-                                    <Field
-                                        orientation="horizontal"
-                                        data-disabled={Boolean(
-                                            request?.created
-                                        )}
-                                    >
-                                        <Checkbox
-                                            id="world-instance-queue-enabled"
-                                            checked={form.queueEnabled}
-                                            disabled={Boolean(request?.created)}
-                                            onCheckedChange={(value) =>
-                                                patchForm({
-                                                    queueEnabled: Boolean(value)
-                                                })
-                                            }
-                                        />
-                                        <FieldLabel htmlFor="world-instance-queue-enabled">
-                                            Queue enabled
-                                        </FieldLabel>
                                     </Field>
-                                    <Field
-                                        orientation="horizontal"
-                                        data-disabled={Boolean(
-                                            request?.created
-                                        )}
-                                    >
-                                        <Checkbox
-                                            id="world-instance-age-gate"
-                                            checked={form.ageGate}
+                                    <Field>
+                                        <FieldLabel>Group Access</FieldLabel>
+                                        <Select
+                                            value={form.groupAccessType}
                                             disabled={Boolean(request?.created)}
-                                            onCheckedChange={(value) =>
+                                            onValueChange={(value) =>
                                                 patchForm({
-                                                    ageGate: Boolean(value)
+                                                    groupAccessType: value
                                                 })
                                             }
-                                        />
-                                        <FieldLabel htmlFor="world-instance-age-gate">
-                                            Age gate
-                                        </FieldLabel>
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {groupAccessTypeOptions.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        )
+                                                    )}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
                                     </Field>
-                                </FieldGroup>
-                            </>
-                        ) : null}
-                        <div className="grid gap-2">
-                            <Label>Display Name</Label>
-                            <Input
-                                value={form.displayName}
-                                disabled={Boolean(request?.created)}
-                                onChange={(event) =>
-                                    patchForm({
-                                        displayName: event.target.value
-                                    })
-                                }
-                            />
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="Legacy" className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label>Access</Label>
-                            <Select
-                                value={form.accessType}
-                                onValueChange={(value) =>
-                                    patchForm({ accessType: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {accessTypeOptions.map((option) => (
-                                            <SelectItem
-                                                key={option.value}
-                                                value={option.value}
-                                            >
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>Region</Label>
-                            <Select
-                                value={form.region}
-                                onValueChange={(value) =>
-                                    patchForm({ region: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectGroup>
-                                        {regionOptions.map((region) => (
-                                            <SelectItem
-                                                key={region}
-                                                value={region}
-                                            >
-                                                {region}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectGroup>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>Instance Name</Label>
-                            <Input
-                                value={form.instanceName}
-                                onChange={(event) =>
-                                    patchForm({
-                                        instanceName:
-                                            event.target.value.replace(
-                                                /[^A-Za-z0-9]/g,
-                                                ''
-                                            )
-                                    })
-                                }
-                            />
-                        </div>
-                        {form.accessType !== 'public' &&
-                        form.accessType !== 'group' ? (
-                            <div className="grid gap-2">
-                                <Label>User ID</Label>
+                                    {form.groupAccessType === 'members' ? (
+                                        <Field>
+                                            <FieldLabel htmlFor="world-instance-role-ids">
+                                                Role IDs
+                                            </FieldLabel>
+                                            <Input
+                                                id="world-instance-role-ids"
+                                                value={form.roleIds}
+                                                disabled={Boolean(
+                                                    request?.created
+                                                )}
+                                                onChange={(event) =>
+                                                    patchForm({
+                                                        roleIds:
+                                                            event.target.value
+                                                    })
+                                                }
+                                            />
+                                        </Field>
+                                    ) : null}
+                                    <FieldGroup data-slot="checkbox-group">
+                                        <Field
+                                            orientation="horizontal"
+                                            data-disabled={Boolean(
+                                                request?.created
+                                            )}
+                                        >
+                                            <Checkbox
+                                                id="world-instance-queue-enabled"
+                                                checked={form.queueEnabled}
+                                                disabled={Boolean(
+                                                    request?.created
+                                                )}
+                                                onCheckedChange={(value) =>
+                                                    patchForm({
+                                                        queueEnabled:
+                                                            Boolean(value)
+                                                    })
+                                                }
+                                            />
+                                            <FieldLabel htmlFor="world-instance-queue-enabled">
+                                                Queue enabled
+                                            </FieldLabel>
+                                        </Field>
+                                        <Field
+                                            orientation="horizontal"
+                                            data-disabled={Boolean(
+                                                request?.created
+                                            )}
+                                        >
+                                            <Checkbox
+                                                id="world-instance-age-gate"
+                                                checked={form.ageGate}
+                                                disabled={Boolean(
+                                                    request?.created
+                                                )}
+                                                onCheckedChange={(value) =>
+                                                    patchForm({
+                                                        ageGate: Boolean(value)
+                                                    })
+                                                }
+                                            />
+                                            <FieldLabel htmlFor="world-instance-age-gate">
+                                                Age gate
+                                            </FieldLabel>
+                                        </Field>
+                                    </FieldGroup>
+                                </>
+                            ) : null}
+                            <Field>
+                                <FieldLabel htmlFor="world-instance-display-name">
+                                    Display Name
+                                </FieldLabel>
                                 <Input
-                                    value={form.legacyUserId}
+                                    id="world-instance-display-name"
+                                    value={form.displayName}
+                                    disabled={Boolean(request?.created)}
                                     onChange={(event) =>
                                         patchForm({
-                                            legacyUserId: event.target.value
+                                            displayName: event.target.value
                                         })
                                     }
                                 />
-                            </div>
-                        ) : null}
-                        {form.accessType === 'group' ? (
-                            <>
-                                <div className="grid gap-2">
-                                    <Label>Group ID</Label>
+                            </Field>
+                        </FieldGroup>
+                    </TabsContent>
+                    <TabsContent value="Legacy">
+                        <FieldGroup className="gap-4">
+                            <Field>
+                                <FieldLabel>Access</FieldLabel>
+                                <Select
+                                    value={form.accessType}
+                                    onValueChange={(value) =>
+                                        patchForm({ accessType: value })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {accessTypeOptions.map((option) => (
+                                                <SelectItem
+                                                    key={option.value}
+                                                    value={option.value}
+                                                >
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field>
+                                <FieldLabel>Region</FieldLabel>
+                                <Select
+                                    value={form.region}
+                                    onValueChange={(value) =>
+                                        patchForm({ region: value })
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectGroup>
+                                            {regionOptions.map((region) => (
+                                                <SelectItem
+                                                    key={region}
+                                                    value={region}
+                                                >
+                                                    {region}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="world-launch-instance-name">
+                                    Instance Name
+                                </FieldLabel>
+                                <Input
+                                    id="world-launch-instance-name"
+                                    value={form.instanceName}
+                                    onChange={(event) =>
+                                        patchForm({
+                                            instanceName:
+                                                event.target.value.replace(
+                                                    /[^A-Za-z0-9]/g,
+                                                    ''
+                                                )
+                                        })
+                                    }
+                                />
+                            </Field>
+                            {form.accessType !== 'public' &&
+                            form.accessType !== 'group' ? (
+                                <Field>
+                                    <FieldLabel htmlFor="world-launch-user-id">
+                                        User ID
+                                    </FieldLabel>
                                     <Input
-                                        value={form.groupId}
+                                        id="world-launch-user-id"
+                                        value={form.legacyUserId}
                                         onChange={(event) =>
                                             patchForm({
-                                                groupId: event.target.value
+                                                legacyUserId: event.target.value
                                             })
                                         }
                                     />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label>Group Access</Label>
-                                    <Select
-                                        value={form.groupAccessType}
-                                        onValueChange={(value) =>
+                                </Field>
+                            ) : null}
+                            {form.accessType === 'group' ? (
+                                <>
+                                    <Field>
+                                        <FieldLabel htmlFor="world-launch-group-id">
+                                            Group ID
+                                        </FieldLabel>
+                                        <Input
+                                            id="world-launch-group-id"
+                                            value={form.groupId}
+                                            onChange={(event) =>
+                                                patchForm({
+                                                    groupId: event.target.value
+                                                })
+                                            }
+                                        />
+                                    </Field>
+                                    <Field>
+                                        <FieldLabel>Group Access</FieldLabel>
+                                        <Select
+                                            value={form.groupAccessType}
+                                            onValueChange={(value) =>
+                                                patchForm({
+                                                    groupAccessType: value
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectGroup>
+                                                    {groupAccessTypeOptions.map(
+                                                        (option) => (
+                                                            <SelectItem
+                                                                key={
+                                                                    option.value
+                                                                }
+                                                                value={
+                                                                    option.value
+                                                                }
+                                                            >
+                                                                {option.label}
+                                                            </SelectItem>
+                                                        )
+                                                    )}
+                                                </SelectGroup>
+                                            </SelectContent>
+                                        </Select>
+                                    </Field>
+                                </>
+                            ) : null}
+                            {form.accessType === 'group' ? (
+                                <Field orientation="horizontal">
+                                    <Checkbox
+                                        id="world-launch-age-gate"
+                                        checked={form.ageGate}
+                                        onCheckedChange={(value) =>
                                             patchForm({
-                                                groupAccessType: value
+                                                ageGate: Boolean(value)
                                             })
                                         }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectGroup>
-                                                {groupAccessTypeOptions.map(
-                                                    (option) => (
-                                                        <SelectItem
-                                                            key={option.value}
-                                                            value={option.value}
-                                                        >
-                                                            {option.label}
-                                                        </SelectItem>
-                                                    )
-                                                )}
-                                            </SelectGroup>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </>
-                        ) : null}
-                        {form.accessType === 'group' ? (
-                            <Field orientation="horizontal">
-                                <Checkbox
-                                    id="world-launch-age-gate"
-                                    checked={form.ageGate}
-                                    onCheckedChange={(value) =>
-                                        patchForm({ ageGate: Boolean(value) })
-                                    }
-                                />
-                                <FieldLabel htmlFor="world-launch-age-gate">
-                                    Age gate
-                                </FieldLabel>
-                            </Field>
-                        ) : null}
-                        {form.accessType === 'invite' ||
-                        form.accessType === 'friends' ? (
-                            <Field orientation="horizontal">
-                                <Checkbox
-                                    id="world-launch-strict"
-                                    checked={form.strict}
-                                    onCheckedChange={(value) =>
-                                        patchForm({ strict: Boolean(value) })
-                                    }
-                                />
-                                <FieldLabel htmlFor="world-launch-strict">
-                                    Strict
-                                </FieldLabel>
-                            </Field>
-                        ) : null}
+                                    />
+                                    <FieldLabel htmlFor="world-launch-age-gate">
+                                        Age gate
+                                    </FieldLabel>
+                                </Field>
+                            ) : null}
+                            {form.accessType === 'invite' ||
+                            form.accessType === 'friends' ? (
+                                <Field orientation="horizontal">
+                                    <Checkbox
+                                        id="world-launch-strict"
+                                        checked={form.strict}
+                                        onCheckedChange={(value) =>
+                                            patchForm({
+                                                strict: Boolean(value)
+                                            })
+                                        }
+                                    />
+                                    <FieldLabel htmlFor="world-launch-strict">
+                                        Strict
+                                    </FieldLabel>
+                                </Field>
+                            ) : null}
+                        </FieldGroup>
                     </TabsContent>
                 </Tabs>
                 {activeCreated ? (
-                    <div className="grid gap-4">
-                        <div className="grid gap-2">
-                            <Label>Location</Label>
+                    <FieldGroup className="gap-4">
+                        <Field>
+                            <FieldLabel htmlFor="world-created-location">
+                                Location
+                            </FieldLabel>
                             <Input
+                                id="world-created-location"
                                 readOnly
                                 value={activeCreated.location || ''}
                                 onClick={(event) =>
                                     event.currentTarget.select()
                                 }
                             />
-                        </div>
-                        <div className="grid gap-2">
-                            <Label>URL</Label>
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="world-created-url">
+                                URL
+                            </FieldLabel>
                             <Input
+                                id="world-created-url"
                                 readOnly
                                 value={activeCreated.url || ''}
                                 onClick={(event) =>
                                     event.currentTarget.select()
                                 }
                             />
-                        </div>
-                    </div>
+                        </Field>
+                    </FieldGroup>
                 ) : null}
                 {activeCreated ? (
                     <DialogFooter className="gap-2 sm:justify-end">

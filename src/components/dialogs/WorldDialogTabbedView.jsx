@@ -616,11 +616,8 @@ function InstanceUserTiles({ instance }) {
                                     className="size-9 rounded-full object-cover"
                                 />
                             ) : (
-                                <span className="bg-muted flex size-9 items-center justify-center rounded-full">
-                                    <UserIcon
-                                        data-icon="inline-start"
-                                        className="text-muted-foreground size-4"
-                                    />
+                                <span className="bg-muted flex size-9 items-center justify-center rounded-full [&>svg]:size-4">
+                                    <UserIcon className="text-muted-foreground" />
                                 </span>
                             )}
                             {dotClassName ? (
@@ -1030,7 +1027,9 @@ export function WorldDialogTabbedView({
     const displayInstanceRows = baseDisplayInstanceRows.map((instance) => {
         const location = resolveLaunchLocation(world, instance);
         const friendsInInstance = location
-            ? friendRows.filter((friend) => friendIsInInstance(friend, location))
+            ? friendRows.filter((friend) =>
+                  friendIsInInstance(friend, location)
+              )
             : [];
         const creatorGroupId = firstText(
             instance.creatorGroupId,

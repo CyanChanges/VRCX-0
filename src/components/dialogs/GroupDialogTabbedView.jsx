@@ -60,7 +60,12 @@ import {
 } from '@/ui/shadcn/dialog';
 import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { Input } from '@/ui/shadcn/input';
-import { Label } from '@/ui/shadcn/label';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import {
     Select,
     SelectContent,
@@ -71,6 +76,7 @@ import {
 } from '@/ui/shadcn/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
 import { Textarea } from '@/ui/shadcn/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/ui/shadcn/toggle-group';
 
 import {
     EntityActionDropdown,
@@ -495,10 +501,7 @@ function PhotoGalleryRows({ rows, group, loading, error, onPreviewImage }) {
                                         />
                                     ) : (
                                         <div className="bg-muted flex h-52 w-full items-center justify-center">
-                                            <ImageIcon
-                                                data-icon="inline-start"
-                                                className="text-muted-foreground size-6"
-                                            />
+                                            <ImageIcon className="text-muted-foreground" />
                                         </div>
                                     )}
                                 </Button>
@@ -596,10 +599,7 @@ function RowList({
                             />
                         ) : (
                             <div className="bg-muted mr-2.5 flex size-9 shrink-0 items-center justify-center rounded-full">
-                                <UserIcon
-                                    data-icon="inline-start"
-                                    className="text-muted-foreground size-4"
-                                />
+                                <UserIcon className="text-muted-foreground" />
                             </div>
                         )}
                         <span className="min-w-0 flex-1 overflow-hidden">
@@ -1387,7 +1387,7 @@ function GroupModerationToolsDialog({ open, onOpenChange, group, endpoint }) {
                                                                         <Button
                                                                             type="button"
                                                                             variant="ghost"
-                                                                            className="h-auto max-w-52 justify-start truncate p-0 text-left font-medium hover:text-primary"
+                                                                            className="hover:text-primary h-auto max-w-52 justify-start truncate p-0 text-left font-medium"
                                                                             onClick={() =>
                                                                                 openUserDialog(
                                                                                     {
@@ -1646,9 +1646,11 @@ function GroupPostEditorDialog({
                         {group?.name || 'Group'}
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="group-post-title">Title</Label>
+                <FieldGroup className="gap-4">
+                    <Field>
+                        <FieldLabel htmlFor="group-post-title">
+                            Title
+                        </FieldLabel>
                         <Input
                             id="group-post-title"
                             value={form.title}
@@ -1657,9 +1659,11 @@ function GroupPostEditorDialog({
                             }
                             disabled={submitting}
                         />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="group-post-text">Message</Label>
+                    </Field>
+                    <Field>
+                        <FieldLabel htmlFor="group-post-text">
+                            Message
+                        </FieldLabel>
                         <Textarea
                             id="group-post-text"
                             rows={4}
@@ -1670,7 +1674,7 @@ function GroupPostEditorDialog({
                             disabled={submitting}
                             className="resize-none"
                         />
-                    </div>
+                    </Field>
                     {!isEdit ? (
                         <Field
                             orientation="horizontal"
@@ -1691,32 +1695,35 @@ function GroupPostEditorDialog({
                             </FieldLabel>
                         </Field>
                     ) : null}
-                    <div className="flex flex-col gap-1.5">
-                        <Label>Post visibility</Label>
-                        <div className="flex flex-wrap gap-2">
+                    <Field>
+                        <FieldLabel>Post visibility</FieldLabel>
+                        <ToggleGroup
+                            type="single"
+                            variant="outline"
+                            size="sm"
+                            value={form.visibility}
+                            onValueChange={(visibility) => {
+                                if (visibility) {
+                                    updateForm({ visibility });
+                                }
+                            }}
+                            disabled={submitting}
+                        >
                             {['public', 'group'].map((visibility) => (
-                                <Button
+                                <ToggleGroupItem
                                     key={visibility}
-                                    type="button"
-                                    size="sm"
-                                    variant={
-                                        form.visibility === visibility
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    disabled={submitting}
-                                    onClick={() => updateForm({ visibility })}
+                                    value={visibility}
                                 >
                                     {visibility === 'public'
                                         ? 'Public'
                                         : 'Group'}
-                                </Button>
+                                </ToggleGroupItem>
                             ))}
-                        </div>
-                    </div>
+                        </ToggleGroup>
+                    </Field>
                     {form.visibility === 'group' ? (
-                        <div className="flex flex-col gap-1.5">
-                            <Label>Roles</Label>
+                        <Field>
+                            <FieldLabel>Roles</FieldLabel>
                             {roles.length ? (
                                 <FieldGroup
                                     data-slot="checkbox-group"
@@ -1759,12 +1766,14 @@ function GroupPostEditorDialog({
                                     No roles.
                                 </div>
                             )}
-                        </div>
+                        </Field>
                     ) : null}
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor="group-post-image-id">Image</Label>
-                        <div className="flex gap-2">
-                            <Input
+                    <Field>
+                        <FieldLabel htmlFor="group-post-image-id">
+                            Image
+                        </FieldLabel>
+                        <InputGroup>
+                            <InputGroupInput
                                 id="group-post-image-id"
                                 value={form.imageId || ''}
                                 onChange={(event) =>
@@ -1773,25 +1782,26 @@ function GroupPostEditorDialog({
                                 disabled={submitting}
                                 placeholder="Gallery image id"
                             />
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={submitting || !form.imageId}
-                                onClick={() => updateForm({ imageId: '' })}
-                            >
-                                Clear
-                            </Button>
-                            <Button
-                                type="button"
-                                variant="outline"
-                                disabled={
-                                    submitting || galleryStatus === 'running'
-                                }
-                                onClick={() => void loadGalleryRows()}
-                            >
-                                Refresh
-                            </Button>
-                        </div>
+                            <InputGroupAddon align="inline-end">
+                                <InputGroupButton
+                                    type="button"
+                                    disabled={submitting || !form.imageId}
+                                    onClick={() => updateForm({ imageId: '' })}
+                                >
+                                    Clear
+                                </InputGroupButton>
+                                <InputGroupButton
+                                    type="button"
+                                    disabled={
+                                        submitting ||
+                                        galleryStatus === 'running'
+                                    }
+                                    onClick={() => void loadGalleryRows()}
+                                >
+                                    Refresh
+                                </InputGroupButton>
+                            </InputGroupAddon>
+                        </InputGroup>
                         {galleryOptions.length ? (
                             <div className="grid max-h-56 gap-2 overflow-auto rounded-md border p-2 sm:grid-cols-2">
                                 {galleryOptions.map((option) => (
@@ -1816,10 +1826,9 @@ function GroupPostEditorDialog({
                                                 className="size-12 shrink-0 rounded object-cover"
                                             />
                                         ) : (
-                                            <ImageIcon
-                                                data-icon="inline-start"
-                                                className="text-muted-foreground size-12 shrink-0 rounded border p-3"
-                                            />
+                                            <span className="text-muted-foreground flex size-12 shrink-0 items-center justify-center rounded border">
+                                                <ImageIcon />
+                                            </span>
                                         )}
                                         <span className="min-w-0">
                                             <span className="block truncate font-medium">
@@ -1840,8 +1849,8 @@ function GroupPostEditorDialog({
                                       'No gallery images loaded.'}
                             </div>
                         )}
-                    </div>
-                </div>
+                    </Field>
+                </FieldGroup>
                 <DialogFooter>
                     <Button
                         type="button"
@@ -2456,7 +2465,7 @@ export function GroupDialogTabbedView({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="text-muted-foreground h-auto justify-start gap-1 p-0 text-xs font-normal hover:text-primary"
+                                    className="text-muted-foreground hover:text-primary h-auto justify-start gap-1 p-0 text-xs font-normal"
                                     title="Open group owner profile"
                                     onClick={openGroupOwner}
                                 >
@@ -2834,7 +2843,7 @@ export function GroupDialogTabbedView({
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                className="h-auto gap-1 p-0 text-xs font-normal hover:text-primary"
+                                                className="hover:text-primary h-auto gap-1 p-0 text-xs font-normal"
                                                 onClick={() =>
                                                     openUserDialog({
                                                         userId: announcementUserId(
@@ -2888,7 +2897,7 @@ export function GroupDialogTabbedView({
                                             <Button
                                                 type="button"
                                                 variant="ghost"
-                                                className="h-auto gap-1 p-0 text-xs font-normal hover:text-primary"
+                                                className="hover:text-primary h-auto gap-1 p-0 text-xs font-normal"
                                                 onClick={() =>
                                                     openUserDialog({
                                                         userId: announcementUserId(

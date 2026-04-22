@@ -56,7 +56,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/ui/shadcn/dropdown-menu';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import { Spinner } from '@/ui/shadcn/spinner';
 import { Table, TableBody, TableRow } from '@/ui/shadcn/table';
 
@@ -368,7 +372,7 @@ function renderUserCell(row) {
         <Button
             type="button"
             variant="ghost"
-            className="h-auto justify-start p-0 text-left text-sm font-medium hover:text-primary"
+            className="hover:text-primary h-auto justify-start p-0 text-left text-sm font-medium"
             onClick={() =>
                 openUserDialog({
                     userId: row.userId,
@@ -631,9 +635,7 @@ export function FriendLogPage({ embedded = false } = {}) {
             setRows([]);
             updateRowsOwnerUserId('');
             setLoadStatus('idle');
-            setDetail(
-                'No authenticated user is available for friend history.'
-            );
+            setDetail('No authenticated user is available for friend history.');
             return () => {
                 active = false;
             };
@@ -986,9 +988,11 @@ export function FriendLogPage({ embedded = false } = {}) {
                             value={selectedTypes}
                             onChange={setSelectedTypes}
                         />
-                        <div className="relative min-w-56 flex-1">
-                            <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                            <Input
+                        <InputGroup className="min-w-56 flex-1">
+                            <InputGroupAddon>
+                                <SearchIcon />
+                            </InputGroupAddon>
+                            <InputGroupInput
                                 value={searchQuery}
                                 onChange={(event) =>
                                     setSearchQuery(event.target.value)
@@ -996,9 +1000,8 @@ export function FriendLogPage({ embedded = false } = {}) {
                                 placeholder={t(
                                     'view.friend_log.search_placeholder'
                                 )}
-                                className="pl-9"
                             />
-                        </div>
+                        </InputGroup>
                         <Button
                             type="button"
                             variant="outline"

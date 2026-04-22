@@ -92,7 +92,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/ui/shadcn/dropdown-menu';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import { Spinner } from '@/ui/shadcn/spinner';
 import { TableBody, TableRow } from '@/ui/shadcn/table';
@@ -430,7 +435,7 @@ function renderSessionMember(member) {
                 <Button
                     type="button"
                     variant="ghost"
-                    className="h-auto p-0 text-sm hover:text-primary"
+                    className="hover:text-primary h-auto p-0 text-sm"
                     onClick={() => void openGameLogUser(member)}
                 >
                     {displayName}
@@ -1821,7 +1826,7 @@ export function GameLogPage({ embedded = false } = {}) {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto min-w-0 p-0 text-left text-sm hover:text-primary"
+                                    className="hover:text-primary h-auto min-w-0 p-0 text-left text-sm"
                                     onClick={() =>
                                         void openGameLogUser(row.original)
                                     }
@@ -1900,7 +1905,7 @@ export function GameLogPage({ embedded = false } = {}) {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto min-w-0 p-0 text-left text-sm hover:text-primary"
+                                    className="hover:text-primary h-auto min-w-0 p-0 text-left text-sm"
                                     onClick={() =>
                                         openWorldDialog({
                                             worldId: worldTarget,
@@ -2281,11 +2286,13 @@ export function GameLogPage({ embedded = false } = {}) {
         );
     }
 
-    function renderSearchInput(className = 'relative min-w-56 flex-1') {
+    function renderSearchInput(className = 'min-w-56 flex-1') {
         return (
-            <div className={className}>
-                <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                <Input
+            <InputGroup className={className}>
+                <InputGroupAddon>
+                    <SearchIcon />
+                </InputGroupAddon>
+                <InputGroupInput
                     value={searchDraft}
                     onChange={(event) => setSearchDraft(event.target.value)}
                     onBlur={commitSearchDraft}
@@ -2295,25 +2302,24 @@ export function GameLogPage({ embedded = false } = {}) {
                         }
                     }}
                     placeholder="Search"
-                    className="pr-9 pl-9"
                 />
                 {searchDraft ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label="Clear search"
-                        className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2"
-                        onMouseDown={(event) => event.preventDefault()}
-                        onClick={() => {
-                            setSearchDraft('');
-                            setSearchQuery('');
-                        }}
-                    >
-                        <XIcon data-icon="inline-start" />
-                    </Button>
+                    <InputGroupAddon align="inline-end">
+                        <InputGroupButton
+                            type="button"
+                            size="icon-xs"
+                            aria-label="Clear search"
+                            onMouseDown={(event) => event.preventDefault()}
+                            onClick={() => {
+                                setSearchDraft('');
+                                setSearchQuery('');
+                            }}
+                        >
+                            <XIcon data-icon="icon" />
+                        </InputGroupButton>
+                    </InputGroupAddon>
                 ) : null}
-            </div>
+            </InputGroup>
         );
     }
 
@@ -2366,9 +2372,7 @@ export function GameLogPage({ embedded = false } = {}) {
                                         }
                                     />
                                 </div>
-                                {renderSearchInput(
-                                    'relative ml-auto w-60 shrink-0'
-                                )}
+                                {renderSearchInput('ml-auto w-60 shrink-0')}
                                 {renderTableControls()}
                             </div>
                         </div>
@@ -2386,9 +2390,7 @@ export function GameLogPage({ embedded = false } = {}) {
                                     }
                                     className="flex shrink-0 items-center gap-1"
                                 />
-                                {renderSearchInput(
-                                    'relative ml-auto w-60 shrink-0'
-                                )}
+                                {renderSearchInput('ml-auto w-60 shrink-0')}
                                 {renderTableControls()}
                             </div>
                         </div>

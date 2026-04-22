@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
+import { EmptyState as AppEmptyState } from '@/components/layout/PageScaffold.jsx';
 import { ImageCropDialog } from '@/components/media/ImageCropDialog.jsx';
 import { getPlatformInfo } from '@/lib/avatarPlatform.js';
 import { convertFileUrlToImageUrl } from '@/lib/entityMedia.js';
@@ -46,19 +47,12 @@ function normalizeEntityId(value) {
 
 function AvatarDialogEmptyState({ title, description, loading = false }) {
     return (
-        <div className="bg-muted/20 flex min-h-56 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-sm flex-col gap-2">
-                {loading ? (
-                    <div className="flex justify-center">
-                        <Spinner className="text-muted-foreground size-5" />
-                    </div>
-                ) : null}
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-56"
+            title={title}
+            description={description}
+            icon={loading ? Spinner : undefined}
+        />
     );
 }
 

@@ -67,9 +67,7 @@ import {
     getLoginErrorMessage as getErrorMessage,
     getLoginUserDisplayName as getUserDisplayName
 } from './loginDisplay.js';
-import {
-    getSnapshotLoginParams,
-} from './loginSession.js';
+import { getSnapshotLoginParams } from './loginSession.js';
 
 export function LoginPage() {
     const navigate = useNavigate();
@@ -908,7 +906,7 @@ export function LoginPage() {
                                                                 )
                                                             }
                                                         >
-                                                            <div className="bg-background flex size-10 shrink-0 items-center justify-center rounded-full border">
+                                                            <div className="bg-background flex size-10 shrink-0 items-center justify-center rounded-full border [&>svg]:size-5">
                                                                 {avatarUrl ? (
                                                                     <img
                                                                         src={
@@ -918,7 +916,7 @@ export function LoginPage() {
                                                                         className="size-full rounded-full object-cover"
                                                                     />
                                                                 ) : (
-                                                                    <UserIcon className="text-muted-foreground size-5" />
+                                                                    <UserIcon className="text-muted-foreground" />
                                                                 )}
                                                             </div>
                                                             <div className="min-w-0 flex-1">

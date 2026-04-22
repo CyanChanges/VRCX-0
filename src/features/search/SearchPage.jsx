@@ -90,8 +90,8 @@ function AvatarCard({ avatar }) {
                     className="aspect-[16/10] w-full rounded-lg object-cover"
                 />
             ) : (
-                <div className="bg-muted text-muted-foreground flex aspect-[16/10] w-full items-center justify-center rounded-lg">
-                    <UserIcon data-icon="inline-start" className="size-8" />
+                <div className="bg-muted text-muted-foreground flex aspect-[16/10] w-full items-center justify-center rounded-lg [&>svg]:size-8">
+                    <UserIcon />
                 </div>
             )}
             <div className="mt-2 flex min-w-0 flex-col gap-1">
@@ -128,8 +128,8 @@ function WorldCard({ world }) {
                     className="aspect-[16/10] w-full rounded-lg object-cover"
                 />
             ) : (
-                <div className="bg-muted text-muted-foreground flex aspect-[16/10] w-full items-center justify-center rounded-lg">
-                    <GlobeIcon data-icon="inline-start" className="size-8" />
+                <div className="bg-muted text-muted-foreground flex aspect-[16/10] w-full items-center justify-center rounded-lg [&>svg]:size-8">
+                    <GlobeIcon />
                 </div>
             )}
             <div className="mt-2 flex min-w-0 flex-col gap-1">
@@ -175,8 +175,8 @@ function UserRow({ user, randomUserColours, isDarkMode }) {
                     className="size-14 rounded-full object-cover"
                 />
             ) : (
-                <div className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full">
-                    <UserIcon data-icon="inline-start" className="size-5" />
+                <div className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-full [&>svg]:size-5">
+                    <UserIcon />
                 </div>
             )}
             <div className="min-w-0 flex-1">
@@ -241,8 +241,8 @@ function GroupRow({ group }) {
                     className="size-14 rounded-lg object-cover"
                 />
             ) : (
-                <div className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-lg">
-                    <UsersIcon data-icon="inline-start" className="size-5" />
+                <div className="bg-muted text-muted-foreground flex size-14 items-center justify-center rounded-lg [&>svg]:size-5">
+                    <UsersIcon />
                 </div>
             )}
             <div className="min-w-0 flex-1">

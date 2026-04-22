@@ -674,7 +674,10 @@ export function AppStatusBar() {
                                                   size="sm"
                                                   className="h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal tabular-nums"
                                               >
-                                                  <ClockIcon className="text-muted-foreground size-3.5" />
+                                                  <ClockIcon
+                                                      data-icon="inline-start"
+                                                      className="text-muted-foreground"
+                                                  />
                                                   {formatClock(
                                                       nowMs,
                                                       clock.offset
@@ -768,7 +771,7 @@ export function AppStatusBar() {
                                                 );
                                             }}
                                         >
-                                            <NetworkIcon className="size-3.5" />
+                                            <NetworkIcon data-icon="icon" />
                                         </Button>
                                     </TooltipTrigger>
                                     <TooltipContent className="max-w-xs">

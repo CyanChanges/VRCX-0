@@ -588,10 +588,9 @@ export function AvatarDialogTabbedView({
                                                         className="size-full object-contain"
                                                     />
                                                 ) : (
-                                                    <ImageIcon
-                                                        data-icon="inline-start"
-                                                        className="text-muted-foreground size-8"
-                                                    />
+                                                    <span className="text-muted-foreground flex size-full items-center justify-center [&>svg]:size-8">
+                                                        <ImageIcon />
+                                                    </span>
                                                 )}
                                             </Button>
                                             <div className="text-muted-foreground flex items-center justify-between gap-2 text-xs">

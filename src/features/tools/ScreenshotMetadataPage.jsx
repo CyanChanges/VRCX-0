@@ -19,6 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
+import { EmptyState as AppEmptyState } from '@/components/layout/PageScaffold.jsx';
 import { Location } from '@/components/Location.jsx';
 import { convertFileSrc } from '@/platform/tauri/index.js';
 import {
@@ -38,7 +39,11 @@ import {
     CardHeader,
     CardTitle
 } from '@/ui/shadcn/card';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import {
     Select,
     SelectContent,
@@ -71,19 +76,12 @@ import {
 
 function EmptyState({ title, description, loading = false }) {
     return (
-        <div className="bg-muted/20 flex min-h-72 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-sm flex-col gap-2">
-                {loading ? (
-                    <div className="flex justify-center">
-                        <Spinner className="text-muted-foreground size-6" />
-                    </div>
-                ) : null}
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-72"
+            title={title}
+            description={description}
+            icon={loading ? Spinner : undefined}
+        />
     );
 }
 
@@ -147,7 +145,7 @@ function MetadataAuthorLink({ author, endpoint }) {
         <Button
             type="button"
             variant="ghost"
-            className="text-muted-foreground h-auto justify-start gap-1 p-0 text-left hover:text-primary"
+            className="text-muted-foreground hover:text-primary h-auto justify-start gap-1 p-0 text-left"
             title={userId}
             onClick={() =>
                 openUserDialog({
@@ -749,11 +747,12 @@ export function ScreenshotMetadataPage() {
                 </div>
 
                 <div className="flex flex-1 flex-col gap-2 lg:flex-row xl:justify-end">
-                    <div className="relative min-w-0 flex-1 xl:max-w-sm">
-                        <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                        <Input
+                    <InputGroup className="min-w-0 flex-1 xl:max-w-sm">
+                        <InputGroupAddon>
+                            <SearchIcon />
+                        </InputGroupAddon>
+                        <InputGroupInput
                             value={searchQuery}
-                            className="pl-9"
                             placeholder={t(
                                 'dialog.screenshot_metadata.search_placeholder'
                             )}
@@ -767,7 +766,7 @@ export function ScreenshotMetadataPage() {
                                 }
                             }}
                         />
-                    </div>
+                    </InputGroup>
                     <Select
                         value={searchType}
                         onValueChange={handleSearchTypeChange}

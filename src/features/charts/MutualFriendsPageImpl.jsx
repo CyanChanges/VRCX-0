@@ -14,6 +14,10 @@ import Sigma from 'sigma';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
+import {
+    EmptyState as AppEmptyState,
+    LoadingState as AppLoadingState
+} from '@/components/layout/PageScaffold.jsx';
 import dayjs from '@/lib/dayjs.js';
 import { userImage } from '@/lib/entityMedia.js';
 import { cn } from '@/lib/utils.js';
@@ -208,25 +212,21 @@ function UserPickerRow({
 
 function GraphLoadingState() {
     return (
-        <div className="bg-muted/20 flex min-h-80 items-center justify-center rounded-xl border border-dashed">
-            <div className="text-muted-foreground flex items-center gap-3 text-sm">
-                <Spinner className="size-5" />
-                Loading mutual graph snapshot.
-            </div>
-        </div>
+        <AppLoadingState
+            className="min-h-80"
+            label="Loading mutual graph snapshot."
+        />
     );
 }
 
 function GraphEmptyState({ title, description }) {
     return (
-        <div className="bg-muted/20 flex min-h-80 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-md flex-col gap-2">
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-80"
+            title={title}
+            description={description}
+            contentClassName="max-w-md"
+        />
     );
 }
 

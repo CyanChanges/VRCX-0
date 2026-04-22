@@ -31,7 +31,11 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/ui/shadcn/dialog';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 
 const RESULT_LIMIT = 8;
 
@@ -261,7 +265,7 @@ function ResultRow({ item, onSelect }) {
             className="h-auto w-full justify-start gap-3 px-2 py-2 text-left font-normal"
             onClick={() => onSelect(item)}
         >
-            <span className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md">
+            <span className="bg-muted flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-md [&>svg]:size-4">
                 {item.imageUrl ? (
                     <img
                         src={item.imageUrl}
@@ -270,7 +274,7 @@ function ResultRow({ item, onSelect }) {
                         loading="lazy"
                     />
                 ) : (
-                    <Icon className="text-muted-foreground size-4" />
+                    <Icon className="text-muted-foreground" />
                 )}
             </span>
             <span className="min-w-0 flex-1">
@@ -539,16 +543,17 @@ export function QuickSearchDialog({ open, onOpenChange }) {
                     </DialogTitle>
                 </DialogHeader>
                 <div className="border-b p-3">
-                    <div className="relative">
-                        <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                        <Input
+                    <InputGroup className="border-0 shadow-none">
+                        <InputGroupAddon>
+                            <SearchIcon />
+                        </InputGroupAddon>
+                        <InputGroupInput
                             autoFocus
                             value={query}
                             placeholder={t('side_panel.search_placeholder')}
-                            className="border-0 pl-9 shadow-none focus-visible:ring-0"
                             onChange={(event) => setQuery(event.target.value)}
                         />
-                    </div>
+                    </InputGroup>
                 </div>
                 <div className="max-h-[min(420px,55vh)] overflow-x-hidden overflow-y-auto p-2">
                     {normalizedQuery.length < 2 ? (

@@ -10,7 +10,7 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/ui/shadcn/dialog';
-import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
+import { Field, FieldGroup, FieldLabel, FieldTitle } from '@/ui/shadcn/field';
 import { Input } from '@/ui/shadcn/input';
 import { Textarea } from '@/ui/shadcn/textarea';
 
@@ -202,8 +202,11 @@ function WorldTagsDialog({
                         </FieldLabel>
                     </Field>
                     <Field>
-                        <FieldLabel>Author tags</FieldLabel>
+                        <FieldLabel htmlFor="world-owner-author-tags">
+                            Author tags
+                        </FieldLabel>
                         <Textarea
+                            id="world-owner-author-tags"
                             rows={2}
                             value={draft.authorTags}
                             disabled={saving}
@@ -214,7 +217,7 @@ function WorldTagsDialog({
                         />
                     </Field>
                     <Field>
-                        <FieldLabel>Content tags</FieldLabel>
+                        <FieldTitle>Content tags</FieldTitle>
                         <div className="grid grid-cols-2 gap-2">
                             {CONTENT_TAGS.map(([key, , label]) => (
                                 <Field key={key} orientation="horizontal">
@@ -237,6 +240,7 @@ function WorldTagsDialog({
                             ))}
                         </div>
                         <Textarea
+                            aria-label="Raw content tags"
                             rows={2}
                             value={draft.contentTags}
                             disabled={saving}

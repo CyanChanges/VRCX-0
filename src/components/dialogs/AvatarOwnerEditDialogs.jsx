@@ -614,8 +614,11 @@ export function AvatarStylesDialog({
                         </Select>
                     </Field>
                     <Field>
-                        <FieldLabel>Author Tags</FieldLabel>
+                        <FieldLabel htmlFor="avatar-owner-author-tags">
+                            Author Tags
+                        </FieldLabel>
                         <Textarea
+                            id="avatar-owner-author-tags"
                             rows={2}
                             className="resize-none"
                             value={authorTags}

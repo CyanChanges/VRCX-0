@@ -1040,7 +1040,7 @@ function StaticSidebarLocation({
                 <Button
                     type="button"
                     variant="ghost"
-                    className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit hover:text-primary"
+                    className="ml-0.5 h-auto min-w-0 truncate p-0 text-left font-normal text-inherit hover:text-primary"
                     onClick={openGroup}
                     onKeyDown={(event) => event.stopPropagation()}
                 >
@@ -1315,9 +1315,9 @@ function InstanceHeaderRow({
     ageGatedInstancesVisible = false
 }) {
     return (
-        <div className="mb-1 flex items-center px-1.5 text-xs">
+        <div className="mb-1 flex min-w-0 items-center px-1.5 text-xs">
             <StaticSidebarLocation
-                className="inline text-xs"
+                className="min-w-0 flex-1 text-xs"
                 location={location}
                 link
                 showGroupLink
@@ -1326,7 +1326,7 @@ function InstanceHeaderRow({
                 showInstanceIdInLocation={showInstanceIdInLocation}
                 ageGatedInstancesVisible={ageGatedInstancesVisible}
             />
-            <span className="ml-1.5">{`(${count})`}</span>
+            <span className="ml-1.5 shrink-0">{`(${count})`}</span>
         </div>
     );
 }

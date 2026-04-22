@@ -101,7 +101,12 @@ import {
     ContextMenuSeparator,
     ContextMenuTrigger
 } from '@/ui/shadcn/context-menu';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import { Spinner } from '@/ui/shadcn/spinner';
 import { Table, TableBody, TableCell, TableRow } from '@/ui/shadcn/table';
@@ -432,8 +437,7 @@ function resolveInitialAvatarInfoLineState({
     ownerId,
     endpoint
 }) {
-    const hintedName =
-        typeof avatarName === 'string' ? avatarName.trim() : '';
+    const hintedName = typeof avatarName === 'string' ? avatarName.trim() : '';
     const hintedOwnerId = normalizeId(ownerId);
     const cacheKey = getAvatarInfoLineCacheKey(imageUrl, endpoint);
 
@@ -507,10 +511,7 @@ const AvatarInfoLine = memo(function AvatarInfoLine({
         const hintedName =
             typeof avatarName === 'string' ? avatarName.trim() : '';
         const hintedOwnerId = normalizeId(ownerId);
-        const cacheKey = getAvatarInfoLineCacheKey(
-            imageUrl,
-            currentEndpoint
-        );
+        const cacheKey = getAvatarInfoLineCacheKey(imageUrl, currentEndpoint);
 
         if (!cacheKey) {
             setAvatarInfoLineState(setInfo, {
@@ -683,7 +684,7 @@ const AvatarInfoLine = memo(function AvatarInfoLine({
             <Button
                 type="button"
                 variant="ghost"
-                className="h-auto w-fit justify-start p-0 text-left font-normal hover:text-primary"
+                className="hover:text-primary h-auto w-fit justify-start p-0 text-left font-normal"
                 disabled={!imageUrl}
                 onClick={() => void openAvatarAuthorTarget()}
             >
@@ -860,7 +861,7 @@ function FeedUserLink({
             <Button
                 type="button"
                 variant="ghost"
-                className="h-auto justify-start p-0 text-left font-medium hover:text-primary"
+                className="hover:text-primary h-auto justify-start p-0 text-left font-medium"
                 disabled={!userId}
                 onClick={() =>
                     openUserDialog({
@@ -890,7 +891,7 @@ function FeedUserLink({
                             })
                         }
                     >
-                        <UserIcon className="size-4" />
+                        <UserIcon />
                         Open user
                     </ContextMenuItem>
                     <ContextMenuItem
@@ -902,7 +903,7 @@ function FeedUserLink({
                             })
                         }
                     >
-                        <GlobeIcon className="size-4" />
+                        <GlobeIcon />
                         Open current location
                     </ContextMenuItem>
                     <ContextMenuItem
@@ -914,7 +915,7 @@ function FeedUserLink({
                             })
                         }
                     >
-                        <UsersIcon className="size-4" />
+                        <UsersIcon />
                         Open group
                     </ContextMenuItem>
                 </ContextMenuGroup>
@@ -924,7 +925,7 @@ function FeedUserLink({
                         disabled={!canUseFriendLocation}
                         onSelect={() => void actions?.launchLocation(location)}
                     >
-                        <ExternalLinkIcon className="size-4" />
+                        <ExternalLinkIcon />
                         Launch in VRChat
                     </ContextMenuItem>
                     <ContextMenuItem
@@ -933,7 +934,7 @@ function FeedUserLink({
                             void actions?.selfInviteLocation(location)
                         }
                     >
-                        <ExternalLinkIcon className="size-4" />
+                        <ExternalLinkIcon />
                         Self invite
                     </ContextMenuItem>
                 </ContextMenuGroup>
@@ -943,7 +944,7 @@ function FeedUserLink({
                         disabled={isCurrentUser || !canSendInvite}
                         onSelect={() => void actions?.sendInvite(friend || row)}
                     >
-                        <ExternalLinkIcon className="size-4" />
+                        <ExternalLinkIcon />
                         Send invite
                     </ContextMenuItem>
                     <ContextMenuItem
@@ -952,14 +953,14 @@ function FeedUserLink({
                             void actions?.requestInvite(friend || row)
                         }
                     >
-                        <ExternalLinkIcon className="size-4" />
+                        <ExternalLinkIcon />
                         Request invite
                     </ContextMenuItem>
                     <ContextMenuItem
                         disabled={isCurrentUser || !canBoop}
                         onSelect={() => void actions?.sendBoop(friend || row)}
                     >
-                        <ExternalLinkIcon className="size-4" />
+                        <ExternalLinkIcon />
                         Send boop
                     </ContextMenuItem>
                 </ContextMenuGroup>
@@ -969,7 +970,7 @@ function FeedUserLink({
                         disabled={!userId}
                         onSelect={() => void copyFeedText(userId, 'User ID')}
                     >
-                        <CopyIcon className="size-4" />
+                        <CopyIcon />
                         Copy user ID
                     </ContextMenuItem>
                     <ContextMenuItem
@@ -978,7 +979,7 @@ function FeedUserLink({
                             void copyFeedText(displayName, 'Display name')
                         }
                     >
-                        <CopyIcon className="size-4" />
+                        <CopyIcon />
                         Copy display name
                     </ContextMenuItem>
                 </ContextMenuGroup>
@@ -2465,8 +2466,8 @@ export function FeedPage({ embedded = false } = {}) {
                         })}
                     </div>
 
-                    <div className="relative min-w-0 flex-1 basis-0">
-                        <Input
+                    <InputGroup className="h-9 min-w-0 flex-1 basis-0">
+                        <InputGroupInput
                             value={searchDraft}
                             onChange={(event) =>
                                 setSearchDraft(event.target.value)
@@ -2478,21 +2479,20 @@ export function FeedPage({ embedded = false } = {}) {
                                 }
                             }}
                             placeholder={t('view.feed.search_placeholder')}
-                            className="h-9 min-w-0 pr-9"
                         />
                         {searchDraft ? (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                aria-label="Clear search"
-                                className="absolute top-1/2 right-1 size-7 -translate-y-1/2"
-                                onClick={clearSearch}
-                            >
-                                <XIcon data-icon="icon" />
-                            </Button>
+                            <InputGroupAddon align="inline-end">
+                                <InputGroupButton
+                                    type="button"
+                                    size="icon-xs"
+                                    aria-label="Clear search"
+                                    onClick={clearSearch}
+                                >
+                                    <XIcon data-icon="icon" />
+                                </InputGroupButton>
+                            </InputGroupAddon>
                         ) : null}
-                    </div>
+                    </InputGroup>
 
                     <div className="flex items-center gap-2">
                         <TableColumnVisibilityMenu table={table} />

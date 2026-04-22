@@ -27,8 +27,8 @@ import {
 } from '@/services/dialogService.js';
 import { tryOpenLaunchLocation } from '@/services/directAccessService.js';
 import { selfInviteToInstance } from '@/services/launchService.js';
-import { checkCanInvite, checkCanInviteSelf } from '@/shared/utils/invite.js';
 import { getFriendsSortFunction } from '@/shared/utils/friend.js';
+import { checkCanInvite, checkCanInviteSelf } from '@/shared/utils/invite.js';
 import {
     parseLocation,
     resolveFriendPresenceLocation
@@ -41,7 +41,11 @@ import { useSessionStore } from '@/state/sessionStore.js';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
 import { Field, FieldContent, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
-import { Input } from '@/ui/shadcn/input';
+import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import { Slider } from '@/ui/shadcn/slider';
 import { Switch } from '@/ui/shadcn/switch';
@@ -1656,9 +1660,11 @@ export function FriendsLocationsPage({ embedded = false } = {}) {
                         </TabsList>
                     </Tabs>
 
-                    <div className="relative w-full max-w-md lg:ml-auto">
-                        <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                        <Input
+                    <InputGroup className="w-full max-w-md lg:ml-auto">
+                        <InputGroupAddon>
+                            <SearchIcon />
+                        </InputGroupAddon>
+                        <InputGroupInput
                             value={searchQuery}
                             onChange={(event) =>
                                 setSearchQuery(event.target.value)
@@ -1666,9 +1672,8 @@ export function FriendsLocationsPage({ embedded = false } = {}) {
                             placeholder={t(
                                 'view.friends_locations.search_placeholder'
                             )}
-                            className="pl-9"
                         />
-                    </div>
+                    </InputGroup>
                 </div>
 
                 <Popover>

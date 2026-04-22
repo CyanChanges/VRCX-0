@@ -10,6 +10,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
 import { PreviousInstancesTableDialog } from '@/components/dialogs/PreviousInstancesTableDialog.jsx';
+import {
+    EmptyState as AppEmptyState,
+    LoadingState as AppLoadingState
+} from '@/components/layout/PageScaffold.jsx';
 import { Location } from '@/components/Location.jsx';
 import { timeToText } from '@/lib/dateTime.js';
 import {
@@ -30,7 +34,6 @@ import { Input } from '@/ui/shadcn/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import { Separator } from '@/ui/shadcn/separator';
 import { Slider } from '@/ui/shadcn/slider';
-import { Spinner } from '@/ui/shadcn/spinner';
 import { Switch } from '@/ui/shadcn/switch';
 
 import {
@@ -117,25 +120,21 @@ function formatDateLabel(dayKey) {
 
 function ChartLoadingState() {
     return (
-        <div className="bg-muted/20 flex min-h-80 items-center justify-center rounded-xl border border-dashed">
-            <div className="text-muted-foreground flex items-center gap-3 text-sm">
-                <Spinner className="size-5" />
-                <span>Loading instance activity.</span>
-            </div>
-        </div>
+        <AppLoadingState
+            className="min-h-80"
+            label="Loading instance activity."
+        />
     );
 }
 
 function ChartEmptyState({ title, description }) {
     return (
-        <div className="bg-muted/20 flex min-h-80 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-md flex-col gap-2">
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-80"
+            title={title}
+            description={description}
+            contentClassName="max-w-md"
+        />
     );
 }
 

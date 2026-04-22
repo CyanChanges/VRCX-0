@@ -128,7 +128,7 @@ function SortButton({ column, label, descFirst = false }) {
         <Button
             type="button"
             variant="ghost"
-            className="text-muted-foreground h-auto gap-1 p-0 text-left text-xs tracking-wide uppercase hover:text-primary"
+            className="text-muted-foreground hover:text-primary h-auto gap-1 p-0 text-left text-xs tracking-wide uppercase"
             onClick={() => {
                 if (!direction && descFirst) {
                     column.toggleSorting(true);
@@ -598,11 +598,8 @@ function MyAvatarGridCard({
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="text-muted-foreground grid h-full w-full place-items-center">
-                                <ImageIcon
-                                    data-icon="inline-start"
-                                    className="size-6"
-                                />
+                            <div className="text-muted-foreground grid h-full w-full place-items-center [&>svg]:size-6">
+                                <ImageIcon />
                             </div>
                         )}
                         {platforms?.isQuest || platforms?.isIos ? (
@@ -1580,7 +1577,7 @@ export function MyAvatarsPage({ embedded = false } = {}) {
                     <Button
                         type="button"
                         variant="ghost"
-                        className="h-auto p-0 text-left font-medium hover:text-primary"
+                        className="hover:text-primary h-auto p-0 text-left font-medium"
                         onClick={() => openAvatarDetails(row.original)}
                     >
                         {row.original?.name || ''}

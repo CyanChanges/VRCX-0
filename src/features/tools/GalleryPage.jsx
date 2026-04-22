@@ -15,6 +15,10 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useI18n } from '@/app/hooks/use-i18n.js';
+import {
+    EmptyState as AppEmptyState,
+    LoadingState as AppLoadingState
+} from '@/components/layout/PageScaffold.jsx';
 import { ImageCropDialog } from '@/components/media/ImageCropDialog.jsx';
 import { formatDateFilter } from '@/lib/dateTime.js';
 import { openExternalLink } from '@/lib/entityMedia.js';
@@ -24,13 +28,13 @@ import userProfileRepository from '@/repositories/userProfileRepository.js';
 import { emojiAnimationStyleList } from '@/shared/constants/emoji.js';
 import { extractFileId } from '@/shared/utils/fileUtils.js';
 import { getPrintFileName } from '@/shared/utils/gallery.js';
-import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint.js';
 import {
     IMAGE_UPLOAD_ACCEPT,
     readFileAsBase64,
     validateImageUploadFile,
     withUploadTimeout
 } from '@/shared/utils/imageUpload.js';
+import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint.js';
 import { useModalStore } from '@/state/modalStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { Badge } from '@/ui/shadcn/badge';
@@ -44,9 +48,8 @@ import {
     DialogHeader,
     DialogTitle
 } from '@/ui/shadcn/dialog';
-import { Field, FieldLabel } from '@/ui/shadcn/field';
+import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { Input } from '@/ui/shadcn/input';
-import { Label } from '@/ui/shadcn/label';
 import {
     Select,
     SelectContent,
@@ -55,7 +58,6 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/ui/shadcn/select';
-import { Spinner } from '@/ui/shadcn/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
 
 const FILE_TABS = {
@@ -208,23 +210,16 @@ function validateImageFile(file, t) {
 
 function EmptyState({ title, description }) {
     return (
-        <div className="bg-muted/20 flex min-h-72 items-center justify-center rounded-xl border border-dashed p-6 text-center">
-            <div className="flex max-w-sm flex-col gap-2">
-                <div className="text-sm font-medium">{title}</div>
-                <div className="text-muted-foreground text-sm">
-                    {description}
-                </div>
-            </div>
-        </div>
+        <AppEmptyState
+            className="min-h-72"
+            title={title}
+            description={description}
+        />
     );
 }
 
 function LoadingState() {
-    return (
-        <div className="bg-muted/20 flex min-h-72 items-center justify-center rounded-xl border border-dashed">
-            <Spinner className="text-muted-foreground size-6" />
-        </div>
-    );
+    return <AppLoadingState className="min-h-72" />;
 }
 
 export function GalleryPage() {
@@ -1035,13 +1030,13 @@ export function GalleryPage() {
                                     </div>
                                 </div>
                                 {tab === 'emojis' ? (
-                                    <div className="bg-muted/20 flex flex-wrap items-end gap-3 rounded-lg border p-3">
-                                        <div className="flex min-w-56 flex-col gap-1">
-                                            <Label>
+                                    <FieldGroup className="bg-muted/20 flex-row flex-wrap items-end gap-3 rounded-lg border p-3">
+                                        <Field className="min-w-56">
+                                            <FieldLabel>
                                                 {t(
                                                     'dialog.gallery_icons.emoji_animation_styles'
                                                 )}
-                                            </Label>
+                                            </FieldLabel>
                                             <Select
                                                 value={emojiAnimationStyle}
                                                 onValueChange={
@@ -1068,7 +1063,7 @@ export function GalleryPage() {
                                                     </SelectGroup>
                                                 </SelectContent>
                                             </Select>
-                                        </div>
+                                        </Field>
                                         <Field
                                             orientation="horizontal"
                                             className="h-9 w-auto"
@@ -1090,13 +1085,14 @@ export function GalleryPage() {
                                         </Field>
                                         {emojiAnimType ? (
                                             <>
-                                                <div className="flex w-28 flex-col gap-1">
-                                                    <Label>
+                                                <Field className="w-28">
+                                                    <FieldLabel htmlFor="gallery-emoji-animation-fps">
                                                         {t(
                                                             'dialog.gallery_icons.emoji_animation_fps'
                                                         )}
-                                                    </Label>
+                                                    </FieldLabel>
                                                     <Input
+                                                        id="gallery-emoji-animation-fps"
                                                         type="number"
                                                         min={1}
                                                         max={64}
@@ -1108,14 +1104,15 @@ export function GalleryPage() {
                                                             )
                                                         }
                                                     />
-                                                </div>
-                                                <div className="flex w-28 flex-col gap-1">
-                                                    <Label>
+                                                </Field>
+                                                <Field className="w-28">
+                                                    <FieldLabel htmlFor="gallery-emoji-animation-frame-count">
                                                         {t(
                                                             'dialog.gallery_icons.emoji_animation_frame_count'
                                                         )}
-                                                    </Label>
+                                                    </FieldLabel>
                                                     <Input
+                                                        id="gallery-emoji-animation-frame-count"
                                                         type="number"
                                                         min={2}
                                                         max={64}
@@ -1129,7 +1126,7 @@ export function GalleryPage() {
                                                             )
                                                         }
                                                     />
-                                                </div>
+                                                </Field>
                                                 <Field
                                                     orientation="horizontal"
                                                     className="h-9 w-auto"
@@ -1169,7 +1166,7 @@ export function GalleryPage() {
                                                 </Button>
                                             </>
                                         ) : null}
-                                    </div>
+                                    </FieldGroup>
                                 ) : null}
                             </CardHeader>
                             <CardContent>
@@ -1398,12 +1395,13 @@ export function GalleryPage() {
                                     </Button>
                                 </div>
                             </div>
-                            <div className="bg-muted/20 flex flex-wrap items-end gap-3 rounded-lg border p-3">
-                                <div className="flex w-80 max-w-full flex-col gap-1">
-                                    <Label>
+                            <FieldGroup className="bg-muted/20 flex-row flex-wrap items-end gap-3 rounded-lg border p-3">
+                                <Field className="w-80 max-w-full">
+                                    <FieldLabel htmlFor="gallery-print-upload-note">
                                         {t('dialog.gallery_icons.note')}
-                                    </Label>
+                                    </FieldLabel>
                                     <Input
+                                        id="gallery-print-upload-note"
                                         maxLength={32}
                                         value={printUploadNote}
                                         onChange={(event) =>
@@ -1415,7 +1413,7 @@ export function GalleryPage() {
                                             'dialog.gallery_icons.note'
                                         )}
                                     />
-                                </div>
+                                </Field>
                                 <Field
                                     orientation="horizontal"
                                     className="h-9 w-auto"
@@ -1433,7 +1431,7 @@ export function GalleryPage() {
                                         )}
                                     </FieldLabel>
                                 </Field>
-                            </div>
+                            </FieldGroup>
                         </CardHeader>
                         <CardContent>
                             {loadingByTab.prints ? (

@@ -77,6 +77,12 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { Input } from '@/ui/shadcn/input';
 import {
+    InputGroup,
+    InputGroupAddon,
+    InputGroupButton,
+    InputGroupInput
+} from '@/ui/shadcn/input-group';
+import {
     ResizableHandle,
     ResizablePanel,
     ResizablePanelGroup
@@ -386,52 +392,50 @@ function FavoritesToolbar({
             </Select>
 
             <div className="flex min-w-72 flex-1 items-center gap-2">
-                <div className="relative flex-1">
-                    <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
-                    <Input
+                <InputGroup className="flex-1">
+                    <InputGroupAddon>
+                        <SearchIcon />
+                    </InputGroupAddon>
+                    <InputGroupInput
                         value={searchQuery}
                         onChange={(event) => onSearchChange(event.target.value)}
                         placeholder={searchPlaceholder}
-                        className="h-8 pr-20 pl-9 text-sm"
+                        className="text-sm"
                     />
                     {kind === 'world' ? (
-                        <div className="bg-background absolute top-1/2 right-1 flex -translate-y-1/2 rounded-md border p-0.5">
-                            <Button
+                        <InputGroupAddon align="inline-end">
+                            <InputGroupButton
                                 type="button"
-                                size="xs"
                                 variant={
                                     searchMode === 'name' ? 'default' : 'ghost'
                                 }
-                                className="h-5 px-1.5 text-xs"
                                 onClick={() => onSearchModeChange('name')}
                             >
                                 Name
-                            </Button>
-                            <Button
+                            </InputGroupButton>
+                            <InputGroupButton
                                 type="button"
-                                size="xs"
                                 variant={
                                     searchMode === 'tag' ? 'default' : 'ghost'
                                 }
-                                className="h-5 px-1.5 text-xs"
                                 onClick={() => onSearchModeChange('tag')}
                             >
                                 Tag
-                            </Button>
-                        </div>
+                            </InputGroupButton>
+                        </InputGroupAddon>
                     ) : searchQuery ? (
-                        <Button
-                            type="button"
-                            size="icon-xs"
-                            variant="ghost"
-                            className="absolute top-1/2 right-1 -translate-y-1/2"
-                            aria-label="Clear search"
-                            onClick={() => onSearchChange('')}
-                        >
-                            <XIcon data-icon="inline-start" />
-                        </Button>
+                        <InputGroupAddon align="inline-end">
+                            <InputGroupButton
+                                type="button"
+                                size="icon-xs"
+                                aria-label="Clear search"
+                                onClick={() => onSearchChange('')}
+                            >
+                                <XIcon data-icon="icon" />
+                            </InputGroupButton>
+                        </InputGroupAddon>
                     ) : null}
-                </div>
+                </InputGroup>
 
                 <Button
                     type="button"
@@ -2954,8 +2958,7 @@ function FavoritesPage({ kind, embedded = false }) {
         if (!Number.isFinite(nextSizePx) || nextSizePx < 0) {
             return;
         }
-        pendingSplitterSizePxRef.current =
-            normalizeSplitterSizePx(nextSizePx);
+        pendingSplitterSizePxRef.current = normalizeSplitterSizePx(nextSizePx);
     }
 
     function persistSplitterLayout() {
@@ -3020,7 +3023,8 @@ function FavoritesPage({ kind, embedded = false }) {
     const handleConfirmCreateLocalGroup = useStableEvent(
         confirmCreateLocalGroup
     );
-    const handleAvatarHistoryRefreshEvent = useStableEvent(refreshAvatarHistory);
+    const handleAvatarHistoryRefreshEvent =
+        useStableEvent(refreshAvatarHistory);
     const handleAvatarHistoryClearEvent = useStableEvent(
         handleAvatarHistoryClear
     );
@@ -3166,7 +3170,9 @@ function FavoritesPage({ kind, embedded = false }) {
                                     loading={avatarHistoryLoading}
                                     onRefresh={handleAvatarHistoryRefreshEvent}
                                     onSelect={handleGroupRailSelect}
-                                    onRemoteRename={handleRemoteGroupRenameEvent}
+                                    onRemoteRename={
+                                        handleRemoteGroupRenameEvent
+                                    }
                                     onRemoteVisibility={
                                         handleRemoteGroupVisibilityEvent
                                     }

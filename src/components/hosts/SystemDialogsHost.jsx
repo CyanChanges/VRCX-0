@@ -796,10 +796,11 @@ function LaunchOptionsDialog({ open, onOpenChange }) {
                         <div>--enable-udon-debug-logging</div>
                     </div>
                     <Field>
-                        <FieldLabel>
+                        <FieldLabel htmlFor="launch-options-arguments">
                             {t('dialog.launch_options.header')}
                         </FieldLabel>
                         <Textarea
+                            id="launch-options-arguments"
                             rows={3}
                             value={launchArguments}
                             placeholder="e.g. --fps=144 --enable-sdk-log-levels"
@@ -809,10 +810,11 @@ function LaunchOptionsDialog({ open, onOpenChange }) {
                         />
                     </Field>
                     <Field>
-                        <FieldLabel>
+                        <FieldLabel htmlFor="launch-options-path-override">
                             {t('dialog.launch_options.path_override')}
                         </FieldLabel>
                         <Input
+                            id="launch-options-path-override"
                             value={vrcLaunchPathOverride}
                             placeholder="C:\\Program Files (x86)\\Steam\\steamapps\\common\\VRChat\\launch.exe"
                             spellCheck={false}
@@ -1108,9 +1110,12 @@ function VRChatConfigDialog({ open, onOpenChange }) {
 
                     {configFields.map(([key, label, placeholder, type]) => (
                         <Field key={key}>
-                            <FieldLabel>{label}</FieldLabel>
+                            <FieldLabel htmlFor={`config-json-${key}`}>
+                                {label}
+                            </FieldLabel>
                             <div className="flex gap-2">
                                 <Input
+                                    id={`config-json-${key}`}
                                     type={type}
                                     value={config[key] ?? ''}
                                     placeholder={placeholder}

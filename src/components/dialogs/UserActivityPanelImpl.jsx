@@ -350,8 +350,8 @@ function TopWorldRows({ worlds, sortBy, t }) {
                                     className="rounded-sm object-cover"
                                 />
                             ) : null}
-                            <AvatarFallback className="rounded-sm">
-                                <ImageIcon className="text-muted-foreground size-3.5" />
+                            <AvatarFallback className="rounded-sm [&>svg]:size-3.5">
+                                <ImageIcon className="text-muted-foreground" />
                             </AvatarFallback>
                         </Avatar>
                         <span className="min-w-0 flex-1">

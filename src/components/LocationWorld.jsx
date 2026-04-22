@@ -262,11 +262,11 @@ export function LocationWorld({
                 <Button
                     type="button"
                     variant="ghost"
-                    className="h-auto min-w-0 shrink justify-start p-0 text-left font-normal text-inherit hover:text-primary"
+                    className="hover:text-primary h-auto min-w-0 shrink justify-start gap-1.5 p-0 text-left font-normal text-inherit"
                     onClick={openLocationWorldDialog}
                 >
                     {isUnlocked ? (
-                        <UnlockIcon className="mr-1.5 size-4 shrink-0" />
+                        <UnlockIcon data-icon="inline-start" />
                     ) : null}
                     <span className="min-w-0 truncate">
                         {locationLabel}
@@ -289,7 +289,7 @@ export function LocationWorld({
                     <Button
                         type="button"
                         variant="ghost"
-                        className="ml-0.5 h-auto min-w-0 shrink justify-start p-0 text-left font-normal text-inherit hover:text-primary"
+                        className="hover:text-primary ml-0.5 h-auto min-w-0 shrink justify-start p-0 text-left font-normal text-inherit"
                         onClick={openLocationGroupDialog}
                     >
                         <span className="truncate">({groupName})</span>
