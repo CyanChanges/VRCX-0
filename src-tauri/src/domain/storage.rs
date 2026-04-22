@@ -101,3 +101,65 @@ fn do_save(data: &Arc<RwLock<HashMap<String, String>>>, path: &Path) {
         Err(e) => tracing::error!("StorageService: failed to serialize: {e}"),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path =
+                std::env::temp_dir().join(format!("vrcx-0-{name}-{}-{nonce}", std::process::id()));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    #[test]
+    fn loads_and_flushes_daily_app_settings() -> Result<(), AppError> {
+        let dir = TestDir::new("storage-daily");
+        let config_path = dir.path.join("VRCX-0.json");
+        std::fs::write(
+            &config_path,
+            r#"{"VRCX_CloseToTray":"true","VRCX_ProxyServer":""}"#,
+        )?;
+
+        let storage = StorageService::new(&config_path)?;
+        assert_eq!(storage.get("VRCX_CloseToTray").as_deref(), Some("true"));
+        assert_eq!(storage.get("VRCX_ProxyServer").as_deref(), Some(""));
+
+        storage.set("VRCX_StartAsMinimizedState".into(), "false".into());
+        assert_eq!(
+            storage
+                .get_all()
+                .get("VRCX_StartAsMinimizedState")
+                .map(String::as_str),
+            Some("false")
+        );
+        assert_eq!(storage.remove("VRCX_ProxyServer").as_deref(), Some(""));
+        storage.save()?;
+        drop(storage);
+
+        let reloaded = StorageService::new(&config_path)?;
+        assert_eq!(
+            reloaded.get("VRCX_StartAsMinimizedState").as_deref(),
+            Some("false")
+        );
+        assert_eq!(reloaded.get("VRCX_ProxyServer"), None);
+        Ok(())
+    }
+}
