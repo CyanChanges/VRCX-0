@@ -897,7 +897,7 @@ export function LoginPage() {
                                                         <Button
                                                             type="button"
                                                             variant="ghost"
-                                                            className="h-auto min-w-0 flex-1 justify-start gap-3 p-1 text-left font-normal hover:bg-transparent"
+                                                            className="h-auto min-w-0 flex-1 justify-start gap-3 p-1 text-left font-normal"
                                                             disabled={
                                                                 !hasStoredCredentials ||
                                                                 isAuthBusy

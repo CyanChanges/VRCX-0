@@ -78,6 +78,7 @@ import { Calendar } from '@/ui/shadcn/calendar';
 import {
     ContextMenu,
     ContextMenuContent,
+    ContextMenuGroup,
     ContextMenuItem,
     ContextMenuSeparator,
     ContextMenuTrigger
@@ -231,7 +232,7 @@ function SortButton({ column, label }) {
             type="button"
             variant="ghost"
             size="sm"
-            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase hover:bg-transparent"
+            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase"
             onClick={() => column.toggleSorting(direction === 'asc')}
         >
             <span>{label}</span>
@@ -428,8 +429,8 @@ function renderSessionMember(member) {
             {canOpenUser ? (
                 <Button
                     type="button"
-                    variant="link"
-                    className="h-auto p-0 text-sm"
+                    variant="ghost"
+                    className="h-auto p-0 text-sm hover:text-primary"
                     onClick={() => void openGameLogUser(member)}
                 >
                     {displayName}
@@ -579,29 +580,33 @@ function SessionEventRow({ event }) {
                         <ContextMenuContent>
                             {showVideoLink ? (
                                 <>
-                                    <ContextMenuItem
-                                        onSelect={() =>
-                                            void openExternalLink(
-                                                event.videoUrl
-                                            )
-                                        }
-                                    >
-                                        <ExternalLinkIcon data-icon="inline-start" />
-                                        {t('common.actions.open_link')}
-                                    </ContextMenuItem>
+                                    <ContextMenuGroup>
+                                        <ContextMenuItem
+                                            onSelect={() =>
+                                                void openExternalLink(
+                                                    event.videoUrl
+                                                )
+                                            }
+                                        >
+                                            <ExternalLinkIcon data-icon="inline-start" />
+                                            {t('common.actions.open_link')}
+                                        </ContextMenuItem>
+                                    </ContextMenuGroup>
                                     <ContextMenuSeparator />
                                 </>
                             ) : null}
-                            <ContextMenuItem
-                                onSelect={() =>
-                                    void copyTextToClipboard(
-                                        event?.videoUrl || videoLabel
-                                    )
-                                }
-                            >
-                                <CopyIcon data-icon="inline-start" />
-                                {t('common.actions.copy')}
-                            </ContextMenuItem>
+                            <ContextMenuGroup>
+                                <ContextMenuItem
+                                    onSelect={() =>
+                                        void copyTextToClipboard(
+                                            event?.videoUrl || videoLabel
+                                        )
+                                    }
+                                >
+                                    <CopyIcon data-icon="inline-start" />
+                                    {t('common.actions.copy')}
+                                </ContextMenuItem>
+                            </ContextMenuGroup>
                         </ContextMenuContent>
                     </ContextMenu>
                 ) : (
@@ -609,7 +614,7 @@ function SessionEventRow({ event }) {
                         type="button"
                         variant="ghost"
                         className={cn(
-                            'h-auto min-w-0 flex-1 justify-start gap-1 px-0 py-0 text-left font-normal hover:bg-transparent',
+                            'h-auto min-w-0 flex-1 justify-start gap-1 px-0 py-0 text-left font-normal',
                             userId || event?.displayName
                                 ? 'cursor-pointer'
                                 : 'cursor-default'
@@ -1815,8 +1820,8 @@ export function GameLogPage({ embedded = false } = {}) {
                             {canOpenUser ? (
                                 <Button
                                     type="button"
-                                    variant="link"
-                                    className="h-auto min-w-0 p-0 text-left text-sm"
+                                    variant="ghost"
+                                    className="h-auto min-w-0 p-0 text-left text-sm hover:text-primary"
                                     onClick={() =>
                                         void openGameLogUser(row.original)
                                     }
@@ -1894,8 +1899,8 @@ export function GameLogPage({ embedded = false } = {}) {
                             {canOpenWorld ? (
                                 <Button
                                     type="button"
-                                    variant="link"
-                                    className="h-auto min-w-0 p-0 text-left text-sm"
+                                    variant="ghost"
+                                    className="h-auto min-w-0 p-0 text-left text-sm hover:text-primary"
                                     onClick={() =>
                                         openWorldDialog({
                                             worldId: worldTarget,

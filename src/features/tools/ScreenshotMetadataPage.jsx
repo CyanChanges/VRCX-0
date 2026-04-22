@@ -100,7 +100,7 @@ function SearchSortHead({ label, sortKey, sort, onToggle }) {
             type="button"
             variant="ghost"
             size="sm"
-            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase hover:bg-transparent"
+            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase"
             onClick={() => onToggle(sortKey)}
         >
             <span>{label}</span>
@@ -146,8 +146,8 @@ function MetadataAuthorLink({ author, endpoint }) {
     return (
         <Button
             type="button"
-            variant="link"
-            className="text-muted-foreground h-auto justify-start gap-1 p-0 text-left"
+            variant="ghost"
+            className="text-muted-foreground h-auto justify-start gap-1 p-0 text-left hover:text-primary"
             title={userId}
             onClick={() =>
                 openUserDialog({
@@ -990,7 +990,7 @@ export function ScreenshotMetadataPage() {
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto w-full p-0 hover:bg-transparent"
+                                    className="h-auto w-full p-0"
                                     onClick={() =>
                                         openImagePreview({
                                             url: imageUrl,

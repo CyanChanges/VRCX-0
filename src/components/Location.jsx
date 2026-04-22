@@ -427,7 +427,7 @@ export function Location({
                             className={cn(
                                 'x-location inline-flex max-w-full min-w-0 flex-nowrap items-center truncate overflow-hidden text-left',
                                 isLocationLink
-                                    ? 'cursor-pointer hover:underline'
+                                    ? 'cursor-pointer text-inherit underline-offset-4 hover:text-primary'
                                     : 'cursor-default'
                             )}
                             onClick={openWorld}
@@ -453,8 +453,8 @@ export function Location({
                     {showGroupLink && groupName ? (
                         <Button
                             type="button"
-                            variant="link"
-                            className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit"
+                            variant="ghost"
+                            className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit hover:text-primary"
                             onClick={openGroup}
                             onKeyDown={(event) => event.stopPropagation()}
                         >

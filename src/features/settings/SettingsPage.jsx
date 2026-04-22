@@ -3481,8 +3481,8 @@ export function SettingsPage() {
                                         </div>
                                         <Button
                                             type="button"
-                                            variant="link"
-                                            className="text-muted-foreground h-auto justify-start p-0 text-left text-xs font-normal"
+                                            variant="ghost"
+                                            className="text-muted-foreground h-auto justify-start p-0 text-left text-xs font-normal hover:text-primary"
                                             onClick={() =>
                                                 setSystemHostOpen(
                                                     'vrchatConfigOpen',

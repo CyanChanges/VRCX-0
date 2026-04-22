@@ -137,8 +137,8 @@ function InstanceOwnerCell({ userId, location = '', endpoint = '' }) {
     return (
         <Button
             type="button"
-            variant="link"
-            className="h-auto max-w-full flex-col items-start justify-start gap-0 p-0 text-left text-xs"
+            variant="ghost"
+            className="h-auto max-w-full flex-col items-start justify-start gap-0 p-0 text-left text-xs hover:text-primary"
             title={[displayName || userId, userId, location]
                 .filter(Boolean)
                 .join('\n')}

@@ -127,8 +127,8 @@ function SortButton({ column, label, descFirst = false }) {
     return (
         <Button
             type="button"
-            variant="link"
-            className="text-muted-foreground h-auto gap-1 p-0 text-left text-xs tracking-wide uppercase"
+            variant="ghost"
+            className="text-muted-foreground h-auto gap-1 p-0 text-left text-xs tracking-wide uppercase hover:text-primary"
             onClick={() => {
                 if (!direction && descFirst) {
                     column.toggleSorting(true);
@@ -1579,8 +1579,8 @@ export function MyAvatarsPage({ embedded = false } = {}) {
                 cell: ({ row }) => (
                     <Button
                         type="button"
-                        variant="link"
-                        className="h-auto p-0 text-left font-medium"
+                        variant="ghost"
+                        className="h-auto p-0 text-left font-medium hover:text-primary"
                         onClick={() => openAvatarDetails(row.original)}
                     >
                         {row.original?.name || ''}

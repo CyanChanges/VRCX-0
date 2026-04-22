@@ -12,6 +12,7 @@ import { openGroupDialog, openWorldDialog } from '@/services/dialogService.js';
 import { accessTypeLocaleKeyMap } from '@/shared/constants/accessType.js';
 import { parseLocation, translateAccessType } from '@/shared/utils/location.js';
 import { useLaunchStore } from '@/state/launchStore.js';
+import { Button } from '@/ui/shadcn/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 function normalizeLocationObject(locationObject) {
@@ -257,53 +258,45 @@ export function LocationWorld({
             )}
         >
             <RegionCodeBadge region={region} />
-            <span
-                role={interactive ? 'button' : undefined}
-                tabIndex={interactive ? 0 : undefined}
-                className={cn(
-                    'inline-flex min-w-0 items-center text-left',
-                    interactive ? 'cursor-pointer hover:underline' : ''
-                )}
-                onClick={openLocationWorldDialog}
-                onKeyDown={(event) => {
-                    if (!interactive) {
-                        return;
-                    }
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        openLocationWorldDialog(event);
-                    }
-                }}
-            >
-                {isUnlocked ? (
-                    <UnlockIcon className="mr-1.5 size-4 shrink-0" />
-                ) : null}
-                <span className="min-w-0 truncate">
-                    {locationLabel}
-                    {instanceName ? ` #${instanceName}` : ''}
-                </span>
-            </span>
-            {groupName ? (
-                <span
-                    className={cn(
-                        'ml-0.5 truncate',
-                        interactive ? 'cursor-pointer hover:underline' : ''
-                    )}
-                    role={interactive ? 'button' : undefined}
-                    tabIndex={interactive ? 0 : undefined}
-                    onClick={openLocationGroupDialog}
-                    onKeyDown={(event) => {
-                        if (!interactive) {
-                            return;
-                        }
-                        if (event.key === 'Enter' || event.key === ' ') {
-                            event.preventDefault();
-                            openLocationGroupDialog(event);
-                        }
-                    }}
+            {interactive ? (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    className="h-auto min-w-0 shrink justify-start p-0 text-left font-normal text-inherit hover:text-primary"
+                    onClick={openLocationWorldDialog}
                 >
-                    ({groupName})
+                    {isUnlocked ? (
+                        <UnlockIcon className="mr-1.5 size-4 shrink-0" />
+                    ) : null}
+                    <span className="min-w-0 truncate">
+                        {locationLabel}
+                        {instanceName ? ` #${instanceName}` : ''}
+                    </span>
+                </Button>
+            ) : (
+                <span className="inline-flex min-w-0 items-center text-left">
+                    {isUnlocked ? (
+                        <UnlockIcon className="mr-1.5 size-4 shrink-0" />
+                    ) : null}
+                    <span className="min-w-0 truncate">
+                        {locationLabel}
+                        {instanceName ? ` #${instanceName}` : ''}
+                    </span>
                 </span>
+            )}
+            {groupName ? (
+                interactive ? (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        className="ml-0.5 h-auto min-w-0 shrink justify-start p-0 text-left font-normal text-inherit hover:text-primary"
+                        onClick={openLocationGroupDialog}
+                    >
+                        <span className="truncate">({groupName})</span>
+                    </Button>
+                ) : (
+                    <span className="ml-0.5 truncate">({groupName})</span>
+                )
             ) : null}
             {isClosed ? (
                 <Tooltip>

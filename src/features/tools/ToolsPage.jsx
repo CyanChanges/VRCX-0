@@ -70,7 +70,7 @@ function ToolItem({
             <Button
                 type="button"
                 variant="ghost"
-                className="h-full w-full min-w-0 items-start justify-start gap-2.5 rounded-md p-3 pr-10 text-left font-normal whitespace-normal hover:bg-transparent"
+                className="h-full w-full min-w-0 items-start justify-start gap-2.5 rounded-md p-3 pr-10 text-left font-normal whitespace-normal"
                 onClick={onClick}
             >
                 <div className="bg-muted/40 text-muted-foreground flex size-8 flex-none items-center justify-center rounded-md">

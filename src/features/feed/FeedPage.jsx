@@ -15,8 +15,11 @@ import {
     CopyIcon,
     CalendarIcon,
     ExternalLinkIcon,
+    GlobeIcon,
     LockIcon,
     StarIcon,
+    UserIcon,
+    UsersIcon,
     XIcon
 } from 'lucide-react';
 import {
@@ -93,6 +96,7 @@ import { Calendar } from '@/ui/shadcn/calendar';
 import {
     ContextMenu,
     ContextMenuContent,
+    ContextMenuGroup,
     ContextMenuItem,
     ContextMenuSeparator,
     ContextMenuTrigger
@@ -678,8 +682,8 @@ const AvatarInfoLine = memo(function AvatarInfoLine({
         <div className="flex flex-col gap-0.5">
             <Button
                 type="button"
-                variant="link"
-                className="h-auto w-fit justify-start p-0 text-left font-normal"
+                variant="ghost"
+                className="h-auto w-fit justify-start p-0 text-left font-normal hover:text-primary"
                 disabled={!imageUrl}
                 onClick={() => void openAvatarAuthorTarget()}
             >
@@ -855,8 +859,8 @@ function FeedUserLink({
         <div className="flex min-w-0 flex-col gap-0.5">
             <Button
                 type="button"
-                variant="link"
-                className="h-auto justify-start p-0 text-left font-medium"
+                variant="ghost"
+                className="h-auto justify-start p-0 text-left font-medium hover:text-primary"
                 disabled={!userId}
                 onClick={() =>
                     openUserDialog({
@@ -876,96 +880,108 @@ function FeedUserLink({
                 <span className="block min-w-0">{trigger}</span>
             </ContextMenuTrigger>
             <ContextMenuContent className="w-56">
-                <ContextMenuItem
-                    disabled={!userId}
-                    onSelect={() =>
-                        openUserDialog({
-                            userId,
-                            title: userLabel
-                        })
-                    }
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Open user
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={!worldTarget}
-                    onSelect={() =>
-                        openWorldDialog({
-                            worldId: worldDialogTarget,
-                            title: friend?.worldName || worldTarget
-                        })
-                    }
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Open current location
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={!groupTarget}
-                    onSelect={() =>
-                        openGroupDialog({
-                            groupId: groupTarget,
-                            title: undefined
-                        })
-                    }
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Open group
-                </ContextMenuItem>
+                <ContextMenuGroup>
+                    <ContextMenuItem
+                        disabled={!userId}
+                        onSelect={() =>
+                            openUserDialog({
+                                userId,
+                                title: userLabel
+                            })
+                        }
+                    >
+                        <UserIcon className="size-4" />
+                        Open user
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={!worldTarget}
+                        onSelect={() =>
+                            openWorldDialog({
+                                worldId: worldDialogTarget,
+                                title: friend?.worldName || worldTarget
+                            })
+                        }
+                    >
+                        <GlobeIcon className="size-4" />
+                        Open current location
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={!groupTarget}
+                        onSelect={() =>
+                            openGroupDialog({
+                                groupId: groupTarget,
+                                title: undefined
+                            })
+                        }
+                    >
+                        <UsersIcon className="size-4" />
+                        Open group
+                    </ContextMenuItem>
+                </ContextMenuGroup>
                 <ContextMenuSeparator />
-                <ContextMenuItem
-                    disabled={!canUseFriendLocation}
-                    onSelect={() => void actions?.launchLocation(location)}
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Launch in VRChat
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={!canUseFriendLocation}
-                    onSelect={() => void actions?.selfInviteLocation(location)}
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Self invite
-                </ContextMenuItem>
+                <ContextMenuGroup>
+                    <ContextMenuItem
+                        disabled={!canUseFriendLocation}
+                        onSelect={() => void actions?.launchLocation(location)}
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                        Launch in VRChat
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={!canUseFriendLocation}
+                        onSelect={() =>
+                            void actions?.selfInviteLocation(location)
+                        }
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                        Self invite
+                    </ContextMenuItem>
+                </ContextMenuGroup>
                 <ContextMenuSeparator />
-                <ContextMenuItem
-                    disabled={isCurrentUser || !canSendInvite}
-                    onSelect={() => void actions?.sendInvite(friend || row)}
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Send invite
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={isCurrentUser || !canRequestInvite}
-                    onSelect={() => void actions?.requestInvite(friend || row)}
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Request invite
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={isCurrentUser || !canBoop}
-                    onSelect={() => void actions?.sendBoop(friend || row)}
-                >
-                    <ExternalLinkIcon className="size-4" />
-                    Send boop
-                </ContextMenuItem>
+                <ContextMenuGroup>
+                    <ContextMenuItem
+                        disabled={isCurrentUser || !canSendInvite}
+                        onSelect={() => void actions?.sendInvite(friend || row)}
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                        Send invite
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={isCurrentUser || !canRequestInvite}
+                        onSelect={() =>
+                            void actions?.requestInvite(friend || row)
+                        }
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                        Request invite
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={isCurrentUser || !canBoop}
+                        onSelect={() => void actions?.sendBoop(friend || row)}
+                    >
+                        <ExternalLinkIcon className="size-4" />
+                        Send boop
+                    </ContextMenuItem>
+                </ContextMenuGroup>
                 <ContextMenuSeparator />
-                <ContextMenuItem
-                    disabled={!userId}
-                    onSelect={() => void copyFeedText(userId, 'User ID')}
-                >
-                    <CopyIcon className="size-4" />
-                    Copy user ID
-                </ContextMenuItem>
-                <ContextMenuItem
-                    disabled={!displayName}
-                    onSelect={() =>
-                        void copyFeedText(displayName, 'Display name')
-                    }
-                >
-                    <CopyIcon className="size-4" />
-                    Copy display name
-                </ContextMenuItem>
+                <ContextMenuGroup>
+                    <ContextMenuItem
+                        disabled={!userId}
+                        onSelect={() => void copyFeedText(userId, 'User ID')}
+                    >
+                        <CopyIcon className="size-4" />
+                        Copy user ID
+                    </ContextMenuItem>
+                    <ContextMenuItem
+                        disabled={!displayName}
+                        onSelect={() =>
+                            void copyFeedText(displayName, 'Display name')
+                        }
+                    >
+                        <CopyIcon className="size-4" />
+                        Copy display name
+                    </ContextMenuItem>
+                </ContextMenuGroup>
             </ContextMenuContent>
         </ContextMenu>
     );

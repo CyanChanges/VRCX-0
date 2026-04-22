@@ -1386,8 +1386,8 @@ function GroupModerationToolsDialog({ open, onOpenChange, group, endpoint }) {
                                                                     {userId ? (
                                                                         <Button
                                                                             type="button"
-                                                                            variant="link"
-                                                                            className="h-auto max-w-52 justify-start truncate p-0 text-left font-medium"
+                                                                            variant="ghost"
+                                                                            className="h-auto max-w-52 justify-start truncate p-0 text-left font-medium hover:text-primary"
                                                                             onClick={() =>
                                                                                 openUserDialog(
                                                                                     {
@@ -2455,8 +2455,8 @@ export function GroupDialogTabbedView({
                             {group.ownerId ? (
                                 <Button
                                     type="button"
-                                    variant="link"
-                                    className="text-muted-foreground h-auto justify-start gap-1 p-0 text-xs font-normal"
+                                    variant="ghost"
+                                    className="text-muted-foreground h-auto justify-start gap-1 p-0 text-xs font-normal hover:text-primary"
                                     title="Open group owner profile"
                                     onClick={openGroupOwner}
                                 >
@@ -2833,8 +2833,8 @@ export function GroupDialogTabbedView({
                                         ) ? (
                                             <Button
                                                 type="button"
-                                                variant="link"
-                                                className="h-auto gap-1 p-0 text-xs font-normal"
+                                                variant="ghost"
+                                                className="h-auto gap-1 p-0 text-xs font-normal hover:text-primary"
                                                 onClick={() =>
                                                     openUserDialog({
                                                         userId: announcementUserId(
@@ -2887,8 +2887,8 @@ export function GroupDialogTabbedView({
                                         ) ? (
                                             <Button
                                                 type="button"
-                                                variant="link"
-                                                className="h-auto gap-1 p-0 text-xs font-normal"
+                                                variant="ghost"
+                                                className="h-auto gap-1 p-0 text-xs font-normal hover:text-primary"
                                                 onClick={() =>
                                                     openUserDialog({
                                                         userId: announcementUserId(

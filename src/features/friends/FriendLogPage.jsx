@@ -286,7 +286,7 @@ function SortButton({ column, label }) {
             type="button"
             variant="ghost"
             size="sm"
-            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase hover:bg-transparent"
+            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase"
             onClick={() => column.toggleSorting(direction === 'asc')}
         >
             <span>{label}</span>
@@ -367,8 +367,8 @@ function renderUserCell(row) {
     const userLabel = row?.userId ? (
         <Button
             type="button"
-            variant="link"
-            className="h-auto justify-start p-0 text-left text-sm font-medium"
+            variant="ghost"
+            className="h-auto justify-start p-0 text-left text-sm font-medium hover:text-primary"
             onClick={() =>
                 openUserDialog({
                     userId: row.userId,

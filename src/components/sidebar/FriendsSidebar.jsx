@@ -1014,7 +1014,7 @@ function StaticSidebarLocation({
                     className={cn(
                         'x-location inline-flex max-w-full min-w-0 flex-nowrap items-center truncate overflow-hidden text-left',
                         isLocationLink
-                            ? 'cursor-pointer hover:underline'
+                            ? 'cursor-pointer text-inherit underline-offset-4 hover:text-primary'
                             : 'cursor-default'
                     )}
                     onClick={openWorld}
@@ -1039,8 +1039,8 @@ function StaticSidebarLocation({
             {showGroupLink && metadata?.groupName ? (
                 <Button
                     type="button"
-                    variant="link"
-                    className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit"
+                    variant="ghost"
+                    className="ml-0.5 h-auto min-w-0 p-0 text-left font-normal text-inherit hover:text-primary"
                     onClick={openGroup}
                     onKeyDown={(event) => event.stopPropagation()}
                 >
@@ -1289,7 +1289,7 @@ function FriendSectionHeader({ id, title, count, open, onToggle }) {
             type="button"
             variant="ghost"
             size="sm"
-            className="h-auto w-full justify-start px-0 py-1.5 pt-4 text-left text-xs font-normal hover:bg-transparent"
+            className="h-auto w-full justify-start px-0 py-1.5 pt-4 text-left text-xs font-normal"
             onClick={() => onToggle(id)}
         >
             <ChevronDownIcon

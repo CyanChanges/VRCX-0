@@ -418,7 +418,7 @@ export function GroupsSidebar() {
                         variant="ghost"
                         size="sm"
                         className={cn(
-                            'h-auto w-full justify-start px-0 py-1.5 text-left text-xs font-normal hover:bg-transparent',
+                            'h-auto w-full justify-start px-0 py-1.5 text-left text-xs font-normal',
                             row.first ? 'pt-0' : 'pt-4'
                         )}
                         onClick={() => toggleGroup(row.groupId)}

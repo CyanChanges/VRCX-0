@@ -157,9 +157,9 @@ function FeedUserName({ row, friend, className = '' }) {
     return (
         <Button
             type="button"
-            variant="link"
+            variant="ghost"
             className={cn(
-                'h-auto shrink-0 cursor-pointer justify-start p-0 text-left font-normal',
+                'h-auto shrink-0 cursor-pointer justify-start p-0 text-left font-normal hover:text-primary',
                 className
             )}
             onClick={() => openFeedUser(row, friend)}

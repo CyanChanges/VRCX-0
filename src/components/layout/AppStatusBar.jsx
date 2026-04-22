@@ -165,9 +165,9 @@ function formatStatusDate(value) {
 
 function StatusDot({ active, warn = false }) {
     const color = warn
-        ? 'bg-amber-500'
+        ? 'bg-[var(--status-active)]'
         : active
-          ? 'bg-green-500'
+          ? 'bg-[var(--status-online)]'
           : 'bg-muted-foreground/40';
     return (
         <span

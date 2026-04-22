@@ -1184,7 +1184,7 @@ export function AppNavMenu({ isCollapsed }) {
                                     <Button
                                         type="button"
                                         variant="ghost"
-                                        className="h-auto min-w-0 flex-col items-start gap-0 p-0 text-left font-normal hover:bg-transparent"
+                                        className="h-auto min-w-0 flex-col items-start gap-0 p-0 text-left font-normal"
                                         onClick={() =>
                                             void openExternalLink(links.github)
                                         }

@@ -15,7 +15,7 @@ export function DashboardWidgetHeader({ title, icon, path, children }) {
                 variant="ghost"
                 size="sm"
                 disabled={!canNavigate}
-                className="text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground h-auto min-w-0 justify-start px-0 py-0 text-xs font-semibold hover:bg-transparent disabled:cursor-default"
+                className="text-muted-foreground hover:text-foreground disabled:hover:text-muted-foreground h-auto min-w-0 justify-start px-0 py-0 text-xs font-semibold disabled:cursor-default"
                 onClick={() => {
                     if (canNavigate) {
                         navigate(path);

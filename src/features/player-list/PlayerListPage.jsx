@@ -172,8 +172,8 @@ function CurrentWorldHeader({
                 <div>
                     <Button
                         type="button"
-                        variant="link"
-                        className="h-auto max-w-full justify-start p-0 text-left text-base font-semibold"
+                        variant="ghost"
+                        className="h-auto max-w-full justify-start p-0 text-left text-base font-semibold hover:text-primary"
                         onClick={() =>
                             openWorldDialog({
                                 worldId: worldDialogTarget,
@@ -188,8 +188,8 @@ function CurrentWorldHeader({
                 {world?.authorName ? (
                     <Button
                         type="button"
-                        variant="link"
-                        className="text-muted-foreground h-auto justify-start p-0 font-mono text-xs"
+                        variant="ghost"
+                        className="text-muted-foreground h-auto justify-start p-0 font-mono text-xs hover:text-primary"
                         onClick={() =>
                             world?.authorId &&
                             openUserDialog({

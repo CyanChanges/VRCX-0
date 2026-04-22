@@ -10,14 +10,19 @@ import {
     ArrowUpIcon,
     BanIcon,
     BellOffIcon,
+    BoxIcon,
+    CalendarIcon,
     CheckIcon,
     ExternalLinkIcon,
+    GlobeIcon,
     MessageCircleIcon,
     RefreshCcwIcon,
     ReplyIcon,
     SendIcon,
     TagIcon,
     Trash2Icon,
+    UserIcon,
+    UsersIcon,
     XIcon
 } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
@@ -128,6 +133,38 @@ function getResponseIcon(response, notificationType) {
         default:
             return TagIcon;
     }
+}
+
+function getNotificationLinkScheme(link) {
+    const value = String(link || '').trim();
+    const separatorIndex = value.indexOf(':');
+    if (separatorIndex <= 0) {
+        return '';
+    }
+    return value.slice(0, separatorIndex).toLowerCase();
+}
+
+function getNotificationLinkIcon(link) {
+    switch (getNotificationLinkScheme(link)) {
+        case 'user':
+            return UserIcon;
+        case 'group':
+            return UsersIcon;
+        case 'event':
+            return CalendarIcon;
+        case 'world':
+            return GlobeIcon;
+        case 'avatar':
+            return BoxIcon;
+        default:
+            return ExternalLinkIcon;
+    }
+}
+
+function notificationLinkIsInternal(link) {
+    return ['user', 'group', 'event', 'world', 'avatar'].includes(
+        getNotificationLinkScheme(link)
+    );
 }
 
 function SortButton({ column, label }) {
@@ -1248,8 +1285,8 @@ export function VrcNotificationPage({ embedded = false } = {}) {
                         return (
                             <Button
                                 type="button"
-                                variant="link"
-                                className="h-auto max-w-48 justify-start p-0 text-left font-normal"
+                                variant="ghost"
+                                className="h-auto max-w-48 justify-start p-0 text-left font-normal hover:text-primary"
                                 onClick={() =>
                                     openUserDialog({
                                         userId: notification.senderUserId,
@@ -1270,8 +1307,8 @@ export function VrcNotificationPage({ embedded = false } = {}) {
                         return (
                             <Button
                                 type="button"
-                                variant="link"
-                                className="h-auto max-w-48 justify-start p-0 text-left font-normal"
+                                variant="ghost"
+                                className="h-auto max-w-48 justify-start p-0 text-left font-normal hover:text-primary"
                                 onClick={() =>
                                     openUserDialog({
                                         userId,
@@ -1326,8 +1363,8 @@ export function VrcNotificationPage({ embedded = false } = {}) {
                     return groupId ? (
                         <Button
                             type="button"
-                            variant="link"
-                            className="h-auto max-w-48 justify-start p-0 text-left font-normal"
+                            variant="ghost"
+                            className="h-auto max-w-48 justify-start p-0 text-left font-normal hover:text-primary"
                             onClick={() =>
                                 openGroupDialog({ groupId, title: label })
                             }
@@ -1389,6 +1426,10 @@ export function VrcNotificationPage({ embedded = false } = {}) {
                         notification.data?.worldId ||
                         notification.location ||
                         '';
+                    const notificationLink = notification.link || '';
+                    const internalLink =
+                        notificationLinkIsInternal(notificationLink);
+                    const LinkIcon = getNotificationLinkIcon(notificationLink);
                     return (
                         <div className="flex min-w-0 flex-col gap-1">
                             {message ? (
@@ -1412,20 +1453,23 @@ export function VrcNotificationPage({ embedded = false } = {}) {
                                     }
                                 />
                             ) : null}
-                            {notification.link ? (
+                            {notificationLink ? (
                                 <Button
                                     type="button"
-                                    variant="link"
+                                    variant={internalLink ? 'ghost' : 'link'}
                                     size="sm"
-                                    className="h-auto max-w-xl justify-start p-0 text-left font-normal"
+                                    className={cn(
+                                        'h-auto max-w-xl justify-start p-0 text-left font-normal',
+                                        internalLink && 'hover:text-primary'
+                                    )}
                                     onClick={() =>
-                                        openNotificationLink(notification.link)
+                                        openNotificationLink(notificationLink)
                                     }
                                 >
-                                    <ExternalLinkIcon data-icon="inline-start" />
+                                    <LinkIcon data-icon="inline-start" />
                                     <span className="truncate">
                                         {notification.linkText ||
-                                            notification.link}
+                                            notificationLink}
                                     </span>
                                 </Button>
                             ) : null}

@@ -83,8 +83,8 @@ function EntityDialogHeader({
                                 {onTitleClick ? (
                                     <Button
                                         type="button"
-                                        variant="link"
-                                        className="h-auto min-w-0 justify-start p-0 text-left text-lg font-semibold break-words whitespace-normal"
+                                        variant="ghost"
+                                        className="h-auto min-w-0 justify-start p-0 text-left text-lg font-semibold break-words whitespace-normal hover:text-primary"
                                         onClick={onTitleClick}
                                     >
                                         {title}
@@ -100,8 +100,8 @@ function EntityDialogHeader({
                                 onSubtitleClick ? (
                                     <Button
                                         type="button"
-                                        variant="link"
-                                        className="text-muted-foreground h-auto justify-start p-0 text-left font-mono text-sm break-all whitespace-normal"
+                                        variant="ghost"
+                                        className="text-muted-foreground h-auto justify-start p-0 text-left font-mono text-sm break-all whitespace-normal hover:text-primary"
                                         onClick={onSubtitleClick}
                                     >
                                         {subtitle}
@@ -391,10 +391,10 @@ function EntityInfoBlock({
             type={onClick ? 'button' : undefined}
             onClick={onClick}
             className={cn(
-                'flex items-center p-1.5 text-left text-sm',
+                'flex items-center rounded-md p-1.5 text-left text-sm',
                 full ? 'w-full' : wide ? 'w-80' : 'w-44',
                 onClick
-                    ? 'hover:bg-muted/50 cursor-pointer hover:rounded-md'
+                    ? 'cursor-pointer hover:bg-muted/50'
                     : 'cursor-default'
             )}
         >

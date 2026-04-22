@@ -2634,8 +2634,8 @@ export function UserDialogTabbedView({
                             {currentAvatarTarget ? (
                                 <Button
                                     type="button"
-                                    variant="link"
-                                    className="h-auto justify-start p-0 text-left text-xs"
+                                    variant="ghost"
+                                    className="h-auto justify-start p-0 text-left text-xs hover:text-primary"
                                     onClick={() =>
                                         openAvatarDialog(
                                             currentAvatarDialogArgs
@@ -2660,7 +2660,7 @@ export function UserDialogTabbedView({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto max-w-full justify-start gap-2 p-0 text-left text-xs font-normal whitespace-normal hover:bg-transparent hover:underline"
+                                    className="h-auto max-w-full justify-start gap-2 p-0 text-left text-xs font-normal whitespace-normal text-inherit hover:text-primary"
                                     onClick={() =>
                                         openGroupDialog({
                                             groupId: representedGroup.groupId,
@@ -3454,8 +3454,8 @@ export function UserDialogTabbedView({
                     {currentAvatarTarget ? (
                         <Button
                             type="button"
-                            variant="link"
-                            className="h-auto justify-start p-0 text-left"
+                            variant="ghost"
+                            className="h-auto justify-start p-0 text-left hover:text-primary"
                             onClick={() =>
                                 openAvatarDialog(currentAvatarDialogArgs)
                             }

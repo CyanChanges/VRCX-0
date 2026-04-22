@@ -299,7 +299,7 @@ function SortButton({ column, label }) {
             type="button"
             variant="ghost"
             size="sm"
-            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase hover:bg-transparent"
+            className="text-muted-foreground hover:text-foreground h-auto justify-start px-0 py-0 text-left text-xs font-medium tracking-wide uppercase"
             onClick={() => column.toggleSorting(direction === 'asc')}
         >
             <span>{label}</span>
@@ -818,8 +818,8 @@ export function ModerationPage({ embedded = false } = {}) {
                 cell: ({ row }) => (
                     <Button
                         type="button"
-                        variant="link"
-                        className="block h-auto w-full min-w-0 truncate p-0 pr-2.5 text-left text-sm font-normal"
+                        variant="ghost"
+                        className="block h-auto w-full min-w-0 truncate p-0 pr-2.5 text-left text-sm font-normal hover:text-primary"
                         disabled={!row.original?.sourceUserId}
                         onClick={() =>
                             openUserDialog({
@@ -866,8 +866,8 @@ export function ModerationPage({ embedded = false } = {}) {
                 cell: ({ row }) => (
                     <Button
                         type="button"
-                        variant="link"
-                        className="block h-auto w-full min-w-0 p-0 pr-2.5 text-left text-sm font-normal break-words whitespace-normal"
+                        variant="ghost"
+                        className="block h-auto w-full min-w-0 p-0 pr-2.5 text-left text-sm font-normal break-words whitespace-normal hover:text-primary"
                         disabled={!row.original?.targetUserId}
                         onClick={() =>
                             openUserDialog({

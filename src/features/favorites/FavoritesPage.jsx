@@ -759,7 +759,7 @@ const GroupRailSection = memo(function GroupRailSection({
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    className="h-auto min-w-0 flex-1 justify-start rounded-lg px-3 py-2 text-left whitespace-normal hover:bg-transparent"
+                                    className="h-auto min-w-0 flex-1 justify-start rounded-lg px-3 py-2 text-left whitespace-normal"
                                     onClick={() => onSelect(group)}
                                 >
                                     <span className="min-w-0">

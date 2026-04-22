@@ -288,7 +288,7 @@ function NotificationRow({
                     <Button
                         type="button"
                         variant="ghost"
-                        className="h-auto min-w-0 flex-1 justify-start p-0 text-left text-sm font-medium hover:bg-transparent"
+                        className="h-auto min-w-0 flex-1 justify-start p-0 text-left text-sm font-medium"
                         onClick={() => openSender(notification)}
                     >
                         <span className="truncate">

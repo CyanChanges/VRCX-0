@@ -583,7 +583,7 @@ export const SidePanel = forwardRef(function SidePanel(
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    className="text-muted-foreground hover:text-foreground h-auto w-full justify-between px-0 py-0.5 text-xs font-medium tracking-wide uppercase hover:bg-transparent"
+                                    className="text-muted-foreground hover:text-foreground h-auto w-full justify-between px-0 py-0.5 text-xs font-medium tracking-wide uppercase"
                                     onClick={() =>
                                         setIsAdvancedOpen((current) => !current)
                                     }

@@ -1167,8 +1167,8 @@ function NoteExportDialog({ open, onOpenChange }) {
                                         <TableCell>
                                             <Button
                                                 type="button"
-                                                variant="link"
-                                                className="px-0"
+                                                variant="ghost"
+                                                className="px-0 hover:text-primary"
                                                 onClick={() =>
                                                     openUserDialog({
                                                         userId: row.id,
@@ -1878,8 +1878,8 @@ function GroupEventCard({
                                 {showGroupName ? (
                                     <Button
                                         type="button"
-                                        variant="link"
-                                        className="text-muted-foreground h-auto max-w-full justify-start p-0 text-left text-xs font-normal"
+                                        variant="ghost"
+                                        className="text-muted-foreground h-auto max-w-full justify-start p-0 text-left text-xs font-normal hover:text-primary"
                                         onClick={stopAndRun(() =>
                                             openGroupDialog({ groupId })
                                         )}
@@ -1891,8 +1891,8 @@ function GroupEventCard({
                                 ) : null}
                                 <Button
                                     type="button"
-                                    variant="link"
-                                    className="h-auto max-w-full justify-start p-0 text-left text-sm font-medium"
+                                    variant="ghost"
+                                    className="h-auto max-w-full justify-start p-0 text-left text-sm font-medium hover:text-primary"
                                     onClick={stopAndRun(() =>
                                         openGroupDialog({ groupId })
                                     )}
