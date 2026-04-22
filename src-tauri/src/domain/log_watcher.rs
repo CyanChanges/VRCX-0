@@ -41,7 +41,8 @@ impl LogWatcher {
     }
 
     pub fn start(&self, log_dir: PathBuf, app_handle: AppHandle) {
-        *self.inner.keep_polling_until.lock().unwrap() = Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
+        *self.inner.keep_polling_until.lock().unwrap() =
+            Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
         let inner = Arc::clone(&self.inner);
         std::thread::spawn(move || thread_loop(inner, log_dir, app_handle));
     }
@@ -53,12 +54,14 @@ impl LogWatcher {
             *self.inner.till_date.lock().unwrap() = Some(dt);
         }
         *self.inner.active.lock().unwrap() = true;
-        *self.inner.keep_polling_until.lock().unwrap() = Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
+        *self.inner.keep_polling_until.lock().unwrap() =
+            Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
     }
 
     pub fn reset(&self) {
         *self.inner.reset_flag.lock().unwrap() = true;
-        *self.inner.keep_polling_until.lock().unwrap() = Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
+        *self.inner.keep_polling_until.lock().unwrap() =
+            Some(Instant::now() + INACTIVE_POLL_KEEPALIVE);
     }
 
     pub fn get(&self) -> Vec<Vec<String>> {
@@ -173,7 +176,6 @@ fn update(
         deleted.remove(&name);
 
         let ctx = contexts.entry(name.clone()).or_insert_with(LogContext::new);
-
 
         saw_new_data |= parse_log(
             inner,

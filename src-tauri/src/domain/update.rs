@@ -48,7 +48,10 @@ impl UpdateManager {
         if let Ok(entries) = std::fs::read_dir(&self.app_data) {
             for entry in entries.flatten() {
                 let path = entry.path();
-                let file_name = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
+                let file_name = path
+                    .file_name()
+                    .and_then(|name| name.to_str())
+                    .unwrap_or("");
                 if file_name.starts_with("tempDownload-") {
                     let _ = std::fs::remove_file(path);
                 }
@@ -122,9 +125,10 @@ impl UpdateManager {
 
         let temp = self.app_data.join("tempDownload");
         let _ = std::fs::remove_file(&temp);
-        let temp = self
-            .app_data
-            .join(format!("tempDownload-{}", self.generation.load(Ordering::SeqCst)));
+        let temp = self.app_data.join(format!(
+            "tempDownload-{}",
+            self.generation.load(Ordering::SeqCst)
+        ));
         let _ = std::fs::remove_file(&temp);
     }
 
@@ -244,14 +248,17 @@ async fn do_download(
     }
 
     {
-        let _guard = finalize_lock.lock().map_err(|e| format!("update finalize lock: {e}"))?;
+        let _guard = finalize_lock
+            .lock()
+            .map_err(|e| format!("update finalize lock: {e}"))?;
         if cancel.load(Ordering::Relaxed) || generation_state.load(Ordering::SeqCst) != generation {
             let _ = std::fs::remove_file(&temp_path);
             return Err("cancelled".into());
         }
 
         let _ = std::fs::remove_file(&update_path);
-        std::fs::rename(&temp_path, &update_path).map_err(|e| format!("move to update.exe: {e}"))?;
+        std::fs::rename(&temp_path, &update_path)
+            .map_err(|e| format!("move to update.exe: {e}"))?;
 
         if generation_state.load(Ordering::SeqCst) == generation {
             progress.store(UPDATE_PROGRESS_READY, Ordering::Relaxed);

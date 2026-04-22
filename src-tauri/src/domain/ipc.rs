@@ -109,12 +109,7 @@ fn accept_one(
         return Err("CreateNamedPipeW failed".into());
     }
 
-    let connected = unsafe {
-        ConnectNamedPipe(
-            handle,
-            std::ptr::null_mut(),
-        )
-    };
+    let connected = unsafe { ConnectNamedPipe(handle, std::ptr::null_mut()) };
     if connected == 0 {
         let err = unsafe { GetLastError() };
         if err != ERROR_PIPE_CONNECTED {

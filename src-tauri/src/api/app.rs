@@ -1253,9 +1253,28 @@ fn is_windows_reserved_name(value: &str) -> bool {
         .to_ascii_uppercase();
     matches!(
         upper.as_str(),
-        "CON" | "PRN" | "AUX" | "NUL"
-            | "COM1" | "COM2" | "COM3" | "COM4" | "COM5" | "COM6" | "COM7" | "COM8" | "COM9"
-            | "LPT1" | "LPT2" | "LPT3" | "LPT4" | "LPT5" | "LPT6" | "LPT7" | "LPT8" | "LPT9"
+        "CON"
+            | "PRN"
+            | "AUX"
+            | "NUL"
+            | "COM1"
+            | "COM2"
+            | "COM3"
+            | "COM4"
+            | "COM5"
+            | "COM6"
+            | "COM7"
+            | "COM8"
+            | "COM9"
+            | "LPT1"
+            | "LPT2"
+            | "LPT3"
+            | "LPT4"
+            | "LPT5"
+            | "LPT6"
+            | "LPT7"
+            | "LPT8"
+            | "LPT9"
     )
 }
 
@@ -1300,7 +1319,9 @@ fn build_ugc_image_path(
 
     let month_folder = sanitize_ugc_component(month_folder, "month_folder")?;
     let file_name = sanitize_ugc_component(file_name, "file_name")?;
-    Ok(PathBuf::from(ugc_folder_path).join(month_folder).join(file_name))
+    Ok(PathBuf::from(ugc_folder_path)
+        .join(month_folder)
+        .join(file_name))
 }
 
 async fn save_ugc_image_to_file(
@@ -1565,9 +1586,9 @@ pub fn app__set_vrchat_registry_key(
             }
 
             3 => {
-                let s = value
-                    .as_str()
-                    .ok_or_else(|| AppError::Custom(format!("registry value is not string: {key}")))?;
+                let s = value.as_str().ok_or_else(|| {
+                    AppError::Custom(format!("registry value is not string: {key}"))
+                })?;
                 vrc_key
                     .set_raw_value(
                         &hashed_key,
@@ -1580,9 +1601,9 @@ pub fn app__set_vrchat_registry_key(
             }
 
             100 => {
-                let f = value
-                    .as_f64()
-                    .ok_or_else(|| AppError::Custom(format!("registry value is not float: {key}")))?;
+                let f = value.as_f64().ok_or_else(|| {
+                    AppError::Custom(format!("registry value is not float: {key}"))
+                })?;
                 vrc_key
                     .set_raw_value(
                         &hashed_key,

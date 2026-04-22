@@ -61,9 +61,8 @@ impl AppState {
             tracing::info!("Legacy VRCX data migration completed");
         }
 
-        let legacy_vrcx_available = !paths.db_file.exists()
-            && !paths.config_file.exists()
-            && has_legacy_vrcx_data();
+        let legacy_vrcx_available =
+            !paths.db_file.exists() && !paths.config_file.exists() && has_legacy_vrcx_data();
 
         let storage = StorageService::new(&paths.config_file)?;
 

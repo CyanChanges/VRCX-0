@@ -162,7 +162,9 @@ impl DatabaseService {
                     inner.main = Some(conn);
                 }
                 Err(reopen_error) => {
-                    tracing::warn!("Failed to reopen database after upgrade rollback: {reopen_error}");
+                    tracing::warn!(
+                        "Failed to reopen database after upgrade rollback: {reopen_error}"
+                    );
                 }
             }
             return Err(error);
@@ -246,8 +248,9 @@ impl DatabaseService {
     }
 
     fn work_db_path(&self, from_version: i64, to_version: i64) -> PathBuf {
-        self.upgrade_dir
-            .join(format!("VRCX-0-upgrade-{from_version}-to-{to_version}.sqlite3"))
+        self.upgrade_dir.join(format!(
+            "VRCX-0-upgrade-{from_version}-to-{to_version}.sqlite3"
+        ))
     }
 
     fn active_status_path(&self) -> PathBuf {

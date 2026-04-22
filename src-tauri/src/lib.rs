@@ -3,15 +3,15 @@ mod domain;
 mod error;
 mod state;
 
-use std::collections::HashMap;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::time::Duration;
 
 use tauri::http::{header::CONTENT_TYPE, Request, Response, StatusCode};
 use tauri::menu::{Menu, MenuItem};
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 use tauri::Manager;
 use tauri::WindowEvent;
-use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 use tauri_plugin_autostart::ManagerExt as _;
 
 use state::AppState;
@@ -27,7 +27,10 @@ fn show_main_window(app: &tauri::AppHandle) {
 
 fn db_config_bool(state: &AppState, key: &str) -> Option<bool> {
     let mut args = HashMap::new();
-    args.insert("@key".to_string(), serde_json::Value::String(key.to_string()));
+    args.insert(
+        "@key".to_string(),
+        serde_json::Value::String(key.to_string()),
+    );
 
     state
         .db
@@ -39,8 +42,7 @@ fn db_config_bool(state: &AppState, key: &str) -> Option<bool> {
 }
 
 fn screenshot_protocol_response(request: Request<Vec<u8>>) -> Response<Cow<'static, [u8]>> {
-    let path = match percent_encoding::percent_decode_str(&request.uri().path()[1..])
-        .decode_utf8()
+    let path = match percent_encoding::percent_decode_str(&request.uri().path()[1..]).decode_utf8()
     {
         Ok(path) => path.into_owned(),
         Err(_) => {
@@ -88,14 +90,11 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_main_window(app);
         }))
-        .register_asynchronous_uri_scheme_protocol(
-            "vrcx-img",
-            |_ctx, request, responder| {
-                tauri::async_runtime::spawn_blocking(move || {
-                    responder.respond(screenshot_protocol_response(request));
-                });
-            },
-        )
+        .register_asynchronous_uri_scheme_protocol("vrcx-img", |_ctx, request, responder| {
+            tauri::async_runtime::spawn_blocking(move || {
+                responder.respond(screenshot_protocol_response(request));
+            });
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
@@ -192,13 +191,11 @@ pub fn run() {
                     });
                 }
             }
-            state
-                .process_monitor
-                .start(
-                    app.handle().clone(),
-                    state.auto_launch.clone(),
-                    state.log_watcher.clone(),
-                );
+            state.process_monitor.start(
+                app.handle().clone(),
+                state.auto_launch.clone(),
+                state.log_watcher.clone(),
+            );
             state.ipc.start(app.handle().clone());
 
             let local_low = std::env::var("LOCALAPPDATA")
