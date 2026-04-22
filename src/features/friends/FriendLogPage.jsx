@@ -632,7 +632,7 @@ export function FriendLogPage({ embedded = false } = {}) {
             updateRowsOwnerUserId('');
             setLoadStatus('idle');
             setDetail(
-                'No authenticated user is available for friend log history.'
+                'No authenticated user is available for friend history.'
             );
             return () => {
                 active = false;
@@ -667,7 +667,7 @@ export function FriendLogPage({ embedded = false } = {}) {
                 setDetail(
                     userFacingErrorMessage(
                         error,
-                        'Failed to load the friend log history snapshot.'
+                        'Failed to load the friend history snapshot.'
                     )
                 );
             });
@@ -727,7 +727,7 @@ export function FriendLogPage({ embedded = false } = {}) {
             rowsOwnerUserIdRef.current !== ownerUserId
         ) {
             setDetail(
-                'Friend log owner changed before delete; refresh and try again.'
+                'Friend history owner changed before delete; refresh and try again.'
             );
             return;
         }
@@ -750,7 +750,7 @@ export function FriendLogPage({ embedded = false } = {}) {
             }
             if (!Number.isFinite(affectedRows) || affectedRows <= 0) {
                 setDetail(
-                    'No matching friend log history row was deleted; refresh and try again.'
+                    'No matching friend history row was deleted; refresh and try again.'
                 );
                 return;
             }
@@ -760,12 +760,12 @@ export function FriendLogPage({ embedded = false } = {}) {
                         getFriendLogRowKey(currentRow, ownerUserId) !== rowKey
                 )
             );
-            setDetail('Deleted one friend log history row.');
+            setDetail('Deleted one friend history row.');
         } catch (error) {
             setDetail(
                 error instanceof Error
                     ? error.message
-                    : 'Failed to delete the friend log history row.'
+                    : 'Failed to delete the friend history row.'
             );
         } finally {
             setDeletingRowKey('');
@@ -1004,7 +1004,7 @@ export function FriendLogPage({ embedded = false } = {}) {
                             variant="outline"
                             size="icon"
                             title="Refresh"
-                            aria-label="Refresh friend log"
+                            aria-label="Refresh friend history"
                             disabled={
                                 !currentUserId || loadStatus === 'running'
                             }
@@ -1025,7 +1025,7 @@ export function FriendLogPage({ embedded = false } = {}) {
                     <div className="text-muted-foreground text-sm">
                         {userFacingErrorMessage(
                             detail,
-                            'Failed to load the friend log history snapshot.'
+                            'Failed to load the friend history snapshot.'
                         )}
                     </div>
                 ) : null}
@@ -1033,10 +1033,10 @@ export function FriendLogPage({ embedded = false } = {}) {
 
             <PageBody>
                 {isLoading ? (
-                    <LoadingState label="Loading the friend log history snapshot" />
+                    <LoadingState label="Loading the friend history snapshot" />
                 ) : isError ? (
                     <FriendLogEmptyState
-                        title="Friend log failed to load"
+                        title="Friend history failed to load"
                         description={
                             detail || 'The history query did not complete.'
                         }
@@ -1106,7 +1106,7 @@ export function FriendLogPage({ embedded = false } = {}) {
                     </>
                 ) : (
                     <FriendLogEmptyState
-                        title="No friend log rows match the current filters"
+                        title="No friend history rows match the current filters"
                         description="Broaden the type filters or search query to see more history."
                     />
                 )}

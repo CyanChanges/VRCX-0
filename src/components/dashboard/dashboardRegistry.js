@@ -62,9 +62,9 @@ export const DASHBOARD_PAGE_DEFINITIONS = [
     {
         key: 'friends-locations',
         category: 'page',
-        label: 'Friends Locations',
+        label: 'Friend Locations',
         path: '/friends-locations',
-        description: 'Live friend location cards.'
+        description: 'Live friend location board.'
     },
     {
         key: 'game-log',
@@ -76,9 +76,9 @@ export const DASHBOARD_PAGE_DEFINITIONS = [
     {
         key: 'player-list',
         category: 'page',
-        label: 'Player List',
+        label: 'Current Players',
         path: '/player-list',
-        description: 'Instance player list page.'
+        description: 'Current instance player page.'
     },
     {
         key: 'search',
@@ -111,16 +111,16 @@ export const DASHBOARD_PAGE_DEFINITIONS = [
     {
         key: 'friend-log',
         category: 'page',
-        label: 'Friend Log',
+        label: 'Friend History',
         path: '/social/friend-log',
-        description: 'Friend log table page.'
+        description: 'Friend history table page.'
     },
     {
         key: 'friend-list',
         category: 'page',
-        label: 'Friend List',
+        label: 'Friends',
         path: '/social/friend-list',
-        description: 'Friend list table page.'
+        description: 'Friend management page.'
     },
     {
         key: 'moderation',

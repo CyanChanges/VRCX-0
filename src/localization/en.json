@@ -47,10 +47,10 @@
         "settings_saved": "Settings saved"
     },
     "nav_tooltip": {
-        "friends_locations": "Friends Locations",
+        "friends_locations": "Friend Locations",
         "feed": "Feed",
         "game_log": "Game Log",
-        "player_list": "Player List",
+        "player_list": "Current Players",
         "search": "Search",
         "favorites": "Favorites",
         "favorite_friends": "Favorite Friends",
@@ -58,10 +58,10 @@
         "favorite_avatars": "Favorite Avatars",
         "my_avatars": "My Avatars",
         "social": "Social",
-        "friend_log": "Friend Log",
+        "friend_log": "Friend History",
         "moderation": "Moderation",
         "notification": "Notification",
-        "friend_list": "Friend List",
+        "friend_list": "Friends",
         "charts": "Charts",
         "tools": "Tools",
         "settings": "Settings",
@@ -599,7 +599,7 @@
                     "start_fetching": "Started fetching",
                     "mutual_friend_graph_ready_title": "Mutual Friend Network Graph",
                     "mutual_friend_graph_ready_message": "Mutual friend network graph is ready",
-                    "friend_list_changed_fetch_again": "Friend list changed. Please fetch the mutual friend network again."
+                    "friend_list_changed_fetch_again": "Friends changed. Please fetch the mutual friend network again."
                 },
                 "settings": {
                     "title": "Graph Layout Settings",
@@ -701,7 +701,7 @@
                 "header": "Pictures",
                 "screenshot": "Screenshot Manager",
                 "screenshot_description": "View and manage screenshot metadata",
-                "gallery": "Image Manager",
+                "gallery": "Gallery",
                 "gallery_description": "Manage images and inventory"
             },
             "shortcuts": {
@@ -1014,7 +1014,7 @@
                     }
                 },
                 "friend_log": {
-                    "header": "Friend Log",
+                    "header": "Friend History",
                     "hide_unfriends": "Hide Unfriend Events"
                 }
             },
@@ -1248,7 +1248,7 @@
                         "bio": "Bio:",
                         "avatar": "Avatar:",
                         "online_offline": "Online/Offline:",
-                        "friend_log_history": "Friend Log History:",
+                        "friend_log_history": "Friend History:",
                         "notification": "Notifications:",
                         "location": "Location:",
                         "join_leave": "Join/Leave:",
@@ -2047,7 +2047,7 @@
             "clear_errors": "Clear Errors"
         },
         "gallery_icons": {
-            "header": "Manage Photos, Icons, Emojis and Stickers",
+            "header": "Gallery",
             "recommended_image_size": "Recommended image size",
             "gallery": "Photos",
             "icons": "Icons",

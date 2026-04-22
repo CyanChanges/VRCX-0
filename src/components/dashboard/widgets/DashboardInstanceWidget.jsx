@@ -404,7 +404,7 @@ export function DashboardInstanceWidget({ config = {}, configUpdater = null }) {
                 title="Instance widget failed"
                 description={userFacingErrorMessage(
                     detail,
-                    'The player-list snapshot did not complete.'
+                    'Current players did not finish loading.'
                 )}
             />
         );
@@ -423,7 +423,7 @@ export function DashboardInstanceWidget({ config = {}, configUpdater = null }) {
         return renderShell(
             <DashboardWidgetEmptyState
                 title="Instance widget idle"
-                description="The current instance player list is not available yet."
+                description="Current players are not available yet."
             />
         );
     }

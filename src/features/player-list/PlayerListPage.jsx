@@ -605,7 +605,7 @@ export function PlayerListPage({ embedded = false } = {}) {
                 setDetail(
                     userFacingErrorMessage(
                         error,
-                        'Failed to reconstruct the current instance player list.'
+                        'Failed to reconstruct current players for the current instance.'
                     )
                 );
             });
@@ -1407,10 +1407,10 @@ export function PlayerListPage({ embedded = false } = {}) {
                     <LoadingState label="Rebuilding the current instance roster from game-log history" />
                 ) : isError ? (
                     <PlayerListEmptyState
-                        title="Player list failed to load"
+                        title="Current players failed to load"
                         description={userFacingErrorMessage(
                             detail,
-                            'The player-list adapter could not rebuild the current instance.'
+                            'Current players could not be rebuilt for the current instance.'
                         )}
                     />
                 ) : (
@@ -1456,7 +1456,7 @@ export function PlayerListPage({ embedded = false } = {}) {
                                         : !isGameRunning
                                           ? 'VRChat is not running'
                                           : isPlayerListSourceUnavailable
-                                            ? 'Player list is not available yet'
+                                            ? 'Current players are not available yet'
                                             : parsedLocation.isTraveling
                                               ? 'Currently traveling between instances'
                                               : parsedLocation.isOffline
@@ -1465,13 +1465,13 @@ export function PlayerListPage({ embedded = false } = {}) {
                                 }
                                 description={
                                     gameLogDisabled
-                                        ? 'Enable game log ingestion in settings before the current instance player list can be reconstructed.'
+                                        ? 'Enable game log ingestion in settings before current players can be reconstructed.'
                                         : !isGameRunning
                                           ? 'Start VRChat and let VRCX-0 receive game-log events before this page can rebuild the current instance.'
                                           : isPlayerListSourceUnavailable
                                             ? 'Stay in the instance until local join/leave events are recorded, then this table will populate automatically.'
                                             : parsedLocation.isTraveling
-                                              ? 'The player list follows live instance locations. It will repopulate after the next location event lands.'
+                                              ? 'Current players follow live instance locations. They will repopulate after the next location event lands.'
                                               : 'The local join/leave history does not have any current players for the active location yet.'
                                 }
                             />

@@ -1780,7 +1780,7 @@ export function FriendsLocationsPage({ embedded = false } = {}) {
                     />
                 ) : isError ? (
                     <FriendsLocationsEmptyState
-                        title="Friends locations failed to load"
+                        title="Friend locations failed to load"
                         description={
                             rosterDetail ||
                             'The roster bootstrap did not complete.'

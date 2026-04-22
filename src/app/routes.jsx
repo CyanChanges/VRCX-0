@@ -40,8 +40,8 @@ export const protectedRoutes = [
     },
     {
         path: '/friends-locations',
-        title: 'Friends Locations',
-        description: 'Live friend presence and location board.',
+        title: 'Friend Locations',
+        description: 'Live friend location board for finding people.',
         element: <FriendsLocationsPage />
     },
     {
@@ -52,7 +52,7 @@ export const protectedRoutes = [
     },
     {
         path: '/player-list',
-        title: 'Player List',
+        title: 'Current Players',
         description:
             'Current-instance player roster rebuilt from local activity data.',
         element: <PlayerListPage />
@@ -90,8 +90,8 @@ export const protectedRoutes = [
     },
     {
         path: '/social/friend-log',
-        title: 'Friend Log',
-        description: 'Friend history table backed by local SQL.',
+        title: 'Friend History',
+        description: 'Friend relationship history table backed by local SQL.',
         element: <FriendLogPage />
     },
     {
@@ -114,8 +114,8 @@ export const protectedRoutes = [
     },
     {
         path: '/social/friend-list',
-        title: 'Friend List',
-        description: 'Friend roster table.',
+        title: 'Friends',
+        description: 'Friend management table and roster details.',
         element: <FriendListPage />
     },
     {
