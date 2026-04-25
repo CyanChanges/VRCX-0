@@ -22,6 +22,7 @@ import {
     DropdownMenuTrigger
 } from '@/ui/shadcn/dropdown-menu';
 import { Spinner } from '@/ui/shadcn/spinner';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import {
     EntityDialogTabContent,
@@ -33,8 +34,8 @@ import {
     formatStatsDate,
     formatStatsDuration
 } from '../userDialogRows.js';
-import { useUserBioTranslation } from '../useUserBioTranslation.js';
 import { EntityList } from '../UserDialogViewParts.jsx';
+import { useUserBioTranslation } from '../useUserBioTranslation.js';
 
 function UserDialogPresenceSection({ presence, presenceActions, profile, t }) {
     const {
@@ -165,7 +166,7 @@ export function UserDialogInfoTab({
             <EntityInfoGrid>
                 {profile.note && !hideUserNotes ? (
                     <EntityInfoBlock
-                        label={t('dialog.user.generated.note')}
+                        label={t('dialog.user.info.note')}
                         full
                         onClick={onEditMemo}
                     >
@@ -176,7 +177,7 @@ export function UserDialogInfoTab({
                 ) : null}
                 {memo && !hideUserMemos ? (
                     <EntityInfoBlock
-                        label={t('dialog.user.generated.memo')}
+                        label={t('dialog.user.info.memo')}
                         full
                         onClick={onEditMemo}
                     >
@@ -185,10 +186,7 @@ export function UserDialogInfoTab({
                         </pre>
                     </EntityInfoBlock>
                 ) : null}
-                <EntityInfoBlock
-                    label={t('dialog.user.info.avatar_info')}
-                    full
-                >
+                <EntityInfoBlock label={t('dialog.user.info.avatar_info')} full>
                     {currentAvatarTarget ? (
                         <Button
                             type="button"
@@ -282,85 +280,93 @@ export function UserDialogInfoTab({
                         </span>
                     )}
                 </EntityInfoBlock>
-                <EntityInfoBlock
-                    label={t('dialog.user.generated.bio')}
-                    full
-                >
+                <EntityInfoBlock label={t('dialog.user.info.bio')} full>
                     <div className="flex items-start gap-2">
                         <pre className="text-muted-foreground max-h-52 min-w-0 flex-1 overflow-auto font-sans text-xs whitespace-pre-wrap">
                             {visibleBio}
                         </pre>
                         {profile.bio ? (
-                            <Button
-                                type="button"
-                                size="icon-xs"
-                                variant="ghost"
-                                className="shrink-0"
-                                disabled={bioTranslationLoading}
-                                title={
-                                    translatedBioActive
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        size="icon-xs"
+                                        variant="ghost"
+                                        className="shrink-0"
+                                        disabled={bioTranslationLoading}
+                                        aria-label={
+                                            translatedBioActive
+                                                ? 'Show original bio'
+                                                : 'Translate bio'
+                                        }
+                                        onClick={() =>
+                                            void toggleBioTranslation()
+                                        }
+                                    >
+                                        {bioTranslationLoading ? (
+                                            <Spinner data-icon="inline-start" />
+                                        ) : (
+                                            <LanguagesIcon data-icon="inline-start" />
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    {translatedBioActive
                                         ? 'Show original bio'
-                                        : 'Translate bio'
-                                }
-                                aria-label={
-                                    translatedBioActive
-                                        ? 'Show original bio'
-                                        : 'Translate bio'
-                                }
-                                onClick={() => void toggleBioTranslation()}
-                            >
-                                {bioTranslationLoading ? (
-                                    <Spinner data-icon="inline-start" />
-                                ) : (
-                                    <LanguagesIcon data-icon="inline-start" />
-                                )}
-                            </Button>
+                                        : 'Translate bio'}
+                                </TooltipContent>
+                            </Tooltip>
                         ) : null}
                     </div>
                     {bioLinks.length ? (
                         <div className="mt-1.5 flex flex-wrap gap-1.5">
                             {bioLinks.map((link) => (
-                                <Button
-                                    key={link}
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon-xs"
-                                    title={link}
-                                    aria-label={`Open ${link}`}
-                                    onClick={() => openExternalLink(link)}
-                                >
-                                    {getFaviconUrl(link) ? (
-                                        <img
-                                            src={getFaviconUrl(link)}
-                                            alt=""
-                                            className="size-4"
-                                        />
-                                    ) : (
-                                        <ExternalLinkIcon data-icon="inline-start" />
-                                    )}
-                                </Button>
+                                <Tooltip key={link}>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon-xs"
+                                            aria-label={`Open ${link}`}
+                                            onClick={() =>
+                                                openExternalLink(link)
+                                            }
+                                        >
+                                            {getFaviconUrl(link) ? (
+                                                <img
+                                                    src={getFaviconUrl(link)}
+                                                    alt=""
+                                                    className="size-4"
+                                                />
+                                            ) : (
+                                                <ExternalLinkIcon data-icon="inline-start" />
+                                            )}
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{link}</TooltipContent>
+                                </Tooltip>
                             ))}
                         </div>
                     ) : null}
                 </EntityInfoBlock>
                 {!isCurrentUser ? (
                     <EntityInfoBlock
-                        label={t('dialog.user.generated.last_seen')}
+                        label={t('dialog.user.info.last_seen')}
                         value={formatStatsDate(lastSeen)}
                     />
                 ) : null}
                 <EntityInfoBlock
-                    label={t('dialog.user.generated.last_login')}
+                    label={t('dialog.user.info.last_login')}
                     value={formatDate(
                         profile.last_login || profile.last_activity
                     )}
                 />
                 <EntityInfoBlock
-                    label={t('dialog.user.generated.last_activity')}
+                    label={t('dialog.user.info.last_activity')}
                     value={formatDate(profile.last_activity)}
                 />
                 <EntityInfoBlock
-                    label={t('dialog.user.generated.date_joined')}
+                    label={t('dialog.user.info.date_joined')}
                     value={profile.date_joined}
                 />
                 {isCurrentUser ? (
@@ -387,7 +393,7 @@ export function UserDialogInfoTab({
                             }
                         />
                         <EntityInfoBlock
-                            label={t('dialog.user.generated.time_together')}
+                            label={t('dialog.user.info.time_together')}
                             value={formatStatsDuration(userTimeSpent)}
                         />
                     </>
@@ -411,7 +417,7 @@ export function UserDialogInfoTab({
                     </EntityInfoBlock>
                 ) : null}
                 <EntityInfoBlock
-                    label={t('dialog.user.generated.user_id')}
+                    label={t('dialog.user.info.id')}
                     mono
                     full
                 >
@@ -419,23 +425,27 @@ export function UserDialogInfoTab({
                         {profile.id || '\u2014'}
                         {profile.id ? (
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        type="button"
-                                        aria-label="Open user copy menu"
-                                        title={t(
-                                            'dialog.user.generated.copy_user_details'
-                                        )}
-                                        className="ml-1"
-                                        size="icon-xs"
-                                        variant="ghost"
-                                        onClick={(event) =>
-                                            event.stopPropagation()
-                                        }
-                                    >
-                                        <CopyIcon data-icon="inline-start" />
-                                    </Button>
-                                </DropdownMenuTrigger>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                aria-label="Open user copy menu"
+                                                className="ml-1"
+                                                size="icon-xs"
+                                                variant="ghost"
+                                                onClick={(event) =>
+                                                    event.stopPropagation()
+                                                }
+                                            >
+                                                <CopyIcon data-icon="inline-start" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        {t('dialog.user.info.id_tooltip')}
+                                    </TooltipContent>
+                                </Tooltip>
                                 <DropdownMenuContent align="start">
                                     <DropdownMenuGroup>
                                         <DropdownMenuItem
@@ -447,7 +457,7 @@ export function UserDialogInfoTab({
                                             }
                                         >
                                             {t(
-                                                'dialog.user.generated.copy_user_id'
+                                                'dialog.user.info.copy_id'
                                             )}
                                         </DropdownMenuItem>
                                         {profile.displayName ? (
@@ -460,7 +470,7 @@ export function UserDialogInfoTab({
                                                 }
                                             >
                                                 {t(
-                                                    'dialog.user.generated.copy_display_name'
+                                                    'dialog.user.info.copy_display_name'
                                                 )}
                                             </DropdownMenuItem>
                                         ) : null}

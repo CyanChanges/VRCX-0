@@ -27,6 +27,7 @@ import {
     TableRow
 } from '@/ui/shadcn/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { PreviousInstanceInfoChart } from './PreviousInstanceInfoChart.jsx';
 import {
@@ -113,24 +114,33 @@ export function InstanceOwnerCell({ userId, location = '', endpoint = '' }) {
     }
 
     return (
-        <Button
-            type="button"
-            variant="ghost"
-            className="hover:text-primary h-auto max-w-full flex-col items-start justify-start gap-0 p-0 text-left text-xs"
-            title={[displayName || userId, userId, location]
-                .filter(Boolean)
-                .join('\n')}
-            onClick={() =>
-                openUserDialog({ userId, title: displayName || undefined })
-            }
-        >
-            <span className="truncate">{displayName || userId}</span>
-            {displayName && displayName !== userId ? (
-                <span className="text-muted-foreground max-w-full truncate text-xs">
-                    {userId}
-                </span>
-            ) : null}
-        </Button>
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    className="hover:text-primary h-auto max-w-full flex-col items-start justify-start gap-0 p-0 text-left text-xs"
+                    onClick={() =>
+                        openUserDialog({
+                            userId,
+                            title: displayName || undefined
+                        })
+                    }
+                >
+                    <span className="truncate">{displayName || userId}</span>
+                    {displayName && displayName !== userId ? (
+                        <span className="text-muted-foreground max-w-full truncate text-xs">
+                            {userId}
+                        </span>
+                    ) : null}
+                </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+                {[displayName || userId, userId, location]
+                    .filter(Boolean)
+                    .join('\n')}
+            </TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -265,31 +275,31 @@ export function PreviousInstanceDetailsPanel({
             <div className="grid gap-2 text-sm sm:grid-cols-2">
                 <div>
                     <span className="text-muted-foreground">
-                        {t('dialog.previous_instances.generated.created')}
+                        {t('table.previous_instances.date')}
                     </span>
                     <div>{formatDate(row?.created_at || row?.createdAt)}</div>
                 </div>
                 <div>
                     <span className="text-muted-foreground">
-                        {t('dialog.previous_instances.generated.duration')}
+                        {t('table.previous_instances.time')}
                     </span>
                     <div>{rowDuration(row)}</div>
                 </div>
                 <div>
                     <span className="text-muted-foreground">
-                        {t('dialog.previous_instances.generated.world')}
+                        {t('table.previous_instances.world')}
                     </span>
                     <div>{row?.worldName || '-'}</div>
                 </div>
                 <div>
                     <span className="text-muted-foreground">
-                        {t('dialog.previous_instances.generated.group')}
+                        {t('dialog.new_instance.group')}
                     </span>
                     <div>{row?.groupName || '-'}</div>
                 </div>
                 <div>
                     <span className="text-muted-foreground">
-                        {t('dialog.previous_instances.generated.creator')}
+                        {t('table.previous_instances.instance_creator')}
                     </span>
                     <div>
                         <InstanceOwnerCell
@@ -308,7 +318,7 @@ export function PreviousInstanceDetailsPanel({
                 <div className="flex items-center justify-between gap-3">
                     <TabsList variant="line">
                         <TabsTrigger value="players">
-                            {t('dialog.previous_instances.generated.players')}
+                            {t('dashboard.widget.instance_players')}
                         </TabsTrigger>
                         <TabsTrigger value="timeline">
                             {t('dialog.previous_instances.chart_view')}
@@ -341,12 +351,12 @@ export function PreviousInstanceDetailsPanel({
                                         <TableRow>
                                             <TableHead>
                                                 {t(
-                                                    'dialog.previous_instances.generated.name'
+                                                    'table.previous_instances.display_name'
                                                 )}
                                             </TableHead>
                                             <TableHead>
                                                 {t(
-                                                    'dialog.previous_instances.generated.user_id'
+                                                    'table.group_member_moderation.user_id'
                                                 )}
                                             </TableHead>
                                             <TableHead className="w-24">
@@ -358,9 +368,7 @@ export function PreviousInstanceDetailsPanel({
                                                 )}
                                             </TableHead>
                                             <TableHead className="w-44">
-                                                {t(
-                                                    'dialog.previous_instances.generated.first_seen'
-                                                )}
+                                                {t('table.previous_instances.date')}
                                             </TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -444,19 +452,15 @@ export function PreviousInstanceDetailsPanel({
                             <TableHeader className="bg-background sticky top-0">
                                 <TableRow>
                                     <TableHead className="h-8 px-2 py-1 text-xs">
-                                        {t(
-                                            'dialog.previous_instances.generated.left_at'
-                                        )}
+                                        {t('table.previous_instances.date')}
                                     </TableHead>
                                     <TableHead className="h-8 px-2 py-1 text-xs">
                                         {t(
-                                            'dialog.previous_instances.generated.name'
+                                            'table.previous_instances.display_name'
                                         )}
                                     </TableHead>
                                     <TableHead className="h-8 px-2 py-1 text-xs">
-                                        {t(
-                                            'dialog.previous_instances.generated.duration'
-                                        )}
+                                        {t('table.previous_instances.time')}
                                     </TableHead>
                                 </TableRow>
                             </TableHeader>

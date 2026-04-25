@@ -21,6 +21,15 @@ import {
     resolveLaunchLocation
 } from './WorldDialogViewParts.jsx';
 
+function firstKnownValue(...values) {
+    for (const value of values) {
+        if (value !== null && typeof value !== 'undefined' && value !== '') {
+            return value;
+        }
+    }
+    return undefined;
+}
+
 export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
     const {
         activeTab,
@@ -39,16 +48,16 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
         world,
         worldDialogShortName
     } = state;
-    const {
-        onChangeTab,
-        onOpenAuthor,
-        onPreviousInstancesChange,
-        onSaveMemo
-    } = handlers;
+    const { onChangeTab, onOpenAuthor, onPreviousInstancesChange, onSaveMemo } =
+        handlers;
     const { formatDate } = helpers;
 
     return (
-        <EntityDialogTabs value={activeTab} onValueChange={onChangeTab} tabs={tabs}>
+        <EntityDialogTabs
+            value={activeTab}
+            onValueChange={onChangeTab}
+            tabs={tabs}
+        >
             <EntityDialogTabContent
                 value="instances"
                 className="flex flex-col gap-4"
@@ -74,10 +83,27 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                 <div className="flex flex-col gap-2">
                     {displayInstanceRows.length ? (
                         displayInstanceRows.map((instance) => {
-                            const location = resolveLaunchLocation(world, instance);
+                            const location = resolveLaunchLocation(
+                                world,
+                                instance
+                            );
                             const shortName = instance.shortName || '';
                             const launchToken =
                                 instance.shortName || instance.secureName || '';
+                            const playerCount = firstKnownValue(
+                                instance.playerCount,
+                                instance.userCount,
+                                instance.occupants,
+                                Array.isArray(instance.users)
+                                    ? instance.users.length
+                                    : undefined
+                            );
+                            const capacity = firstKnownValue(
+                                instance.capacity,
+                                instance.ref?.capacity,
+                                instance.ref?.world?.capacity,
+                                world.capacity
+                            );
                             return (
                                 <div
                                     key={instance.id}
@@ -102,6 +128,9 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                                                 instance.group?.name ||
                                                 ''
                                             }
+                                            playerCount={playerCount}
+                                            capacity={capacity}
+                                            showPlayerSummary={false}
                                             hint={
                                                 world.name ||
                                                 instance.worldName ||
@@ -126,11 +155,11 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                                                 Number(instance.friendCount) ||
                                                 undefined
                                             }
-                                            playerCount={
-                                                instance.playerCount ??
-                                                instance.userCount ??
-                                                instance.occupants
-                                            }
+                                            playerCount={playerCount}
+                                            capacity={capacity}
+                                            instanceInfoPlacement="start"
+                                            instanceCountAlign="left"
+                                            instanceSummaryOrder="markers-first"
                                             showHistory={Boolean(
                                                 previousInstances.length
                                             )}
@@ -154,7 +183,7 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                 className="flex min-h-0 flex-col"
             >
                 <PreviousInstancesPanel
-                    title={t('dialog.world.generated.visit_history')}
+                    title={t('dialog.world.actions.show_previous_instances')}
                     instances={previousInstances}
                     variant="world"
                     targetRef={world}
@@ -165,20 +194,20 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
             <EntityDialogTabContent value="info" forceMount>
                 <EntityInfoGrid>
                     <EntityMemoTextarea
-                        label={t('dialog.world.generated.memo')}
+                        label={t('dialog.world.info.memo')}
                         value={memo}
-                        placeholder={t('dialog.world.generated.memo')}
+                        placeholder={t('dialog.world.info.memo_placeholder')}
                         onSave={onSaveMemo}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.world_id')}
+                        label={t('dialog.world.info.id')}
                         value={world.id}
                         mono
                         full
                     />
                     {previewUrl ? (
                         <EntityInfoBlock
-                            label={t('dialog.world.generated.youtube_preview')}
+                            label={t('dialog.world.info.youtube_preview')}
                             wide
                             onClick={() => openExternalLink(previewUrl)}
                         >
@@ -196,11 +225,11 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         </span>
                     </EntityInfoBlock>
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.players')}
+                        label={t('dialog.world.info.players')}
                         value={world.occupants ? String(world.occupants) : '—'}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.favorites')}
+                        label={t('dialog.world.info.favorites')}
                         value={
                             world.favorites
                                 ? `${world.favorites}${favoriteRate ? ` (${favoriteRate}%)` : ''}`
@@ -216,11 +245,11 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         value={`${world.recommendedCapacity || '—'} (${world.capacity || '—'})`}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.created')}
+                        label={t('dialog.world.info.created_at')}
                         value={formatDate(world.createdAt || world.created_at)}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.last_updated')}
+                        label={t('dialog.world.info.last_updated')}
                         value={formatDate(world.updatedAt || world.updated_at)}
                     />
                     {world.labsPublicationDate &&
@@ -235,7 +264,7 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         value={formatDate(world.publicationDate)}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.last_visited')}
+                        label={t('dialog.world.info.last_visited')}
                         value={formatDate(
                             lastVisitedInstance?.created_at ||
                                 lastVisitedInstance?.createdAt
@@ -255,7 +284,7 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         }
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.time_spent')}
+                        label={t('dialog.world.info.time_spent')}
                         value={
                             totalVisitTime > 0
                                 ? timeToText(totalVisitTime)
@@ -263,7 +292,7 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         }
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.version')}
+                        label={t('dialog.world.info.version')}
                         value={world.version ? String(world.version) : '—'}
                     />
                     <EntityInfoBlock
@@ -271,17 +300,17 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         value={world.heat ? String(world.heat) : '—'}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.popularity')}
+                        label={t('dialog.world.info.popularity')}
                         value={
                             world.popularity ? String(world.popularity) : '—'
                         }
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.persistent_data')}
-                        value={hasPersistData ? 'Available' : '—'}
+                        label={t('dialog.world.info.persistent_data')}
+                        value={hasPersistData ? '✓' : '—'}
                     />
                     <EntityInfoBlock
-                        label={t('dialog.world.generated.platform')}
+                        label={t('dialog.world.info.platform')}
                         full
                     >
                         <span className="block text-xs whitespace-normal">
