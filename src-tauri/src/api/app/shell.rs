@@ -8,6 +8,7 @@ use tauri::{AppHandle, State};
 use crate::error::AppError;
 use crate::state::AppState;
 
+use super::host_capabilities::{require_host_capability, HostCapability};
 use super::paths::{
     app__get_ugc_photo_location, app__get_vrchat_photos_location,
     app__get_vrchat_screenshots_location, vrchat_app_data, vrchat_config_path,
@@ -40,6 +41,7 @@ pub fn app__get_file_bytes(path: String) -> Result<Vec<u8>, AppError> {
 
 #[tauri::command]
 pub fn app__read_config_file() -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let path = vrchat_config_path();
     if !path.exists() {
         return Ok(String::new());
@@ -49,6 +51,7 @@ pub fn app__read_config_file() -> Result<String, AppError> {
 
 #[tauri::command]
 pub fn app__read_config_file_safe() -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let path = vrchat_config_path();
     if !path.exists() {
         return Ok(String::new());
@@ -63,6 +66,7 @@ pub fn app__read_config_file_safe() -> Result<String, AppError> {
 
 #[tauri::command]
 pub fn app__write_config_file(json: String) -> Result<(), AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let path = vrchat_config_path();
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)?;
@@ -87,24 +91,25 @@ pub fn app__open_vrcx_app_data_folder(state: State<'_, AppState>) -> Result<bool
 
 #[tauri::command]
 pub fn app__open_vrc_app_data_folder() -> Result<bool, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     open_folder(&vrchat_app_data().to_string_lossy())
 }
 
 #[tauri::command]
 pub fn app__open_vrc_photos_folder() -> Result<bool, AppError> {
-    let path = app__get_vrchat_photos_location();
+    let path = app__get_vrchat_photos_location()?;
     open_folder(&path)
 }
 
 #[tauri::command]
 pub fn app__open_ugc_photos_folder(ugc_path: Option<String>) -> Result<bool, AppError> {
-    let path = app__get_ugc_photo_location(ugc_path);
+    let path = app__get_ugc_photo_location(ugc_path)?;
     open_folder(&path)
 }
 
 #[tauri::command]
 pub fn app__open_vrc_screenshots_folder() -> Result<bool, AppError> {
-    let path = app__get_vrchat_screenshots_location();
+    let path = app__get_vrchat_screenshots_location()?;
     if path.is_empty() {
         return Ok(false);
     }
@@ -113,6 +118,7 @@ pub fn app__open_vrc_screenshots_folder() -> Result<bool, AppError> {
 
 #[tauri::command]
 pub fn app__open_crash_vrc_crash_dumps() -> Result<bool, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let temp = std::env::temp_dir();
     let path = temp.join("VRChat\\VRChat\\Crashes");
     open_folder(&path.to_string_lossy())

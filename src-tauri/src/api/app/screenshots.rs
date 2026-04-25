@@ -6,13 +6,15 @@ use crate::domain::screenshot::{self, SearchType};
 use crate::error::AppError;
 use crate::state::AppState;
 
-use super::paths::app__get_vrchat_photos_location;
+use super::host_capabilities::{require_host_capability, HostCapability};
+use super::paths::vrchat_photos_location;
 
 #[tauri::command]
 pub fn app__get_extra_screenshot_data(
     path: String,
     _carousel_cache: bool,
 ) -> Result<String, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
     let p = std::path::Path::new(&path);
     let mut result = serde_json::Map::new();
 
@@ -70,6 +72,7 @@ pub fn app__get_extra_screenshot_data(
 
 #[tauri::command]
 pub fn app__get_screenshot_metadata(path: String) -> Result<String, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
     match screenshot::get_screenshot_metadata(&path) {
         Some(meta) => {
             serde_json::to_string(&meta).map_err(|e| AppError::Custom(format!("serialize: {e}")))
@@ -84,8 +87,9 @@ pub fn app__find_screenshots_by_search(
     search_query: String,
     search_type: Option<i32>,
 ) -> Result<String, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
     let st = SearchType::from_i32(search_type.unwrap_or(0));
-    let photos_dir = app__get_vrchat_photos_location();
+    let photos_dir = vrchat_photos_location();
     if photos_dir.is_empty() {
         return Ok("[]".into());
     }
@@ -96,7 +100,8 @@ pub fn app__find_screenshots_by_search(
 
 #[tauri::command]
 pub fn app__get_last_screenshot() -> Result<String, AppError> {
-    let photos_dir = app__get_vrchat_photos_location();
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    let photos_dir = vrchat_photos_location();
     if photos_dir.is_empty() {
         return Ok(String::new());
     }
@@ -127,15 +132,17 @@ pub fn app__get_last_screenshot() -> Result<String, AppError> {
 
 #[tauri::command]
 pub fn app__delete_screenshot_metadata(path: String) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
     screenshot::delete_text_metadata(&path, false);
     Ok(true)
 }
 
 #[tauri::command]
-pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) {
-    let photos_dir = app__get_vrchat_photos_location();
+pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) -> Result<(), AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    let photos_dir = vrchat_photos_location();
     if photos_dir.is_empty() {
-        return;
+        return Ok(());
     }
     for entry in walkdir::WalkDir::new(&photos_dir).into_iter().flatten() {
         if entry.file_type().is_file()
@@ -148,6 +155,7 @@ pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) {
         }
     }
     state.screenshot_cache.clear_all();
+    Ok(())
 }
 
 #[tauri::command]
@@ -157,6 +165,7 @@ pub fn app__add_screenshot_metadata(
     _world_id: String,
     _change_filename: Option<bool>,
 ) -> Result<String, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
     if screenshot::has_vrcx_metadata(&path) {
         return Ok(path);
     }

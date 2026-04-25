@@ -5,7 +5,8 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 
-use crate::api::app::paths::app__get_vrchat_cache_location;
+use crate::api::app::host_capabilities::{require_host_capability, HostCapability};
+use crate::api::app::paths::vrchat_cache_location;
 use crate::error::AppError;
 
 #[derive(Serialize)]
@@ -77,7 +78,7 @@ fn get_vrchat_cache_full_location_impl(
     variant: &str,
     variant_version: i32,
 ) -> String {
-    let cache_path = PathBuf::from(app__get_vrchat_cache_location());
+    let cache_path = PathBuf::from(vrchat_cache_location());
     let id_hash = get_asset_id(file_id, variant);
     let top_dir = cache_path.join(id_hash);
     let version_location = get_asset_version(file_version, variant_version);
@@ -138,8 +139,14 @@ pub fn asset_bundle__get_vrchat_cache_full_location(
     file_version: i32,
     variant: String,
     variant_version: i32,
-) -> String {
-    get_vrchat_cache_full_location_impl(&file_id, file_version, &variant, variant_version)
+) -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    Ok(get_vrchat_cache_full_location_impl(
+        &file_id,
+        file_version,
+        &variant,
+        variant_version,
+    ))
 }
 
 #[tauri::command]
@@ -148,7 +155,8 @@ pub fn asset_bundle__check_vrchat_cache(
     file_version: i32,
     variant: String,
     variant_version: i32,
-) -> CacheCheckResult {
+) -> Result<CacheCheckResult, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let mut file_size = -1i64;
     let mut is_locked = false;
 
@@ -170,11 +178,11 @@ pub fn asset_bundle__check_vrchat_cache(
         is_locked = true;
     }
 
-    CacheCheckResult {
+    Ok(CacheCheckResult {
         item1: file_size,
         item2: is_locked,
         item3: cache_path,
-    }
+    })
 }
 
 #[tauri::command]
@@ -183,7 +191,8 @@ pub fn asset_bundle__delete_cache(
     file_version: i32,
     variant: String,
     variant_version: i32,
-) {
+) -> Result<(), AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let path = get_vrchat_cache_full_location_impl(&file_id, file_version, "", 0);
     if Path::new(&path).exists() {
         let _ = fs::remove_dir_all(&path);
@@ -194,28 +203,32 @@ pub fn asset_bundle__delete_cache(
     if Path::new(&path).exists() {
         let _ = fs::remove_dir_all(&path);
     }
+    Ok(())
 }
 
 #[tauri::command]
-pub fn asset_bundle__delete_all_cache() {
-    let cache_path = PathBuf::from(app__get_vrchat_cache_location());
+pub fn asset_bundle__delete_all_cache() -> Result<(), AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    let cache_path = PathBuf::from(vrchat_cache_location());
     if cache_path.exists() {
         let _ = fs::remove_dir_all(&cache_path);
         let _ = fs::create_dir_all(&cache_path);
     }
+    Ok(())
 }
 
 #[tauri::command]
-pub fn asset_bundle__sweep_cache() -> Vec<String> {
-    let cache_path = PathBuf::from(app__get_vrchat_cache_location());
+pub fn asset_bundle__sweep_cache() -> Result<Vec<String>, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    let cache_path = PathBuf::from(vrchat_cache_location());
     let mut output = Vec::new();
 
     if !cache_path.exists() {
-        return output;
+        return Ok(output);
     }
 
     let Ok(entries) = fs::read_dir(&cache_path) else {
-        return output;
+        return Ok(output);
     };
 
     for entry in entries.flatten() {
@@ -283,12 +296,13 @@ pub fn asset_bundle__sweep_cache() -> Vec<String> {
         }
     }
 
-    output
+    Ok(output)
 }
 
 #[tauri::command]
 pub fn asset_bundle__get_cache_size() -> Result<i64, AppError> {
-    let cache_path = PathBuf::from(app__get_vrchat_cache_location());
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    let cache_path = PathBuf::from(vrchat_cache_location());
     if !cache_path.exists() {
         return Ok(0);
     }

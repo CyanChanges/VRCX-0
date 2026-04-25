@@ -9,6 +9,7 @@ import {
     openUserDialog,
     openWorldDialog
 } from '@/services/dialogService.js';
+import { isHostCapabilityAvailable } from '@/services/hostCapabilityService.js';
 import { parseLocation } from '@/shared/utils/location.js';
 
 function normalizeString(value) {
@@ -119,6 +120,10 @@ export async function tryOpenLaunchLocation(
     shortName = '',
     endpoint = ''
 ) {
+    if (!isHostCapabilityAvailable('ipc')) {
+        return false;
+    }
+
     const normalizedLocation = normalizeString(location);
     if (!normalizedLocation || !normalizedLocation.includes(':')) {
         return false;

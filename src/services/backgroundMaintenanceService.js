@@ -18,6 +18,7 @@ import {
 } from '@/services/updateService.js';
 import { clearFavoriteRemoteDetailsCache } from '@/services/favoriteRemoteDetailsCacheService.js';
 import i18n from '@/services/i18nService.js';
+import { isHostCapabilityAvailable } from '@/services/hostCapabilityService.js';
 import { parseLocation } from '@/shared/utils/locationParser.js';
 import { useFavoriteStore } from '@/state/favoriteStore.js';
 import { useFriendRosterStore } from '@/state/friendRosterStore.js';
@@ -604,6 +605,10 @@ async function updateAutoStateChange() {
 }
 
 async function backupVrcRegistry(name) {
+    if (!isHostCapabilityAvailable('registryPrefs')) {
+        return false;
+    }
+
     let regJson;
     try {
         regJson = await backend.app.GetVRChatRegistry();
@@ -637,6 +642,10 @@ async function backupVrcRegistry(name) {
 }
 
 async function tryAutoBackupVrcRegistry() {
+    if (!isHostCapabilityAvailable('registryPrefs')) {
+        return;
+    }
+
     if (!(await configRepository.getBool('vrcRegistryAutoBackup', true))) {
         return;
     }
@@ -699,6 +708,10 @@ async function tryAutoBackupVrcRegistry() {
 }
 
 async function checkAutoBackupRestoreVrcRegistry() {
+    if (!isHostCapabilityAvailable('registryPrefs')) {
+        return;
+    }
+
     if (!(await configRepository.getBool('vrcRegistryAutoBackup', true))) {
         return;
     }

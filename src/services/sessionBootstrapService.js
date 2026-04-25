@@ -8,6 +8,7 @@ import { useSessionStore } from '@/state/sessionStore.js';
 
 import { syncStartupServicesTask } from './startupServicesStatus.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
+import { isHostCapabilityAvailable } from './hostCapabilityService.js';
 
 function getCurrentUserDisplayName(user) {
     return user?.displayName || user?.username || user?.id || '';
@@ -52,6 +53,10 @@ async function runAvatarAutoCleanup(userId) {
 }
 
 async function restoreGameRunningState() {
+    if (!isHostCapabilityAvailable('gameProcessMonitor')) {
+        return false;
+    }
+
     try {
         await backend.app.CheckGameRunning();
         return true;

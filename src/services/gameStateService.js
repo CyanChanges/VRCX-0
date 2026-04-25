@@ -10,6 +10,10 @@ import {
     resetGameLogIngestSessionState,
     resetNowPlayingState
 } from '@/services/gameLogIngestService.js';
+import {
+    isHostCapabilityAvailable,
+    requireHostCapability
+} from '@/services/hostCapabilityService.js';
 import { showSQLiteErrorDialog } from '@/services/sqliteErrorDialogService.js';
 import { isRealInstance } from '@/shared/utils/instance.js';
 import { useModalStore } from '@/state/modalStore.js';
@@ -54,6 +58,7 @@ function buildLaunchUrl(location) {
 }
 
 async function launchVrchat(location, desktopMode) {
+    requireHostCapability('gameLaunch');
     const args = [buildLaunchUrl(location)];
     const launchArguments = await configRepository.getString(
         'launchArguments',
@@ -140,6 +145,10 @@ async function sweepVrchatCacheIfEnabled() {
 }
 
 async function scheduleCrashRelaunchIfNeeded(previousGameState) {
+    if (!isHostCapabilityAvailable('gameLaunch')) {
+        return;
+    }
+
     if (!(await configRepository.getBool('relaunchVRChatAfterCrash', false))) {
         return;
     }
@@ -309,6 +318,10 @@ function clearStoppedGameLocationSnapshot(
 }
 
 export async function checkVRChatDebugLogging() {
+    if (!isHostCapabilityAvailable('registryPrefs')) {
+        return;
+    }
+
     if (await configRepository.getBool('gameLogDisabled', false)) {
         return;
     }

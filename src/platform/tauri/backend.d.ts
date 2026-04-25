@@ -37,6 +37,32 @@ export interface AssetBundleBackendNamespace extends BackendNamespace {
     GetCacheSize(): Promise<number>;
 }
 
+export interface HostCapabilityStatus {
+    supported: boolean;
+    enabled: boolean;
+    available: boolean;
+    reason?: string;
+}
+
+export interface HostCapabilities {
+    platform: 'windows' | 'linux' | 'macos' | 'unknown';
+    localDatabase: HostCapabilityStatus;
+    websocketRuntime: HostCapabilityStatus;
+    gameLogWatcher: HostCapabilityStatus;
+    gameProcessMonitor: HostCapabilityStatus;
+    vrchatPathDiscovery: HostCapabilityStatus;
+    steamLibraryDiscovery: HostCapabilityStatus;
+    steamRuntimeIntegration: HostCapabilityStatus;
+    registryPrefs: HostCapabilityStatus;
+    gameLaunch: HostCapabilityStatus;
+    ipc: HostCapabilityStatus;
+    screenshotCache: HostCapabilityStatus;
+}
+
+export interface AppBackendNamespace extends BackendNamespace {
+    GetHostCapabilities(): Promise<HostCapabilities>;
+}
+
 export interface BackendEvents {
     on(name: string, handler: (payload: unknown) => void): Promise<() => void>;
     off(name: string, handler: (payload: unknown) => void): void;
@@ -61,7 +87,7 @@ export interface BackendWebview {
 }
 
 export interface Backend {
-    app: BackendNamespace;
+    app: AppBackendNamespace;
     web: BackendNamespace;
     storage: BackendNamespace;
     sqlite: BackendNamespace;

@@ -4,12 +4,14 @@ use std::collections::HashMap;
 
 use crate::error::AppError;
 
+use super::host_capabilities::{require_host_capability, HostCapability};
 use super::paths::vrchat_app_data;
 
 #[tauri::command]
 pub fn app__get_vrchat_moderations(
     current_user_id: String,
 ) -> Result<HashMap<String, i16>, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let path = vrchat_app_data()
         .join("LocalPlayerModerations")
         .join(format!("{current_user_id}-show-hide-user.vrcset"));
@@ -46,6 +48,7 @@ pub fn app__set_vrchat_user_moderation(
     user_id: String,
     moderation_type: i32,
 ) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let dir = vrchat_app_data().join("LocalPlayerModerations");
     std::fs::create_dir_all(&dir)?;
     let path = dir.join(format!("{current_user_id}-show-hide-user.vrcset"));

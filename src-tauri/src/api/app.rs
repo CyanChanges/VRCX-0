@@ -1,6 +1,7 @@
 pub mod calendar;
 pub mod clipboard;
 pub mod game;
+pub mod host_capabilities;
 pub mod ipc_commands;
 pub mod media;
 pub mod moderation;

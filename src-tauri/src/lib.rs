@@ -14,6 +14,9 @@ use tauri::Manager;
 use tauri::WindowEvent;
 use tauri_plugin_autostart::ManagerExt as _;
 
+use api::app::host_capabilities::{
+    current_host_capabilities, is_host_capability_available, HostCapability,
+};
 use state::AppState;
 
 fn show_main_window(app: &tauri::AppHandle) {
@@ -191,17 +194,31 @@ pub fn run() {
                     });
                 }
             }
-            state.process_monitor.start(
-                app.handle().clone(),
-                state.auto_launch.clone(),
-                state.log_watcher.clone(),
+            let host_capabilities = current_host_capabilities();
+            tracing::info!(
+                platform = %host_capabilities.platform,
+                "host capabilities resolved"
             );
-            state.ipc.start(app.handle().clone());
 
-            let local_low = std::env::var("LOCALAPPDATA")
-                .map(|p| std::path::PathBuf::from(p).join("..\\LocalLow\\VRChat\\VRChat"))
-                .unwrap_or_default();
-            state.log_watcher.start(local_low, app.handle().clone());
+            if is_host_capability_available(HostCapability::GameProcessMonitor) {
+                state.process_monitor.start(
+                    app.handle().clone(),
+                    state.auto_launch.clone(),
+                    state.log_watcher.clone(),
+                );
+            }
+
+            if is_host_capability_available(HostCapability::Ipc) {
+                state.ipc.start(app.handle().clone());
+            }
+
+            #[cfg(target_os = "windows")]
+            if is_host_capability_available(HostCapability::GameLogWatcher) {
+                let local_low = std::env::var("LOCALAPPDATA")
+                    .map(|p| std::path::PathBuf::from(p).join("..\\LocalLow\\VRChat\\VRChat"))
+                    .unwrap_or_default();
+                state.log_watcher.start(local_low, app.handle().clone());
+            }
 
             #[cfg(all(debug_assertions, feature = "devtools"))]
             if let Some(window) = app.get_webview_window("main") {
@@ -247,6 +264,7 @@ pub fn run() {
             api::app::game::app__quit_game,
             api::app::game::app__start_game,
             api::app::game::app__start_game_from_path,
+            api::app::host_capabilities::app__get_host_capabilities,
             api::app::paths::app__current_culture,
             api::app::paths::app__current_language,
             api::app::window::app__set_user_agent,

@@ -16,6 +16,9 @@ describe('tauri command mapping', () => {
         expect(toCommandName('logWatcher', 'SetDateTill')).toBe(
             'log_watcher__set_date_till'
         );
+        expect(toCommandName('app', 'GetHostCapabilities')).toBe(
+            'app__get_host_capabilities'
+        );
     });
 
     it('uses explicit named args for known command contracts', () => {
@@ -30,6 +33,7 @@ describe('tauri command mapping', () => {
             killOnExit: false,
             runProcessOnce: true
         });
+        expect(toNamedArgs('app__get_host_capabilities', [])).toEqual({});
         expect(
             toNamedArgs('asset_bundle__check_vrchat_cache', [
                 'file_abc',

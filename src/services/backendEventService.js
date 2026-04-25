@@ -5,6 +5,7 @@ import { useSessionStore } from '@/state/sessionStore.js';
 
 import { ingestBackendGameLogEvent } from './gameLogIngestService.js';
 import { handleGameRunningUpdate } from './gameStateService.js';
+import { isHostCapabilityAvailable } from './hostCapabilityService.js';
 import { handleIpcEvent } from './ipcEventService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 import { handleBrowserFocus } from './vrcStatusService.js';
@@ -29,6 +30,9 @@ function handleBackendEvent(name, payload) {
     const runtimeStore = useRuntimeStore.getState();
 
     if (name === 'addGameLogEvent') {
+        if (!isHostCapabilityAvailable('gameLogWatcher')) {
+            return;
+        }
         gameLogIngestQueue = gameLogIngestQueue.then(
             () => ingestAndRecordGameLogEvent(name, payload),
             () => ingestAndRecordGameLogEvent(name, payload)
@@ -39,6 +43,9 @@ function handleBackendEvent(name, payload) {
     runtimeStore.recordBackendEvent(name, payload);
 
     if (name === 'updateIsGameRunning') {
+        if (!isHostCapabilityAvailable('gameProcessMonitor')) {
+            return;
+        }
         handleGameRunningUpdate(payload).catch((error) => {
             useNotificationStore.getState().pushNotification({
                 level: 'warning',
@@ -50,6 +57,9 @@ function handleBackendEvent(name, payload) {
     }
 
     if (name === 'ipcEvent') {
+        if (!isHostCapabilityAvailable('ipc')) {
+            return;
+        }
         handleIpcEvent(payload).catch((error) => {
             useNotificationStore.getState().pushNotification({
                 level: 'warning',

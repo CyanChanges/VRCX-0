@@ -27,6 +27,7 @@ import {
 } from '@/state/shellStore.js';
 
 import { refreshDiscordPresence } from './discordPresenceService.js';
+import { requireHostCapability } from './hostCapabilityService.js';
 import {
     configureRecentActionCooldown,
     readRecentActionCooldown
@@ -706,6 +707,7 @@ export async function setAppLauncherPreference({
     autoClose,
     runProcessOnce
 }) {
+    requireHostCapability('gameLaunch');
     const nextEnabled = Boolean(enabled);
     const nextAutoClose = Boolean(autoClose);
     const nextRunProcessOnce = Boolean(runProcessOnce);

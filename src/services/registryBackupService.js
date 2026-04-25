@@ -1,6 +1,8 @@
 import { backend } from '@/platform/index.js';
 import { configRepository } from '@/repositories/index.js';
 
+import { requireHostCapability } from './hostCapabilityService.js';
+
 function safeJsonParse(value, fallback) {
     if (!value) {
         return fallback;
@@ -39,6 +41,7 @@ async function saveVrcRegistryBackups(backups) {
 }
 
 async function backupVrcRegistry(name = 'Manual Backup') {
+    requireHostCapability('registryPrefs');
     const data = await backend.app.GetVRChatRegistry();
     if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
         throw new Error('No VRChat registry data was found to back up.');
@@ -57,6 +60,7 @@ async function backupVrcRegistry(name = 'Manual Backup') {
 }
 
 async function restoreVrcRegistryBackup(key) {
+    requireHostCapability('registryPrefs');
     const backups = await listVrcRegistryBackups();
     const backup = backups.find((item) => item.key === key);
     if (!backup) {
@@ -90,6 +94,7 @@ async function saveVrcRegistryBackupToFile(key) {
 }
 
 async function restoreVrcRegistryBackupFromFile() {
+    requireHostCapability('registryPrefs');
     const filePath = await backend.app.OpenFileSelectorDialog(
         null,
         '.json',
@@ -125,6 +130,7 @@ async function restoreVrcRegistryBackupFromFile() {
 }
 
 async function deleteVrcRegistryFolder() {
+    requireHostCapability('registryPrefs');
     return backend.app.DeleteVRChatRegistryFolder();
 }
 

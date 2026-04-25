@@ -6,6 +6,7 @@ import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { useSessionStore } from '@/state/sessionStore.js';
 
 import { refreshCurrentUserFriendsAndFavorites } from './backgroundMaintenanceService.js';
+import { isHostCapabilityAvailable } from './hostCapabilityService.js';
 import { handleRealtimePresenceEvent } from './realtimePresenceService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 import { syncStartupServicesTask } from './startupServicesStatus.js';
@@ -287,7 +288,11 @@ async function connectRealtimeTransport({ announceIpc, preserveMetrics }) {
         });
     }
 
-    if (announceIpc && !ipcAnnouncedForActiveSession) {
+    if (
+        announceIpc &&
+        !ipcAnnouncedForActiveSession &&
+        isHostCapabilityAvailable('ipc')
+    ) {
         useSessionStore.getState().setTransportStatus('announcing-ipc');
         try {
             await backend.app.IPCAnnounceStart();

@@ -7,9 +7,11 @@ use std::path::PathBuf;
 
 use crate::error::AppError;
 
+use super::host_capabilities::{require_host_capability, HostCapability};
+
 #[tauri::command]
 pub fn app__get_vrchat_registry_key(key: String) -> Result<serde_json::Value, AppError> {
-    #[cfg(not(target_os = "windows"))]
+    require_host_capability(HostCapability::RegistryPrefs)?;
     let _ = &key;
 
     #[cfg(target_os = "windows")]
@@ -57,12 +59,10 @@ pub fn app__get_vrchat_registry_key(key: String) -> Result<serde_json::Value, Ap
                 _ => {}
             }
         }
-        Ok(serde_json::Value::Null)
+        return Ok(serde_json::Value::Null);
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Ok(serde_json::Value::Null)
-    }
+
+    Ok(serde_json::Value::Null)
 }
 
 #[tauri::command]
@@ -72,22 +72,21 @@ pub fn app__get_vrchat_registry_key_string(key: String) -> Result<String, AppErr
 }
 
 #[tauri::command]
-pub fn app__has_vrchat_registry_folder() -> bool {
+pub fn app__has_vrchat_registry_folder() -> Result<bool, AppError> {
+    require_host_capability(HostCapability::RegistryPrefs)?;
     #[cfg(target_os = "windows")]
     {
         use winreg::enums::*;
         use winreg::RegKey;
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
-        hkcu.open_subkey("SOFTWARE\\VRChat\\VRChat").is_ok()
+        return Ok(hkcu.open_subkey("SOFTWARE\\VRChat\\VRChat").is_ok());
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        false
-    }
+    Ok(false)
 }
 
 #[tauri::command]
 pub fn app__delete_vrchat_registry_folder() -> Result<(), AppError> {
+    require_host_capability(HostCapability::RegistryPrefs)?;
     #[cfg(target_os = "windows")]
     {
         use winreg::enums::*;
@@ -106,6 +105,7 @@ pub fn app__set_vrchat_registry_key(
     _value: serde_json::Value,
     _type_int: i32,
 ) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::RegistryPrefs)?;
     #[cfg(target_os = "windows")]
     {
         let key = _key;
@@ -169,17 +169,16 @@ pub fn app__set_vrchat_registry_key(
                 )));
             }
         }
-        Ok(true)
+        return Ok(true);
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Ok(false)
-    }
+
+    Ok(false)
 }
 
 #[tauri::command]
 pub fn app__get_vrchat_registry(
 ) -> Result<HashMap<String, HashMap<String, serde_json::Value>>, AppError> {
+    require_host_capability(HostCapability::RegistryPrefs)?;
     #[cfg(target_os = "windows")]
     {
         use winreg::enums::*;
@@ -234,16 +233,15 @@ pub fn app__get_vrchat_registry(
                 result.insert(key_name.to_string(), entry);
             }
         }
-        Ok(result)
+        return Ok(result);
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        Ok(HashMap::new())
-    }
+
+    Ok(HashMap::new())
 }
 
 #[tauri::command]
 pub fn app__set_vrchat_registry(_json: String) -> Result<(), AppError> {
+    require_host_capability(HostCapability::RegistryPrefs)?;
     #[cfg(target_os = "windows")]
     {
         let json = _json;

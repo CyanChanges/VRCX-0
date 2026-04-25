@@ -2,6 +2,10 @@
 
 use std::path::PathBuf;
 
+use crate::error::AppError;
+
+use super::host_capabilities::{require_host_capability, HostCapability};
+
 #[tauri::command]
 pub fn app__current_culture() -> String {
     normalize_locale(sys_locale::get_locale().unwrap_or_else(|| "en-US".into()))
@@ -27,12 +31,12 @@ pub(super) fn vrchat_app_data() -> PathBuf {
 }
 
 #[tauri::command]
-pub fn app__get_vrchat_app_data_location() -> String {
-    vrchat_app_data().to_string_lossy().into_owned()
+pub fn app__get_vrchat_app_data_location() -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    Ok(vrchat_app_data().to_string_lossy().into_owned())
 }
 
-#[tauri::command]
-pub fn app__get_vrchat_photos_location() -> String {
+pub(super) fn vrchat_photos_location() -> String {
     if let Ok(content) = std::fs::read_to_string(vrchat_config_path()) {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(folder) = v.get("picture_output_folder").and_then(|v| v.as_str()) {
@@ -51,15 +55,21 @@ pub fn app__get_vrchat_photos_location() -> String {
 }
 
 #[tauri::command]
-pub fn app__get_ugc_photo_location(path: Option<String>) -> String {
+pub fn app__get_vrchat_photos_location() -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    Ok(vrchat_photos_location())
+}
+
+#[tauri::command]
+pub fn app__get_ugc_photo_location(path: Option<String>) -> Result<String, AppError> {
     match path {
-        Some(p) if !p.is_empty() => p,
+        Some(p) if !p.is_empty() => Ok(p),
         _ => app__get_vrchat_photos_location(),
     }
 }
 
 #[tauri::command]
-pub fn app__get_vrchat_cache_location() -> String {
+pub(crate) fn vrchat_cache_location() -> String {
     if let Ok(content) = std::fs::read_to_string(vrchat_config_path()) {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(folder) = v.get("cache_directory").and_then(|v| v.as_str()) {
@@ -76,7 +86,12 @@ pub fn app__get_vrchat_cache_location() -> String {
 }
 
 #[tauri::command]
-pub fn app__get_vrchat_screenshots_location() -> String {
+pub fn app__get_vrchat_cache_location() -> Result<String, AppError> {
+    require_host_capability(HostCapability::VrchatPathDiscovery)?;
+    Ok(vrchat_cache_location())
+}
+
+fn vrchat_screenshots_location() -> String {
     let steam_path = get_steam_path();
     if steam_path.is_empty() {
         return String::new();
@@ -107,6 +122,12 @@ pub fn app__get_vrchat_screenshots_location() -> String {
     best_path
 }
 
+#[tauri::command]
+pub fn app__get_vrchat_screenshots_location() -> Result<String, AppError> {
+    require_host_capability(HostCapability::SteamLibraryDiscovery)?;
+    Ok(vrchat_screenshots_location())
+}
+
 pub(super) fn get_steam_path() -> String {
     #[cfg(target_os = "windows")]
     {
@@ -118,12 +139,10 @@ pub(super) fn get_steam_path() -> String {
                 return val;
             }
         }
-        String::new()
+        return String::new();
     }
-    #[cfg(not(target_os = "windows"))]
-    {
-        String::new()
-    }
+
+    String::new()
 }
 #[cfg(test)]
 mod tests {

@@ -30,6 +30,7 @@ const commandArgs = {
     app__get_clipboard: [],
     app__current_culture: [],
     app__current_language: [],
+    app__get_host_capabilities: [],
     app__set_user_agent: [],
     app__check_game_running: [],
     app__get_file_base64: ['path'],

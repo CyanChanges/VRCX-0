@@ -5,6 +5,10 @@ import {
     runBackgroundMaintenanceTick
 } from './backgroundMaintenanceService.js';
 import { syncGameLogTail } from './gameLogIngestService.js';
+import {
+    getHostCapabilityUnavailableReason,
+    isHostCapabilityAvailable
+} from './hostCapabilityService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 
 let updateLoopTimer = null;
@@ -25,14 +29,25 @@ async function tickRuntimeLoop() {
     });
 
     try {
-        await syncGameLogTail();
+        const gameLogAvailable = isHostCapabilityAvailable('gameLogWatcher');
+        if (gameLogAvailable) {
+            await syncGameLogTail();
+        } else {
+            runtimeStore.setUpdateLoopState({
+                lastGameLogSyncAt: new Date().toISOString(),
+                lastGameLogSyncDetail:
+                    getHostCapabilityUnavailableReason('gameLogWatcher')
+            });
+        }
         await runBackgroundMaintenanceTick();
         useRuntimeStore
             .getState()
             .setStartupTask(
                 'updateLoop',
                 'running',
-                'Game log tail sync and background maintenance are active.'
+                gameLogAvailable
+                    ? 'Game log tail sync and background maintenance are active.'
+                    : 'Background maintenance is active. Game log tail sync is unavailable in this host.'
             );
     } catch (error) {
         await showSQLiteErrorDialog(error);
@@ -61,7 +76,9 @@ export function startRuntimeUpdateLoop() {
         .setStartupTask(
             'updateLoop',
             'running',
-            'Starting game log tail sync and background maintenance.'
+            isHostCapabilityAvailable('gameLogWatcher')
+                ? 'Starting game log tail sync and background maintenance.'
+                : 'Starting background maintenance without game log tail sync.'
         );
     void tickRuntimeLoop();
     return stopRuntimeUpdateLoop;

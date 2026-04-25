@@ -45,13 +45,48 @@ function createActivityState() {
     };
 }
 
+const HOST_CAPABILITY_KEYS = Object.freeze([
+    'localDatabase',
+    'websocketRuntime',
+    'gameLogWatcher',
+    'gameProcessMonitor',
+    'vrchatPathDiscovery',
+    'steamLibraryDiscovery',
+    'steamRuntimeIntegration',
+    'registryPrefs',
+    'gameLaunch',
+    'ipc',
+    'screenshotCache'
+]);
+
+function createCapabilityStatus(reason = 'Host capabilities have not loaded.') {
+    return {
+        supported: false,
+        enabled: false,
+        available: false,
+        reason
+    };
+}
+
+function createHostCapabilities() {
+    return HOST_CAPABILITY_KEYS.reduce(
+        (acc, key) => {
+            acc[key] = createCapabilityStatus();
+            return acc;
+        },
+        { platform: 'unknown' }
+    );
+}
+
 const initialState = {
     startup: {
+        capabilities: createTaskState(),
         config: createTaskState(),
         auth: createTaskState(),
         services: createTaskState(),
         updateLoop: createTaskState()
     },
+    hostCapabilities: createHostCapabilities(),
     auth: {
         currentUserId: null,
         currentUserDisplayName: '',
@@ -175,6 +210,11 @@ export const useRuntimeStore = create((set) => ({
                 ...payload
             }
         }));
+    },
+    setHostCapabilities(payload) {
+        set({
+            hostCapabilities: payload || createHostCapabilities()
+        });
     },
     setUpdateLoopState(patch) {
         set((state) => ({

@@ -7,6 +7,7 @@ use tauri::{AppHandle, Emitter, State};
 use crate::error::AppError;
 use crate::state::AppState;
 
+use super::host_capabilities::{require_host_capability, HostCapability};
 use super::paths::get_steam_path;
 
 #[tauri::command]
@@ -14,6 +15,7 @@ pub fn app__check_game_running(
     app_handle: AppHandle,
     state: State<'_, AppState>,
 ) -> Result<(), AppError> {
+    require_host_capability(HostCapability::GameProcessMonitor)?;
     let _ = app_handle.emit(
         "updateIsGameRunning",
         serde_json::json!({
@@ -25,17 +27,20 @@ pub fn app__check_game_running(
 }
 
 #[tauri::command]
-pub fn app__is_game_running(state: State<'_, AppState>) -> bool {
-    state.process_monitor.is_game_running()
+pub fn app__is_game_running(state: State<'_, AppState>) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::GameProcessMonitor)?;
+    Ok(state.process_monitor.is_game_running())
 }
 
 #[tauri::command]
-pub fn app__is_steamvr_running(state: State<'_, AppState>) -> bool {
-    state.process_monitor.is_steamvr_running()
+pub fn app__is_steamvr_running(state: State<'_, AppState>) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::GameProcessMonitor)?;
+    Ok(state.process_monitor.is_steamvr_running())
 }
 
 #[tauri::command]
 pub fn app__quit_game() -> Result<i32, AppError> {
+    require_host_capability(HostCapability::GameLaunch)?;
     use sysinfo::System;
     let mut sys = System::new();
     sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
@@ -56,6 +61,7 @@ pub fn app__quit_game() -> Result<i32, AppError> {
 
 #[tauri::command]
 pub fn app__start_game(arguments: String) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::GameLaunch)?;
     let steam_path = get_steam_path();
     if steam_path.is_empty() {
         return Ok(false);
@@ -80,6 +86,7 @@ pub fn app__start_game(arguments: String) -> Result<bool, AppError> {
 
 #[tauri::command]
 pub fn app__start_game_from_path(path: String, arguments: String) -> Result<bool, AppError> {
+    require_host_capability(HostCapability::GameLaunch)?;
     let launch_exe = PathBuf::from(&path).join("launch.exe");
     if !launch_exe.exists() {
         return Ok(false);

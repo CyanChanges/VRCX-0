@@ -41,6 +41,7 @@ import {
     persistVideoEntry,
     resetRuntimeNowPlayingState
 } from './game-log-ingest/videoPersistence.js';
+import { isHostCapabilityAvailable } from './hostCapabilityService.js';
 
 const GAME_LOG_BATCH_LIMIT = 50;
 
@@ -392,6 +393,11 @@ export async function initializeGameLogIngest() {
 
     ingestState.initializing = (async () => {
         await databaseMaintenanceRepository.initGlobalTables();
+        if (!isHostCapabilityAvailable('gameLogWatcher')) {
+            ingestState.tailCaughtUp = true;
+            ingestState.initialized = true;
+            return;
+        }
         const dateTill = await gameLogRepository.getLastDateGameLogDatabase();
         await backend.logWatcher.SetDateTill(dateTill);
         ingestState.tailCaughtUp = false;
@@ -488,6 +494,10 @@ export async function finalizeCurrentGameLogSession(
 }
 
 export async function ingestBackendGameLogEvent(payload) {
+    if (!isHostCapabilityAvailable('gameLogWatcher')) {
+        return null;
+    }
+
     if (await configRepository.getBool('gameLogDisabled', false)) {
         return null;
     }
@@ -499,6 +509,10 @@ export async function ingestBackendGameLogEvent(payload) {
 export async function syncGameLogTail() {
     if (ingestState.syncing || !useSessionStore.getState().isLoggedIn) {
         return { processed: 0, skipped: true };
+    }
+
+    if (!isHostCapabilityAvailable('gameLogWatcher')) {
+        return { processed: 0, skipped: true, unavailable: true };
     }
 
     if (

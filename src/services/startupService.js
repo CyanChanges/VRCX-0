@@ -1,5 +1,8 @@
 import { backend } from '@/platform/index.js';
-import { configRepository } from '@/repositories/index.js';
+import {
+    configRepository,
+    databaseMaintenanceRepository
+} from '@/repositories/index.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { useSessionStore } from '@/state/sessionStore.js';
 import { useShellStore } from '@/state/shellStore.js';
@@ -8,6 +11,10 @@ import { refreshSavedAuthSnapshot } from './authSnapshotService.js';
 import { runStartupMaintenance } from './backgroundMaintenanceService.js';
 import { initializeDatabaseUpgradeFlow } from './databaseUpgradeService.js';
 import { checkVRChatDebugLogging } from './gameStateService.js';
+import {
+    initializeHostCapabilities,
+    isHostCapabilityAvailable
+} from './hostCapabilityService.js';
 import { loadPreferenceSnapshot } from './preferencesService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 import {
@@ -32,14 +39,14 @@ export async function initializeReactRuntime() {
     const shellStore = useShellStore.getState();
     const runtimeStore = useRuntimeStore.getState();
 
-    sessionStore.setBootStatus('booting');
-    runtimeStore.setStartupTask(
-        'config',
-        'running',
-        'Loading config, locale, theme and zoom.'
-    );
-
     try {
+        sessionStore.setBootStatus('booting');
+        await initializeHostCapabilities();
+        runtimeStore.setStartupTask(
+            'config',
+            'running',
+            'Loading config, locale, theme and zoom.'
+        );
         await configRepository.init();
 
         const [
@@ -69,6 +76,7 @@ export async function initializeReactRuntime() {
         );
         applyAppFontPreferences({ fontFamily, customFontFamily, cjkFontPack });
         await runNonCriticalStartupSync('zoom', applyZoomLevel(zoomLevel));
+        await databaseMaintenanceRepository.initGlobalTables();
         const databaseReady = await initializeDatabaseUpgradeFlow();
         sessionStore.setSessionState({ databaseReady });
         await loadPreferenceSnapshot();
@@ -88,9 +96,14 @@ export async function initializeReactRuntime() {
         }
 
         await refreshSavedAuthSnapshot();
-        checkVRChatDebugLogging().catch((error) => {
-            console.warn('Startup VRChat debug logging check failed:', error);
-        });
+        if (isHostCapabilityAvailable('registryPrefs')) {
+            checkVRChatDebugLogging().catch((error) => {
+                console.warn(
+                    'Startup VRChat debug logging check failed:',
+                    error
+                );
+            });
+        }
         runStartupMaintenance().catch((error) => {
             console.warn('Startup maintenance failed:', error);
         });
