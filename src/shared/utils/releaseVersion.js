@@ -1,5 +1,7 @@
 const RELEASE_VERSION_PATTERN =
     /^v?(?<year>\d+)\.(?<month>\d+)(?:\.(?<patch>\d+))?(?:-beta\.(?<beta>\d+))?$/;
+const ALPHA_DISPLAY_VERSION_PATTERN =
+    /^v?(?<year>\d+)\.(?<month>\d+)(?:\.(?<patch>\d+))?-alpha\.(?<alpha>\d+)$/;
 
 /**
  * @param {string} version
@@ -67,9 +69,40 @@ function parseReleaseVersion(version) {
  * @returns {string}
  */
 function formatReleaseDisplayVersion(version) {
-    return (
-        parseReleaseVersion(version)?.displayVersion || String(version || '')
-    );
+    const parsedVersion = parseReleaseVersion(version);
+    if (parsedVersion) {
+        return parsedVersion.displayVersion;
+    }
+
+    const normalizedVersion = String(version || '').trim();
+    const alphaMatch = ALPHA_DISPLAY_VERSION_PATTERN.exec(normalizedVersion);
+    if (alphaMatch?.groups) {
+        const year = Number.parseInt(alphaMatch.groups.year, 10);
+        const month = Number.parseInt(alphaMatch.groups.month, 10);
+        const patchNumber = alphaMatch.groups.patch
+            ? Number.parseInt(alphaMatch.groups.patch, 10)
+            : 0;
+        const alphaNumber = Number.parseInt(alphaMatch.groups.alpha, 10);
+
+        if (
+            !Number.isNaN(year) &&
+            !Number.isNaN(month) &&
+            !Number.isNaN(patchNumber) &&
+            !Number.isNaN(alphaNumber) &&
+            month >= 1 &&
+            month <= 12 &&
+            patchNumber >= 0 &&
+            alphaNumber >= 1
+        ) {
+            const displayBaseVersion = `${year}.${String(month).padStart(
+                2,
+                '0'
+            )}${patchNumber ? `.${patchNumber}` : ''}`;
+            return `${displayBaseVersion}.alpha-${alphaNumber}`;
+        }
+    }
+
+    return normalizedVersion;
 }
 
 /**
