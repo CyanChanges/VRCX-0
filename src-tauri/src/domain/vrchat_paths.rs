@@ -19,6 +19,30 @@ pub struct LinuxVrchatPaths {
     pub latest_log: Option<PathBuf>,
 }
 
+pub fn discover_linux_steam_roots() -> Result<Vec<PathBuf>, String> {
+    let home = dirs::home_dir().ok_or_else(|| "Linux home directory not found".to_string())?;
+    let mut roots = Vec::new();
+    let mut seen = HashSet::new();
+
+    for steam_root in steam_root_candidates(&home) {
+        if steam_root
+            .join("config")
+            .join("libraryfolders.vdf")
+            .is_file()
+            || steam_root.join("steam.sh").is_file()
+            || steam_root.join("userdata").is_dir()
+        {
+            push_unique_path(&mut roots, &mut seen, steam_root);
+        }
+    }
+
+    if roots.is_empty() {
+        return Err("Steam root not found".into());
+    }
+
+    Ok(roots)
+}
+
 pub fn discover_linux_steam_libraries() -> Result<LinuxSteamLibraries, String> {
     let home = dirs::home_dir().ok_or_else(|| "Linux home directory not found".to_string())?;
     let mut libraries = Vec::new();
@@ -119,6 +143,23 @@ pub fn discover_linux_vrchat_paths() -> Result<LinuxVrchatPaths, String> {
     }
 
     Err("VRChat Proton prefix not found".into())
+}
+
+pub fn linux_command_in_path(command: &str) -> bool {
+    let Some(path_var) = std::env::var_os("PATH") else {
+        return false;
+    };
+
+    std::env::split_paths(&path_var).any(|dir| dir.join(command).is_file())
+}
+
+pub fn linux_steam_sh_candidates() -> Vec<PathBuf> {
+    discover_linux_steam_roots()
+        .unwrap_or_default()
+        .into_iter()
+        .map(|root| root.join("steam.sh"))
+        .filter(|path| path.is_file())
+        .collect()
 }
 
 fn steam_root_candidates(home: &Path) -> Vec<PathBuf> {

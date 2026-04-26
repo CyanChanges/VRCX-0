@@ -209,16 +209,16 @@ fn linux_host_capabilities(platform: &str, available: &CapabilityStatus) -> Host
         websocket_runtime: available.clone(),
         game_log_watcher: vrchat_path_discovery.clone(),
         game_process_monitor: available.clone(),
-        vrchat_path_discovery,
+        vrchat_path_discovery: vrchat_path_discovery.clone(),
         steam_library_discovery,
         steam_runtime_integration: CapabilityStatus::unsupported(
             "Steam runtime integration",
             "Linux",
         ),
         registry_prefs: CapabilityStatus::unsupported("VRChat registry preferences", "Linux"),
-        game_launch: CapabilityStatus::unsupported("Game launch", "Linux"),
+        game_launch: available.clone(),
         ipc: CapabilityStatus::unsupported("IPC", "Linux"),
-        screenshot_cache: CapabilityStatus::unsupported("Screenshot cache", "Linux"),
+        screenshot_cache: vrchat_path_discovery.clone(),
     }
 }
 

@@ -77,7 +77,13 @@ pub(crate) fn vrchat_cache_location() -> String {
         if let Ok(v) = serde_json::from_str::<serde_json::Value>(&content) {
             if let Some(folder) = v.get("cache_directory").and_then(|v| v.as_str()) {
                 if !folder.is_empty() {
-                    return folder.to_string();
+                    let base = PathBuf::from(folder);
+                    if base.is_dir() {
+                        return base
+                            .join("Cache-WindowsPlayer")
+                            .to_string_lossy()
+                            .into_owned();
+                    }
                 }
             }
         }
@@ -95,6 +101,10 @@ pub fn app__get_vrchat_cache_location() -> Result<String, AppError> {
 }
 
 fn vrchat_screenshots_location() -> String {
+    if cfg!(target_os = "linux") {
+        return linux_vrchat_screenshots_location();
+    }
+
     let steam_path = get_steam_path();
     if steam_path.is_empty() {
         return String::new();
@@ -122,6 +132,45 @@ fn vrchat_screenshots_location() -> String {
             }
         }
     }
+    best_path
+}
+
+fn linux_vrchat_screenshots_location() -> String {
+    let mut best_path = String::new();
+    let mut best_time = std::time::SystemTime::UNIX_EPOCH;
+
+    for steam_root in crate::domain::vrchat_paths::discover_linux_steam_roots().unwrap_or_default()
+    {
+        let userdata = steam_root.join("userdata");
+        if !userdata.is_dir() {
+            continue;
+        }
+
+        let Ok(entries) = std::fs::read_dir(&userdata) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let screenshots_dir = entry
+                .path()
+                .join("760")
+                .join("remote")
+                .join("438100")
+                .join("screenshots");
+            if !screenshots_dir.is_dir() {
+                continue;
+            }
+
+            let modified = std::fs::metadata(&screenshots_dir)
+                .and_then(|meta| meta.modified())
+                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+            if modified > best_time {
+                best_time = modified;
+                best_path = screenshots_dir.to_string_lossy().into_owned();
+            }
+        }
+    }
+
     best_path
 }
 

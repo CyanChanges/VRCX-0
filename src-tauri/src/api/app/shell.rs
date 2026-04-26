@@ -136,20 +136,72 @@ pub fn app__open_shortcut_folder(state: State<'_, AppState>) -> Result<(), AppEr
 #[tauri::command]
 pub fn app__open_folder_and_select_item(
     path: String,
-    _is_folder: Option<bool>,
+    is_folder: Option<bool>,
 ) -> Result<(), AppError> {
     let p = PathBuf::from(&path);
     if !p.exists() {
         return Err(AppError::Custom(format!("path not found: {path}")));
     }
 
-    std::process::Command::new("explorer.exe")
-        .arg("/select,")
-        .arg(&path)
-        .spawn()
-        .map_err(|e| AppError::Custom(format!("explorer: {e}")))?;
+    #[cfg(target_os = "linux")]
+    {
+        return open_folder_and_select_item_linux(&p, is_folder.unwrap_or(false));
+    }
 
-    Ok(())
+    #[cfg(not(target_os = "linux"))]
+    {
+        std::process::Command::new("explorer.exe")
+            .arg("/select,")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| AppError::Custom(format!("explorer: {e}")))?;
+
+        Ok(())
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn open_folder_and_select_item_linux(
+    path: &std::path::Path,
+    is_folder: bool,
+) -> Result<(), AppError> {
+    let directory = if is_folder {
+        path
+    } else {
+        path.parent().unwrap_or(path)
+    };
+
+    let path_arg = path.as_os_str().to_os_string();
+    let directory_arg = directory.as_os_str().to_os_string();
+    let attempts: Vec<(&str, Vec<std::ffi::OsString>)> = vec![
+        ("nautilus", vec![path_arg.clone()]),
+        ("nemo", vec![path_arg.clone()]),
+        ("thunar", vec![path_arg.clone()]),
+        ("caja", vec!["--select".into(), path_arg.clone()]),
+        ("pcmanfm-qt", vec![directory_arg.clone()]),
+        ("pcmanfm", vec![directory_arg.clone()]),
+        ("dolphin", vec!["--select".into(), path_arg.clone()]),
+        ("konqueror", vec!["--select".into(), path_arg.clone()]),
+        ("xdg-open", vec![directory_arg]),
+    ];
+
+    for (command, args) in attempts {
+        if !crate::domain::vrchat_paths::linux_command_in_path(command) {
+            continue;
+        }
+
+        if std::process::Command::new(command)
+            .args(args)
+            .spawn()
+            .is_ok()
+        {
+            return Ok(());
+        }
+    }
+
+    Err(AppError::Custom(
+        "No supported Linux file manager was found".into(),
+    ))
 }
 
 #[tauri::command]
