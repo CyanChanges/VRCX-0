@@ -16,9 +16,14 @@
                 "img-src": [
                     "https:",
                     "http://localhost:*",
+                    "http://vrcx-img.localhost",
                     "asset:",
                     "vrcx-img:",
                     "data:",
+                    "blob:"
+                ],
+                "worker-src": [
+                    "'self'",
                     "blob:"
                 ]
             }
