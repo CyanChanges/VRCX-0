@@ -4,7 +4,6 @@ import { branches } from '@/shared/constants/settings.js';
 import {
     compareReleaseVersions,
     formatReleaseDisplayVersion,
-    isBetaReleaseVersion,
     parseReleaseVersion
 } from '@/shared/utils/releaseVersion.js';
 
@@ -37,21 +36,23 @@ function getAssetOfInterest(assets = []) {
     return { downloadUrl: '', hashString: '', size: 0 };
 }
 
-function normalizeGitHubRelease(release) {
+function normalizeGitHubRelease(release, { requireInstallerAsset = true } = {}) {
     const parsedVersion = parseReleaseVersion(release?.tag_name);
     if (!parsedVersion) {
         return null;
     }
 
     const asset = getAssetOfInterest(release.assets);
-    if (!asset.downloadUrl) {
+    if (requireInstallerAsset && !asset.downloadUrl) {
         return null;
     }
 
     return {
         ...asset,
         canonicalVersion: parsedVersion.canonicalVersion,
+        channel: parsedVersion.channel,
         displayVersion: parsedVersion.displayVersion,
+        htmlUrl: release.html_url || '',
         tagName: release.tag_name,
         displayName: release.name || `VRCX-0 ${parsedVersion.displayVersion}`,
         prerelease: Boolean(release.prerelease),
@@ -60,12 +61,16 @@ function normalizeGitHubRelease(release) {
     };
 }
 
-function normalizeReleaseList(branch, releases) {
-    const shouldKeepPrerelease = branch === 'Beta';
+function normalizeReleaseList(branch, releases, options = {}) {
+    const normalizedBranch = sanitizeBranch(branch);
+    const shouldKeepPrerelease = normalizedBranch !== 'Stable';
     return (Array.isArray(releases) ? releases : [releases])
-        .map((release) => normalizeGitHubRelease(release))
+        .map((release) => normalizeGitHubRelease(release, options))
         .filter(
-            (release) => release && release.prerelease === shouldKeepPrerelease
+            (release) =>
+                release &&
+                release.channel === normalizedBranch &&
+                release.prerelease === shouldKeepPrerelease
         )
         .sort((left, right) =>
             compareReleaseVersions(
@@ -76,11 +81,14 @@ function normalizeReleaseList(branch, releases) {
 }
 
 function sanitizeBranch(branch) {
+    if (branch === 'Alpha') {
+        return 'Alpha';
+    }
     return branch === 'Beta' ? 'Beta' : 'Stable';
 }
 
 function defaultBranchForVersion(version = VERSION || '') {
-    return isBetaReleaseVersion(version) ? 'Beta' : 'Stable';
+    return parseReleaseVersion(version)?.channel || 'Stable';
 }
 
 function hasUpdateForBranch(branch, currentVersion, latestReleaseVersion) {
@@ -91,7 +99,12 @@ function hasUpdateForBranch(branch, currentVersion, latestReleaseVersion) {
         return false;
     }
 
-    if (branch === 'Beta') {
+    const normalizedBranch = sanitizeBranch(branch);
+    if (latestParsed.channel !== normalizedBranch) {
+        return false;
+    }
+
+    if (normalizedBranch !== 'Stable') {
         const versionDelta =
             latestParsed.year - currentParsed.year ||
             latestParsed.month - currentParsed.month ||
@@ -102,7 +115,7 @@ function hasUpdateForBranch(branch, currentVersion, latestReleaseVersion) {
 
         if (
             currentParsed.channel === 'Stable' &&
-            latestParsed.channel === 'Beta'
+            latestParsed.channel === normalizedBranch
         ) {
             return true;
         }
@@ -113,7 +126,7 @@ function hasUpdateForBranch(branch, currentVersion, latestReleaseVersion) {
     );
 }
 
-async function fetchBranchReleases(branch) {
+async function fetchBranchReleases(branch, options = {}) {
     const normalizedBranch = sanitizeBranch(branch);
     const response = await webRepository.execute({
         url: branches[normalizedBranch].urlReleases,
@@ -134,11 +147,11 @@ async function fetchBranchReleases(branch) {
         throw new Error(data.message);
     }
 
-    return normalizeReleaseList(normalizedBranch, data);
+    return normalizeReleaseList(normalizedBranch, data, options);
 }
 
-async function fetchLatestBranchRelease(branch) {
-    const releases = await fetchBranchReleases(branch);
+async function fetchLatestBranchRelease(branch, options = {}) {
+    const releases = await fetchBranchReleases(branch, options);
     return releases[0] || null;
 }
 

@@ -1,4 +1,4 @@
-name: Build & Release
+name: Package
 
 on:
     workflow_dispatch:
@@ -10,203 +10,92 @@ on:
                 options:
                     - stable
                     - beta
+                    - alpha
                 default: stable
-            publish:
-                description: 'Publish a GitHub release'
-                type: boolean
-                default: false
             beta_number:
                 description: 'Beta suffix number (1, 2, 3...)'
                 required: false
                 type: string
                 default: '1'
+            alpha_number:
+                description: 'Alpha suffix number (1, 2, 3...)'
+                required: false
+                type: string
+                default: '1'
 
 concurrency:
-    group: ${{ github.ref }}-build
+    group: ${{ github.ref }}-package
     cancel-in-progress: true
 
 permissions:
-    contents: write
+    contents: read
 
 jobs:
-    build:
-        runs-on: windows-latest
+    package:
+        name: ${{ matrix.label }}
+        runs-on: ${{ matrix.os }}
         defaults:
             run:
                 shell: bash
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - label: Linux AppImage
+                      os: ubuntu-24.04
+                      build_command: npm run tauri:build -- --config src-tauri/tauri.linux.conf.json --bundles appimage
+                      artifact_name: linux-appimage
+                      artifact_path: src-tauri/target/release/bundle/appimage/*.AppImage
+                    - label: macOS DMG
+                      os: macos-latest
+                      build_command: npm run tauri:build -- --bundles dmg
+                      artifact_name: macos-dmg
+                      artifact_path: src-tauri/target/release/bundle/dmg/*.dmg
         steps:
             - uses: actions/checkout@v6
-
-            - id: meta
-              run: |
-                  base_version=$(node -p "require('./src-tauri/tauri.conf.json').version")
-                  channel="${{ inputs.channel }}"
-                  beta_number="${{ inputs.beta_number }}"
-
-                  if [[ ! "$base_version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
-                      echo "Invalid base version: $base_version" >&2
-                      exit 1
-                  fi
-
-                  IFS='.' read -r year month patch <<< "$base_version"
-                  if (( month < 1 || month > 12 )); then
-                      echo "Invalid base version month: $base_version" >&2
-                      exit 1
-                  fi
-
-                  display_version=$(printf '%04d.%02d' "$year" "$month")
-                  if (( patch > 0 )); then
-                      display_version="${display_version}.${patch}"
-                  fi
-
-                  if [ "$channel" = "beta" ]; then
-                      if (( patch != 0 )); then
-                          echo "Beta releases must use a base patch version of 0: $base_version" >&2
-                          exit 1
-                      fi
-                      if [[ ! "$beta_number" =~ ^[1-9][0-9]*$ ]]; then
-                          echo "Invalid beta_number: $beta_number" >&2
-                          exit 1
-                      fi
-                      build_version="${base_version}-beta.${beta_number}"
-                      display_version="${display_version}-beta.${beta_number}"
-                      prerelease=true
-                  else
-                      build_version="${base_version}"
-                      prerelease=false
-                  fi
-
-                  echo "base_version=${base_version}"       >> "$GITHUB_OUTPUT"
-                  echo "build_version=${build_version}"     >> "$GITHUB_OUTPUT"
-                  echo "display_version=${display_version}" >> "$GITHUB_OUTPUT"
-                  echo "tag=v${display_version}"            >> "$GITHUB_OUTPUT"
-                  echo "name=VRCX-0 ${display_version}"     >> "$GITHUB_OUTPUT"
-                  echo "prerelease=${prerelease}"           >> "$GITHUB_OUTPUT"
-
-            - id: changelog
-              if: inputs.publish
-              run: |
-                  if [ "${{ inputs.channel }}" = "stable" ]; then
-                      src="CHANGELOG.md"
-                  else
-                      src="CHANGELOG-beta.md"
-                  fi
-                  notes=$(awk '/^## /{if(n++)exit;next} 1' "$src" | sed '/^<!--/,/-->/d' | sed '/./,$!d' | sed -e :a -e '/^\n*$/{$d;N;ba}')
-                  if [ -z "$notes" ]; then
-                      notes="No changelog provided."
-                  fi
-                  echo "$notes" > .release-notes.md
-
-            - name: Sync build version into manifests
-              run: |
-                  build_version="${{ steps.meta.outputs.build_version }}"
-                  node <<'NODE'
-                  const fs = require('node:fs');
-                  const buildVersion = process.env.BUILD_VERSION;
-
-                  const tauriPath = './src-tauri/tauri.conf.json';
-                  const tauri = JSON.parse(fs.readFileSync(tauriPath, 'utf8'));
-                  tauri.version = buildVersion;
-                  fs.writeFileSync(tauriPath, `${JSON.stringify(tauri, null, 2)}\n`);
-
-                  const cargoPath = './src-tauri/Cargo.toml';
-                  const cargo = fs.readFileSync(cargoPath, 'utf8');
-                  const cargoVersionPattern =
-                      /(^\[package\][\s\S]*?^version\s*=\s*)"[^"]+"/m;
-                  if (!cargoVersionPattern.test(cargo)) {
-                      throw new Error('Failed to update src-tauri/Cargo.toml package version');
-                  }
-                  const updatedCargo = cargo.replace(
-                      cargoVersionPattern,
-                      `$1"${buildVersion}"`
-                  );
-                  fs.writeFileSync(cargoPath, updatedCargo);
-
-                  const lockPath = './src-tauri/Cargo.lock';
-                  if (fs.existsSync(lockPath)) {
-                      const lock = fs.readFileSync(lockPath, 'utf8');
-                      const lockVersionPattern =
-                          /(\[\[package\]\]\r?\nname = "vrcx-0"\r?\nversion = )"[^"]+"/;
-                      if (!lockVersionPattern.test(lock)) {
-                          throw new Error('Failed to update src-tauri/Cargo.lock package version');
-                      }
-                      const updatedLock = lock.replace(
-                          lockVersionPattern,
-                          `$1"${buildVersion}"`
-                      );
-                      fs.writeFileSync(lockPath, updatedLock);
-                  }
-                  NODE
-              env:
-                  BUILD_VERSION: ${{ steps.meta.outputs.build_version }}
 
             - uses: dtolnay/rust-toolchain@stable
 
             - uses: actions/setup-node@v6
               with:
-                  node-version: lts/*
+                  node-version: 24.x
                   cache: npm
 
             - uses: Swatinem/rust-cache@v2
               with:
                   workspaces: src-tauri -> target
 
+            - name: Install Linux dependencies
+              if: runner.os == 'Linux'
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y \
+                      build-essential \
+                      curl \
+                      file \
+                      libayatana-appindicator3-dev \
+                      librsvg2-dev \
+                      libssl-dev \
+                      libwebkit2gtk-4.1-dev \
+                      libxdo-dev \
+                      patchelf \
+                      wget
+
             - run: npm ci
-            - run: npm run tauri:build
 
-            - name: Rename NSIS installer
-              shell: pwsh
+            - id: version
+              name: Prepare release version
               run: |
-                  $nsisDir = "src-tauri/target/release/bundle/nsis"
-                  $original = Get-ChildItem "$nsisDir/*.exe" | Select-Object -First 1
-                  if ($original) {
-                      $newName = "VRCX-0_${{ steps.meta.outputs.display_version }}_windows_x64-setup.exe"
-                      Rename-Item $original.FullName -NewName $newName
-                  }
+                  node build-scripts/prepare-release-version.js \
+                      --channel "${{ inputs.channel }}" \
+                      --beta-number "${{ inputs.beta_number }}" \
+                      --alpha-number "${{ inputs.alpha_number }}"
 
-            - name: Package portable zip
-              shell: pwsh
-              run: |
-                  $zipDir = "src-tauri/target/release/bundle/zip"
-                  $packageDir = Join-Path $zipDir "VRCX-0"
-                  $zipPath = Join-Path $zipDir "VRCX-0_${{ steps.meta.outputs.display_version }}_windows_x64-portable.zip"
-                  if (Test-Path $packageDir) {
-                      Remove-Item $packageDir -Recurse -Force
-                  }
-                  New-Item -ItemType Directory -Force -Path $zipDir | Out-Null
-                  New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
-                  Copy-Item "src-tauri/target/release/VRCX-0.exe" -Destination (Join-Path $packageDir "VRCX-0.exe")
-                  Copy-Item "README.md" -Destination (Join-Path $packageDir "README.md")
-                  Copy-Item "LICENSE" -Destination (Join-Path $packageDir "LICENSE")
-                  Copy-Item "LICENSE-MIT" -Destination (Join-Path $packageDir "LICENSE-MIT")
-                  New-Item -ItemType Directory -Force -Path (Join-Path $packageDir "licenses") | Out-Null
-                  Copy-Item "src-tauri/resources/licenses/THIRD_PARTY_NOTICES.txt" -Destination (Join-Path $packageDir "THIRD_PARTY_NOTICES.txt")
-                  Copy-Item "src-tauri/resources/licenses/THIRD_PARTY_NOTICES.txt" -Destination (Join-Path $packageDir "licenses/THIRD_PARTY_NOTICES.txt")
-                  if (Test-Path $zipPath) {
-                      Remove-Item $zipPath -Force
-                  }
-                  Compress-Archive -Path $packageDir -DestinationPath $zipPath
+            - name: Build package
+              run: ${{ matrix.build_command }}
 
-            - name: Upload NSIS installer
-              uses: actions/upload-artifact@v7
+            - uses: actions/upload-artifact@v7
               with:
-                  name: VRCX-0-installer
-                  path: src-tauri/target/release/bundle/nsis/*.exe
-
-            - name: Upload portable zip
-              uses: actions/upload-artifact@v7
-              with:
-                  name: VRCX-0-zip
-                  path: src-tauri/target/release/bundle/zip/*.zip
-
-            - name: Create GitHub Release
-              if: inputs.publish
-              uses: softprops/action-gh-release@v2
-              with:
-                  tag_name: ${{ steps.meta.outputs.tag }}
-                  name: ${{ steps.meta.outputs.name }}
-                  prerelease: ${{ steps.meta.outputs.prerelease }}
-                  body_path: .release-notes.md
-                  files: |
-                      src-tauri/target/release/bundle/nsis/*.exe
-                      src-tauri/target/release/bundle/zip/*.zip
+                  name: VRCX-0_${{ steps.version.outputs.display_version }}_${{ matrix.artifact_name }}
+                  path: ${{ matrix.artifact_path }}
+                  if-no-files-found: error

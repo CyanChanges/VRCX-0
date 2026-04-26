@@ -765,6 +765,8 @@ async function checkAutoBackupRestoreVrcRegistry() {
 }
 
 async function checkForAppUpdate({ includeRegistryBackup = true } = {}) {
+    const hostPlatform = useRuntimeStore.getState().hostCapabilities.platform;
+    const canInstallUpdates = hostPlatform === 'windows';
     let autoUpdateMode = await configRepository.getString(
         'autoUpdateVRCX',
         'Auto Download'
@@ -775,9 +777,9 @@ async function checkForAppUpdate({ includeRegistryBackup = true } = {}) {
     }
 
     if (autoUpdateMode !== 'Off') {
-        const available = await backend.app
-            .CheckForUpdateExe()
-            .catch(() => false);
+        const available = canInstallUpdates
+            ? await backend.app.CheckForUpdateExe().catch(() => false)
+            : false;
         if (available) {
             useNotificationStore.getState().pushNotification({
                 level: 'info',
@@ -795,14 +797,21 @@ async function checkForAppUpdate({ includeRegistryBackup = true } = {}) {
                     'branch',
                     ''
                 );
-                const branch = sanitizeBranch(
-                    savedBranch || defaultBranchForVersion(VERSION || '')
-                );
+                const defaultBranch = defaultBranchForVersion(VERSION || '');
+                const sanitizedSavedBranch = sanitizeBranch(savedBranch);
+                const branch =
+                    defaultBranch !== 'Stable'
+                        ? defaultBranch
+                        : savedBranch
+                          ? sanitizedSavedBranch
+                          : defaultBranch;
                 if (branch !== savedBranch) {
                     await configRepository.setString('branch', branch);
                 }
 
-                const latestRelease = await fetchLatestBranchRelease(branch);
+                const latestRelease = await fetchLatestBranchRelease(branch, {
+                    requireInstallerAsset: canInstallUpdates
+                });
                 if (
                     latestRelease &&
                     hasUpdateForBranch(
@@ -822,7 +831,11 @@ async function checkForAppUpdate({ includeRegistryBackup = true } = {}) {
                         message: i18n.t('service.background_maintenance_service.generated_dynamic.version_value_is_available_on_the_value_branch', { value: displayVersion, value2: branch })
                     });
 
-                    if (autoUpdateMode === 'Auto Download') {
+                    if (!canInstallUpdates) {
+                        useRuntimeStore
+                            .getState()
+                            .setSystemHostOpen('updaterOpen', true);
+                    } else if (autoUpdateMode === 'Auto Download') {
                         useRuntimeStore.getState().setUpdateLoopState({
                             lastUpdaterCheckAt: new Date().toISOString(),
                             lastUpdaterCheckDetail: i18n.t(

@@ -104,6 +104,9 @@ export function AppTitleBar() {
     const setSystemHostOpen = useRuntimeStore(
         (state) => state.setSystemHostOpen
     );
+    const hostPlatform = useRuntimeStore(
+        (state) => state.hostCapabilities.platform
+    );
     const rightSidebarOpen = useShellStore((state) => state.rightSidebarOpen);
     const toggleRightSidebar = useShellStore(
         (state) => state.toggleRightSidebar
@@ -152,7 +155,7 @@ export function AppTitleBar() {
     }, [isSessionReady, openDirectAccessFromClipboard]);
 
     useEffect(() => {
-        if (!isSessionReady) {
+        if (!isSessionReady || hostPlatform !== 'windows') {
             setHasPendingUpdate(false);
             return undefined;
         }
@@ -203,7 +206,7 @@ export function AppTitleBar() {
             window.clearInterval(intervalId);
             window.removeEventListener('focus', refreshPendingUpdate);
         };
-    }, [isSessionReady]);
+    }, [hostPlatform, isSessionReady]);
 
     async function runWindowAction(action, shouldSync = true) {
         try {

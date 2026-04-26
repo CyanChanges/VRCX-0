@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useTranslation } from 'react-i18next';
+import { openExternalLink } from '@/lib/entityMedia.js';
 import { userFacingErrorMessage } from '@/lib/errorDisplay.js';
 import { backend } from '@/platform/index.js';
 import {
@@ -10,6 +11,8 @@ import {
     formatReleaseDisplayVersion,
     sanitizeBranch
 } from '@/services/updateService.js';
+import { links } from '@/shared/constants/link.js';
+import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { Button } from '@/ui/shadcn/button';
 import {
     Dialog,
@@ -32,6 +35,10 @@ import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
 
 export function UpdaterDialog({ open, onOpenChange }) {
     const { t } = useTranslation();
+    const hostPlatform = useRuntimeStore(
+        (state) => state.hostCapabilities.platform
+    );
+    const canInstallUpdates = hostPlatform === 'windows';
 
     const cancelTokenRef = useRef(null);
     const [branch, setBranch] = useState(() =>
@@ -57,16 +64,22 @@ export function UpdaterDialog({ open, onOpenChange }) {
         setLoading(true);
         setDetail('Checking update state.');
 
-        backend.app
-            .CheckForUpdateExe()
-            .then((hasPendingInstall) => {
-                if (active) {
-                    setPendingInstall(Boolean(hasPendingInstall));
-                }
-            })
-            .catch(() => {});
+        if (canInstallUpdates) {
+            backend.app
+                .CheckForUpdateExe()
+                .then((hasPendingInstall) => {
+                    if (active) {
+                        setPendingInstall(Boolean(hasPendingInstall));
+                    }
+                })
+                .catch(() => {});
+        } else {
+            setPendingInstall(false);
+        }
 
-        fetchBranchReleases(branch)
+        fetchBranchReleases(branch, {
+            requireInstallerAsset: canInstallUpdates
+        })
             .then((nextReleases) => {
                 if (!active) {
                     return;
@@ -81,7 +94,11 @@ export function UpdaterDialog({ open, onOpenChange }) {
                         : nextReleases[0]?.canonicalVersion || ''
                 );
                 setDetail(
-                    nextReleases.length ? '' : 'No downloadable releases found.'
+                    nextReleases.length
+                        ? ''
+                        : canInstallUpdates
+                          ? 'No downloadable releases found.'
+                          : 'No releases found.'
                 );
             })
             .catch((error) => {
@@ -103,10 +120,10 @@ export function UpdaterDialog({ open, onOpenChange }) {
         return () => {
             active = false;
         };
-    }, [branch, open]);
+    }, [branch, canInstallUpdates, open]);
 
     async function handleDownload() {
-        if (!selectedRelease || downloading) {
+        if (!canInstallUpdates || !selectedRelease || downloading) {
             return;
         }
 
@@ -157,6 +174,10 @@ export function UpdaterDialog({ open, onOpenChange }) {
         void backend.app.RestartApplication(true);
     }
 
+    async function handleOpenReleasePage() {
+        await openExternalLink(selectedRelease?.htmlUrl || links.releases);
+    }
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
@@ -176,14 +197,15 @@ export function UpdaterDialog({ open, onOpenChange }) {
                             setBranch(sanitizeBranch(value))
                         }
                     >
-                        <TabsList className="grid w-full grid-cols-2">
+                        <TabsList className="grid w-full grid-cols-3">
                             <TabsTrigger value="Stable">
-                                {t(
-                                    'dialog.vrcx_updater.branch_stable'
-                                )}
+                                {t('dialog.vrcx_updater.branch_stable')}
                             </TabsTrigger>
                             <TabsTrigger value="Beta">
-                                {t('dialog.system.generated.beta')}
+                                {t('dialog.vrcx_updater.branch_beta')}
+                            </TabsTrigger>
+                            <TabsTrigger value="Alpha">
+                                {t('dialog.vrcx_updater.branch_alpha')}
                             </TabsTrigger>
                         </TabsList>
                     </Tabs>
@@ -214,7 +236,7 @@ export function UpdaterDialog({ open, onOpenChange }) {
                             </SelectGroup>
                         </SelectContent>
                     </Select>
-                    {downloading ? (
+                    {canInstallUpdates && downloading ? (
                         <div className="flex flex-col gap-2">
                             <div className="bg-muted h-2 overflow-hidden rounded-full">
                                 <div
@@ -229,7 +251,7 @@ export function UpdaterDialog({ open, onOpenChange }) {
                             </div>
                         </div>
                     ) : null}
-                    {pendingInstall ? (
+                    {canInstallUpdates && pendingInstall ? (
                         <div className="bg-muted/30 rounded-md border p-3 text-sm">
                             {t(
                                 'dialog.system.generated.an_update_is_downloaded_and_ready_to_install'
@@ -246,7 +268,7 @@ export function UpdaterDialog({ open, onOpenChange }) {
                     ) : null}
                 </FieldGroup>
                 <DialogFooter>
-                    {downloading ? (
+                    {canInstallUpdates && downloading ? (
                         <Button
                             type="button"
                             variant="outline"
@@ -255,22 +277,34 @@ export function UpdaterDialog({ open, onOpenChange }) {
                             {t('common.actions.cancel')}
                         </Button>
                     ) : null}
-                    <Button
-                        type="button"
-                        disabled={!selectedRelease || loading || downloading}
-                        onClick={() => void handleDownload()}
-                    >
-                        {t('dialog.vrcx_updater.download')}
-                    </Button>
-                    <Button
-                        type="button"
-                        disabled={downloading || !pendingInstall}
-                        onClick={handleInstall}
-                    >
-                        {t(
-                            'dialog.system.generated.install_and_restart'
-                        )}
-                    </Button>
+                    {canInstallUpdates ? (
+                        <>
+                            <Button
+                                type="button"
+                                disabled={
+                                    !selectedRelease || loading || downloading
+                                }
+                                onClick={() => void handleDownload()}
+                            >
+                                {t('dialog.vrcx_updater.download')}
+                            </Button>
+                            <Button
+                                type="button"
+                                disabled={downloading || !pendingInstall}
+                                onClick={handleInstall}
+                            >
+                                {t('dialog.system.generated.install_and_restart')}
+                            </Button>
+                        </>
+                    ) : (
+                        <Button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => void handleOpenReleasePage()}
+                        >
+                            {t('nav_menu.update')}
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>

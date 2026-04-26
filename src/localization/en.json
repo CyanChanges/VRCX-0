@@ -3841,6 +3841,7 @@
             "ready_for_update": "Ready for install, restart VRCX-0 to apply",
             "branch_stable": "Stable",
             "branch_beta": "Beta",
+            "branch_alpha": "Alpha",
             "beta_title": "Beta builds",
             "beta_notice": "Beta builds are for testing. For stability, use stable build",
             "release": "Release",
