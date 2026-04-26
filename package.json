@@ -15,6 +15,7 @@
         "dev": "vite",
         "tauri:dev": "tauri dev --features devtools",
         "tauri:build": "tauri build",
+        "tauri:build:devtools": "tauri build --features devtools",
         "format": "oxfmt .",
         "format:check": "oxfmt --check .",
         "lint": "npm run lint:oxlint",
