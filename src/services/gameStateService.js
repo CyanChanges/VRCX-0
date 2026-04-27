@@ -12,7 +12,8 @@ import {
 } from '@/services/gameLogIngestService.js';
 import {
     isHostCapabilityAvailable,
-    requireHostCapability
+    isHostCapabilitySupported,
+    requireHostCapabilitySupported
 } from '@/services/hostCapabilityService.js';
 import { showSQLiteErrorDialog } from '@/services/sqliteErrorDialogService.js';
 import { isRealInstance } from '@/shared/utils/instance.js';
@@ -58,7 +59,7 @@ function buildLaunchUrl(location) {
 }
 
 async function launchVrchat(location, desktopMode) {
-    requireHostCapability('gameLaunch');
+    requireHostCapabilitySupported('gameLaunch');
     const args = [buildLaunchUrl(location)];
     const launchArguments = await configRepository.getString(
         'launchArguments',
@@ -145,7 +146,7 @@ async function sweepVrchatCacheIfEnabled() {
 }
 
 async function scheduleCrashRelaunchIfNeeded(previousGameState) {
-    if (!isHostCapabilityAvailable('gameLaunch')) {
+    if (!isHostCapabilitySupported('gameLaunch')) {
         return;
     }
 

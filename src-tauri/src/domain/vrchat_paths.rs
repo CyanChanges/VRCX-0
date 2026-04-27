@@ -145,6 +145,40 @@ pub fn discover_linux_vrchat_paths() -> Result<LinuxVrchatPaths, String> {
     Err("VRChat Proton prefix not found".into())
 }
 
+pub fn discover_linux_vrchat_log_paths() -> Result<LinuxVrchatPaths, String> {
+    let paths = discover_linux_vrchat_paths()?;
+    if paths.latest_log.is_some() {
+        Ok(paths)
+    } else {
+        Err("VRChat output log path not found".into())
+    }
+}
+
+pub fn discover_linux_game_launch() -> Result<(), String> {
+    if linux_command_in_path("steam") {
+        return Ok(());
+    }
+
+    if !linux_steam_sh_candidates().is_empty() {
+        return Ok(());
+    }
+
+    Err("Steam launcher not found".into())
+}
+
+pub fn discover_linux_screenshot_cache() -> Result<(), String> {
+    discover_linux_vrchat_paths()
+        .map_err(|reason| format!("VRChat photos path discovery failed: {reason}"))?;
+
+    let roots = discover_linux_steam_roots()
+        .map_err(|reason| format!("Steam userdata discovery failed: {reason}"))?;
+    if roots.iter().any(|root| root.join("userdata").is_dir()) {
+        return Ok(());
+    }
+
+    Err("Steam userdata path not found".into())
+}
+
 pub fn linux_command_in_path(command: &str) -> bool {
     let Some(path_var) = std::env::var_os("PATH") else {
         return false;

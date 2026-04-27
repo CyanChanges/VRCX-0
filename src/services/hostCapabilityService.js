@@ -12,6 +12,7 @@ const HOST_CAPABILITY_KEYS = Object.freeze([
     'registryPrefs',
     'gameLaunch',
     'ipc',
+    'vrchatLaunchPipe',
     'screenshotCache'
 ]);
 
@@ -93,12 +94,25 @@ export async function initializeHostCapabilities() {
     }
 }
 
+export async function refreshHostCapabilities() {
+    const capabilities = normalizeHostCapabilities(
+        await backend.app.GetHostCapabilities()
+    );
+    useRuntimeStore.getState().setHostCapabilities(capabilities);
+    return capabilities;
+}
+
 export function getHostCapabilityStatus(key) {
     return useRuntimeStore.getState().hostCapabilities?.[key] || null;
 }
 
 export function isHostCapabilityAvailable(key) {
     return Boolean(getHostCapabilityStatus(key)?.available);
+}
+
+export function isHostCapabilitySupported(key) {
+    const status = getHostCapabilityStatus(key);
+    return Boolean(status?.supported && status?.enabled);
 }
 
 export function getHostCapabilityUnavailableReason(key) {
@@ -108,6 +122,13 @@ export function getHostCapabilityUnavailableReason(key) {
 
 export function requireHostCapability(key) {
     if (isHostCapabilityAvailable(key)) {
+        return;
+    }
+    throw new Error(getHostCapabilityUnavailableReason(key));
+}
+
+export function requireHostCapabilitySupported(key) {
+    if (isHostCapabilitySupported(key)) {
         return;
     }
     throw new Error(getHostCapabilityUnavailableReason(key));

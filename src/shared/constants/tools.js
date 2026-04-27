@@ -134,6 +134,7 @@ const toolDefinitions = [
         descriptionKey: 'view.tools.system_tools.launch_options_description',
         navEligible: true,
         requiredCapability: 'gameLaunch',
+        requiredCapabilityMode: 'supported',
         action: {
             type: 'store-action',
             target: 'launch',

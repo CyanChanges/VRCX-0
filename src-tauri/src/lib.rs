@@ -269,7 +269,7 @@ pub fn run() {
             }
 
             #[cfg(target_os = "linux")]
-            if is_host_capability_available(HostCapability::GameLogWatcher) {
+            if is_host_capability_available(HostCapability::VrchatPathDiscovery) {
                 match crate::domain::vrchat_paths::discover_linux_vrchat_paths() {
                     Ok(paths) => {
                         let latest_log = paths

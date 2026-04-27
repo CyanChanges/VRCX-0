@@ -7,7 +7,7 @@ import {
     resolveVrcLaunchUrl,
     tryOpenLaunchLocation
 } from '@/services/directAccessService.js';
-import { requireHostCapability } from '@/services/hostCapabilityService.js';
+import { requireHostCapabilitySupported } from '@/services/hostCapabilityService.js';
 import { getLaunchURL, isRealInstance } from '@/shared/utils/instance.js';
 import { parseLocation } from '@/shared/utils/location.js';
 import i18n from '@/services/i18nService.js';
@@ -151,7 +151,7 @@ export async function launchVrchat(
     desktopMode = false,
     endpoint = ''
 ) {
-    requireHostCapability('gameLaunch');
+    requireHostCapabilitySupported('gameLaunch');
     const launchUrl = await resolveVrcLaunchUrl(location, shortName, endpoint);
     const args = [launchUrl];
     const launchArguments = normalizeString(

@@ -70,7 +70,9 @@ pub fn append_error_log_entry(app_data: &Path, entry: &str) {
 
 fn append_error_log_unfiltered(app_data: &Path, entry: &str) -> std::io::Result<()> {
     let mutex = ERROR_LOG_MUTEX.get_or_init(|| Mutex::new(()));
-    let _guard = mutex.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    let _guard = mutex
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     std::fs::create_dir_all(app_data)?;
     let path = app_data.join(ERROR_LOG_FILE);

@@ -387,7 +387,11 @@ async function persistGameLog(gameLog, options = {}) {
 }
 
 export async function initializeGameLogIngest() {
-    if (ingestState.initialized) {
+    if (
+        ingestState.initialized &&
+        (!isHostCapabilityAvailable('gameLogWatcher') ||
+            ingestState.watcherInitialized)
+    ) {
         return;
     }
 
@@ -400,12 +404,14 @@ export async function initializeGameLogIngest() {
         if (!isHostCapabilityAvailable('gameLogWatcher')) {
             ingestState.tailCaughtUp = true;
             ingestState.initialized = true;
+            ingestState.watcherInitialized = false;
             return;
         }
         const dateTill = await gameLogRepository.getLastDateGameLogDatabase();
         await backend.logWatcher.SetDateTill(dateTill);
         ingestState.tailCaughtUp = false;
         ingestState.initialized = true;
+        ingestState.watcherInitialized = true;
     })();
 
     try {

@@ -5,6 +5,8 @@ pub mod error_log;
 pub mod image_cache;
 pub mod ipc;
 pub mod legacy_vrcx;
+#[cfg(target_os = "linux")]
+pub mod linux_registry;
 pub mod log_watcher;
 pub mod png;
 pub mod process_monitor;

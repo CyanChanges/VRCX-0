@@ -120,7 +120,7 @@ export async function tryOpenLaunchLocation(
     shortName = '',
     endpoint = ''
 ) {
-    if (!isHostCapabilityAvailable('ipc')) {
+    if (!isHostCapabilityAvailable('vrchatLaunchPipe')) {
         return false;
     }
 

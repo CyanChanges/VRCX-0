@@ -56,6 +56,7 @@ export interface HostCapabilities {
     registryPrefs: HostCapabilityStatus;
     gameLaunch: HostCapabilityStatus;
     ipc: HostCapabilityStatus;
+    vrchatLaunchPipe: HostCapabilityStatus;
     screenshotCache: HostCapabilityStatus;
 }
 

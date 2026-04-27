@@ -62,7 +62,15 @@ pub fn app__get_vrchat_registry_key(key: String) -> Result<serde_json::Value, Ap
         return Ok(serde_json::Value::Null);
     }
 
-    Ok(serde_json::Value::Null)
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::get_registry_key(&key).map_err(AppError::Custom);
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(serde_json::Value::Null)
+    }
 }
 
 #[tauri::command]
@@ -81,7 +89,14 @@ pub fn app__has_vrchat_registry_folder() -> Result<bool, AppError> {
         let hkcu = RegKey::predef(HKEY_CURRENT_USER);
         return Ok(hkcu.open_subkey("SOFTWARE\\VRChat\\VRChat").is_ok());
     }
-    Ok(false)
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::has_registry_folder().map_err(AppError::Custom);
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -95,8 +110,16 @@ pub fn app__delete_vrchat_registry_folder() -> Result<(), AppError> {
         if let Ok(key) = hkcu.open_subkey("SOFTWARE\\VRChat") {
             let _ = key.delete_subkey_all("VRChat");
         }
+        return Ok(());
     }
-    Ok(())
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::delete_registry_folder().map_err(AppError::Custom);
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(())
+    }
 }
 
 #[tauri::command]
@@ -172,7 +195,16 @@ pub fn app__set_vrchat_registry_key(
         return Ok(true);
     }
 
-    Ok(false)
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::set_registry_key(&_key, &_value, _type_int)
+            .map_err(AppError::Custom);
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(false)
+    }
 }
 
 #[tauri::command]
@@ -236,7 +268,15 @@ pub fn app__get_vrchat_registry(
         return Ok(result);
     }
 
-    Ok(HashMap::new())
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::get_registry().map_err(AppError::Custom);
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(HashMap::new())
+    }
 }
 
 #[tauri::command]
@@ -311,8 +351,16 @@ pub fn app__set_vrchat_registry(_json: String) -> Result<(), AppError> {
                 _ => return Err(AppError::Custom(format!("unknown type: {vtype_int}"))),
             }
         }
+        return Ok(());
     }
-    Ok(())
+    #[cfg(target_os = "linux")]
+    {
+        return crate::domain::linux_registry::set_registry(&_json).map_err(AppError::Custom);
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    {
+        Ok(())
+    }
 }
 
 #[tauri::command]

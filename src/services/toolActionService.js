@@ -6,7 +6,8 @@ import { useRuntimeStore } from '@/state/runtimeStore.js';
 import i18n from '@/services/i18nService.js';
 import {
     getHostCapabilityUnavailableReason,
-    isHostCapabilityAvailable
+    isHostCapabilityAvailable,
+    isHostCapabilitySupported
 } from '@/services/hostCapabilityService.js';
 
 const toolRouteMap = {
@@ -25,6 +26,9 @@ const toolDialogHostMap = {
 };
 
 export function isToolCapabilityAvailable(tool) {
+    if (tool?.requiredCapabilityMode === 'supported') {
+        return isHostCapabilitySupported(tool.requiredCapability);
+    }
     return (
         !tool?.requiredCapability ||
         isHostCapabilityAvailable(tool.requiredCapability)

@@ -5,14 +5,43 @@ import { useSessionStore } from '@/state/sessionStore.js';
 
 import { ingestBackendGameLogEvent } from './gameLogIngestService.js';
 import { handleGameRunningUpdate } from './gameStateService.js';
-import { isHostCapabilityAvailable } from './hostCapabilityService.js';
+import {
+    isHostCapabilityAvailable,
+    refreshHostCapabilities
+} from './hostCapabilityService.js';
 import { handleIpcEvent } from './ipcEventService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 import { handleBrowserFocus } from './vrcStatusService.js';
 
 let gameLogIngestQueue = Promise.resolve();
 
+async function canIngestGameLogEvent() {
+    if (isHostCapabilityAvailable('gameLogWatcher')) {
+        return true;
+    }
+
+    const capabilities = useRuntimeStore.getState().hostCapabilities;
+    if (
+        capabilities?.platform !== 'linux' ||
+        !capabilities?.vrchatPathDiscovery?.available
+    ) {
+        return false;
+    }
+
+    try {
+        const refreshed = await refreshHostCapabilities();
+        return Boolean(refreshed?.gameLogWatcher?.available);
+    } catch (error) {
+        console.warn('Failed to refresh GameLog capability:', error);
+        return false;
+    }
+}
+
 async function ingestAndRecordGameLogEvent(name, payload) {
+    if (!(await canIngestGameLogEvent())) {
+        return;
+    }
+
     try {
         await ingestBackendGameLogEvent(payload);
         useRuntimeStore.getState().recordBackendEvent(name, payload);
@@ -30,9 +59,6 @@ function handleBackendEvent(name, payload) {
     const runtimeStore = useRuntimeStore.getState();
 
     if (name === 'addGameLogEvent') {
-        if (!isHostCapabilityAvailable('gameLogWatcher')) {
-            return;
-        }
         gameLogIngestQueue = gameLogIngestQueue.then(
             () => ingestAndRecordGameLogEvent(name, payload),
             () => ingestAndRecordGameLogEvent(name, payload)

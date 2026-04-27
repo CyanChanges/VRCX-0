@@ -8,13 +8,38 @@ import {
 import { syncGameLogTail } from './gameLogIngestService.js';
 import {
     getHostCapabilityUnavailableReason,
-    isHostCapabilityAvailable
+    isHostCapabilityAvailable,
+    refreshHostCapabilities
 } from './hostCapabilityService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
 import i18n from './i18nService.js';
 
 let updateLoopTimer = null;
+let lastGameLogCapabilityRefreshAt = 0;
 let stopped = true;
+
+async function refreshGameLogCapabilityIfPrewatching() {
+    const capabilities = useRuntimeStore.getState().hostCapabilities;
+    if (
+        capabilities?.platform !== 'linux' ||
+        capabilities?.gameLogWatcher?.available ||
+        !capabilities?.vrchatPathDiscovery?.available
+    ) {
+        return;
+    }
+
+    const now = Date.now();
+    if (now - lastGameLogCapabilityRefreshAt < 30000) {
+        return;
+    }
+
+    lastGameLogCapabilityRefreshAt = now;
+    try {
+        await refreshHostCapabilities();
+    } catch (error) {
+        console.warn('Failed to refresh host capabilities:', error);
+    }
+}
 
 async function tickRuntimeLoop() {
     if (stopped) {
@@ -31,6 +56,7 @@ async function tickRuntimeLoop() {
     });
 
     try {
+        await refreshGameLogCapabilityIfPrewatching();
         const gameLogAvailable = isHostCapabilityAvailable('gameLogWatcher');
         if (gameLogAvailable) {
             await syncGameLogTail();

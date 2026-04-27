@@ -5,6 +5,7 @@ import { normalizeString } from './parsing.js';
 const ingestState = {
     initialized: false,
     initializing: null,
+    watcherInitialized: false,
     syncing: false,
     tailCaughtUp: false,
     currentLocation: '',

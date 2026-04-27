@@ -56,6 +56,7 @@ const HOST_CAPABILITY_KEYS = Object.freeze([
     'registryPrefs',
     'gameLaunch',
     'ipc',
+    'vrchatLaunchPipe',
     'screenshotCache'
 ]);
 

@@ -3,7 +3,8 @@ import { toast } from 'sonner';
 
 import {
     getHostCapabilityUnavailableReason,
-    isHostCapabilityAvailable
+    isHostCapabilityAvailable,
+    isHostCapabilitySupported
 } from '@/services/hostCapabilityService.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 
@@ -40,12 +41,21 @@ export function SystemDialogsHost() {
     useEffect(() => {
         const guards = [
             ['registryBackupOpen', registryBackupOpen, 'registryPrefs'],
-            ['launchOptionsOpen', launchOptionsOpen, 'gameLaunch'],
+            [
+                'launchOptionsOpen',
+                launchOptionsOpen,
+                'gameLaunch',
+                'supported'
+            ],
             ['vrchatConfigOpen', vrchatConfigOpen, 'vrchatPathDiscovery']
         ];
 
-        for (const [hostKey, open, capability] of guards) {
-            if (open && !isHostCapabilityAvailable(capability)) {
+        for (const [hostKey, open, capability, mode] of guards) {
+            const usable =
+                mode === 'supported'
+                    ? isHostCapabilitySupported(capability)
+                    : isHostCapabilityAvailable(capability);
+            if (open && !usable) {
                 toast.error(getHostCapabilityUnavailableReason(capability));
                 setSystemHostOpen(hostKey, false);
             }

@@ -9,8 +9,10 @@ use crate::domain::vrchat_paths;
 use crate::error::AppError;
 use crate::state::AppState;
 
-use super::host_capabilities::{require_host_capability, HostCapability};
-#[cfg(not(target_os = "linux"))]
+use super::host_capabilities::{
+    require_host_capability, require_host_capability_supported, HostCapability,
+};
+#[cfg(target_os = "windows")]
 use super::paths::get_steam_path;
 
 #[tauri::command]
@@ -43,7 +45,7 @@ pub fn app__is_steamvr_running(state: State<'_, AppState>) -> Result<bool, AppEr
 
 #[tauri::command]
 pub fn app__quit_game() -> Result<i32, AppError> {
-    require_host_capability(HostCapability::GameLaunch)?;
+    require_host_capability_supported(HostCapability::GameLaunch)?;
     use sysinfo::System;
     let mut sys = System::new();
     sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
@@ -70,13 +72,28 @@ pub fn app__start_game(arguments: String) -> Result<bool, AppError> {
         return start_game_linux(&arguments);
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
     {
         start_game_windows(&arguments)
     }
+
+    #[cfg(target_os = "macos")]
+    {
+        Err(AppError::Custom(
+            "Game launch is not supported on macOS".into(),
+        ))
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+    {
+        Err(AppError::Custom(format!(
+            "Game launch is not supported on {}",
+            super::host_capabilities::current_platform()
+        )))
+    }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "windows")]
 fn start_game_windows(arguments: &str) -> Result<bool, AppError> {
     let steam_path = get_steam_path();
     if steam_path.is_empty() {
@@ -132,7 +149,7 @@ fn spawn_steam_app_launch(program: PathBuf, arguments: &str) -> Result<(), AppEr
 
 #[tauri::command]
 pub fn app__start_game_from_path(path: String, arguments: String) -> Result<bool, AppError> {
-    require_host_capability(HostCapability::GameLaunch)?;
+    require_host_capability_supported(HostCapability::GameLaunch)?;
     #[cfg(target_os = "linux")]
     {
         let steam_sh = PathBuf::from(&path).join("steam.sh");
@@ -144,7 +161,7 @@ pub fn app__start_game_from_path(path: String, arguments: String) -> Result<bool
         return Ok(true);
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
     {
         let launch_exe = PathBuf::from(&path).join("launch.exe");
         if !launch_exe.exists() {
@@ -159,5 +176,20 @@ pub fn app__start_game_from_path(path: String, arguments: String) -> Result<bool
             .map_err(|e| AppError::Custom(format!("start game: {e}")))?;
 
         Ok(true)
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Err(AppError::Custom(
+            "Game launch is not supported on macOS".into(),
+        ))
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
+    {
+        Err(AppError::Custom(format!(
+            "Game launch is not supported on {}",
+            super::host_capabilities::current_platform()
+        )))
     }
 }
