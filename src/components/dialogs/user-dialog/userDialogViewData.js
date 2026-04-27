@@ -21,6 +21,19 @@ import {
     normalizeProfileLanguageRows
 } from './userProfileFields.js';
 
+function optionalFiniteCount(...values) {
+    for (const value of values) {
+        if (value === undefined || value === null || value === '') {
+            continue;
+        }
+        const count = Number(value);
+        if (Number.isFinite(count) && count >= 0) {
+            return count;
+        }
+    }
+    return undefined;
+}
+
 export function buildUserDialogTabs({
     isCurrentUser,
     currentUserHasSharedConnectionsOptOut,
@@ -174,7 +187,6 @@ export function buildUserDialogProfileSummary({
     userStats,
     sortedProfileGroups,
     selectedUserGroups,
-    mutualFriends,
     isCurrentUser,
     vrchatConfigConstants,
     currentUserSnapshot
@@ -235,14 +247,11 @@ export function buildUserDialogProfileSummary({
         profile,
         languageOptionsMap
     );
-    const mutualFriendCount =
-        Number(
-            userStats.mutualFriendCount ??
-                profile.mutualFriendCount ??
-                profile.$mutualFriendCount ??
-                mutualFriends.length ??
-                0
-        ) || 0;
+    const mutualFriendCount = optionalFiniteCount(
+        userStats.mutualFriendCount,
+        profile.mutualFriendCount,
+        profile.$mutualFriendCount
+    );
     const friendNumber =
         Number(profile.$friendNumber ?? profile.friendNumber ?? 0) || 0;
 

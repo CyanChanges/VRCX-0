@@ -96,8 +96,8 @@ export function UserDialogTabsSection({
     const tabsWithCounts = tabs
         .filter((tab) => !tab.hidden)
         .map((tab) => {
-            const count = Number(tabCounts[tab.value] ?? 0);
-            return count > 0
+            const count = Number(tabCounts[tab.value]);
+            return Number.isFinite(count) && count >= 0
                 ? {
                       ...tab,
                       label: (

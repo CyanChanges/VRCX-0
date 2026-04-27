@@ -36,6 +36,19 @@ import { buildUserDialogProfileSummary } from './user-dialog/userDialogViewData.
 
 const VRC_PLUS_SUMMARY_SNAPSHOT = Object.freeze({ $isVRCPlus: true });
 
+function finiteTabCount(value) {
+    const count = Number(value);
+    return Number.isFinite(count) && count >= 0 ? count : undefined;
+}
+
+function loadedTabCount(status, rows) {
+    return status === 'ready' && Array.isArray(rows) ? rows.length : undefined;
+}
+
+function resolveTabCount(primary, fallback) {
+    return finiteTabCount(primary) ?? finiteTabCount(fallback);
+}
+
 export function UserDialogTabbedView({
     profile,
     memo,
@@ -163,6 +176,7 @@ export function UserDialogTabbedView({
         remoteData,
         remoteErrors,
         remoteStatus,
+        remoteTabCounts,
         search,
         selectedUserGroups,
         setGroupSort,
@@ -217,13 +231,13 @@ export function UserDialogTabbedView({
         userJoinCount,
         lastSeen,
         profileLanguages,
+        mutualFriendCount,
         friendNumber
     } = buildUserDialogProfileSummary({
         profile,
         userStats,
         sortedProfileGroups,
         selectedUserGroups,
-        mutualFriends,
         isCurrentUser,
         vrchatConfigConstants,
         currentUserSnapshot: isLocalUserVrcPlusSupporter
@@ -299,19 +313,41 @@ export function UserDialogTabbedView({
     const tabCounts = useMemo(
         () => ({
             'instance-history': previousInstances.length,
-            mutual: mutualFriends.length,
-            groups: profileGroups.length,
-            worlds: profileWorlds.length,
-            'favorite-worlds': favoriteWorlds.length,
-            avatars: profileAvatars.length
+            mutual: resolveTabCount(
+                loadedTabCount(remoteStatus.mutual, mutualFriends),
+                mutualFriendCount
+            ),
+            groups: resolveTabCount(
+                loadedTabCount(remoteStatus.groups, profileGroups),
+                remoteTabCounts.groups
+            ),
+            worlds: resolveTabCount(
+                loadedTabCount(remoteStatus.worlds, profileWorlds),
+                remoteTabCounts.worlds
+            ),
+            'favorite-worlds': resolveTabCount(
+                loadedTabCount(remoteStatus['favorite-worlds'], favoriteWorlds),
+                remoteTabCounts['favorite-worlds']
+            ),
+            avatars: resolveTabCount(
+                loadedTabCount(remoteStatus.avatars, profileAvatars),
+                remoteTabCounts.avatars
+            )
         }),
         [
             favoriteWorlds.length,
+            mutualFriendCount,
             mutualFriends.length,
             previousInstances.length,
             profileAvatars.length,
             profileGroups.length,
-            profileWorlds.length
+            profileWorlds.length,
+            remoteStatus.mutual,
+            remoteStatus.avatars,
+            remoteStatus['favorite-worlds'],
+            remoteStatus.groups,
+            remoteStatus.worlds,
+            remoteTabCounts
         ]
     );
     const isRecentDialogAction = (actionType) =>

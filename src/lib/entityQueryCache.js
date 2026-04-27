@@ -138,6 +138,12 @@ export const entityQueryPolicies = Object.freeze({
         retry: 1,
         refetchOnWindowFocus: false
     }),
+    userDialogTabCounts: Object.freeze({
+        staleTime: 10 * MINUTE,
+        gcTime: 10 * MINUTE,
+        retry: 1,
+        refetchOnWindowFocus: false
+    }),
     worldPersistData: Object.freeze({
         staleTime: 30 * MINUTE,
         gcTime: 120 * MINUTE,
@@ -227,6 +233,11 @@ export const queryKeys = Object.freeze({
         withEndpoint(['avatar', 'styles'], endpoint),
     representedGroup: (userId, endpoint = '') =>
         withEndpoint(['user', userId, 'representedGroup'], endpoint),
+    userDialogTabCounts: (params = {}, endpoint = '') =>
+        withEndpoint(
+            ['user', params.userId, 'dialogTabCounts', stableParams(params)],
+            endpoint
+        ),
     worldPersistData: ({ userId = '', worldId = '' } = {}, endpoint = '') =>
         withEndpoint(['world', worldId, 'persistData', userId], endpoint)
 });
