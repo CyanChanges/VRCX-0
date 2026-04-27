@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { checkCanInvite } from '@/shared/utils/invite.js';
 
 import { FRIENDS_LOCATIONS_SEGMENTS as SEGMENTS } from './friendsLocationsConfig.js';
+import { getFriendsLocationsDensityConfig } from './friendsLocationsDensity.js';
 import {
     buildSameInstanceGroups,
     normalizeFriendsLocationId as normalizeId,
@@ -24,11 +25,11 @@ import {
 export function useFriendsLocationsPageDerivedState({
     activeIds,
     activeSegment,
-    cardScale,
     collapsedFavoriteGroups,
     currentUserId,
     currentUserSnapshot,
     deferredSearchQuery,
+    density,
     favoriteFriendGroups,
     friendsById,
     gameState,
@@ -42,9 +43,12 @@ export function useFriendsLocationsPageDerivedState({
     scrollMetrics,
     showSameInstance,
     sidebarFavoritePrefs,
-    sidebarSortMethods,
-    spacingScale
+    sidebarSortMethods
 }) {
+    const densityConfig = useMemo(
+        () => getFriendsLocationsDensityConfig(density),
+        [density]
+    );
     const favoriteIds = useMemo(
         () => buildFavoriteIdSet(remoteFavoriteFriendIds, localFriendFavorites),
         [localFriendFavorites, remoteFavoriteFriendIds]
@@ -482,8 +486,8 @@ export function useFriendsLocationsPageDerivedState({
         rosterStatus === 'running' &&
         onlineFriends.length + activeFriends.length + offlineFriends.length ===
             0;
-    const cardGridGap = Math.max(6, (14 + (cardScale - 1) * 10) * spacingScale);
-    const cardGridMinWidth = Math.max(120, 220 * cardScale);
+    const cardGridGap = densityConfig.gridGap;
+    const cardGridMinWidth = densityConfig.gridMinWidth;
     const cardGridColumns = Math.max(
         1,
         Math.floor(
@@ -491,10 +495,7 @@ export function useFriendsLocationsPageDerivedState({
                 (cardGridMinWidth + cardGridGap)
         ) || 1
     );
-    const cardGridRowHeight = Math.max(
-        160,
-        150 * cardScale + 48 * spacingScale
-    );
+    const cardGridRowHeight = densityConfig.rowHeight;
     const cardRowHeight = cardGridRowHeight + cardGridGap;
     const virtualRows = useMemo(() => {
         const rows = [];
@@ -582,6 +583,7 @@ export function useFriendsLocationsPageDerivedState({
         canInviteFromCurrentLocation,
         canSendInvite,
         currentInviteLocation,
+        densityConfig,
         favoriteIds,
         friendsMap,
         hasVisibleSections,

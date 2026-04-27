@@ -96,14 +96,12 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         () => new Set()
     );
     const {
-        cardScale,
-        changeCardScalePreference,
+        changeDensityPreference,
         changeShowSameInstance,
-        changeSpacingScalePreference,
+        density,
         showSameInstance,
         sidebarFavoritePrefs,
-        sidebarSortMethods,
-        spacingScale
+        sidebarSortMethods
     } = useFriendsLocationsPreferences();
     const deferredSearchQuery = useDeferredValue(searchQuery);
     const scrollRef = useRef(null);
@@ -129,6 +127,7 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         canInviteFromCurrentLocation,
         canSendInvite,
         currentInviteLocation,
+        densityConfig,
         friendsMap,
         hasVisibleSections,
         isLoading,
@@ -138,11 +137,11 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
     } = useFriendsLocationsPageDerivedState({
         activeIds,
         activeSegment,
-        cardScale,
         collapsedFavoriteGroups,
         currentUserId,
         currentUserSnapshot,
         deferredSearchQuery,
+        density,
         favoriteFriendGroups,
         friendsById,
         gameState,
@@ -156,8 +155,7 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         scrollMetrics,
         showSameInstance,
         sidebarFavoritePrefs,
-        sidebarSortMethods,
-        spacingScale
+        sidebarSortMethods
     });
     const canBoop = Boolean(currentUserSnapshot?.isBoopingEnabled);
     const {
@@ -203,13 +201,11 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         segmentOptions,
         searchQuery,
         showSameInstance,
-        cardScale,
-        spacingScale,
+        density,
         setActiveSegment,
         setSearchQuery,
         changeShowSameInstance,
-        changeCardScalePreference,
-        changeSpacingScalePreference,
+        changeDensityPreference,
         scrollRef,
         isLoading,
         isError,
@@ -222,6 +218,7 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         cardGridMinWidth,
         cardGridColumns,
         cardGridRowHeight,
+        densityConfig,
         currentUserId,
         canUseFriendLocation,
         canSendInvite,

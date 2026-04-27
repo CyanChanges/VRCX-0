@@ -114,8 +114,7 @@ export function FriendsLocationCardItem({
     section,
     friend,
     currentUserId,
-    cardScale,
-    spacingScale,
+    densityConfig,
     canUseFriendLocation,
     canSendInvite,
     canBoop,
@@ -151,8 +150,7 @@ export function FriendsLocationCardItem({
             rawLocation={rawLocation}
             isTraveling={isTravelingLocation}
             travelingLocation={travelingLocation}
-            cardScale={cardScale}
-            spacingScale={spacingScale}
+            densityConfig={densityConfig}
             displayInstanceInfo={section.displayInstanceInfo !== false}
             canUseFriendLocation={
                 !friendIsCurrentUser && friendLocationAvailable

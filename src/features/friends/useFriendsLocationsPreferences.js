@@ -4,28 +4,14 @@ import { onPreferenceChanged } from '@/lib/preferenceEvents.js';
 import { configRepository } from '@/repositories/index.js';
 
 import { parseConfigArray } from './friendsLocationsConfig.js';
-
-function formatOptionValue(value) {
-    return Number(value)
-        .toFixed(2)
-        .replace(/\.00$/, '')
-        .replace(/(\.\d)0$/, '$1');
-}
-
-function parseScale(value, fallback) {
-    const parsed = Number.parseFloat(value);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function clampScale(value, min, max, fallback) {
-    const parsed = parseScale(value, fallback);
-    return Math.min(max, Math.max(min, parsed));
-}
+import {
+    DEFAULT_FRIENDS_LOCATIONS_DENSITY,
+    sanitizeFriendsLocationsDensity
+} from './friendsLocationsDensity.js';
 
 export function useFriendsLocationsPreferences() {
     const [showSameInstance, setShowSameInstance] = useState(false);
-    const [cardScale, setCardScale] = useState(1);
-    const [spacingScale, setSpacingScale] = useState(1);
+    const [density, setDensity] = useState(DEFAULT_FRIENDS_LOCATIONS_DENSITY);
     const [sidebarFavoritePrefs, setSidebarFavoritePrefs] = useState({
         isDivideByGroup: false,
         selectedGroups: [],
@@ -41,8 +27,10 @@ export function useFriendsLocationsPreferences() {
         let active = true;
 
         Promise.all([
-            configRepository.getString('FriendLocationCardScale', '1'),
-            configRepository.getString('FriendLocationCardSpacing', '1'),
+            configRepository.getString(
+                'FriendLocationDensity',
+                DEFAULT_FRIENDS_LOCATIONS_DENSITY
+            ),
             configRepository.getBool('FriendLocationShowSameInstance', false),
             configRepository.getBool('isSidebarDivideByFriendGroup', false),
             configRepository.getString('sidebarFavoriteGroups', '[]'),
@@ -56,8 +44,7 @@ export function useFriendsLocationsPreferences() {
         ])
             .then(
                 ([
-                    nextScale,
-                    nextSpacing,
+                    nextDensity,
                     nextShowSameInstance,
                     nextDivideByGroup,
                     nextSelectedGroups,
@@ -70,8 +57,7 @@ export function useFriendsLocationsPreferences() {
                         return;
                     }
 
-                    setCardScale(clampScale(nextScale, 0.5, 1, 1));
-                    setSpacingScale(clampScale(nextSpacing, 0.25, 1, 1));
+                    setDensity(sanitizeFriendsLocationsDensity(nextDensity));
                     setShowSameInstance(Boolean(nextShowSameInstance));
                     setSidebarFavoritePrefs({
                         isDivideByGroup: Boolean(nextDivideByGroup),
@@ -166,32 +152,18 @@ export function useFriendsLocationsPreferences() {
         void configRepository.setBool('FriendLocationShowSameInstance', nextValue);
     }
 
-    function changeCardScalePreference(value) {
-        const nextValue = clampScale(value, 0.5, 1, 1);
-        setCardScale(nextValue);
-        void configRepository.setString(
-            'FriendLocationCardScale',
-            formatOptionValue(nextValue)
-        );
-    }
-
-    function changeSpacingScalePreference(value) {
-        const nextValue = clampScale(value, 0.25, 1, 1);
-        setSpacingScale(nextValue);
-        void configRepository.setString(
-            'FriendLocationCardSpacing',
-            formatOptionValue(nextValue)
-        );
+    function changeDensityPreference(value) {
+        const nextValue = sanitizeFriendsLocationsDensity(value);
+        setDensity(nextValue);
+        void configRepository.setString('FriendLocationDensity', nextValue);
     }
 
     return {
-        cardScale,
-        changeCardScalePreference,
+        changeDensityPreference,
         changeShowSameInstance,
-        changeSpacingScalePreference,
+        density,
         showSameInstance,
         sidebarFavoritePrefs,
-        sidebarSortMethods,
-        spacingScale
+        sidebarSortMethods
     };
 }

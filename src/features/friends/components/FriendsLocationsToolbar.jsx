@@ -9,10 +9,12 @@ import {
     InputGroupInput
 } from '@/ui/shadcn/input-group';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
-import { Slider } from '@/ui/shadcn/slider';
 import { Switch } from '@/ui/shadcn/switch';
 import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
+import { ToggleGroup, ToggleGroupItem } from '@/ui/shadcn/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
+
+import { FRIENDS_LOCATIONS_DENSITY_OPTIONS } from '../friendsLocationsDensity.js';
 
 export function FriendsLocationsToolbar({ controller }) {
     const { t } = useTranslation();
@@ -21,13 +23,11 @@ export function FriendsLocationsToolbar({ controller }) {
         segmentOptions,
         searchQuery,
         showSameInstance,
-        cardScale,
-        spacingScale,
+        density,
         setActiveSegment,
         setSearchQuery,
         changeShowSameInstance,
-        changeCardScalePreference,
-        changeSpacingScalePreference
+        changeDensityPreference
     } = controller;
 
     return (
@@ -98,44 +98,38 @@ export function FriendsLocationsToolbar({ controller }) {
                         </Field>
                         <Field>
                             <FieldContent>
-                                <FieldLabel htmlFor="friends-locations-card-scale">
-                                    {t('view.friends_locations.scale')}
+                                <FieldLabel>
+                                    {t('view.friends_locations.density')}
                                 </FieldLabel>
                             </FieldContent>
-                            <Slider
-                                id="friends-locations-card-scale"
-                                min={0.5}
-                                max={1}
-                                step={0.01}
-                                value={[cardScale]}
-                                onValueChange={([value]) =>
-                                    changeCardScalePreference(value)
-                                }
-                            />
-                            <div className="text-muted-foreground text-sm">
-                                {Math.round(cardScale * 100)}%
-                            </div>
-                        </Field>
-
-                        <Field>
-                            <FieldContent>
-                                <FieldLabel htmlFor="friends-locations-card-spacing">
-                                    {t('view.friends_locations.spacing')}
-                                </FieldLabel>
-                            </FieldContent>
-                            <Slider
-                                id="friends-locations-card-spacing"
-                                min={0.25}
-                                max={1}
-                                step={0.05}
-                                value={[spacingScale]}
-                                onValueChange={([value]) =>
-                                    changeSpacingScalePreference(value)
-                                }
-                            />
-                            <div className="text-muted-foreground text-sm">
-                                {Math.round(spacingScale * 100)}%
-                            </div>
+                            <ToggleGroup
+                                type="single"
+                                variant="outline"
+                                size="sm"
+                                spacing={1}
+                                value={density}
+                                onValueChange={(nextValue) => {
+                                    if (nextValue) {
+                                        changeDensityPreference(nextValue);
+                                    }
+                                }}
+                                className="grid w-full grid-cols-3"
+                            >
+                                {FRIENDS_LOCATIONS_DENSITY_OPTIONS.map(
+                                    (option) => (
+                                        <ToggleGroupItem
+                                            key={option.value}
+                                            value={option.value}
+                                            aria-label={t(option.labelKey)}
+                                            className="w-full min-w-0 justify-center px-2"
+                                        >
+                                            <span className="truncate">
+                                                {t(option.labelKey)}
+                                            </span>
+                                        </ToggleGroupItem>
+                                    )
+                                )}
+                            </ToggleGroup>
                         </Field>
                     </FieldGroup>
                 </PopoverContent>

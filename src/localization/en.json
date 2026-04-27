@@ -454,6 +454,12 @@
             "search_placeholder": "Search friends",
             "spacing": "Spacing",
             "scale": "Scale",
+            "density": "Density",
+            "density_options": {
+                "standard": "Standard",
+                "compact": "Compact",
+                "dense": "Dense"
+            },
             "separate_same_instance_friends": "Separate Same Instance Friends",
             "loading_more": "Loading more..."
         },

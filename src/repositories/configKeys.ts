@@ -166,6 +166,7 @@ export const ConfigKeys = {
     MyAvatarsCardSpacing: { type: 'string', default: null },
     FriendLocationCardScale: { type: 'string', default: '1' },
     FriendLocationCardSpacing: { type: 'string', default: '1' },
+    FriendLocationDensity: { type: 'string', default: 'compact' },
     FriendLocationShowSameInstance: { type: 'bool', default: null },
     InstanceActivityBarWidth: { type: 'int', default: 25 },
     groupCalendarShowFeaturedEvents: { type: 'bool', default: false },

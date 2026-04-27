@@ -5,6 +5,12 @@ import {
     parseConfigArray,
     safeJsonParse
 } from './friendsLocationsConfig.js';
+import {
+    DEFAULT_FRIENDS_LOCATIONS_DENSITY,
+    FRIENDS_LOCATIONS_DENSITY_OPTIONS,
+    getFriendsLocationsDensityConfig,
+    sanitizeFriendsLocationsDensity
+} from './friendsLocationsDensity.js';
 
 describe('friends locations config helpers', () => {
     it('keeps the expected segment order for the page tabs', () => {
@@ -29,5 +35,34 @@ describe('friends locations config helpers', () => {
             'group_b'
         ]);
         expect(parseConfigArray('bad json')).toEqual([]);
+    });
+
+    it('normalizes fixed density options and exposes grid metrics', () => {
+        expect(DEFAULT_FRIENDS_LOCATIONS_DENSITY).toBe('compact');
+        expect(
+            FRIENDS_LOCATIONS_DENSITY_OPTIONS.map((option) => option.value)
+        ).toEqual(['standard', 'compact', 'dense']);
+        expect(sanitizeFriendsLocationsDensity('standard')).toBe('standard');
+        expect(sanitizeFriendsLocationsDensity('bad-value')).toBe('compact');
+
+        expect(getFriendsLocationsDensityConfig('standard')).toMatchObject({
+            value: 'standard',
+            avatarSize: 44,
+            gridMinWidth: 200,
+            rowHeight: 158,
+            locationLineClamp: 2,
+            statusLineClamp: 1,
+            showStatusDescription: true,
+            layout: 'card'
+        });
+        expect(getFriendsLocationsDensityConfig('dense')).toMatchObject({
+            value: 'dense',
+            avatarSize: 32,
+            gridMinWidth: 180,
+            rowHeight: 72,
+            locationLineClamp: 1,
+            showStatusDescription: false,
+            layout: 'item'
+        });
     });
 });

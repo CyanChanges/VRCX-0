@@ -25,9 +25,8 @@ export function FriendsLocationsVirtualList({ controller }) {
         cardGridMinWidth,
         cardGridColumns,
         cardGridRowHeight,
+        densityConfig,
         currentUserId,
-        cardScale,
-        spacingScale,
         canUseFriendLocation,
         canSendInvite,
         canBoop,
@@ -108,8 +107,7 @@ export function FriendsLocationsVirtualList({ controller }) {
                                             section={row.section}
                                             friend={friend}
                                             currentUserId={currentUserId}
-                                            cardScale={cardScale}
-                                            spacingScale={spacingScale}
+                                            densityConfig={densityConfig}
                                             canUseFriendLocation={
                                                 canUseFriendLocation
                                             }
