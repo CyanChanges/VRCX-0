@@ -18,6 +18,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/ui/shadcn/dropdown-menu';
+import {
+    ToggleGroup,
+    ToggleGroupItem
+} from '@/ui/shadcn/toggle-group';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { getGameLogLocationTarget } from '../gameLogRows.js';
@@ -183,16 +187,6 @@ function TypeFilterToggleGroup({
 }) {
     const { t } = useTranslation();
 
-    function toggleType(type) {
-        const nextTypes = selectedTypes.includes(type)
-            ? selectedTypes.filter((entry) => entry !== type)
-            : [...selectedTypes, type];
-
-        onSelectedTypesChange(
-            nextTypes.length === types.length ? [] : nextTypes
-        );
-    }
-
     return (
         <div className={className}>
             <Button
@@ -203,19 +197,25 @@ function TypeFilterToggleGroup({
             >
                 {t('view.search.avatar.all')}
             </Button>
-            {types.map((type) => (
-                <Button
-                    key={type}
-                    type="button"
-                    variant={
-                        selectedTypes.includes(type) ? 'default' : 'outline'
-                    }
-                    size="sm"
-                    onClick={() => toggleType(type)}
-                >
-                    {t(`view.game_log.filters.${type}`)}
-                </Button>
-            ))}
+            <ToggleGroup
+                type="multiple"
+                variant="outline"
+                size="sm"
+                spacing={1}
+                value={selectedTypes}
+                onValueChange={(nextTypes) => {
+                    onSelectedTypesChange(
+                        nextTypes.length === types.length ? [] : nextTypes
+                    );
+                }}
+                className="flex min-w-0 flex-wrap"
+            >
+                {types.map((type) => (
+                    <ToggleGroupItem key={type} value={type}>
+                        {t(`view.game_log.filters.${type}`)}
+                    </ToggleGroupItem>
+                ))}
+            </ToggleGroup>
         </div>
     );
 }

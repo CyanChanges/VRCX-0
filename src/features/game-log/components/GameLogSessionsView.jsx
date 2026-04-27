@@ -1,10 +1,5 @@
-import {
-    ChevronRightIcon,
-    LogInIcon,
-    LogOutIcon,
-    VideoIcon
-} from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronRightIcon } from 'lucide-react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Location } from '@/components/Location.jsx';
@@ -12,17 +7,22 @@ import { formatDateFilter, timeToText } from '@/lib/dateTime.js';
 import { cn } from '@/lib/utils.js';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger
+} from '@/ui/shadcn/collapsible';
 import { Spinner } from '@/ui/shadcn/spinner';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import {
-    countGameLogSessionEvent as countSessionEvent,
-    GAME_LOG_TYPE_LABELS as TYPE_LABELS,
     getGameLogSessionKey,
     resolveGameLogSessionDuration as resolveSessionDuration,
     resolveGameLogWorldTarget as resolveWorldTarget
 } from '../gameLogRows.js';
-import { SessionEventRow } from './GameLogSessionEventRow.jsx';
+import { SessionEventGroups } from './GameLogSessionEventRow.jsx';
+
+const DEFAULT_OPEN_SESSION_COUNT = 3;
 
 const GameLogSessionSegment = memo(function GameLogSessionSegment({
     sessionKey,
@@ -30,14 +30,11 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
     isLast,
     isLatest,
     isGameRunning,
-    collapsed = false,
-    onCollapsedChange
+    isOpen = false,
+    onOpenChange
 }) {
     const { t } = useTranslation();
     const worldTarget = resolveWorldTarget(session);
-    const joinedCount = countSessionEvent(session.events, 'OnPlayerJoined');
-    const leftCount = countSessionEvent(session.events, 'OnPlayerLeft');
-    const videoCount = countSessionEvent(session.events, 'VideoPlay');
     const durationMs = resolveSessionDuration(session);
     const sessionStartedAt = Date.parse(session?.created_at);
     const shouldShowLiveDuration =
@@ -56,9 +53,9 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
               ? timeToText(liveDurationMs)
               : '';
     const sessionLocation = session.location || '';
-    const toggleCollapsed = () => {
+    const handleOpenChange = (nextOpen) => {
         if (sessionKey) {
-            onCollapsedChange?.(sessionKey, !collapsed);
+            onOpenChange?.(sessionKey, nextOpen);
         }
     };
 
@@ -76,51 +73,34 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
     }, [shouldShowLiveDuration]);
 
     return (
-        <div className={cn('border-border border-b', isLast && 'border-b-0')}>
+        <Collapsible
+            open={isOpen}
+            onOpenChange={handleOpenChange}
+            className={cn('border-border border-b', isLast && 'border-b-0')}
+        >
             <div className="border-border bg-muted/80 sticky top-0 z-[5] border-b transition-colors">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    aria-expanded={!collapsed}
-                    aria-label={
-                        collapsed
-                            ? 'Expand game log session'
-                            : 'Collapse game log session'
-                    }
-                    className="hover:bg-muted absolute inset-0 z-0 h-full w-full rounded-none p-0"
-                    onClick={toggleCollapsed}
-                >
-                    <span className="sr-only">
-                        {collapsed
-                            ? 'Expand game log session'
-                            : 'Collapse game log session'}
-                    </span>
-                </Button>
-                <div className="pointer-events-none relative z-10 flex w-full items-center gap-2 px-3 py-2 text-left">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-expanded={!collapsed}
-                        aria-label={
-                            collapsed
-                                ? 'Expand game log session'
-                                : 'Collapse game log session'
-                        }
-                        className="pointer-events-auto -ml-1 size-6 shrink-0"
-                        onClick={(event) => {
-                            event.stopPropagation();
-                            toggleCollapsed();
-                        }}
-                    >
-                        <ChevronRightIcon
-                            data-icon="inline-start"
-                            className={cn(
-                                'text-muted-foreground shrink-0 transition-transform duration-150',
-                                !collapsed && 'rotate-90'
+                <div className="flex min-h-9 w-full items-center gap-2 px-3 py-1.5 text-left">
+                    <CollapsibleTrigger asChild>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-xs"
+                            aria-label={t(
+                                isOpen
+                                    ? 'view.game_log.sessions.collapse_session'
+                                    : 'view.game_log.sessions.expand_session'
                             )}
-                        />
-                    </Button>
+                            className="-ml-1 shrink-0"
+                        >
+                            <ChevronRightIcon
+                                data-icon="inline-start"
+                                className={cn(
+                                    'text-muted-foreground shrink-0 transition-transform duration-150',
+                                    isOpen && 'rotate-90'
+                                )}
+                            />
+                        </Button>
+                    </CollapsibleTrigger>
                     <div className="min-w-0 flex-1">
                         {sessionLocation ? (
                             <div className="flex min-w-0 items-center gap-1.5">
@@ -130,7 +110,7 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
                                     grouphint={session.groupName || ''}
                                     enableContextMenu
                                     stopPropagation
-                                    className="pointer-events-auto min-w-0 text-sm"
+                                    className="min-w-0 text-sm font-medium"
                                 />
                                 {durationText ? (
                                     <Tooltip>
@@ -154,9 +134,6 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
                             <span className="truncate text-sm" />
                         )}
                     </div>
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                        {formatDateFilter(session.created_at, 'long')}
-                    </span>
                     {!durationText && isLatest && isGameRunning ? (
                         <Badge
                             variant="outline"
@@ -165,65 +142,16 @@ const GameLogSessionSegment = memo(function GameLogSessionSegment({
                             {t('common.current_session')}
                         </Badge>
                     ) : null}
-                    <div className="text-muted-foreground ml-auto flex max-w-full min-w-0 shrink-0 items-center justify-end gap-2 text-xs">
-                        {session.events?.length ? (
-                            <>
-                                {joinedCount ? (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="flex items-center gap-0.5">
-                                                <LogInIcon className="size-3" />{' '}
-                                                {joinedCount}
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {TYPE_LABELS.OnPlayerJoined}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ) : null}
-                                {leftCount ? (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="flex items-center gap-0.5">
-                                                <LogOutIcon className="size-3" />{' '}
-                                                {leftCount}
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {TYPE_LABELS.OnPlayerLeft}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ) : null}
-                                {videoCount ? (
-                                    <Tooltip>
-                                        <TooltipTrigger asChild>
-                                            <span className="flex items-center gap-0.5">
-                                                <VideoIcon className="size-3" />{' '}
-                                                {videoCount}
-                                            </span>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            {TYPE_LABELS.VideoPlay}
-                                        </TooltipContent>
-                                    </Tooltip>
-                                ) : null}
-                            </>
-                        ) : null}
-                    </div>
+                    <span className="text-muted-foreground ml-auto shrink-0 text-xs">
+                        {formatDateFilter(session.created_at, 'long')}
+                    </span>
                 </div>
             </div>
 
-            {!collapsed && session.events?.length ? (
-                <div className="px-1 py-1">
-                    {session.events.map((event, index) => (
-                        <SessionEventRow
-                            key={`${event.type}:${event.created_at}:${event.userId || event.videoUrl || index}`}
-                            event={event}
-                        />
-                    ))}
-                </div>
-            ) : null}
-        </div>
+            <CollapsibleContent>
+                <SessionEventGroups events={session.events} />
+            </CollapsibleContent>
+        </Collapsible>
     );
 });
 
@@ -240,33 +168,21 @@ export function GameLogSessionsView({
     const scrollRef = useRef(null);
     const sentinelRef = useRef(null);
     const [autoFillAttempts, setAutoFillAttempts] = useState(0);
-    const [collapsedSessionIds, setCollapsedSessionIds] = useState(
-        () => new Set()
+    const [sessionOpenOverrides, setSessionOpenOverrides] = useState(
+        () => new Map()
     );
-    const sessionKeys = useMemo(
-        () =>
-            sessions
-                .map((session) => getGameLogSessionKey(session))
-                .filter(Boolean),
-        [sessions]
-    );
-    const handleSessionCollapsedChange = useCallback(
-        (sessionKey, nextCollapsed) => {
+    const handleSessionOpenChange = useCallback(
+        (sessionKey, nextOpen) => {
             if (!sessionKey) {
                 return;
             }
-            setCollapsedSessionIds((current) => {
-                const isCollapsed = current.has(sessionKey);
-                if (isCollapsed === nextCollapsed) {
+            setSessionOpenOverrides((current) => {
+                if (current.get(sessionKey) === nextOpen) {
                     return current;
                 }
 
-                const next = new Set(current);
-                if (nextCollapsed) {
-                    next.add(sessionKey);
-                } else {
-                    next.delete(sessionKey);
-                }
+                const next = new Map(current);
+                next.set(sessionKey, nextOpen);
                 return next;
             });
         },
@@ -276,24 +192,6 @@ export function GameLogSessionsView({
     useEffect(() => {
         setAutoFillAttempts(0);
     }, [autoFillKey]);
-
-    useEffect(() => {
-        setCollapsedSessionIds((current) => {
-            const nextKeys = new Set(sessionKeys);
-            let changed = false;
-            const nextCollapsedIds = new Set();
-
-            for (const key of current) {
-                if (nextKeys.has(key)) {
-                    nextCollapsedIds.add(key);
-                } else {
-                    changed = true;
-                }
-            }
-
-            return changed ? nextCollapsedIds : current;
-        });
-    }, [sessionKeys]);
 
     useEffect(() => {
         if (!hasMore || isLoadingMore || typeof onLoadMore !== 'function') {
@@ -370,6 +268,10 @@ export function GameLogSessionsView({
             >
                 {sessions.map((session, index) => {
                     const sessionKey = getGameLogSessionKey(session);
+                    const isOpen = sessionKey
+                        ? (sessionOpenOverrides.get(sessionKey) ??
+                          index < DEFAULT_OPEN_SESSION_COUNT)
+                        : index < DEFAULT_OPEN_SESSION_COUNT;
                     return (
                         <GameLogSessionSegment
                             key={sessionKey || `session:${index}`}
@@ -378,8 +280,8 @@ export function GameLogSessionsView({
                             isLatest={index === 0}
                             isLast={index === sessions.length - 1}
                             isGameRunning={isGameRunning}
-                            collapsed={collapsedSessionIds.has(sessionKey)}
-                            onCollapsedChange={handleSessionCollapsedChange}
+                            isOpen={isOpen}
+                            onOpenChange={handleSessionOpenChange}
                         />
                     );
                 })}

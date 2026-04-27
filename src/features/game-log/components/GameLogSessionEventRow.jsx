@@ -2,9 +2,8 @@ import {
     ChevronRightIcon,
     CopyIcon,
     ExternalLinkIcon,
-    LogInIcon,
-    LogOutIcon,
-    LogsIcon,
+    HeartIcon,
+    StarIcon,
     VideoIcon
 } from 'lucide-react';
 import { useState } from 'react';
@@ -16,6 +15,11 @@ import { cn } from '@/lib/utils.js';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
 import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger
+} from '@/ui/shadcn/collapsible';
+import {
     ContextMenu,
     ContextMenuContent,
     ContextMenuGroup,
@@ -24,232 +28,340 @@ import {
     ContextMenuTrigger
 } from '@/ui/shadcn/context-menu';
 
-import { GAME_LOG_TYPE_LABELS as TYPE_LABELS } from '../gameLogRows.js';
 import { normalizeId, openGameLogUser } from '../gameLogUserLookup.js';
 
-function renderSessionMember(member, t) {
-    const displayName = member?.displayName || '';
+const VIDEO_SOURCE_WITHOUT_LINK = new Set(['LSMedia', 'PopcornPalace']);
+
+function getEventLabel(event, t) {
+    if (event?.type === 'JoinGroup') {
+        return t('view.game_log.filters.OnPlayerJoined');
+    }
+    if (event?.type === 'LeftGroup') {
+        return t('view.game_log.filters.OnPlayerLeft');
+    }
+    return t(`view.game_log.filters.${event?.type}`, {
+        defaultValue: event?.type || ''
+    });
+}
+
+function normalizeSessionMember(member, fallbackCreatedAt = '') {
     const userId = normalizeId(member?.userId);
-    const canOpenUser = Boolean(userId || member?.displayName);
+    return {
+        created_at: member?.created_at || fallbackCreatedAt || '',
+        displayName: member?.displayName || '',
+        userId,
+        isFriend: Boolean(member?.isFriend),
+        isFavorite: Boolean(member?.isFavorite)
+    };
+}
+
+function getGroupMembers(event) {
+    if (Array.isArray(event?.members) && event.members.length > 0) {
+        return event.members.map((member) =>
+            normalizeSessionMember(member, event?.created_at)
+        );
+    }
+
+    if (event?.displayName || event?.userId) {
+        return [normalizeSessionMember(event, event?.created_at)];
+    }
+
+    return [];
+}
+
+function getGroupCount(event, members) {
+    if (members.length > 0) {
+        return members.length;
+    }
+    return Number.isFinite(event?.count) && event.count > 0 ? event.count : 0;
+}
+
+function AffinityBadges({ item }) {
+    const { t } = useTranslation();
+
+    if (!item?.isFriend) {
+        return null;
+    }
 
     return (
-        <div
-            key={`${userId}:${member?.created_at || displayName}`}
-            className="text-muted-foreground hover:bg-muted/30 flex items-center gap-1 rounded px-2 py-px text-sm"
-        >
-            {canOpenUser ? (
-                <Button
-                    type="button"
-                    variant="ghost"
-                    className="hover:text-primary h-auto p-0 text-sm"
-                    onClick={() => void openGameLogUser(member, t)}
-                >
-                    {displayName}
-                </Button>
+        <div className="flex shrink-0 items-center gap-1">
+            {item.isFavorite ? (
+                <Badge variant="secondary" className="h-4 px-1 text-[0.7rem]">
+                    <StarIcon data-icon="inline-start" />
+                    {t('view.game_log.sessions.favorite')}
+                </Badge>
             ) : (
-                <span>{displayName}</span>
+                <Badge variant="outline" className="h-4 px-1 text-[0.7rem]">
+                    <HeartIcon data-icon="inline-start" />
+                    {t('view.game_log.sessions.friend')}
+                </Badge>
             )}
-            {member?.isFriend ? (
-                <span>{member?.isFavorite ? '⭐' : '💚'}</span>
-            ) : null}
         </div>
     );
 }
 
-export function SessionEventRow({ event }) {
+function PlayerNameButton({ item }) {
     const { t } = useTranslation();
-    const isJoin =
-        event.type === 'OnPlayerJoined' || event.type === 'JoinGroup';
-    const isLeave = event.type === 'OnPlayerLeft' || event.type === 'LeftGroup';
-    const isVideo = event.type === 'VideoPlay';
-    const [isExpanded, setIsExpanded] = useState(false);
-    const userId = normalizeId(event?.userId);
-    const displayName = event?.displayName || '';
-    const eventLabel =
-        event.type === 'JoinGroup'
-            ? TYPE_LABELS.OnPlayerJoined
-            : event.type === 'LeftGroup'
-              ? TYPE_LABELS.OnPlayerLeft
-              : TYPE_LABELS[event.type] || event.type || '';
-    const EventIcon = isJoin
-        ? LogInIcon
-        : isLeave
-          ? LogOutIcon
-          : isVideo
-            ? VideoIcon
-            : LogsIcon;
-    const groupMembers = Array.isArray(event?.members) ? event.members : [];
-    const isGroup = event.type === 'JoinGroup' || event.type === 'LeftGroup';
-    const videoLabel =
-        event?.videoName ||
-        event?.videoUrl ||
-        event?.videoId ||
-        'Unknown Video';
-    const showVideoLink =
-        isVideo &&
-        event?.videoUrl &&
-        event.videoId !== 'LSMedia' &&
-        event.videoId !== 'PopcornPalace';
+    const displayName =
+        item?.displayName || t('view.game_log.sessions.unknown_user');
+    const canOpenUser = Boolean(item?.userId || item?.displayName);
 
-    if (isGroup) {
-        const count = groupMembers.length || event?.count || 0;
-
+    if (!canOpenUser) {
         return (
-            <div className="py-0.5">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    className="text-muted-foreground hover:bg-muted/50 flex min-h-7 w-full cursor-pointer items-center gap-1.5 rounded border-none bg-transparent px-2 py-0.5 text-left text-sm"
-                    onClick={() => setIsExpanded((current) => !current)}
-                >
-                    <span className="text-muted-foreground min-w-[5.5rem] shrink-0 text-xs tabular-nums">
-                        {formatDateFilter(event?.created_at, 'short')}
-                    </span>
-                    <div className="min-w-[7rem] shrink-0">
-                        <Badge
-                            variant="outline"
-                            className="text-muted-foreground justify-center"
-                        >
-                            {eventLabel}
-                        </Badge>
-                    </div>
-                    <span className="flex-1 font-medium">
-                        {count} {t('view.game_log.generated.player')}
-                        {count === 1 ? '' : 's'} {isJoin ? 'joined' : 'left'}
-                    </span>
-                    <ChevronRightIcon
-                        data-icon="inline-end"
-                        className={cn(
-                            'text-muted-foreground shrink-0 transition-transform duration-150',
-                            isExpanded && 'rotate-90'
-                        )}
-                    />
-                </Button>
-                {isExpanded ? (
-                    <div className="py-0.5 pb-1 pl-20">
-                        {groupMembers.map((member) =>
-                            renderSessionMember(member, t)
-                        )}
-                    </div>
-                ) : null}
-            </div>
+            <span className="text-muted-foreground min-w-0 truncate">
+                {displayName}
+            </span>
         );
     }
 
     return (
-        <div className={cn('py-0.5', isLeave && 'text-muted-foreground')}>
-            <div className="hover:bg-muted/50 flex min-h-7 items-center gap-1.5 rounded px-2 py-0.5 text-sm">
-                <span className="text-muted-foreground min-w-[5.5rem] shrink-0 text-xs tabular-nums">
-                    {formatDateFilter(event?.created_at, 'short')}
-                </span>
-                <div className="min-w-[7rem] shrink-0">
+        <Button
+            type="button"
+            variant="ghost"
+            className="hover:text-primary h-auto min-w-0 justify-start p-0 text-left font-normal"
+            onClick={() => void openGameLogUser(item, t)}
+        >
+            <span className="truncate">{displayName}</span>
+        </Button>
+    );
+}
+
+function PlayerActivityRow({ item, muted = false }) {
+    return (
+        <div
+            className={cn(
+                'hover:bg-muted/50 grid min-h-7 grid-cols-[5.5rem_minmax(0,1fr)_auto] items-center gap-2 rounded px-2 py-0.5 text-sm',
+                muted && 'text-muted-foreground'
+            )}
+        >
+            <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                {formatDateFilter(item?.created_at, 'short')}
+            </span>
+            <PlayerNameButton item={item} />
+            <AffinityBadges item={item} />
+        </div>
+    );
+}
+
+function SinglePlayerActivityRow({ event, muted = false }) {
+    const { t } = useTranslation();
+    const item = normalizeSessionMember(event, event?.created_at);
+
+    return (
+        <div
+            className={cn(
+                'hover:bg-muted/50 grid min-h-7 grid-cols-[5.5rem_7rem_minmax(0,1fr)_auto] items-center gap-2 rounded px-2 py-0.5 text-sm',
+                muted && 'text-muted-foreground'
+            )}
+        >
+            <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                {formatDateFilter(event?.created_at, 'short')}
+            </span>
+            <Badge
+                variant="outline"
+                className="justify-center text-muted-foreground"
+            >
+                {getEventLabel(event, t)}
+            </Badge>
+            <PlayerNameButton item={item} />
+            <AffinityBadges item={item} />
+        </div>
+    );
+}
+
+function GroupActivityRow({ event, isJoin }) {
+    const { t } = useTranslation();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const members = getGroupMembers(event);
+    const count = getGroupCount(event, members);
+    const label = getEventLabel(event, t);
+
+    return (
+        <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+            <CollapsibleTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="text-muted-foreground hover:bg-muted/50 grid min-h-7 w-full grid-cols-[5.5rem_7rem_minmax(0,1fr)_auto] items-center gap-2 rounded px-2 py-0.5 text-left text-sm"
+                >
+                    <span className="shrink-0 text-xs tabular-nums">
+                        {formatDateFilter(event?.created_at, 'short')}
+                    </span>
                     <Badge
                         variant="outline"
-                        className="text-muted-foreground justify-center"
+                        className="justify-center text-muted-foreground"
                     >
-                        {eventLabel}
+                        {label}
                     </Badge>
-                </div>
-
-                {isVideo ? (
-                    <ContextMenu>
-                        <ContextMenuTrigger asChild>
-                            <div className="flex min-w-0 flex-1 cursor-default items-center gap-1 truncate text-left">
-                                <VideoIcon className="shrink-0 text-xs" />
-                                {showVideoLink ? (
-                                    <Button
-                                        type="button"
-                                        variant="link"
-                                        className="text-foreground h-auto min-w-0 justify-start p-0 text-left font-normal"
-                                        onClick={(eventObject) => {
-                                            eventObject.stopPropagation();
-                                            void openExternalLink(
-                                                event.videoUrl
-                                            );
-                                        }}
-                                    >
-                                        <span className="truncate">
-                                            {videoLabel}
-                                        </span>
-                                    </Button>
-                                ) : (
-                                    <span className="truncate">
-                                        {videoLabel}
-                                    </span>
-                                )}
-                                {event?.playCount > 1 ? (
-                                    <Badge
-                                        variant="secondary"
-                                        className="h-4 shrink-0 px-1 text-xs"
-                                    >
-                                        {t(
-                                            'view.game_log.sessions.play_count',
-                                            { count: event.playCount }
-                                        )}
-                                    </Badge>
-                                ) : null}
-                            </div>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent>
-                            {showVideoLink ? (
-                                <>
-                                    <ContextMenuGroup>
-                                        <ContextMenuItem
-                                            onSelect={() =>
-                                                void openExternalLink(
-                                                    event.videoUrl
-                                                )
-                                            }
-                                        >
-                                            <ExternalLinkIcon data-icon="inline-start" />
-                                            {t('common.actions.open_link')}
-                                        </ContextMenuItem>
-                                    </ContextMenuGroup>
-                                    <ContextMenuSeparator />
-                                </>
-                            ) : null}
-                            <ContextMenuGroup>
-                                <ContextMenuItem
-                                    onSelect={() =>
-                                        void copyTextToClipboard(
-                                            event?.videoUrl || videoLabel
-                                        )
-                                    }
-                                >
-                                    <CopyIcon data-icon="inline-start" />
-                                    {t('common.actions.copy')}
-                                </ContextMenuItem>
-                            </ContextMenuGroup>
-                        </ContextMenuContent>
-                    </ContextMenu>
-                ) : (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        className={cn(
-                            'h-auto min-w-0 flex-1 justify-start gap-1 px-0 py-0 text-left font-normal',
-                            userId || event?.displayName
-                                ? 'cursor-pointer'
-                                : 'cursor-default'
+                    <span className="text-foreground min-w-0 truncate font-medium">
+                        {t(
+                            isJoin
+                                ? 'view.game_log.sessions.players_joined'
+                                : 'view.game_log.sessions.players_left',
+                            { count }
                         )}
-                        onClick={() => void openGameLogUser(event, t)}
-                    >
-                        <EventIcon data-icon="inline-start" />
-                        <span className="truncate">{displayName}</span>
-                        {event?.isFriend ? (
-                            <span className="ml-1">
-                                {event?.isFavorite ? '⭐' : '💚'}
-                            </span>
-                        ) : null}
-                    </Button>
-                )}
-
-                {isVideo && event?.displayName ? (
-                    <span className="text-muted-foreground shrink-0 text-xs">
-                        {event.displayName}
                     </span>
+                    <ChevronRightIcon
+                        data-icon="inline-end"
+                        className={cn(
+                            'shrink-0 transition-transform duration-150',
+                            isExpanded && 'rotate-90'
+                        )}
+                    />
+                </Button>
+            </CollapsibleTrigger>
+            {members.length ? (
+                <CollapsibleContent>
+                    <div className="pb-1 pl-20">
+                        {members.map((member, index) => (
+                            <PlayerActivityRow
+                                key={`${member.userId}:${member.created_at}:${member.displayName}:${index}`}
+                                item={member}
+                                muted={!isJoin}
+                            />
+                        ))}
+                    </div>
+                </CollapsibleContent>
+            ) : null}
+        </Collapsible>
+    );
+}
+
+function VideoActivityRow({ event }) {
+    const { t } = useTranslation();
+    const videoLabel =
+        event?.videoName ||
+        event?.videoUrl ||
+        event?.videoId ||
+        t('view.game_log.sessions.unknown_video');
+    const showVideoLink =
+        event?.videoUrl && !VIDEO_SOURCE_WITHOUT_LINK.has(event?.videoId);
+
+    return (
+        <ContextMenu>
+            <ContextMenuTrigger asChild>
+                <div className="hover:bg-muted/50 grid min-h-7 grid-cols-[5.5rem_7rem_minmax(0,1fr)_auto] items-center gap-2 rounded px-2 py-0.5 text-sm">
+                    <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
+                        {formatDateFilter(event?.created_at, 'short')}
+                    </span>
+                    <Badge
+                        variant="outline"
+                        className="justify-center text-muted-foreground"
+                    >
+                        {getEventLabel(event, t)}
+                    </Badge>
+                    <div className="flex min-w-0 items-center gap-1.5">
+                        <VideoIcon className="text-muted-foreground size-3.5 shrink-0" />
+                        {showVideoLink ? (
+                            <Button
+                                type="button"
+                                variant="link"
+                                className="text-foreground h-auto min-w-0 shrink justify-start p-0 text-left font-normal"
+                                onClick={(eventObject) => {
+                                    eventObject.stopPropagation();
+                                    void openExternalLink(event.videoUrl);
+                                }}
+                            >
+                                <span className="truncate">{videoLabel}</span>
+                            </Button>
+                        ) : (
+                            <span className="min-w-0 truncate">
+                                {videoLabel}
+                            </span>
+                        )}
+                        {event?.playCount > 1 ? (
+                            <Badge
+                                variant="secondary"
+                                className="h-4 shrink-0 px-1 text-xs"
+                            >
+                                {t('view.game_log.sessions.play_count', {
+                                    count: event.playCount
+                                })}
+                            </Badge>
+                        ) : null}
+                    </div>
+                    {event?.displayName ? (
+                        <span className="text-muted-foreground min-w-0 truncate text-xs">
+                            {t('view.game_log.sessions.played_by', {
+                                name: event.displayName
+                            })}
+                        </span>
+                    ) : null}
+                </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent>
+                {showVideoLink ? (
+                    <>
+                        <ContextMenuGroup>
+                            <ContextMenuItem
+                                onSelect={() =>
+                                    void openExternalLink(event.videoUrl)
+                                }
+                            >
+                                <ExternalLinkIcon data-icon="inline-start" />
+                                {t('common.actions.open_link')}
+                            </ContextMenuItem>
+                        </ContextMenuGroup>
+                        <ContextMenuSeparator />
+                    </>
                 ) : null}
-            </div>
+                <ContextMenuGroup>
+                    <ContextMenuItem
+                        onSelect={() =>
+                            void copyTextToClipboard(
+                                event?.videoUrl || videoLabel
+                            )
+                        }
+                    >
+                        <CopyIcon data-icon="inline-start" />
+                        {t('common.actions.copy')}
+                    </ContextMenuItem>
+                </ContextMenuGroup>
+            </ContextMenuContent>
+        </ContextMenu>
+    );
+}
+
+function SessionEventRow({ event }) {
+    const isJoin =
+        event?.type === 'OnPlayerJoined' || event?.type === 'JoinGroup';
+    const isLeave = event?.type === 'OnPlayerLeft' || event?.type === 'LeftGroup';
+
+    if (event?.type === 'JoinGroup' || event?.type === 'LeftGroup') {
+        return <GroupActivityRow event={event} isJoin={isJoin} />;
+    }
+
+    if (event?.type === 'VideoPlay') {
+        return <VideoActivityRow event={event} />;
+    }
+
+    if (isJoin || isLeave) {
+        return <SinglePlayerActivityRow event={event} muted={isLeave} />;
+    }
+
+    return null;
+}
+
+export function SessionEventGroups({ events }) {
+    const visibleEvents = (events ?? []).filter((event) =>
+        ['JoinGroup', 'LeftGroup', 'OnPlayerJoined', 'OnPlayerLeft', 'VideoPlay'].includes(
+            event?.type
+        )
+    );
+
+    if (!visibleEvents.length) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-col gap-0.5 px-2 py-1.5">
+            {visibleEvents.map((event, index) => (
+                <SessionEventRow
+                    key={`${event.type}:${event.created_at}:${event.userId || event.videoUrl || index}`}
+                    event={event}
+                />
+            ))}
         </div>
     );
 }

@@ -161,31 +161,60 @@ function sessionHeaderMatchesSearch(session, query) {
     );
 }
 
-function sessionEventMatchesSearch(event, query) {
+function sessionEventValueMatchesSearch(event, query) {
     if (!query) {
         return true;
     }
 
-    const values = [
+    return [
         event?.type,
         event?.displayName,
         event?.userId,
         event?.videoName,
         event?.videoUrl,
         event?.videoId
-    ];
-
-    if (Array.isArray(event?.members)) {
-        for (const member of event.members) {
-            values.push(member?.displayName, member?.userId);
-        }
-    }
-
-    return values.some((value) =>
+    ].some((value) =>
         String(value || '')
             .toLowerCase()
             .includes(query)
     );
+}
+
+function sessionMemberMatchesSearch(member, query) {
+    if (!query) {
+        return true;
+    }
+
+    return [member?.displayName, member?.userId].some((value) =>
+        String(value || '')
+            .toLowerCase()
+            .includes(query)
+    );
+}
+
+function filterSessionEventBySearch(event, query) {
+    if (!query) {
+        return event;
+    }
+
+    if (sessionEventValueMatchesSearch(event, query)) {
+        return event;
+    }
+
+    if (Array.isArray(event?.members)) {
+        const members = event.members.filter((member) =>
+            sessionMemberMatchesSearch(member, query)
+        );
+        if (members.length > 0) {
+            return {
+                ...event,
+                members,
+                count: members.length
+            };
+        }
+    }
+
+    return null;
 }
 
 function filterSessionEvents(
@@ -207,11 +236,15 @@ function filterSessionEvents(
             continue;
         }
 
-        if (!sessionEventMatchesSearch(favoriteFilteredEvent, searchQuery)) {
+        const searchFilteredEvent = filterSessionEventBySearch(
+            favoriteFilteredEvent,
+            searchQuery
+        );
+        if (!searchFilteredEvent) {
             continue;
         }
 
-        filteredEvents.push(favoriteFilteredEvent);
+        filteredEvents.push(searchFilteredEvent);
     }
 
     return filteredEvents;

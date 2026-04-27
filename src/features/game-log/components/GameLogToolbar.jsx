@@ -176,7 +176,7 @@ function GameLogSessionDateFilter({
 
 function GameLogSearchInput({ value, onChange, onCommit, onClear, t }) {
     return (
-        <InputGroup className="ml-auto w-60 shrink-0">
+        <InputGroup className="order-last w-full min-w-0 sm:order-none sm:ml-auto sm:w-60 sm:shrink-0">
             <InputGroupAddon>
                 <SearchIcon />
             </InputGroupAddon>
@@ -318,7 +318,7 @@ export function GameLogToolbar({
                             types={availableFilterTypes}
                             selectedTypes={queryFilterTypes}
                             onSelectedTypesChange={onSelectedTypesChange}
-                            className="flex shrink-0 items-center gap-1"
+                            className="flex min-w-0 flex-wrap items-center gap-1"
                         />
                     </>
                 )}

@@ -484,6 +484,16 @@
                 "players_joined": "{count} players joined",
                 "players_left": "{count} players left",
                 "play_count": "×{count}",
+                "joined": "Joined",
+                "left": "Left",
+                "videos": "Videos",
+                "friend": "Friend",
+                "favorite": "Favorite",
+                "unknown_user": "Unknown user",
+                "unknown_video": "Unknown video",
+                "played_by": "Played by {name}",
+                "expand_session": "Expand session",
+                "collapse_session": "Collapse session",
                 "no_data": "No game log data"
             },
             "generated": {
