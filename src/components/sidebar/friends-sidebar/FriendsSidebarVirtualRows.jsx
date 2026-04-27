@@ -123,7 +123,19 @@ function FriendsSidebarVirtualRow({
                     count={row.count}
                     open={row.open}
                     onToggle={onToggleSection}
-                />
+                >
+                    {(row.children || []).map((child) => (
+                        <FriendsSidebarVirtualRow
+                            key={child.key}
+                            row={child}
+                            context={context}
+                            rowActions={rowActions}
+                            onOpenFriend={onOpenFriend}
+                            onToggleSection={onToggleSection}
+                            t={t}
+                        />
+                    ))}
+                </FriendSectionHeader>
             );
         case 'favorite-group-header':
             return (

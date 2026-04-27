@@ -17,6 +17,11 @@ import { usePreferencesStore } from '@/state/preferencesStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { Button } from '@/ui/shadcn/button';
 import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger
+} from '@/ui/shadcn/collapsible';
+import {
     ContextMenu,
     ContextMenuContent,
     ContextMenuGroup,
@@ -33,7 +38,16 @@ const GROUP_FOOTER_ROW_SIZE = 16;
 function estimateGroupSidebarRowSize(row) {
     switch (row?.type) {
         case 'group-header':
-            return GROUP_HEADER_ROW_SIZE;
+            return (
+                GROUP_HEADER_ROW_SIZE +
+                (!row.isCollapsed
+                    ? (row.children || []).reduce(
+                          (total, child) =>
+                              total + estimateGroupSidebarRowSize(child),
+                          0
+                      )
+                    : 0)
+            );
         case 'message':
         case 'skeleton':
             return GROUP_MESSAGE_ROW_SIZE;
@@ -42,6 +56,42 @@ function estimateGroupSidebarRowSize(row) {
         default:
             return GROUP_INSTANCE_ROW_SIZE;
     }
+}
+
+function GroupHeaderRow({ children, row, onToggleGroup }) {
+    const isOpen = !row.isCollapsed;
+
+    return (
+        <Collapsible
+            open={isOpen}
+            onOpenChange={(nextOpen) => {
+                if (nextOpen !== isOpen) {
+                    onToggleGroup(row.groupId);
+                }
+            }}
+        >
+            <CollapsibleTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between aria-expanded:bg-transparent aria-expanded:text-inherit dark:aria-expanded:bg-transparent"
+                >
+                    <span className="min-w-0 flex-1 truncate text-left">
+                        {row.name} - {row.count}
+                    </span>
+                    <ChevronDownIcon
+                        data-icon="inline-end"
+                        className={cn(
+                            'transition-transform',
+                            !isOpen && '-rotate-90'
+                        )}
+                    />
+                </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>{children}</CollapsibleContent>
+        </Collapsible>
+    );
 }
 
 function firstGroupId(...values) {
@@ -401,6 +451,13 @@ export function GroupsSidebar() {
         groups.forEach(([groupId, groupRows], index) => {
             const name = resolveGroupName(groupRows[0], groupId);
             const isCollapsed = collapsedGroups.has(groupId);
+            const children = isCollapsed
+                ? []
+                : groupRows.map((instance, instanceIndex) => ({
+                      type: 'group-instance',
+                      key: `group:${groupId}:${resolveLocation(instance)}:${instanceIndex}`,
+                      instance
+                  }));
             nextRows.push({
                 type: 'group-header',
                 key: `group:${groupId}`,
@@ -408,17 +465,9 @@ export function GroupsSidebar() {
                 name,
                 count: groupRows.length,
                 isCollapsed,
-                first: index === 0
+                first: index === 0,
+                children
             });
-            if (!isCollapsed) {
-                groupRows.forEach((instance, instanceIndex) => {
-                    nextRows.push({
-                        type: 'group-instance',
-                        key: `group:${groupId}:${resolveLocation(instance)}:${instanceIndex}`,
-                        instance
-                    });
-                });
-            }
         });
 
         if (!groups.length) {
@@ -457,27 +506,14 @@ export function GroupsSidebar() {
         switch (row?.type) {
             case 'group-header':
                 return (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className={cn(
-                            'h-auto w-full justify-start px-0 py-1.5 text-left text-xs font-normal',
-                            row.first ? 'pt-0' : 'pt-4'
-                        )}
-                        onClick={() => toggleGroup(row.groupId)}
+                    <GroupHeaderRow
+                        row={row}
+                        onToggleGroup={toggleGroup}
                     >
-                        <ChevronDownIcon
-                            data-icon="inline-start"
-                            className={cn(
-                                'transition-transform',
-                                row.isCollapsed && '-rotate-90'
-                            )}
-                        />
-                        <span className="ml-1.5">
-                            {row.name} - {row.count}
-                        </span>
-                    </Button>
+                        {(row.children || []).map((child) => (
+                            <div key={child.key}>{renderVirtualRow(child)}</div>
+                        ))}
+                    </GroupHeaderRow>
                 );
             case 'message':
                 return (

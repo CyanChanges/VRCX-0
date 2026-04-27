@@ -2,6 +2,11 @@ import { ChevronDownIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils.js';
 import { Button } from '@/ui/shadcn/button';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger
+} from '@/ui/shadcn/collapsible';
 
 import { StaticSidebarLocation } from './FriendsSidebarLocation.jsx';
 
@@ -15,7 +20,16 @@ const SIDEBAR_FOOTER_ROW_SIZE = 16;
 export function estimateFriendSidebarRowSize(row) {
     switch (row?.type) {
         case 'section':
-            return SECTION_HEADER_ROW_SIZE;
+            return (
+                SECTION_HEADER_ROW_SIZE +
+                (row.open
+                    ? (row.children || []).reduce(
+                          (total, child) =>
+                              total + estimateFriendSidebarRowSize(child),
+                          0
+                      )
+                    : 0)
+            );
         case 'instance-header':
             return INSTANCE_HEADER_ROW_SIZE;
         case 'favorite-group-header':
@@ -30,26 +44,49 @@ export function estimateFriendSidebarRowSize(row) {
     }
 }
 
-export function FriendSectionHeader({ id, title, count, open, onToggle }) {
+export function FriendSectionHeader({
+    children,
+    id,
+    title,
+    count,
+    open,
+    onToggle
+}) {
+    const isOpen = Boolean(open);
+
     return (
-        <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-auto w-full justify-start px-0 py-1.5 pt-4 text-left text-xs font-normal"
-            onClick={() => onToggle(id)}
+        <Collapsible
+            open={isOpen}
+            onOpenChange={(nextOpen) => {
+                if (nextOpen !== isOpen) {
+                    onToggle(id);
+                }
+            }}
         >
-            <ChevronDownIcon
-                data-icon="inline-start"
-                className={cn('transition-transform', !open && '-rotate-90')}
-            />
-            <span className="ml-1.5">
-                {title}
-                {count !== null && count !== undefined
-                    ? ` \u2014 ${count}`
-                    : ''}
-            </span>
-        </Button>
+            <CollapsibleTrigger asChild>
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-between aria-expanded:bg-transparent aria-expanded:text-inherit dark:aria-expanded:bg-transparent"
+                >
+                    <span className="min-w-0 flex-1 truncate text-left">
+                        {title}
+                        {count !== null && count !== undefined
+                            ? ` \u2014 ${count}`
+                            : ''}
+                    </span>
+                    <ChevronDownIcon
+                        data-icon="inline-end"
+                        className={cn(
+                            'transition-transform',
+                            !isOpen && '-rotate-90'
+                        )}
+                    />
+                </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent>{children}</CollapsibleContent>
+        </Collapsible>
     );
 }
 

@@ -470,7 +470,10 @@ export function FriendsSidebar({ prefs }) {
     const visibleLocationMetadataEntries = useMemo(
         () =>
             virtualItems
-                .map((item) => buildSidebarLocationMetadataEntry(item.row))
+                .flatMap((item) =>
+                    item.row?.children ? item.row.children : [item.row]
+                )
+                .map((row) => buildSidebarLocationMetadataEntry(row))
                 .filter(Boolean),
         [virtualItems]
     );
