@@ -147,7 +147,32 @@ jobs:
                       --out "src-tauri/target/release/bundle/appimage/vrcx-0-updater-linux-x86_64-${{ inputs.channel }}.json"
 
             - uses: actions/upload-artifact@v7
+              if: runner.os != 'Linux'
               with:
                   name: VRCX-0_${{ steps.version.outputs.display_version }}_${{ matrix.artifact_name }}
                   path: ${{ matrix.artifact_path }}
+                  if-no-files-found: error
+
+            - name: Upload Linux AppImage artifact
+              if: runner.os == 'Linux'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: VRCX-0_${{ steps.version.outputs.display_version }}_linux-appimage
+                  path: src-tauri/target/release/bundle/appimage/*.AppImage
+                  if-no-files-found: error
+
+            - name: Upload Linux AppImage signature artifact
+              if: runner.os == 'Linux'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: VRCX-0_${{ steps.version.outputs.display_version }}_linux-appimage-sig
+                  path: src-tauri/target/release/bundle/appimage/*.AppImage.sig
+                  if-no-files-found: error
+
+            - name: Upload Linux updater manifest artifact
+              if: runner.os == 'Linux'
+              uses: actions/upload-artifact@v7
+              with:
+                  name: VRCX-0_${{ steps.version.outputs.display_version }}_linux-updater-manifest
+                  path: src-tauri/target/release/bundle/appimage/vrcx-0-updater-linux-x86_64-${{ inputs.channel }}.json
                   if-no-files-found: error
