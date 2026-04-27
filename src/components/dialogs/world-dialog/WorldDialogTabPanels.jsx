@@ -60,25 +60,28 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
         >
             <EntityDialogTabContent
                 value="instances"
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3 px-px pt-3 pb-px"
             >
-                <div className="flex flex-wrap items-center gap-3 text-sm">
-                    <span className="inline-flex items-center gap-1">
-                        <UserIcon className="size-4" />
-                        {t('dialog.world.tags.public')}{' '}
-                        {world.publicOccupants ?? 0}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                        <UserIcon className="size-4" />
-                        {t('dialog.world.tags.private')}{' '}
-                        {world.privateOccupants ?? 0}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                        <UsersIcon className="size-4" />
-                        {t('dialog.world.info.capacity')}{' '}
-                        {world.recommendedCapacity || '—'} /{' '}
-                        {world.capacity || '—'}
-                    </span>
+                <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant="outline">
+                        <UserIcon data-icon="inline-start" />
+                        {t('dialog.world.instances.public_count', {
+                            count: world.publicOccupants ?? 0
+                        })}
+                    </Badge>
+                    <Badge variant="outline">
+                        <UserIcon data-icon="inline-start" />
+                        {t('dialog.world.instances.private_count', {
+                            count: world.privateOccupants ?? 0
+                        })}
+                    </Badge>
+                    <Badge variant="outline">
+                        <UsersIcon data-icon="inline-start" />
+                        {t('dialog.world.instances.capacity_count', {
+                            count: world.recommendedCapacity || '—',
+                            max: world.capacity || '—'
+                        })}
+                    </Badge>
                 </div>
                 <div className="flex flex-col gap-2">
                     {displayInstanceRows.length ? (
@@ -107,38 +110,42 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                             return (
                                 <div
                                     key={instance.id}
-                                    className="rounded-md border px-3 py-2 text-sm"
+                                    className="bg-muted/10 rounded-md border px-2.5 py-2 text-sm transition-colors hover:bg-muted/25"
                                 >
-                                    <div className="flex items-center justify-between gap-3">
-                                        <LocationWorld
-                                            locationObject={{
-                                                ...(instance.ref || {}),
-                                                ...instance,
-                                                tag: location,
-                                                location,
-                                                shortName,
-                                                launchToken
-                                            }}
-                                            currentUserId={currentUserId}
-                                            worldDialogShortName={
-                                                worldDialogShortName
-                                            }
-                                            grouphint={
-                                                instance.groupName ||
-                                                instance.group?.name ||
-                                                ''
-                                            }
-                                            playerCount={playerCount}
-                                            capacity={capacity}
-                                            showPlayerSummary={false}
-                                            hint={
-                                                world.name ||
-                                                instance.worldName ||
-                                                instance.world?.name ||
-                                                ''
-                                            }
-                                        />
+                                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                        <div className="min-w-0 flex-1">
+                                            <LocationWorld
+                                                className="min-w-0 text-sm"
+                                                locationObject={{
+                                                    ...(instance.ref || {}),
+                                                    ...instance,
+                                                    tag: location,
+                                                    location,
+                                                    shortName,
+                                                    launchToken
+                                                }}
+                                                currentUserId={currentUserId}
+                                                worldDialogShortName={
+                                                    worldDialogShortName
+                                                }
+                                                grouphint={
+                                                    instance.groupName ||
+                                                    instance.group?.name ||
+                                                    ''
+                                                }
+                                                playerCount={playerCount}
+                                                capacity={capacity}
+                                                showPlayerSummary={false}
+                                                hint={
+                                                    world.name ||
+                                                    instance.worldName ||
+                                                    instance.world?.name ||
+                                                    ''
+                                                }
+                                            />
+                                        </div>
                                         <InstanceActionBar
+                                            className="min-w-0 flex-wrap justify-start sm:justify-end"
                                             location={location}
                                             launchLocation={location}
                                             inviteLocation={location}

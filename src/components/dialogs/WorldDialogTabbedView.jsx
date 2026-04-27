@@ -21,7 +21,7 @@ import { useModalStore } from '@/state/modalStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 
 import { EntityDialogScaffold } from './EntityDialogScaffold.jsx';
-import { WorldDialogHeaderSection } from './world-dialog/WorldDialogHeaderSection.jsx';
+import { WorldDialogOverviewSection } from './world-dialog/WorldDialogHeaderSection.jsx';
 import { buildWorldDialogDisplayInstanceRows } from './world-dialog/worldDialogInstanceRows.js';
 import { WorldDialogTabPanels } from './world-dialog/WorldDialogTabPanels.jsx';
 import {
@@ -611,6 +611,7 @@ export function WorldDialogTabbedView({
         canManageWorld,
         canUpdateHome,
         detail,
+        favoriteRate,
         hasPersistData,
         imageUrl,
         isHomeWorld,
@@ -686,18 +687,24 @@ export function WorldDialogTabbedView({
     };
 
     return (
-        <EntityDialogScaffold>
-            <WorldDialogHeaderSection
-                handlers={headerHandlers}
-                state={headerState}
-                t={t}
-            />
-            <WorldDialogTabPanels
-                handlers={tabHandlers}
-                helpers={{ formatDate }}
-                state={tabState}
-                t={t}
-            />
+        <EntityDialogScaffold className="gap-3">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden min-[880px]:grid min-[880px]:grid-cols-[20rem_minmax(0,1fr)]">
+                <div className="max-h-[44vh] min-h-0 min-w-0 shrink-0 overflow-auto p-px min-[880px]:max-h-none min-[880px]:shrink min-[880px]:overflow-y-auto">
+                    <WorldDialogOverviewSection
+                        handlers={headerHandlers}
+                        state={headerState}
+                        t={t}
+                    />
+                </div>
+                <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+                    <WorldDialogTabPanels
+                        handlers={tabHandlers}
+                        helpers={{ formatDate }}
+                        state={tabState}
+                        t={t}
+                    />
+                </div>
+            </div>
         </EntityDialogScaffold>
     );
 }
