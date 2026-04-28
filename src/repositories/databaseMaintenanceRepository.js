@@ -120,11 +120,92 @@ async function selectTableNames(whereSql) {
     const tables = [];
     await sqliteRepository.execute((row) => {
         const tableName = row[0];
-        if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)) {
+        if (
+            typeof tableName === 'string' &&
+            /^[A-Za-z_][A-Za-z0-9_]*$/.test(tableName)
+        ) {
             tables.push(tableName);
         }
     }, `SELECT name FROM sqlite_schema WHERE type='table' AND (${whereSql})`);
     return tables;
+}
+
+function safeIdentifier(identifier, label) {
+    if (
+        typeof identifier !== 'string' ||
+        !/^[A-Za-z_][A-Za-z0-9_]*$/.test(identifier)
+    ) {
+        throw new Error(`${label} contains invalid characters.`);
+    }
+    return identifier;
+}
+
+async function selectTableColumnNames(tableName) {
+    const safeTableName = safeIdentifier(tableName, 'Table name');
+    const columns = new Set();
+    await sqliteRepository.execute((row) => {
+        const columnName = Array.isArray(row) ? row[1] : row?.name;
+        if (typeof columnName === 'string') {
+            columns.add(columnName);
+        }
+    }, `PRAGMA table_info(${safeTableName})`);
+    return columns;
+}
+
+async function addColumnIfMissing(tableName, columnName, columnDefinition) {
+    const safeTableName = safeIdentifier(tableName, 'Table name');
+    const safeColumnName = safeIdentifier(columnName, 'Column name');
+    const columns = await selectTableColumnNames(safeTableName);
+    if (columns.has(safeColumnName)) {
+        return false;
+    }
+
+    await sqliteRepository.executeNonQuery(
+        `ALTER TABLE ${safeTableName} ADD COLUMN ${safeColumnName} ${columnDefinition}`
+    );
+    return true;
+}
+
+async function dropColumnIfExists(tableName, columnName) {
+    const safeTableName = safeIdentifier(tableName, 'Table name');
+    const safeColumnName = safeIdentifier(columnName, 'Column name');
+    const columns = await selectTableColumnNames(safeTableName);
+    if (!columns.has(safeColumnName)) {
+        return false;
+    }
+
+    await sqliteRepository.executeNonQuery(
+        `ALTER TABLE ${safeTableName} DROP COLUMN ${safeColumnName}`
+    );
+    return true;
+}
+
+async function migrateGameLogGroupNameColumn() {
+    let columns = await selectTableColumnNames('gamelog_location');
+    if (!columns.has('groupName')) {
+        return;
+    }
+
+    if (!columns.has('group_name')) {
+        await addColumnIfMissing(
+            'gamelog_location',
+            'group_name',
+            "TEXT DEFAULT ''"
+        );
+        columns = await selectTableColumnNames('gamelog_location');
+    }
+
+    if (columns.has('group_name')) {
+        await sqliteRepository.executeNonQuery(
+            `UPDATE gamelog_location
+             SET group_name = groupName
+             WHERE (group_name IS NULL OR group_name = '')
+             AND groupName IS NOT NULL
+             AND groupName != ''`
+        );
+    }
+
+    await dropColumnIfExists('gamelog_location', 'groupName');
 }
 
 async function updateTableForGroupNames() {
@@ -132,28 +213,10 @@ async function updateTableForGroupNames() {
         "name LIKE '%_feed_gps' OR name LIKE '%_feed_online_offline' OR name = 'gamelog_location'"
     );
     for (const tableName of tables) {
-        try {
-            await sqliteRepository.executeNonQuery(
-                `ALTER TABLE ${tableName} ADD group_name TEXT DEFAULT ''`
-            );
-        } catch (error) {
-            const message = String(error);
-            if (!message.includes('duplicate column name')) {
-                console.error(message);
-            }
-        }
+        await addColumnIfMissing(tableName, 'group_name', "TEXT DEFAULT ''");
     }
 
-    try {
-        await sqliteRepository.executeNonQuery(
-            'ALTER TABLE gamelog_location DROP COLUMN groupName'
-        );
-    } catch (error) {
-        const message = String(error);
-        if (!message.includes('no such column')) {
-            console.error(message);
-        }
-    }
+    await migrateGameLogGroupNameColumn();
 }
 
 async function addFriendLogFriendNumber() {
@@ -161,32 +224,18 @@ async function addFriendLogFriendNumber() {
         "name LIKE '%_friend_log_current' OR name LIKE '%_friend_log_history'"
     );
     for (const tableName of tables) {
-        try {
-            await sqliteRepository.executeNonQuery(
-                `ALTER TABLE ${tableName} ADD friend_number INTEGER DEFAULT 0`
-            );
-        } catch (error) {
-            const message = String(error);
-            if (!message.includes('duplicate column name')) {
-                console.error(message);
-            }
-        }
+        await addColumnIfMissing(
+            tableName,
+            'friend_number',
+            'INTEGER DEFAULT 0'
+        );
     }
 }
 
 async function updateTableForAvatarHistory() {
     const tables = await selectTableNames("name LIKE '%_avatar_history'");
     for (const tableName of tables) {
-        try {
-            await sqliteRepository.executeNonQuery(
-                `ALTER TABLE ${tableName} ADD time INTEGER DEFAULT 0`
-            );
-        } catch (error) {
-            const message = String(error);
-            if (!message.includes('duplicate column name')) {
-                console.error(message);
-            }
-        }
+        await addColumnIfMissing(tableName, 'time', 'INTEGER DEFAULT 0');
     }
 }
 
@@ -204,9 +253,7 @@ async function addPerformanceIndexes() {
         'CREATE INDEX IF NOT EXISTS idx_gamelog_jl_display_created ON gamelog_join_leave (display_name, created_at)'
     );
 
-    const tables = await selectTableNames(
-        "name LIKE '%_friend_log_history'"
-    );
+    const tables = await selectTableNames("name LIKE '%_friend_log_history'");
     for (const tableName of tables) {
         try {
             await sqliteRepository.executeNonQuery(
@@ -226,9 +273,7 @@ async function upgradeDatabaseVersion() {
 }
 
 async function cleanLegendFromFriendLog() {
-    const tables = await selectTableNames(
-        "name LIKE '%_friend_log_history'"
-    );
+    const tables = await selectTableNames("name LIKE '%_friend_log_history'");
     for (const tableName of tables) {
         await sqliteRepository.executeNonQuery(
             `DELETE FROM ${tableName}
@@ -367,9 +412,7 @@ async function fixBrokenGroupChange() {
 }
 
 async function fixCancelFriendRequestTypo() {
-    const tables = await selectTableNames(
-        "name LIKE '%_friend_log_history'"
-    );
+    const tables = await selectTableNames("name LIKE '%_friend_log_history'");
     for (const tableName of tables) {
         await sqliteRepository.executeNonQuery(
             `UPDATE ${tableName} SET type = 'CancelFriendRequest' WHERE type = 'CancelFriendRequst'`
