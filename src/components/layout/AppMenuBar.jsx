@@ -1,8 +1,8 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { useTranslation } from 'react-i18next';
 import { KeyboardShortcut } from '@/components/keyboard/KeyboardShortcut.jsx';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog.jsx';
 import { openExternalLink } from '@/lib/entityMedia.js';
@@ -74,7 +74,6 @@ function ToolMenuItem({ toolKey, children, navigate, t }) {
 }
 
 export function AppMenuBar({
-    rightSidebarVisible,
     rightSidebarOpen,
     onOpenQuickSearch,
     onOpenNotificationCenter,
@@ -181,17 +180,13 @@ export function AppMenuBar({
                             >
                                 {t('app_menu.notification_center')}
                             </MenuItem>
-                            {rightSidebarVisible ? (
-                                <MenuItem
-                                    onSelect={() => onToggleRightSidebar?.()}
-                                >
-                                    {t(
-                                        rightSidebarOpen
-                                            ? 'app_menu.collapse_friends_sidebar'
-                                            : 'app_menu.expand_friends_sidebar'
-                                    )}
-                                </MenuItem>
-                            ) : null}
+                            <MenuItem onSelect={() => onToggleRightSidebar?.()}>
+                                {t(
+                                    rightSidebarOpen
+                                        ? 'app_menu.collapse_friends_sidebar'
+                                        : 'app_menu.expand_friends_sidebar'
+                                )}
+                            </MenuItem>
                         </MenubarGroup>
                         <MenubarSeparator />
                         <MenubarGroup>

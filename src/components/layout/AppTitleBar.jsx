@@ -41,8 +41,8 @@ import { Kbd, KbdGroup } from '@/ui/shadcn/kbd';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { AppMenuBar } from './AppMenuBar.jsx';
-import { shouldShowSidePanel } from './sidePanelRoutes.js';
 import { useDirectAccessAction } from './useDirectAccessAction.js';
+import { useRightSidePanelVisibility } from './useRightSidePanelVisibility.js';
 
 const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
 const UPDATE_CHECK_RETRY_MS = 5 * 60 * 1000;
@@ -132,10 +132,10 @@ export function AppTitleBar() {
         (state) => state.hostCapabilities.platform
     );
     const sidebarOpen = useShellStore((state) => state.sidebarOpen);
-    const rightSidebarOpen = useShellStore((state) => state.rightSidebarOpen);
-    const toggleRightSidebar = useShellStore(
-        (state) => state.toggleRightSidebar
-    );
+    const {
+        sidePanelOpen: rightSidebarOpen,
+        toggleSidePanelOpen: toggleRightSidebar
+    } = useRightSidePanelVisibility(location.pathname);
 
     async function syncMaximizedState() {
         try {
@@ -248,8 +248,6 @@ export function AppTitleBar() {
     const titleBarActionsVisible = isSessionReady;
     const notificationActionVisible =
         titleBarActionsVisible && notificationLayout !== 'table';
-    const rightSidebarActionVisible =
-        titleBarActionsVisible && shouldShowSidePanel(location.pathname);
     const leftSidebarLabel = sidebarOpen
         ? t('nav_tooltip.collapse_menu')
         : t('nav_tooltip.expand_menu');
@@ -332,7 +330,6 @@ export function AppTitleBar() {
                             }}
                         >
                             <AppMenuBar
-                                rightSidebarVisible={rightSidebarActionVisible}
                                 rightSidebarOpen={rightSidebarOpen}
                                 onOpenQuickSearch={() =>
                                     setQuickSearchOpen(true)
@@ -340,9 +337,7 @@ export function AppTitleBar() {
                                 onOpenNotificationCenter={() =>
                                     openVrcNotificationCenter()
                                 }
-                                onToggleRightSidebar={() =>
-                                    toggleRightSidebar()
-                                }
+                                onToggleRightSidebar={toggleRightSidebar}
                             />
                         </div>
                     ) : null}
@@ -431,26 +426,20 @@ export function AppTitleBar() {
                                 </div>
                             )
                         ) : null}
-                        {rightSidebarActionVisible ? (
-                            <TitleBarButton
-                                label={leftSidebarLabel}
-                                onClick={() =>
-                                    void setSidebarCollapsedPreference(
-                                        sidebarOpen
-                                    )
-                                }
-                            >
-                                <PanelLeftIcon data-icon="icon" />
-                            </TitleBarButton>
-                        ) : null}
-                        {rightSidebarActionVisible ? (
-                            <TitleBarButton
-                                label={rightSidebarLabel}
-                                onClick={() => toggleRightSidebar()}
-                            >
-                                <PanelRightIcon data-icon="icon" />
-                            </TitleBarButton>
-                        ) : null}
+                        <TitleBarButton
+                            label={leftSidebarLabel}
+                            onClick={() =>
+                                void setSidebarCollapsedPreference(sidebarOpen)
+                            }
+                        >
+                            <PanelLeftIcon data-icon="icon" />
+                        </TitleBarButton>
+                        <TitleBarButton
+                            label={rightSidebarLabel}
+                            onClick={toggleRightSidebar}
+                        >
+                            <PanelRightIcon data-icon="icon" />
+                        </TitleBarButton>
                     </div>
                 ) : null}
                 <div className="flex h-full shrink-0 items-center">

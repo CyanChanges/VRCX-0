@@ -2,11 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import { SidePanel } from '@/components/sidebar/SidePanel.jsx';
-import { useShellStore } from '@/state/shellStore.js';
 
 import { AppSidebar } from './AppSidebar.jsx';
 import { AppStatusBar } from './AppStatusBar.jsx';
-import { shouldShowSidePanel } from './sidePanelRoutes.js';
+import { useRightSidePanelVisibility } from './useRightSidePanelVisibility.js';
 
 const sidePanelStorageKey = 'vrcx-main-layout-right-sidebar-width';
 
@@ -33,13 +32,12 @@ function loadSidePanelWidth() {
 
 export function AppShellLayout() {
     const location = useLocation();
-    const rightSidebarOpen = useShellStore((state) => state.rightSidebarOpen);
+    const { sidePanelOpen } = useRightSidePanelVisibility(location.pathname);
     const [sidePanelWidth, setSidePanelWidth] = useState(loadSidePanelWidth);
     const sidePanelWidthRef = useRef(sidePanelWidth);
     const sidePanelElementRef = useRef(null);
     const resizeCleanupRef = useRef(null);
-    const showSidePanel = shouldShowSidePanel(location.pathname);
-    const sidePanelVisible = showSidePanel && rightSidebarOpen;
+    const sidePanelVisible = sidePanelOpen;
 
     useEffect(() => {
         sidePanelWidthRef.current = sidePanelWidth;
