@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import {
     buildMyAvatarsGridRows,
     getMyAvatarsGridMetrics,
     getVisibleMyAvatarsGridRows
 } from './myAvatarsGrid.js';
+import { useScrollViewportMetrics } from '@/lib/useScrollViewportMetrics.js';
 
 const MY_AVATARS_GRID_HORIZONTAL_INSET = 12;
 
@@ -17,82 +18,24 @@ export function useMyAvatarsGridVirtualization({
     tagFilters,
     viewMode
 }) {
-    const gridScrollRef = useRef(null);
-    const [gridScrollMetrics, setGridScrollMetrics] = useState({
-        scrollTop: 0,
-        viewportHeight: 0,
-        width: 0
-    });
-
-    useEffect(() => {
-        if (viewMode !== 'grid') {
-            return undefined;
-        }
-
-        function updateGridScrollMetrics() {
-            const node = gridScrollRef.current;
-            if (!node) {
-                return;
-            }
-
-            const nextMetrics = {
-                scrollTop: node.scrollTop,
-                viewportHeight: node.clientHeight,
-                width: node.clientWidth
-            };
-
-            setGridScrollMetrics((current) =>
-                current.scrollTop === nextMetrics.scrollTop &&
-                current.viewportHeight === nextMetrics.viewportHeight &&
-                current.width === nextMetrics.width
-                    ? current
-                    : nextMetrics
-            );
-        }
-
-        const node = gridScrollRef.current;
-        if (!node) {
-            return undefined;
-        }
-
-        updateGridScrollMetrics();
-        node.addEventListener('scroll', updateGridScrollMetrics, {
-            passive: true
-        });
-
-        const observer =
-            typeof ResizeObserver === 'function'
-                ? new ResizeObserver(updateGridScrollMetrics)
-                : null;
-        observer?.observe(node);
-        window.addEventListener('resize', updateGridScrollMetrics);
-
-        return () => {
-            node.removeEventListener('scroll', updateGridScrollMetrics);
-            observer?.disconnect();
-            window.removeEventListener('resize', updateGridScrollMetrics);
-        };
-    }, [filteredAvatars.length, viewMode]);
+    const {
+        resetScrollTop,
+        viewportMetrics: gridScrollMetrics,
+        viewportRef: gridScrollRef
+    } = useScrollViewportMetrics({ enabled: viewMode === 'grid' });
 
     useEffect(() => {
         if (viewMode !== 'grid') {
             return;
         }
 
-        const node = gridScrollRef.current;
-        if (node) {
-            node.scrollTop = 0;
-        }
-
-        setGridScrollMetrics((current) => ({
-            ...current,
-            scrollTop: 0
-        }));
+        resetScrollTop();
     }, [
         deferredSearchQuery,
         filteredAvatars.length,
         gridDensity,
         platformFilter,
+        resetScrollTop,
         releaseStatusFilter,
         tagFilters,
         viewMode

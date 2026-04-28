@@ -2,6 +2,10 @@ import {
     MY_AVATARS_DEFAULT_GRID_DENSITY,
     sanitizeMyAvatarsGridDensity
 } from './myAvatarsState.js';
+import {
+    getVisibleKnownSizeRows,
+    positionKnownSizeRows
+} from '@/lib/knownSizeVirtualRows.js';
 
 const MY_AVATARS_GRID_DENSITY_CONFIGS = Object.freeze({
     compact: Object.freeze({
@@ -159,11 +163,10 @@ export function buildMyAvatarsGridRows({
         rows.push({
             key: `grid-row:${index}`,
             avatars: visibleAvatars.slice(index, index + gridColumnCount),
-            top: rows.length * gridRowHeight,
             height: gridRowHeight
         });
     }
-    return rows;
+    return positionKnownSizeRows(rows).rows;
 }
 
 export function getVisibleMyAvatarsGridRows({
@@ -172,10 +175,10 @@ export function getVisibleMyAvatarsGridRows({
     viewportHeight
 }) {
     const overscan = Math.max(480, viewportHeight);
-    const start = Math.max(0, scrollTop - overscan);
-    const end = scrollTop + viewportHeight + overscan;
-    const visibleGridRows = Array.isArray(gridRows) ? gridRows : [];
-    return visibleGridRows.filter(
-        (row) => row.top + row.height >= start && row.top <= end
-    );
+    return getVisibleKnownSizeRows({
+        rows: gridRows,
+        scrollTop,
+        viewportHeight,
+        overscan
+    });
 }

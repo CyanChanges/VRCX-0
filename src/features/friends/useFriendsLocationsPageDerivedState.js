@@ -1,5 +1,9 @@
 import { useMemo } from 'react';
 
+import {
+    getVisibleKnownSizeRows,
+    positionKnownSizeRows
+} from '@/lib/knownSizeVirtualRows.js';
 import { checkCanInvite } from '@/shared/utils/invite.js';
 
 import { FRIENDS_LOCATIONS_SEGMENTS as SEGMENTS } from './friendsLocationsConfig.js';
@@ -550,28 +554,16 @@ export function useFriendsLocationsPageDerivedState({
         return rows;
     }, [cardGridColumns, cardRowHeight, sectionHeaderGap, visibleSections]);
     const positionedRows = useMemo(() => {
-        let top = 0;
-        const rows = virtualRows.map((row) => {
-            const positioned = {
-                ...row,
-                top
-            };
-            top += row.height;
-            return positioned;
-        });
-        return {
-            rows,
-            totalHeight: top
-        };
+        return positionKnownSizeRows(virtualRows);
     }, [virtualRows]);
     const visibleVirtualRows = useMemo(() => {
         const overscan = Math.max(360, scrollMetrics.viewportHeight);
-        const start = Math.max(0, scrollMetrics.scrollTop - overscan);
-        const end =
-            scrollMetrics.scrollTop + scrollMetrics.viewportHeight + overscan;
-        return positionedRows.rows.filter(
-            (row) => row.top + row.height >= start && row.top <= end
-        );
+        return getVisibleKnownSizeRows({
+            rows: positionedRows.rows,
+            scrollTop: scrollMetrics.scrollTop,
+            viewportHeight: scrollMetrics.viewportHeight,
+            overscan
+        });
     }, [positionedRows, scrollMetrics.scrollTop, scrollMetrics.viewportHeight]);
     const canSendInvite = Boolean(
         gameState?.isGameRunning &&

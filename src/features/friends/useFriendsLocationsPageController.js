@@ -1,7 +1,8 @@
-import { useDeferredValue, useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import { useScrollViewportMetrics } from '@/lib/useScrollViewportMetrics.js';
 import {
     notificationRepository,
     vrchatSearchRepository
@@ -104,19 +105,16 @@ export function useFriendsLocationsPageController({ embedded = false } = {}) {
         sidebarSortMethods
     } = useFriendsLocationsPreferences();
     const deferredSearchQuery = useDeferredValue(searchQuery);
-    const scrollRef = useRef(null);
-    const [scrollMetrics, setScrollMetrics] = useState({
-        scrollTop: 0,
-        viewportHeight: 0,
-        width: 0
-    });
+    const {
+        resetScrollTop,
+        viewportMetrics: scrollMetrics,
+        viewportRef: scrollRef
+    } = useScrollViewportMetrics();
     useFriendsLocationsPageEffects({
-        ResizeObserver,
         activeSegment,
         deferredSearchQuery,
-        scrollRef,
+        resetScrollTop,
         setActiveSegment,
-        setScrollMetrics,
         showSameInstance
     });
     const {
