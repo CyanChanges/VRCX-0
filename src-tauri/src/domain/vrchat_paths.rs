@@ -98,7 +98,7 @@ pub fn vrchat_screenshots_location() -> String {
         linux_vrchat_screenshots_location()
     }
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
     {
         let steam_path = steam_path();
         if steam_path.is_empty() {
@@ -128,6 +128,11 @@ pub fn vrchat_screenshots_location() -> String {
             }
         }
         best_path
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
+    {
+        String::new()
     }
 }
 
@@ -170,25 +175,18 @@ fn linux_vrchat_screenshots_location() -> String {
     best_path
 }
 
+#[cfg(target_os = "windows")]
 pub fn steam_path() -> String {
-    #[cfg(target_os = "windows")]
-    {
-        use winreg::enums::*;
-        use winreg::RegKey;
+    use winreg::enums::*;
+    use winreg::RegKey;
 
-        let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-        if let Ok(key) = hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
-            if let Ok(val) = key.get_value::<String, _>("InstallPath") {
-                return val;
-            }
+    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    if let Ok(key) = hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam") {
+        if let Ok(val) = key.get_value::<String, _>("InstallPath") {
+            return val;
         }
-        return String::new();
     }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        String::new()
-    }
+    String::new()
 }
 
 pub fn vrchat_crashes_location() -> PathBuf {
