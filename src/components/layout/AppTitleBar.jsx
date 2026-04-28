@@ -39,6 +39,7 @@ import {
     ContextMenuItem,
     ContextMenuTrigger
 } from '@/ui/shadcn/context-menu';
+import { Kbd, KbdGroup } from '@/ui/shadcn/kbd';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { AppMenuBar } from './AppMenuBar.jsx';
@@ -72,12 +73,29 @@ function TitleBarButton({ label, className, children, onClick, ...props }) {
     );
 }
 
-function TitleBarShortcutKey({ children }) {
+function TitleBarShortcut({ modifierKey, actionKey }) {
     return (
-        <kbd className="text-muted-foreground rounded border px-1 font-sans text-[10px] leading-4">
-            {children}
-        </kbd>
+        <KbdGroup className="gap-0.5">
+            <Kbd className="h-4 min-w-4 px-1 text-[10px] leading-4">
+                {modifierKey}
+            </Kbd>
+            <Kbd className="h-4 min-w-4 px-1 text-[10px] leading-4">
+                {actionKey}
+            </Kbd>
+        </KbdGroup>
     );
+}
+
+function getTitleBarShortcut(isMacHost, actionKey) {
+    const modifierKey = isMacHost ? '\u2318' : 'Ctrl';
+    const label = isMacHost
+        ? `${modifierKey}${actionKey}`
+        : `${modifierKey}+${actionKey}`;
+    return { modifierKey, actionKey, label };
+}
+
+function formatTitleBarShortcutLabel(value, shortcutLabel) {
+    return `${value} ${shortcutLabel}`;
 }
 
 export function AppTitleBar() {
@@ -246,6 +264,9 @@ export function AppTitleBar() {
     const rightSidebarLabel = rightSidebarOpen
         ? 'Collapse right sidebar'
         : 'Expand right sidebar';
+    const isMacHost = hostPlatform === 'macos';
+    const quickSearchShortcut = getTitleBarShortcut(isMacHost, 'K');
+    const directAccessShortcut = getTitleBarShortcut(isMacHost, 'D');
 
     async function markAllNotificationsRead() {
         const store = useVrcNotificationStore.getState();
@@ -363,28 +384,26 @@ export function AppTitleBar() {
                             </Tooltip>
                         ) : null}
                         <TitleBarButton
-                            label={t(
-                                'component.app_title_bar.generated_dynamic.value_ctrl_k',
-                                { value: t('side_panel.search_placeholder') }
+                            label={formatTitleBarShortcutLabel(
+                                t('side_panel.search_placeholder'),
+                                quickSearchShortcut.label
                             )}
                             className="w-auto gap-1.5 px-2"
                             onClick={() => setQuickSearchOpen(true)}
                         >
                             <SearchIcon data-icon="inline-start" />
-                            <TitleBarShortcutKey>Ctrl</TitleBarShortcutKey>
-                            <TitleBarShortcutKey>K</TitleBarShortcutKey>
+                            <TitleBarShortcut {...quickSearchShortcut} />
                         </TitleBarButton>
                         <TitleBarButton
-                            label={t(
-                                'component.app_title_bar.generated_dynamic.value_ctrl_d',
-                                { value: t('prompt.direct_access_omni.header') }
+                            label={formatTitleBarShortcutLabel(
+                                t('prompt.direct_access_omni.header'),
+                                directAccessShortcut.label
                             )}
                             className="w-auto gap-1.5 px-2"
                             onClick={() => void openDirectAccessFromClipboard()}
                         >
                             <CompassIcon data-icon="inline-start" />
-                            <TitleBarShortcutKey>Ctrl</TitleBarShortcutKey>
-                            <TitleBarShortcutKey>D</TitleBarShortcutKey>
+                            <TitleBarShortcut {...directAccessShortcut} />
                         </TitleBarButton>
                         {notificationActionVisible ? (
                             vrcUnseenNotificationCount > 0 ? (
