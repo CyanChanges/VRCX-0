@@ -1,19 +1,22 @@
 import {
     CopyIcon,
+    DatabaseIcon,
     DownloadIcon,
     EyeIcon,
     ExternalLinkIcon,
     FlagIcon,
+    FolderOpenIcon,
     GlobeIcon,
+    HistoryIcon,
     HomeIcon,
     ImageIcon,
     LanguagesIcon,
-    LineChartIcon,
+    LinkIcon,
     MessageSquareIcon,
     PencilIcon,
     RefreshCwIcon,
-    Trash2Icon,
-    UploadIcon
+    SettingsIcon,
+    Trash2Icon
 } from 'lucide-react';
 import { isValidElement } from 'react';
 
@@ -33,7 +36,8 @@ import {
 import {
     EntityActionDropdown,
     EntityActionItem,
-    EntityActionSeparator
+    EntityActionSeparator,
+    EntityActionSub
 } from '../EntityDialogScaffold.jsx';
 import { PlatformBadge } from './WorldDialogViewParts.jsx';
 import { useWorldDescriptionTranslation } from './useWorldDescriptionTranslation.js';
@@ -60,6 +64,127 @@ function WorldOverviewMetric({ label, value }) {
     );
 }
 
+function compactWorldId(worldId) {
+    if (!worldId || worldId.length <= 18) {
+        return worldId || '';
+    }
+    return `${worldId.slice(0, 12)}\u2026${worldId.slice(-4)}`;
+}
+
+function compactUrl(url) {
+    if (!url) {
+        return '';
+    }
+
+    const displayUrl = url.replace(/^https?:\/\//, '');
+    if (displayUrl.length <= 18) {
+        return displayUrl;
+    }
+
+    return `${displayUrl.slice(0, 12)}\u2026${displayUrl.slice(-4)}`;
+}
+
+function WorldOverviewFactRow({ children, label }) {
+    return (
+        <div className="flex min-w-0 items-center justify-between gap-2">
+            <span className="text-muted-foreground min-w-0 truncate">
+                {label}
+            </span>
+            {children}
+        </div>
+    );
+}
+
+function WorldOverviewFacts({
+    onCopyWorldId,
+    onCopyWorldUrl,
+    onOpenWorldPage,
+    t,
+    world,
+    worldUrl
+}) {
+    if (!world.id && !worldUrl) {
+        return null;
+    }
+
+    return (
+        <div className="text-muted-foreground/80 flex min-w-0 flex-col gap-1 border-t pt-3 text-xs">
+            {world.id ? (
+                <WorldOverviewFactRow label={t('dialog.world.info.id')}>
+                    <span className="flex min-w-0 items-center justify-end gap-1">
+                        <span
+                            className="text-muted-foreground/80 min-w-0 truncate font-mono text-[11px]"
+                            title={world.id}
+                        >
+                            {compactWorldId(world.id)}
+                        </span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    aria-label={t('dialog.world.info.copy_id')}
+                                    size="icon-xs"
+                                    variant="ghost"
+                                    onClick={() => void onCopyWorldId?.()}
+                                >
+                                    <CopyIcon data-icon="inline-start" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {t('dialog.world.info.copy_id')}
+                            </TooltipContent>
+                        </Tooltip>
+                    </span>
+                </WorldOverviewFactRow>
+            ) : null}
+            {worldUrl ? (
+                <WorldOverviewFactRow label={t('dialog.world.info.url')}>
+                    <span className="flex min-w-0 items-center justify-end gap-1">
+                        <span
+                            className="text-muted-foreground/80 min-w-0 truncate font-mono text-[11px]"
+                            title={worldUrl}
+                        >
+                            {compactUrl(worldUrl)}
+                        </span>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    aria-label={t('common.actions.open_link')}
+                                    size="icon-xs"
+                                    variant="ghost"
+                                    onClick={onOpenWorldPage}
+                                >
+                                    <ExternalLinkIcon data-icon="inline-start" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {t('common.actions.open_link')}
+                            </TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    type="button"
+                                    aria-label={t('dialog.world.info.copy_url')}
+                                    size="icon-xs"
+                                    variant="ghost"
+                                    onClick={() => void onCopyWorldUrl?.()}
+                                >
+                                    <CopyIcon data-icon="inline-start" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                {t('dialog.world.info.copy_url')}
+                            </TooltipContent>
+                        </Tooltip>
+                    </span>
+                </WorldOverviewFactRow>
+            ) : null}
+        </div>
+    );
+}
+
 function WorldOverviewActions({ handlers, state, t }) {
     const {
         actionStatus,
@@ -70,20 +195,14 @@ function WorldOverviewActions({ handlers, state, t }) {
         isPublished,
         packageUrl,
         previousInstances,
-        world,
-        worldUrl
+        world
     } = state;
     const {
         onChangeAllowedDomains,
-        onChangeCapacity,
-        onChangeDescription,
+        onEditDetails,
         onChangeImage,
-        onChangePreview,
-        onChangeRecommendedCapacity,
         onChangeTags,
         onChangeTab,
-        onCopyWorldId,
-        onCopyWorldUrl,
         onDelete,
         onDeleteCache,
         onDeletePersistentData,
@@ -92,10 +211,8 @@ function WorldOverviewActions({ handlers, state, t }) {
         onNewInstanceSelfInvite,
         onOpenCache,
         onOpenPackage,
-        onOpenWorldPage,
         onPublication,
-        onRefresh,
-        onRename
+        onRefresh
     } = handlers;
 
     return (
@@ -112,18 +229,6 @@ function WorldOverviewActions({ handlers, state, t }) {
                     {t('dialog.world.actions.new_instance')}
                 </span>
             </Button>
-            {world.$isCached ? (
-                <Button
-                    type="button"
-                    size="icon-sm"
-                    variant="outline"
-                    aria-label={t('dialog.world.actions.delete_cache_tooltip')}
-                    disabled={actionStatus === 'cache'}
-                    onClick={onDeleteCache}
-                >
-                    <Trash2Icon data-icon="inline-start" />
-                </Button>
-            ) : null}
             <FavoriteActionMenu
                 kind="world"
                 entityId={world.id}
@@ -138,28 +243,6 @@ function WorldOverviewActions({ handlers, state, t }) {
                 >
                     {t('common.actions.refresh')}
                 </EntityActionItem>
-                {worldUrl ? (
-                    <>
-                        <EntityActionItem
-                            icon={CopyIcon}
-                            onSelect={() => void onCopyWorldUrl()}
-                        >
-                            {t('dialog.world.actions.copy_url')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={ExternalLinkIcon}
-                            onSelect={onOpenWorldPage}
-                        >
-                            {t('common.actions.open_link')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={CopyIcon}
-                            onSelect={() => void onCopyWorldId()}
-                        >
-                            {t('dialog.world.info.copy_id')}
-                        </EntityActionItem>
-                    </>
-                ) : null}
                 <EntityActionSeparator />
                 <EntityActionItem
                     icon={FlagIcon}
@@ -187,101 +270,117 @@ function WorldOverviewActions({ handlers, state, t }) {
                     )}
                 </EntityActionItem>
                 <EntityActionItem
-                    icon={LineChartIcon}
+                    icon={HistoryIcon}
                     disabled={!previousInstances.length}
                     onSelect={() => onChangeTab('visit-history')}
                 >
                     {t('dialog.world.actions.show_previous_instances')}
                 </EntityActionItem>
-                <EntityActionItem
-                    icon={UploadIcon}
-                    disabled={!hasPersistData || actionStatus === 'persistent-data'}
-                    onSelect={onDeletePersistentData}
-                >
-                    {t('dialog.world.actions.delete_persistent_data')}
-                </EntityActionItem>
-                {world.$isCached ? (
-                    <EntityActionItem icon={DownloadIcon} onSelect={onOpenCache}>
-                        {t('dialog.world.tags.cache')}
-                    </EntityActionItem>
-                ) : null}
-                <EntityActionSeparator />
                 {canManageWorld ? (
                     <>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onRename}
-                        >
-                            {t('dialog.world.actions.rename')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangeDescription}
-                        >
-                            {t('dialog.world.actions.change_description')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangeCapacity}
-                        >
-                            {t('dialog.world.actions.change_capacity')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangeRecommendedCapacity}
-                        >
-                            {t('dialog.world.actions.change_recommended_capacity')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangePreview}
-                        >
-                            {t('prompt.change_world_preview.header')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangeTags}
-                        >
-                            {t('dialog.world.generated.change_tags')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={PencilIcon}
-                            disabled={actionStatus === 'save-world'}
-                            onSelect={onChangeAllowedDomains}
-                        >
-                            {t('dialog.world.generated.change_allowed_domains')}
-                        </EntityActionItem>
-                        <EntityActionItem
-                            icon={ImageIcon}
-                            disabled={actionStatus === 'image-upload'}
-                            onSelect={onChangeImage}
-                        >
-                            {t('dialog.world.actions.change_image')}
-                        </EntityActionItem>
-                        {packageUrl ? (
-                            <EntityActionItem
-                                icon={DownloadIcon}
-                                onSelect={onOpenPackage}
-                            >
-                                {t('dialog.world.actions.download_package')}
-                            </EntityActionItem>
-                        ) : null}
                         <EntityActionSeparator />
-                        <EntityActionItem
-                            icon={EyeIcon}
-                            disabled={actionStatus === 'publish-world'}
-                            onSelect={onPublication}
+                        <EntityActionSub
+                            icon={PencilIcon}
+                            label={t('dialog.world.actions.manage_world')}
                         >
-                            {isPublished
-                                ? t('dialog.world.actions.unpublish')
-                                : t('dialog.world.actions.publish_to_labs')}
-                        </EntityActionItem>
+                            <EntityActionItem
+                                icon={PencilIcon}
+                                disabled={actionStatus === 'save-world'}
+                                onSelect={onEditDetails}
+                            >
+                                {t('dialog.world.actions.edit_details')}
+                            </EntityActionItem>
+                            <EntityActionItem
+                                icon={ImageIcon}
+                                disabled={actionStatus === 'image-upload'}
+                                onSelect={onChangeImage}
+                            >
+                                {t('dialog.world.actions.change_image')}
+                            </EntityActionItem>
+                            <EntityActionItem
+                                icon={SettingsIcon}
+                                disabled={actionStatus === 'save-world'}
+                                onSelect={onChangeTags}
+                            >
+                                {t(
+                                    'dialog.world.actions.change_warnings_settings_tags'
+                                )}
+                            </EntityActionItem>
+                            <EntityActionItem
+                                icon={LinkIcon}
+                                disabled={actionStatus === 'save-world'}
+                                onSelect={onChangeAllowedDomains}
+                            >
+                                {t(
+                                    'dialog.world.actions.change_allowed_video_player_domains'
+                                )}
+                            </EntityActionItem>
+                            {packageUrl ? (
+                                <EntityActionItem
+                                    icon={DownloadIcon}
+                                    onSelect={onOpenPackage}
+                                >
+                                    {t('dialog.world.actions.download_package')}
+                                </EntityActionItem>
+                            ) : null}
+                            <EntityActionSeparator />
+                            <EntityActionItem
+                                icon={EyeIcon}
+                                disabled={actionStatus === 'publish-world'}
+                                onSelect={onPublication}
+                            >
+                                {isPublished
+                                    ? t('dialog.world.actions.unpublish')
+                                    : t('dialog.world.actions.publish_to_labs')}
+                            </EntityActionItem>
+                        </EntityActionSub>
+                    </>
+                ) : null}
+                {world.$isCached || hasPersistData ? (
+                    <>
+                        <EntityActionSeparator />
+                        <EntityActionSub
+                            icon={FolderOpenIcon}
+                            label={t('dialog.world.actions.local_data')}
+                        >
+                            {world.$isCached ? (
+                                <>
+                                    <EntityActionItem
+                                        icon={FolderOpenIcon}
+                                        onSelect={onOpenCache}
+                                    >
+                                        {t('dialog.world.actions.open_cache')}
+                                    </EntityActionItem>
+                                    <EntityActionItem
+                                        icon={Trash2Icon}
+                                        disabled={actionStatus === 'cache'}
+                                        onSelect={onDeleteCache}
+                                    >
+                                        {t(
+                                            'dialog.world.actions.delete_cache_tooltip'
+                                        )}
+                                    </EntityActionItem>
+                                </>
+                            ) : null}
+                            {hasPersistData ? (
+                                <EntityActionItem
+                                    icon={DatabaseIcon}
+                                    disabled={
+                                        actionStatus === 'persistent-data'
+                                    }
+                                    onSelect={onDeletePersistentData}
+                                >
+                                    {t(
+                                        'dialog.world.actions.delete_persistent_data'
+                                    )}
+                                </EntityActionItem>
+                            ) : null}
+                        </EntityActionSub>
+                    </>
+                ) : null}
+                {canManageWorld ? (
+                    <>
+                        <EntityActionSeparator />
                         <EntityActionItem
                             icon={Trash2Icon}
                             destructive
@@ -306,9 +405,18 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
         isHomeWorld,
         platformRows,
         visibleTags,
-        world
+        world,
+        worldUrl
     } = state;
-    const { onCopyWorldName, onOpenAuthor, onOpenImage, onOpenCache } = handlers;
+    const {
+        onCopyWorldId,
+        onCopyWorldName,
+        onCopyWorldUrl,
+        onOpenAuthor,
+        onOpenImage,
+        onOpenCache,
+        onOpenWorldPage
+    } = handlers;
     const {
         descriptionTranslationLoading,
         translatedDescriptionActive,
@@ -412,6 +520,15 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
                     value={world.popularity}
                 />
             </div>
+
+            <WorldOverviewFacts
+                onCopyWorldId={onCopyWorldId}
+                onCopyWorldUrl={onCopyWorldUrl}
+                onOpenWorldPage={onOpenWorldPage}
+                t={t}
+                world={world}
+                worldUrl={worldUrl}
+            />
 
             <div className="flex flex-wrap gap-1.5">
                 <Badge

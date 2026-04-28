@@ -66,6 +66,111 @@ export function useWorldDialogOwnerActions({
         }
     }
 
+    function processWorldYouTubePreview(value) {
+        let processedValue = String(value || '').trim();
+        if (processedValue.length > 11) {
+            try {
+                const url = new URL(processedValue);
+                const pathId = url.pathname.startsWith('/')
+                    ? url.pathname.slice(1)
+                    : url.pathname;
+                const queryId = url.searchParams.get('v') || '';
+                if (queryId.length === 11) {
+                    processedValue = queryId;
+                } else if (pathId.length === 11) {
+                    processedValue = pathId;
+                }
+            } catch {
+                toast.error(
+                    t(
+                        'dialog.world.generated.youtube_preview_must_be_a_video_id_or_valid_url'
+                    )
+                );
+                return null;
+            }
+        }
+        return processedValue;
+    }
+
+    function readChangedTextField(patch, field, value) {
+        const nextValue = String(value || '');
+        if (nextValue !== String(world?.[field] || '')) {
+            patch[field] = nextValue;
+        }
+    }
+
+    function readChangedCapacityField(patch, field, value, label) {
+        const rawValue = String(value ?? '').trim();
+        if (rawValue === String(world?.[field] ?? '')) {
+            return true;
+        }
+
+        const parsedValue = Number.parseInt(rawValue, 10);
+        if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+            toast.error(
+                t(
+                    'dialog.world.generated_dynamic.value_must_be_a_positive_number',
+                    { value: label }
+                )
+            );
+            return false;
+        }
+        patch[field] = parsedValue;
+        return true;
+    }
+
+    async function saveWorldDetails(draft) {
+        const patch = {};
+        readChangedTextField(patch, 'name', draft?.name);
+        readChangedTextField(patch, 'description', draft?.description);
+        if (
+            !readChangedCapacityField(
+                patch,
+                'capacity',
+                draft?.capacity,
+                t('dialog.world.info.capacity')
+            )
+        ) {
+            return false;
+        }
+        if (
+            !readChangedCapacityField(
+                patch,
+                'recommendedCapacity',
+                draft?.recommendedCapacity,
+                t('dialog.world.generated.recommended_capacity')
+            )
+        ) {
+            return false;
+        }
+
+        const previewYoutubeId = processWorldYouTubePreview(
+            draft?.previewYoutubeId
+        );
+        if (previewYoutubeId === null) {
+            return false;
+        }
+        if (previewYoutubeId !== String(world?.previewYoutubeId || '')) {
+            patch.previewYoutubeId = previewYoutubeId;
+        }
+
+        if (!Object.keys(patch).length) {
+            setOwnerEditor('');
+            return true;
+        }
+
+        const saved = await saveWorldPatch(patch, {
+            successMessage: t('dialog.world.generated.world_details_updated'),
+            errorMessage: t(
+                'dialog.world.generated_toast.failed_to_update_world_details'
+            )
+        });
+        if (saved) {
+            setOwnerEditor('');
+        }
+        return saved;
+    }
+
     async function renameWorld() {
         const result = await prompt({
             title: t('dialog.world.generated_modal.rename_world'),
@@ -155,23 +260,9 @@ export function useWorldDialogOwnerActions({
             return;
         }
 
-        let processedValue = String(result.value || '').trim();
-        if (processedValue.length > 11) {
-            try {
-                const url = new URL(processedValue);
-                const pathId = url.pathname.startsWith('/')
-                    ? url.pathname.slice(1)
-                    : url.pathname;
-                const queryId = url.searchParams.get('v') || '';
-                if (queryId.length === 11) {
-                    processedValue = queryId;
-                } else if (pathId.length === 11) {
-                    processedValue = pathId;
-                }
-            } catch {
-                toast.error(t('dialog.world.generated.youtube_preview_must_be_a_video_id_or_valid_url'));
-                return;
-            }
+        const processedValue = processWorldYouTubePreview(result.value);
+        if (processedValue === null) {
+            return;
         }
 
         await saveWorldPatch(
@@ -388,6 +479,7 @@ export function useWorldDialogOwnerActions({
         deleteWorld,
         deleteWorldPersistentData,
         renameWorld,
+        saveWorldDetails,
         saveWorldAllowedDomains,
         saveWorldTags,
         updateWorldPublication

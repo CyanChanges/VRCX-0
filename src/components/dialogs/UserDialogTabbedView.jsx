@@ -115,6 +115,13 @@ export function UserDialogTabbedView({
         (state) => state.auth.currentUserEndpoint
     );
     const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
+    const currentAvatarId = useRuntimeStore(
+        (state) => state.auth.currentUserSnapshot?.currentAvatar || ''
+    );
+    const previousAvatarSwapTime = useRuntimeStore(
+        (state) =>
+            Number(state.auth.currentUserSnapshot?.$previousAvatarSwapTime) || 0
+    );
     const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
@@ -139,6 +146,8 @@ export function UserDialogTabbedView({
         isCurrentUser,
         currentEndpoint,
         currentUserId,
+        currentAvatarId,
+        previousAvatarSwapTime,
         currentUserHasSharedConnectionsOptOut,
         friendsById,
         inGameGroupOrder,
@@ -546,9 +555,6 @@ export function UserDialogTabbedView({
                         mutualFriends={mutualFriends}
                         mutualSort={mutualSort}
                         onEditMemo={onEditMemo}
-                        onOpenCurrentAvatar={() =>
-                            openAvatarDialog(currentAvatarDialogArgs)
-                        }
                         onOpenInstanceHistory={openInstanceHistory}
                         onPreviousInstancesChange={onPreviousInstancesChange}
                         onRefreshLocation={onRefreshLocation}

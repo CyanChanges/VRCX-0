@@ -19,12 +19,14 @@ import {
     FieldLegend,
     FieldSet
 } from '@/ui/shadcn/field';
+import { Input } from '@/ui/shadcn/input';
 import {
     InputGroup,
     InputGroupAddon,
     InputGroupButton,
     InputGroupInput
 } from '@/ui/shadcn/input-group';
+import { ScrollArea } from '@/ui/shadcn/scroll-area';
 import { Textarea } from '@/ui/shadcn/textarea';
 
 const CONTENT_TAGS = [
@@ -143,6 +145,162 @@ function buildWorldTags(draft, baseTags = []) {
         }
     }
     return tags;
+}
+
+function createWorldDetailsDraft(world) {
+    return {
+        name: world?.name || '',
+        description: world?.description || '',
+        capacity: world?.capacity || '',
+        recommendedCapacity: world?.recommendedCapacity || '',
+        previewYoutubeId: world?.previewYoutubeId || ''
+    };
+}
+
+function WorldDetailsDialog({
+    open,
+    onOpenChange,
+    world,
+    saving = false,
+    onSave
+}) {
+    const { t } = useTranslation();
+
+    const [draft, setDraft] = useState(() => createWorldDetailsDraft(world));
+
+    useEffect(() => {
+        if (open) {
+            setDraft(createWorldDetailsDraft(world));
+        }
+    }, [open, world]);
+
+    function updateDraft(patch) {
+        setDraft((current) => ({ ...current, ...patch }));
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="grid max-h-[calc(100vh-4rem)] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>
+                        {t('dialog.world.generated.edit_world_details')}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {t(
+                            'dialog.world.generated.update_world_name_description_capacity_and_preview'
+                        )}
+                    </DialogDescription>
+                </DialogHeader>
+                <ScrollArea className="-mx-1 min-h-0 px-1">
+                    <FieldGroup className="gap-4 pb-3">
+                        <Field>
+                            <FieldLabel htmlFor="world-details-name">
+                                {t('dialog.world.info.name')}
+                            </FieldLabel>
+                            <Input
+                                id="world-details-name"
+                                value={draft.name}
+                                disabled={saving}
+                                onChange={(event) =>
+                                    updateDraft({ name: event.target.value })
+                                }
+                            />
+                        </Field>
+                        <Field>
+                            <FieldLabel htmlFor="world-details-description">
+                                {t('dialog.world.info.description')}
+                            </FieldLabel>
+                            <Textarea
+                                id="world-details-description"
+                                rows={5}
+                                value={draft.description}
+                                disabled={saving}
+                                className="field-sizing-fixed max-h-56 min-h-32 resize-y overflow-y-auto"
+                                onChange={(event) =>
+                                    updateDraft({
+                                        description: event.target.value
+                                    })
+                                }
+                            />
+                        </Field>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <Field>
+                                <FieldLabel htmlFor="world-details-capacity">
+                                    {t('dialog.world.info.capacity')}
+                                </FieldLabel>
+                                <Input
+                                    id="world-details-capacity"
+                                    type="number"
+                                    min="1"
+                                    inputMode="numeric"
+                                    value={draft.capacity}
+                                    disabled={saving}
+                                    onChange={(event) =>
+                                        updateDraft({
+                                            capacity: event.target.value
+                                        })
+                                    }
+                                />
+                            </Field>
+                            <Field>
+                                <FieldLabel htmlFor="world-details-recommended-capacity">
+                                    {t(
+                                        'dialog.world.generated.recommended_capacity'
+                                    )}
+                                </FieldLabel>
+                                <Input
+                                    id="world-details-recommended-capacity"
+                                    type="number"
+                                    min="1"
+                                    inputMode="numeric"
+                                    value={draft.recommendedCapacity}
+                                    disabled={saving}
+                                    onChange={(event) =>
+                                        updateDraft({
+                                            recommendedCapacity:
+                                                event.target.value
+                                        })
+                                    }
+                                />
+                            </Field>
+                        </div>
+                        <Field>
+                            <FieldLabel htmlFor="world-details-preview">
+                                {t('dialog.world.generated.youtube_preview')}
+                            </FieldLabel>
+                            <Input
+                                id="world-details-preview"
+                                value={draft.previewYoutubeId}
+                                disabled={saving}
+                                onChange={(event) =>
+                                    updateDraft({
+                                        previewYoutubeId: event.target.value
+                                    })
+                                }
+                            />
+                        </Field>
+                    </FieldGroup>
+                </ScrollArea>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        disabled={saving}
+                        onClick={() => onOpenChange?.(false)}
+                    >
+                        {t('common.actions.cancel')}
+                    </Button>
+                    <Button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => onSave?.(draft)}
+                    >
+                        {t('common.actions.save')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }
 
 function WorldTagsDialog({
@@ -440,4 +598,4 @@ function WorldAllowedDomainsDialog({
     );
 }
 
-export { WorldAllowedDomainsDialog, WorldTagsDialog };
+export { WorldAllowedDomainsDialog, WorldDetailsDialog, WorldTagsDialog };

@@ -176,11 +176,7 @@ export function WorldDialogTabbedView({
     canManageWorld,
     onRefresh,
     onHome,
-    onRename,
-    onChangeDescription,
-    onChangeCapacity,
-    onChangeRecommendedCapacity,
-    onChangePreview,
+    onEditDetails,
     onChangeTags,
     onChangeAllowedDomains,
     onChangeImage,
@@ -625,11 +621,8 @@ export function WorldDialogTabbedView({
     };
     const headerHandlers = {
         onChangeAllowedDomains,
-        onChangeCapacity,
-        onChangeDescription,
+        onEditDetails,
         onChangeImage,
-        onChangePreview,
-        onChangeRecommendedCapacity,
         onChangeTags,
         onChangeTab: changeTab,
         onCopyWorldId: () => copyWorldText(world.id, 'World ID'),
@@ -655,8 +648,7 @@ export function WorldDialogTabbedView({
         onOpenPackage: () => openExternalLink(packageUrl),
         onOpenWorldPage: () => openExternalLink(worldUrl),
         onPublication: () => onPublication(!isPublished),
-        onRefresh,
-        onRename
+        onRefresh
     };
     const tabState = {
         activeTab,
@@ -689,7 +681,7 @@ export function WorldDialogTabbedView({
     return (
         <EntityDialogScaffold className="gap-3">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-4 overflow-hidden min-[880px]:grid min-[880px]:grid-cols-[20rem_minmax(0,1fr)]">
-                <div className="max-h-[44vh] min-h-0 min-w-0 shrink-0 overflow-auto p-px min-[880px]:max-h-none min-[880px]:shrink min-[880px]:overflow-y-auto">
+                <div className="max-h-[50vh] min-h-0 min-w-0 shrink-0 overflow-auto p-px min-[880px]:max-h-none min-[880px]:shrink min-[880px]:overflow-y-auto">
                     <WorldDialogOverviewSection
                         handlers={headerHandlers}
                         state={headerState}

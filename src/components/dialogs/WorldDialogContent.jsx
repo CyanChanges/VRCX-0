@@ -54,6 +54,7 @@ import { useWorldDialogOwnerActions } from './world-dialog/useWorldDialogOwnerAc
 import { WorldDialogTabbedView } from './WorldDialogTabbedView.jsx';
 import {
     WorldAllowedDomainsDialog,
+    WorldDetailsDialog,
     WorldTagsDialog
 } from './WorldOwnerEditDialogs.jsx';
 
@@ -1272,21 +1273,7 @@ export function WorldDialogContent({
                 onSaveMemo={(nextMemo) => saveMemo(nextMemo)}
                 onOpenCache={() => void openWorldCacheFolder()}
                 onDeleteCache={() => void deleteWorldCache()}
-                onRename={() => void ownerActions.renameWorld()}
-                onChangeDescription={() => void ownerActions.changeWorldDescription()}
-                onChangeCapacity={() =>
-                    void ownerActions.changeWorldCapacity(
-                        'capacity',
-                        t('dialog.world.info.capacity')
-                    )
-                }
-                onChangeRecommendedCapacity={() =>
-                    void ownerActions.changeWorldCapacity(
-                        'recommendedCapacity',
-                        t('dialog.world.generated.recommended_capacity')
-                    )
-                }
-                onChangePreview={() => void ownerActions.changeWorldYouTubePreview()}
+                onEditDetails={() => setOwnerEditor('details')}
                 onChangeTags={() => void ownerActions.changeWorldTags()}
                 onChangeAllowedDomains={() => void ownerActions.changeWorldAllowedDomains()}
                 onChangeImage={() => void beginWorldImageUpload()}
@@ -1356,6 +1343,17 @@ export function WorldDialogContent({
                     }
                 }}
                 onConfirm={(blob) => confirmWorldImageUpload(blob)}
+            />
+            <WorldDetailsDialog
+                open={ownerEditor === 'details'}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setOwnerEditor('');
+                    }
+                }}
+                world={world}
+                saving={actionStatus === 'save-world'}
+                onSave={(draft) => void ownerActions.saveWorldDetails(draft)}
             />
             <WorldTagsDialog
                 open={ownerEditor === 'tags'}

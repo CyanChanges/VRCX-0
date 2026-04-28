@@ -48,8 +48,12 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
         world,
         worldDialogShortName
     } = state;
-    const { onChangeTab, onOpenAuthor, onPreviousInstancesChange, onSaveMemo } =
-        handlers;
+    const {
+        onChangeTab,
+        onOpenAuthor,
+        onPreviousInstancesChange,
+        onSaveMemo
+    } = handlers;
     const { formatDate } = helpers;
 
     return (
@@ -205,12 +209,6 @@ export function WorldDialogTabPanels({ handlers, helpers, state, t }) {
                         value={memo}
                         placeholder={t('dialog.world.info.memo_placeholder')}
                         onSave={onSaveMemo}
-                    />
-                    <EntityInfoBlock
-                        label={t('dialog.world.info.id')}
-                        value={world.id}
-                        mono
-                        full
                     />
                     {previewUrl ? (
                         <EntityInfoBlock
