@@ -23,6 +23,7 @@ import {
     buildFriendSections,
     buildSameInstanceSections,
     compareFavoriteGroups,
+    sortActiveFriendsBySidebarPrefs,
     sortFriendsBySidebarPrefs
 } from './friendsLocationsSections.js';
 
@@ -161,7 +162,7 @@ export function useFriendsLocationsPageDerivedState({
     );
     const activeFriends = useMemo(
         () =>
-            sortFriendsBySidebarPrefs(
+            sortActiveFriendsBySidebarPrefs(
                 activeIds.map((id) => friendsById[id]).filter(Boolean),
                 sidebarSortMethods
             ),

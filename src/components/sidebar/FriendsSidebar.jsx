@@ -19,6 +19,7 @@ import {
     normalizeId,
     readFriendStatusSource,
     resolveCurrentInviteLocation,
+    sortActiveRows,
     sortRows
 } from './friends-sidebar/friendsSidebarModel.js';
 import {
@@ -295,7 +296,7 @@ export function FriendsSidebar({ prefs }) {
     );
     const activeRows = useMemo(
         () =>
-            sortRows(
+            sortActiveRows(
                 activeIds.map((id) => friendsById[id]).filter(Boolean),
                 prefs
             ),
@@ -510,9 +511,7 @@ export function FriendsSidebar({ prefs }) {
                     {virtualItems.map((item) => (
                         <div
                             key={item.key}
-                            ref={(element) =>
-                                measureElement(item.key, element)
-                            }
+                            ref={(element) => measureElement(item.key, element)}
                             className="absolute top-0 left-0 w-full"
                             style={{ transform: `translateY(${item.start}px)` }}
                         >

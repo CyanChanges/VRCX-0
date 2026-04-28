@@ -1,7 +1,10 @@
 import { getTrustColor } from '@/lib/trustColors.js';
-import { getFriendsSortFunction } from '@/shared/utils/friend.js';
+import { getFriendsSortFunction, sortStatus } from '@/shared/utils/friend.js';
 import { isRealInstance } from '@/shared/utils/instance.js';
-import { parseLocation, resolveFriendPresenceLocation } from '@/shared/utils/location.js';
+import {
+    parseLocation,
+    resolveFriendPresenceLocation
+} from '@/shared/utils/location.js';
 import { computeTrustLevel } from '@/shared/utils/userTransforms.js';
 
 export function normalizeId(value) {
@@ -111,7 +114,10 @@ export function buildFavoriteIdSet(remoteFavoriteIds, localFriendFavorites) {
 
 export function resolveTrustNameColour(friend, trustColor) {
     if (!friend?.$trustClass && Array.isArray(friend?.tags)) {
-        const trust = computeTrustLevel(friend.tags, friend.developerType || '');
+        const trust = computeTrustLevel(
+            friend.tags,
+            friend.developerType || ''
+        );
         return getTrustColor(
             {
                 ...friend,
@@ -169,6 +175,40 @@ export function resolveCurrentUserStateBucket(currentUser) {
     return 'online';
 }
 
+function activeStatusDotClassName(status) {
+    const normalizedStatus = normalizeLocationStatus(status);
+    if (normalizedStatus === 'join me' || normalizedStatus === 'joinme') {
+        return 'border-[var(--status-joinme)] bg-background';
+    }
+    if (normalizedStatus === 'ask me' || normalizedStatus === 'askme') {
+        return 'border-[var(--status-askme)] bg-background';
+    }
+    if (normalizedStatus === 'busy') {
+        return 'border-[var(--status-busy)] bg-background';
+    }
+    return 'border-[var(--status-online)] bg-background';
+}
+
+function activeStatusSortValue(friend) {
+    const source = readFriendStatusSource(friend);
+    const normalizedStatus = normalizeLocationStatus(source?.status);
+    if (
+        normalizedStatus === 'join me' ||
+        normalizedStatus === 'ask me' ||
+        normalizedStatus === 'busy'
+    ) {
+        return normalizedStatus;
+    }
+    return 'active';
+}
+
+function compareByActiveStatus(left, right) {
+    return sortStatus(
+        activeStatusSortValue(left),
+        activeStatusSortValue(right)
+    );
+}
+
 export function resolveSidebarStatusDotClassName(
     friend,
     currentUser,
@@ -206,16 +246,6 @@ export function resolveSidebarStatusDotClassName(
         source?.stateBucket || snapshotState
     );
 
-    if (
-        !isCurrentUser &&
-        (state === 'active' ||
-            state === 'offline' ||
-            stateBucket === 'active' ||
-            stateBucket === 'offline')
-    ) {
-        return '';
-    }
-
     if (isCurrentUser || userId === currentUser?.id) {
         if (
             source?.pendingOffline ||
@@ -225,7 +255,7 @@ export function resolveSidebarStatusDotClassName(
             return '';
         }
         if (state === 'active') {
-            return 'bg-[var(--status-active)]';
+            return activeStatusDotClassName(status);
         }
         return (
             legacyStatusDotClassName(status) ||
@@ -241,6 +271,10 @@ export function resolveSidebarStatusDotClassName(
         return '';
     }
 
+    if (state === 'offline' || stateBucket === 'offline') {
+        return 'bg-[var(--status-offline)]';
+    }
+
     if (
         status !== 'active' &&
         location === 'private' &&
@@ -249,11 +283,11 @@ export function resolveSidebarStatusDotClassName(
         !isOnlineByCurrentSnapshot
     ) {
         return isActiveByCurrentSnapshot
-            ? 'bg-[var(--status-active)]'
+            ? activeStatusDotClassName(status)
             : 'bg-[var(--status-offline)]';
     }
     if (state === 'active') {
-        return 'bg-[var(--status-active)]';
+        return activeStatusDotClassName(status);
     }
     if (location === 'offline' && state !== 'online') {
         return 'bg-[var(--status-offline)]';
@@ -300,6 +334,11 @@ export function sortRows(rows, prefs) {
     return [...rows].sort((left, right) =>
         sort(toLegacyFriendSortRow(left), toLegacyFriendSortRow(right))
     );
+}
+
+export function sortActiveRows(rows, prefs) {
+    const sortedRows = sortRows(rows, prefs);
+    return [...sortedRows].sort(compareByActiveStatus);
 }
 
 export function lastLocationHasFriend(lastLocation, friendId) {
@@ -358,7 +397,11 @@ export function sameInstanceFallbackKey(locationTag, friend) {
     return `${locationTag}:${friendId || normalizeId(readFriendRef(friend)?.id)}`;
 }
 
-export function withSameInstanceJoinTime(friend, locationTag, fallbackJoinTimes) {
+export function withSameInstanceJoinTime(
+    friend,
+    locationTag,
+    fallbackJoinTimes
+) {
     const source = readFriendStatusSource(friend);
     if (timestampMsFromValue(readFriendInstanceEpoch(source, false))) {
         return friend;
@@ -384,7 +427,12 @@ export function withSameInstanceJoinTime(friend, locationTag, fallbackJoinTimes)
     };
 }
 
-export function buildSameInstanceGroups(rows, prefs, lastLocation, fallbackJoinTimes) {
+export function buildSameInstanceGroups(
+    rows,
+    prefs,
+    lastLocation,
+    fallbackJoinTimes
+) {
     const groupsByLocation = new Map();
     const activeFallbackKeys = new Set();
     for (const friend of sortRows(rows, prefs)) {
@@ -402,14 +450,12 @@ export function buildSameInstanceGroups(rows, prefs, lastLocation, fallbackJoinT
         groupsByLocation
             .get(locationTag)
             .push(
-                withSameInstanceJoinTime(
-                    friend,
-                    locationTag,
-                    fallbackJoinTimes
-                )
+                withSameInstanceJoinTime(friend, locationTag, fallbackJoinTimes)
             );
         if (needsFallback) {
-            activeFallbackKeys.add(sameInstanceFallbackKey(locationTag, friend));
+            activeFallbackKeys.add(
+                sameInstanceFallbackKey(locationTag, friend)
+            );
         }
     }
     for (const key of fallbackJoinTimes.keys()) {

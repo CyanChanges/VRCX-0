@@ -18,11 +18,6 @@ import {
 } from '@/ui/shadcn/context-menu';
 
 import {
-    readFriendRef,
-    resolveSidebarStatusDotClassName,
-    resolveTrustNameColour
-} from './friendsSidebarModel.js';
-import {
     CurrentUserActionItems,
     FriendActionItems
 } from './FriendsSidebarActionItems.jsx';
@@ -31,6 +26,11 @@ import {
     resolveFriendRowLocationState,
     StaticSidebarLocation
 } from './FriendsSidebarLocation.jsx';
+import {
+    readFriendRef,
+    resolveSidebarStatusDotClassName,
+    resolveTrustNameColour
+} from './friendsSidebarModel.js';
 
 export function FriendRow({
     friend,
@@ -75,6 +75,7 @@ export function FriendRow({
         currentUserSnapshot,
         isCurrentUser
     );
+    const isActiveStatusDot = statusDotClassName.includes('bg-background');
     const {
         statusSource,
         friendLocation,
@@ -93,9 +94,9 @@ export function FriendRow({
     });
     const canUseFriendLocation = Boolean(
         canUseFriendInstance &&
-            parsedFriendLocation.isRealInstance &&
-            parsedFriendLocation.worldId &&
-            parsedFriendLocation.instanceId
+        parsedFriendLocation.isRealInstance &&
+        parsedFriendLocation.worldId &&
+        parsedFriendLocation.instanceId
     );
     const subline = statusSource?.pendingOffline
         ? t('side_panel.pending_offline')
@@ -127,12 +128,23 @@ export function FriendRow({
                                 )}
                             </span>
                             {statusDotClassName ? (
-                                <span
-                                    className={cn(
-                                        'border-background absolute -right-0.5 -bottom-0.5 z-10 size-3.75 rounded-full border-3',
-                                        statusDotClassName
-                                    )}
-                                />
+                                isActiveStatusDot ? (
+                                    <span className="border-background bg-background absolute -right-0.5 -bottom-0.5 z-10 size-3.75 rounded-full border-3">
+                                        <span
+                                            className={cn(
+                                                'absolute inset-0 rounded-full border-2',
+                                                statusDotClassName
+                                            )}
+                                        />
+                                    </span>
+                                ) : (
+                                    <span
+                                        className={cn(
+                                            'border-background absolute -right-0.5 -bottom-0.5 z-10 size-3.75 rounded-full border-3',
+                                            statusDotClassName
+                                        )}
+                                    />
+                                )
                             ) : null}
                         </span>
                         <span className="min-w-0 flex-1">

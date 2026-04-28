@@ -1,4 +1,4 @@
-import { getFriendsSortFunction } from '@/shared/utils/friend.js';
+import { getFriendsSortFunction, sortStatus } from '@/shared/utils/friend.js';
 
 import {
     normalizeFriendsLocationId as normalizeId,
@@ -80,6 +80,49 @@ function readFriendRef(friend) {
     return friend?.ref && typeof friend.ref === 'object' ? friend.ref : friend;
 }
 
+function readFriendStatusSource(friend) {
+    const ref = readFriendRef(friend);
+    if (!ref || ref === friend) {
+        return friend;
+    }
+    return {
+        ...friend,
+        ...ref
+    };
+}
+
+function normalizeStatusText(value) {
+    const status =
+        typeof value === 'string'
+            ? value.trim().toLowerCase()
+            : String(value ?? '')
+                  .trim()
+                  .toLowerCase();
+    if (status === 'joinme') {
+        return 'join me';
+    }
+    if (status === 'askme') {
+        return 'ask me';
+    }
+    return status;
+}
+
+function activeStatusSortValue(friend) {
+    const source = readFriendStatusSource(friend);
+    const status = normalizeStatusText(source?.status);
+    if (status === 'join me' || status === 'ask me' || status === 'busy') {
+        return status;
+    }
+    return 'active';
+}
+
+function compareByActiveStatus(left, right) {
+    return sortStatus(
+        activeStatusSortValue(left),
+        activeStatusSortValue(right)
+    );
+}
+
 function toLegacyFriendSortRow(friend) {
     const ref = readFriendRef(friend);
     return {
@@ -103,6 +146,12 @@ export function sortFriendsBySidebarPrefs(friends, sortMethods) {
     const sort = getFriendsSortFunction(methods);
     return [...friends].sort((left, right) =>
         sort(toLegacyFriendSortRow(left), toLegacyFriendSortRow(right))
+    );
+}
+
+export function sortActiveFriendsBySidebarPrefs(friends, sortMethods) {
+    return [...sortFriendsBySidebarPrefs(friends, sortMethods)].sort(
+        compareByActiveStatus
     );
 }
 

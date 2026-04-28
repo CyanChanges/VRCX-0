@@ -5,9 +5,9 @@ import {
     UserIcon,
     UsersIcon
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-import { useTranslation } from 'react-i18next';
 import { Location } from '@/components/Location.jsx';
 import { copyTextToClipboard, userImage } from '@/lib/entityMedia.js';
 import { cn } from '@/lib/utils.js';
@@ -201,32 +201,28 @@ function resolveStatusTone(friend, currentUser) {
 
     if (status === 'join me') {
         return {
-            dotClassName:
-                'bg-[var(--status-joinme)] shadow-[0_0_8px_var(--status-joinme)]',
+            dotClassName: 'bg-[var(--status-joinme)]',
             label: 'Join Me'
         };
     }
 
     if (status === 'ask me') {
         return {
-            dotClassName:
-                'bg-[var(--status-askme)] shadow-[0_0_8px_var(--status-askme)]',
+            dotClassName: 'bg-[var(--status-askme)]',
             label: 'Ask Me'
         };
     }
 
     if (status === 'busy') {
         return {
-            dotClassName:
-                'bg-[var(--status-busy)] shadow-[0_0_8px_var(--status-busy)]',
+            dotClassName: 'bg-[var(--status-busy)]',
             label: 'Busy'
         };
     }
 
     if (status === 'online') {
         return {
-            dotClassName:
-                'bg-[var(--status-online)] shadow-[0_0_8px_var(--status-online)]',
+            dotClassName: 'bg-[var(--status-online)]',
             label: 'Online'
         };
     }
@@ -239,21 +235,22 @@ function resolveStatusTone(friend, currentUser) {
     ) {
         const colorClassName =
             status === 'active-join'
-                ? 'border-[var(--status-joinme)] shadow-[0_0_8px_var(--status-joinme)]'
+                ? 'border-[var(--status-joinme)]'
                 : status === 'active-ask'
-                  ? 'border-[var(--status-askme)] shadow-[0_0_8px_var(--status-askme)]'
+                  ? 'border-[var(--status-askme)]'
                   : status === 'active-busy'
-                    ? 'border-[var(--status-busy)] shadow-[0_0_8px_var(--status-busy)]'
-                    : 'border-[var(--status-online)] shadow-[0_0_8px_var(--status-online)]';
+                    ? 'border-[var(--status-busy)]'
+                    : 'border-[var(--status-online)]';
         return {
-            dotClassName: cn('border-2 bg-transparent', colorClassName),
-            label: 'Active'
+            dotClassName: cn('bg-background', colorClassName),
+            label: 'Active',
+            activeDot: true
         };
     }
 
     return {
         dotClassName:
-            status === 'offline' ? 'bg-[var(--status-offline-card)]' : 'hidden',
+            status === 'offline' ? 'bg-[var(--status-offline)]' : 'hidden',
         label: 'Offline'
     };
 }
@@ -336,8 +333,7 @@ export function FriendLocationCard({
     const travelingValue = isCardTraveling
         ? sourceTravelingLocation || undefined
         : undefined;
-    const resolvedDensityConfig =
-        densityConfig || DEFAULT_CARD_DENSITY_CONFIG;
+    const resolvedDensityConfig = densityConfig || DEFAULT_CARD_DENSITY_CONFIG;
     const isDense = resolvedDensityConfig.layout === 'item';
     const locationLineClampClass = resolveLineClampClass(
         resolvedDensityConfig.locationLineClamp
@@ -345,14 +341,18 @@ export function FriendLocationCard({
     const statusLineClampClass = resolveLineClampClass(
         resolvedDensityConfig.statusLineClamp
     );
-
+    const showStatusDot = !tone.dotClassName.includes('hidden');
     async function copyCardText(value, label) {
         const text = String(value || '').trim();
         if (!text) {
             return;
         }
         await copyTextToClipboard(text);
-        toast.success(t('component.friend_location_card.generated_dynamic.value_copied', { value: label }));
+        toast.success(
+            t('component.friend_location_card.generated_dynamic.value_copied', {
+                value: label
+            })
+        );
     }
 
     const avatarNode = (
@@ -381,16 +381,25 @@ export function FriendLocationCard({
                     </span>
                 </div>
             )}
-            <span
-                className={cn(
-                    'border-background absolute right-0 bottom-0 z-10 block rounded-full border-2',
-                    tone.dotClassName
-                )}
-                style={{
-                    width: `${resolvedDensityConfig.dotSize}px`,
-                    height: `${resolvedDensityConfig.dotSize}px`
-                }}
-            />
+            {showStatusDot ? (
+                <span className="border-background bg-background absolute -right-0.5 -bottom-0.5 z-10 block size-3.75 rounded-full border-3">
+                    {tone.activeDot ? (
+                        <span
+                            className={cn(
+                                'absolute inset-0 rounded-full border-2',
+                                tone.dotClassName
+                            )}
+                        />
+                    ) : (
+                        <span
+                            className={cn(
+                                'absolute inset-0 rounded-full',
+                                tone.dotClassName
+                            )}
+                        />
+                    )}
+                </span>
+            ) : null}
         </div>
     );
     const locationNode = locationValue ? (
@@ -504,7 +513,8 @@ export function FriendLocationCard({
                                                 statusLineClampClass
                                             )}
                                         >
-                                            {friend?.statusDescription || '\u00a0'}
+                                            {friend?.statusDescription ||
+                                                '\u00a0'}
                                         </span>
                                     </CardDescription>
                                 ) : null}
