@@ -59,7 +59,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange, t }) {
         null;
 
     useEffect(() => {
-        if (!open || loaded || loading) {
+        if (!open || loaded) {
             return;
         }
         let active = true;
@@ -103,7 +103,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange, t }) {
         return () => {
             active = false;
         };
-    }, [loaded, loading, open]);
+    }, [loaded, open]);
 
     useEffect(() => {
         if (!filteredEntries.some((entry) => entry.id === selectedEntryId)) {
