@@ -198,7 +198,7 @@ export function FullscreenImageViewer({
                     onWheel={handleWheel}
                 >
                     <div
-                        className="bg-background/80 absolute top-3 right-3 left-3 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded-lg border px-2 py-1 shadow-sm backdrop-blur sm:left-auto sm:max-w-none"
+                        className="bg-background/80 absolute top-3 right-3 left-3 z-20 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end gap-2 rounded-lg border px-2 py-1 shadow-sm backdrop-blur sm:left-auto sm:max-w-none"
                         onClick={(event) => event.stopPropagation()}
                     >
                         <Tooltip>
@@ -374,7 +374,7 @@ export function FullscreenImageViewer({
                                 src={fullSizeUrl}
                                 alt={resolvedTitle}
                                 draggable={false}
-                                className="max-h-full max-w-full cursor-grab touch-none object-contain select-none active:cursor-grabbing data-[unavailable=true]:hidden"
+                                className="relative z-0 max-h-full max-w-full cursor-grab touch-none object-contain select-none active:cursor-grabbing data-[unavailable=true]:hidden"
                                 data-unavailable={
                                     imageLoading || imageLoadError
                                 }
