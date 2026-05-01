@@ -133,7 +133,7 @@ export function UserDialogContent({ userId, seedData = null, openNonce = 0 }) {
 
     const localSnapshot = isTargetCurrentUser
         ? currentUserSnapshot
-        : knownTargetUser || friendsById[normalizedUserId] || seedData || null;
+        : friendsById[normalizedUserId] || seedData || knownTargetUser || null;
     const targetKey = dialogTargetKey(currentEndpoint, normalizedUserId);
     const gameState = useMemo(
         () => ({
