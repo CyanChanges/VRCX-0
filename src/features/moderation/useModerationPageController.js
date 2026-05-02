@@ -14,6 +14,13 @@ import {
     PageToolbar
 } from '@/components/layout/PageScaffold.jsx';
 import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+import {
     configRepository,
     vrchatModerationRepository
 } from '@/repositories/index.js';
@@ -49,7 +56,7 @@ const COLUMN_IDS = [
     'action',
     'trailing'
 ];
-const STORAGE_KEY = 'vrcx:table:moderation';
+const STORAGE_KEY = getDataTableStorageKey('moderation');
 const TYPE_FILTERS_CONFIG_KEY = 'VRCX_playerModerationTableFilters';
 const TYPE_LABELS = {
     block: 'Block',
@@ -70,43 +77,11 @@ function resolveModerationTypeLabel(type, t) {
     const label = t(key);
     return label && label !== key ? label : TYPE_LABELS[value] || value;
 }
-function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
 function readPersistedState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 function writePersistedState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-    try {
-        const current = readPersistedState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Ignore persistence failures; table state can fall back to defaults.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 function sanitizeSorting(value) {
     if (!Array.isArray(value)) {
@@ -161,17 +136,7 @@ function sanitizeColumnOrder(value) {
     return [...orderedColumns, ...missingColumns];
 }
 function sanitizeColumnSizing(value) {
-    if (!value || typeof value !== 'object') {
-        return {};
-    }
-    const sizing = {};
-    for (const columnId of COLUMN_IDS) {
-        const width = Number.parseInt(value[columnId], 10);
-        if (Number.isFinite(width) && width > 0) {
-            sizing[columnId] = width;
-        }
-    }
-    return sizing;
+    return sanitizeTableColumnSizing(value, COLUMN_IDS);
 }
 function resolvePageSize(candidate, allowed, fallback = DEFAULT_PAGE_SIZES[1]) {
     const pageSizes = Array.isArray(allowed)

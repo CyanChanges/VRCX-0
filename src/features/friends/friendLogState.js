@@ -1,3 +1,11 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
 import { FRIEND_LOG_TYPES } from './components/FriendLogViewParts.jsx';
 
 export const DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
@@ -11,50 +19,14 @@ export const COLUMN_IDS = [
 ];
 
 const DEFAULT_SORTING = [];
-const STORAGE_KEY = 'vrcx:table:friendLog';
-
-function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
+const STORAGE_KEY = getDataTableStorageKey('friendLog');
 
 export function readPersistedState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function sanitizeSorting(value) {
@@ -119,18 +91,7 @@ export function sanitizeColumnOrder(value) {
 }
 
 export function sanitizeColumnSizing(value) {
-    if (!value || typeof value !== 'object') {
-        return {};
-    }
-
-    const sizing = {};
-    for (const columnId of COLUMN_IDS) {
-        const width = Number.parseInt(value[columnId], 10);
-        if (Number.isFinite(width) && width > 0) {
-            sizing[columnId] = width;
-        }
-    }
-    return sizing;
+    return sanitizeTableColumnSizing(value, COLUMN_IDS);
 }
 
 export function resolvePageSize(

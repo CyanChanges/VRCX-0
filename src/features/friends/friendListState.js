@@ -1,3 +1,10 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
 export const FRIEND_LIST_DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
 export const FRIEND_LIST_DEFAULT_SORTING = [{ id: 'friendNumber', desc: true }];
 export const FRIEND_LIST_SEARCH_FILTERS = [
@@ -36,50 +43,14 @@ export const FRIEND_LIST_COLUMN_IDS = [
     ...LEGACY_SORT_COLUMN_IDS
 ];
 
-const STORAGE_KEY = 'vrcx:table:friendList';
-
-function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
+const STORAGE_KEY = getDataTableStorageKey('friendList');
 
 export function readPersistedFriendListState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedFriendListState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedFriendListState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function sanitizeFriendListSorting(value) {
@@ -148,18 +119,7 @@ export function sanitizeFriendListColumnOrder(value) {
 }
 
 export function sanitizeFriendListColumnSizing(value) {
-    if (!value || typeof value !== 'object') {
-        return {};
-    }
-
-    const sizing = {};
-    for (const columnId of FRIEND_LIST_COLUMN_IDS) {
-        const width = Number.parseInt(value[columnId], 10);
-        if (Number.isFinite(width) && width > 0) {
-            sizing[columnId] = width;
-        }
-    }
-    return sizing;
+    return sanitizeTableColumnSizing(value, FRIEND_LIST_COLUMN_IDS);
 }
 
 export function resolveFriendListPageSize(

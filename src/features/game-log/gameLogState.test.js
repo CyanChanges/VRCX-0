@@ -14,7 +14,7 @@ import {
     writePersistedGameLogState
 } from './gameLogState.js';
 
-const STORAGE_KEY = 'vrcx:table:gameLog';
+const STORAGE_KEY = 'vrcx-0:table:gameLog';
 
 function installLocalStorage(initial = {}) {
     const store = new Map(

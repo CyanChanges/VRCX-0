@@ -1,3 +1,13 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
+export { safeJsonParse };
+
 export const NOTIFICATION_TABLE_DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
 export const NOTIFICATION_TABLE_DEFAULT_SORTING = [
     { id: 'created_at', desc: true }
@@ -13,7 +23,7 @@ export const NOTIFICATION_TABLE_COLUMN_IDS = [
     'trailing'
 ];
 
-const STORAGE_KEY = 'vrcx:table:notifications';
+const STORAGE_KEY = getDataTableStorageKey('notifications');
 const LEGACY_COLUMN_ID_MAP = {
     createdAt: 'created_at',
     sender: 'senderUsername',
@@ -21,48 +31,12 @@ const LEGACY_COLUMN_ID_MAP = {
     actions: 'action'
 };
 
-export function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
-
 export function readPersistedNotificationTableState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedNotificationTableState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedNotificationTableState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function normalizeNotificationColumnId(columnId) {
@@ -163,24 +137,22 @@ export function sanitizeNotificationColumnOrder(value) {
 }
 
 export function sanitizeNotificationColumnSizing(value) {
-    const sizing = {};
     if (!value || typeof value !== 'object') {
-        return sizing;
+        return {};
     }
 
+    const normalizedSizing = {};
     for (const [columnId, rawSize] of Object.entries(value)) {
         const normalizedColumnId = normalizeNotificationColumnId(columnId);
-        const size = Number(rawSize);
-        if (
-            NOTIFICATION_TABLE_COLUMN_IDS.includes(normalizedColumnId) &&
-            Number.isFinite(size) &&
-            size > 0
-        ) {
-            sizing[normalizedColumnId] = size;
+        if (NOTIFICATION_TABLE_COLUMN_IDS.includes(normalizedColumnId)) {
+            normalizedSizing[normalizedColumnId] = rawSize;
         }
     }
 
-    return sizing;
+    return sanitizeTableColumnSizing(
+        normalizedSizing,
+        NOTIFICATION_TABLE_COLUMN_IDS
+    );
 }
 
 export function resolveNotificationPageSize(

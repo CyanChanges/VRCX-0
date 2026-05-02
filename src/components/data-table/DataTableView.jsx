@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils.js';
@@ -47,6 +48,11 @@ import {
     dataTableColumnDndDefaultState,
     useDataTableColumnDnd
 } from './dataTableColumnDndContext.js';
+import {
+    sanitizeTableColumnOrder,
+    sanitizeTableColumnSizing,
+    usePersistedDataTableLayout
+} from './dataTablePersistence.js';
 import { ResizableTableHead } from './ResizableTableParts.jsx';
 import {
     getColumnOrder,
@@ -69,6 +75,10 @@ function moveColumnByDrag(table, activeId, overId) {
     }
 
     table.setColumnOrder(arrayMove(columnOrder, activeIndex, overIndex));
+}
+
+function getColumnId(column) {
+    return column?.id ?? column?.accessorKey ?? null;
 }
 
 export function getDataTableSizingStyle(table) {
@@ -374,11 +384,64 @@ export function DataTablePagination({
 export function DataTableView({
     columns = [],
     data = [],
-    emptyLabel = 'No rows yet.'
+    emptyLabel = 'No rows yet.',
+    persistKey
 }) {
+    const columnIds = useMemo(
+        () => columns.map((column) => getColumnId(column)).filter(Boolean),
+        [columns]
+    );
+    const tableLayout = usePersistedDataTableLayout({
+        tableId: persistKey,
+        columnIds
+    });
+    const hasWrittenLayoutRef = useRef(false);
+    const persistTableLayout = Boolean(persistKey);
+
+    useEffect(() => {
+        if (!persistTableLayout) {
+            return;
+        }
+        if (!hasWrittenLayoutRef.current) {
+            hasWrittenLayoutRef.current = true;
+            return;
+        }
+
+        tableLayout.writePersistedState({
+            columnOrder: sanitizeTableColumnOrder(
+                tableLayout.columnOrder,
+                columnIds
+            ),
+            columnSizing: sanitizeTableColumnSizing(
+                tableLayout.columnSizing,
+                columnIds
+            )
+        });
+    }, [
+        columnIds,
+        persistTableLayout,
+        tableLayout.columnOrder,
+        tableLayout.columnSizing,
+        tableLayout.writePersistedState
+    ]);
+
     const table = useReactTable({
         columns,
         data,
+        state: persistTableLayout
+            ? {
+                  columnOrder: tableLayout.columnOrder,
+                  columnSizing: tableLayout.columnSizing
+              }
+            : undefined,
+        onColumnOrderChange: persistTableLayout
+            ? tableLayout.setColumnOrder
+            : undefined,
+        onColumnSizingChange: persistTableLayout
+            ? tableLayout.setColumnSizing
+            : undefined,
+        enableColumnResizing: persistTableLayout,
+        columnResizeMode: 'onChange',
         getCoreRowModel: getCoreRowModel()
     });
 

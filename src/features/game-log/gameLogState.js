@@ -1,3 +1,13 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
+export { safeJsonParse };
+
 export const GAME_LOG_DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
 export const GAME_LOG_DEFAULT_SORTING = [{ id: 'created_at', desc: true }];
 export const GAME_LOG_COLUMN_IDS = [
@@ -9,50 +19,14 @@ export const GAME_LOG_COLUMN_IDS = [
     'action'
 ];
 
-const STORAGE_KEY = 'vrcx:table:gameLog';
-
-export function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
+const STORAGE_KEY = getDataTableStorageKey('gameLog');
 
 export function readPersistedGameLogState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedGameLogState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedGameLogState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function sanitizeGameLogSorting(value) {
@@ -122,18 +96,7 @@ export function sanitizeGameLogColumnOrder(value) {
 }
 
 export function sanitizeGameLogColumnSizing(value) {
-    if (!value || typeof value !== 'object') {
-        return {};
-    }
-
-    const sizing = {};
-    for (const columnId of GAME_LOG_COLUMN_IDS) {
-        const width = Number.parseInt(value[columnId], 10);
-        if (Number.isFinite(width) && width > 0) {
-            sizing[columnId] = width;
-        }
-    }
-    return sizing;
+    return sanitizeTableColumnSizing(value, GAME_LOG_COLUMN_IDS);
 }
 
 export function resolveGameLogPageSize(

@@ -14,7 +14,7 @@ import {
     writePersistedFriendListState
 } from './friendListState.js';
 
-const STORAGE_KEY = 'vrcx:table:friendList';
+const STORAGE_KEY = 'vrcx-0:table:friendList';
 
 function installLocalStorage(initial = {}) {
     const store = new Map(

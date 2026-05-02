@@ -44,7 +44,7 @@ describe('feed table state helpers', () => {
 
     it('safely reads and writes persisted feed table state', () => {
         const { localStorage, values } = installLocalStorage({
-            'vrcx:table:feed': JSON.stringify({ pageSize: 25 })
+            'vrcx-0:table:feed': JSON.stringify({ pageSize: 25 })
         });
 
         expect(safeJsonParse('{"sorting":[]}')).toEqual({ sorting: [] });
@@ -54,10 +54,10 @@ describe('feed table state helpers', () => {
         writePersistedFeedTableState({ columnOrder: ['type'] });
 
         expect(localStorage.setItem).toHaveBeenCalledWith(
-            'vrcx:table:feed',
+            'vrcx-0:table:feed',
             expect.any(String)
         );
-        expect(JSON.parse(values.get('vrcx:table:feed'))).toEqual({
+        expect(JSON.parse(values.get('vrcx-0:table:feed'))).toEqual({
             pageSize: 25,
             columnOrder: ['type'],
             updatedAt: new Date('2026-02-03T04:05:06Z').getTime()

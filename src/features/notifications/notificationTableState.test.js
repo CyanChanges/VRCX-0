@@ -50,7 +50,7 @@ describe('notification table state helpers', () => {
 
     it('reads and writes persisted table state without dropping existing keys', () => {
         const { localStorage, values } = installLocalStorage({
-            'vrcx:table:notifications': JSON.stringify({ pageSize: 25 })
+            'vrcx-0:table:notifications': JSON.stringify({ pageSize: 25 })
         });
 
         expect(readPersistedNotificationTableState()).toEqual({ pageSize: 25 });
@@ -59,10 +59,10 @@ describe('notification table state helpers', () => {
         });
 
         expect(localStorage.setItem).toHaveBeenCalledWith(
-            'vrcx:table:notifications',
+            'vrcx-0:table:notifications',
             expect.any(String)
         );
-        expect(JSON.parse(values.get('vrcx:table:notifications'))).toEqual({
+        expect(JSON.parse(values.get('vrcx-0:table:notifications'))).toEqual({
             pageSize: 25,
             sorting: [{ id: 'type', desc: false }],
             updatedAt: new Date('2026-01-02T03:04:05Z').getTime()

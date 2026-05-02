@@ -1,3 +1,13 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
+export { safeJsonParse };
+
 export const FEED_TABLE_DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
 export const FEED_TABLE_DEFAULT_SORTING = [];
 export const FEED_TABLE_COLUMN_IDS = [
@@ -11,50 +21,14 @@ export const FEED_TABLE_ORDER_COLUMN_IDS = [
     ...FEED_TABLE_COLUMN_IDS
 ];
 
-const STORAGE_KEY = 'vrcx:table:feed';
-
-export function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
+const STORAGE_KEY = getDataTableStorageKey('feed');
 
 export function readPersistedFeedTableState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedFeedTableState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedFeedTableState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function sanitizeFeedSorting(value) {
@@ -110,19 +84,7 @@ export function sanitizeFeedColumnOrder(value) {
 }
 
 export function sanitizeFeedColumnSizing(value) {
-    const sizing = {};
-    if (!value || typeof value !== 'object') {
-        return sizing;
-    }
-
-    for (const columnId of FEED_TABLE_ORDER_COLUMN_IDS) {
-        const size = Number(value[columnId]);
-        if (Number.isFinite(size) && size > 0) {
-            sizing[columnId] = size;
-        }
-    }
-
-    return sizing;
+    return sanitizeTableColumnSizing(value, FEED_TABLE_ORDER_COLUMN_IDS);
 }
 
 export function resolveFeedPageSize(

@@ -1,3 +1,10 @@
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
 export const MY_AVATARS_DEFAULT_PAGE_SIZES = [10, 15, 20, 25, 50, 100];
 export const MY_AVATARS_DEFAULT_SORTING = [{ id: 'updated_at', desc: true }];
 export const MY_AVATARS_VIEW_MODES = ['grid', 'table'];
@@ -46,7 +53,7 @@ export const MY_AVATARS_DEFAULT_COLUMN_VISIBILITY = Object.freeze({
     created_at: false
 });
 
-const STORAGE_KEY = 'vrcx:table:my-avatars';
+const STORAGE_KEY = getDataTableStorageKey('my-avatars');
 const COLUMN_ID_ALIASES = {
     releaseStatus: 'visibility',
     action: 'actions'
@@ -72,48 +79,12 @@ const SORT_COLUMN_IDS = [
     'created_at'
 ];
 
-function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
-
 export function readPersistedMyAvatarsState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return safeJsonParse(window.localStorage.getItem(STORAGE_KEY)) ?? {};
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(STORAGE_KEY);
 }
 
 export function writePersistedMyAvatarsState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedMyAvatarsState();
-        window.localStorage.setItem(
-            STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(STORAGE_KEY, patch);
 }
 
 export function normalizeMyAvatarsColumnId(columnId) {
@@ -300,18 +271,13 @@ export function sanitizeMyAvatarsColumnSizing(value) {
         return {};
     }
 
-    const sizing = {};
+    const normalizedSizing = {};
     for (const [rawColumnId, rawWidth] of Object.entries(value)) {
         const columnId = normalizeMyAvatarsColumnId(rawColumnId);
-        const width = Number.parseInt(rawWidth, 10);
-        if (
-            MY_AVATARS_COLUMN_IDS.includes(columnId) &&
-            Number.isFinite(width) &&
-            width > 0
-        ) {
-            sizing[columnId] = width;
+        if (MY_AVATARS_COLUMN_IDS.includes(columnId)) {
+            normalizedSizing[columnId] = rawWidth;
         }
     }
 
-    return sizing;
+    return sanitizeTableColumnSizing(normalizedSizing, MY_AVATARS_COLUMN_IDS);
 }

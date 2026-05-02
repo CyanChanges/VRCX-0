@@ -1,4 +1,14 @@
-export const PLAYER_LIST_STORAGE_KEY = 'vrcx:table:playerList';
+import {
+    getDataTableStorageKey,
+    readPersistedTableState,
+    safeJsonParse,
+    sanitizeTableColumnSizing,
+    writePersistedTableState
+} from '@/components/data-table/dataTablePersistence.js';
+
+export { safeJsonParse };
+
+export const PLAYER_LIST_STORAGE_KEY = getDataTableStorageKey('playerList');
 
 export const PLAYER_LIST_COLUMN_IDS = [
     'avatar',
@@ -15,52 +25,12 @@ export const PLAYER_LIST_COLUMN_IDS = [
 
 export const DEFAULT_PLAYER_LIST_SORTING = [{ id: 'timer', desc: true }];
 
-export function safeJsonParse(value) {
-    if (!value) {
-        return null;
-    }
-
-    try {
-        return JSON.parse(value);
-    } catch {
-        return null;
-    }
-}
-
 export function readPersistedPlayerListState() {
-    if (typeof window === 'undefined') {
-        return {};
-    }
-
-    try {
-        return (
-            safeJsonParse(
-                window.localStorage.getItem(PLAYER_LIST_STORAGE_KEY)
-            ) ?? {}
-        );
-    } catch {
-        return {};
-    }
+    return readPersistedTableState(PLAYER_LIST_STORAGE_KEY);
 }
 
 export function writePersistedPlayerListState(patch) {
-    if (typeof window === 'undefined') {
-        return;
-    }
-
-    try {
-        const current = readPersistedPlayerListState();
-        window.localStorage.setItem(
-            PLAYER_LIST_STORAGE_KEY,
-            JSON.stringify({
-                ...current,
-                ...patch,
-                updatedAt: Date.now()
-            })
-        );
-    } catch {
-        // Persisted table state is optional.
-    }
+    writePersistedTableState(PLAYER_LIST_STORAGE_KEY, patch);
 }
 
 export function sanitizePlayerListSorting(value) {
@@ -112,16 +82,5 @@ export function sanitizePlayerListColumnOrder(value) {
 }
 
 export function sanitizePlayerListColumnSizing(value) {
-    if (!value || typeof value !== 'object') {
-        return {};
-    }
-
-    const sizing = {};
-    for (const columnId of PLAYER_LIST_COLUMN_IDS) {
-        const width = Number.parseInt(value[columnId], 10);
-        if (Number.isFinite(width) && width > 0) {
-            sizing[columnId] = width;
-        }
-    }
-    return sizing;
+    return sanitizeTableColumnSizing(value, PLAYER_LIST_COLUMN_IDS);
 }

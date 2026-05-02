@@ -19,7 +19,7 @@ import {
     writePersistedMyAvatarsState
 } from './myAvatarsState.js';
 
-const STORAGE_KEY = 'vrcx:table:my-avatars';
+const STORAGE_KEY = 'vrcx-0:table:my-avatars';
 
 function installLocalStorage(initial = {}) {
     const store = new Map(
