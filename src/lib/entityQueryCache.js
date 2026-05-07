@@ -286,6 +286,10 @@ export function setCachedQueryData(queryKey, data) {
     queryClient.setQueryData(queryKey, data);
 }
 
+export function getCachedQueryData(queryKey) {
+    return queryClient.getQueryData(queryKey);
+}
+
 export function invalidateEntityQueries(queryKey) {
     return queryClient.invalidateQueries({
         queryKey,

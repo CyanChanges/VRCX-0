@@ -1,5 +1,6 @@
 import { ShieldCheckIcon } from 'lucide-react';
 
+import { convertFileUrlToImageUrl } from '@/lib/entityMedia.js';
 import { cn } from '@/lib/utils.js';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
@@ -8,6 +9,41 @@ import { Field, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 
 import { formatStatsDate } from '../userDialogRows.js';
+
+function resolveBadgeImageUrl(badge) {
+    const imageUrl =
+        [
+            badge?.badgeImageUrl,
+            badge?.imageUrl,
+            badge?.iconUrl,
+            badge?.image
+        ].find((value) => typeof value === 'string' && value.trim()) || '';
+    return imageUrl ? convertFileUrlToImageUrl(imageUrl, 128) : '';
+}
+
+function resolveBadgeName(badge, profileTitle, profileId) {
+    return String(
+        badge?.badgeName || badge?.name || profileTitle || profileId || ''
+    );
+}
+
+function isRenderableBadge(badge) {
+    return Boolean(
+        badge &&
+            typeof badge === 'object' &&
+            (resolveBadgeImageUrl(badge) ||
+                badge.badgeName ||
+                badge.name ||
+                badge.badgeId ||
+                badge.id)
+    );
+}
+
+export function hasRenderableUserProfileBadges(profile) {
+    return (
+        Array.isArray(profile?.badges) && profile.badges.some(isRenderableBadge)
+    );
+}
 
 export function UserDialogHeaderBadges({
     profile,
@@ -115,36 +151,55 @@ export function UserDialogHeaderMediaBadges({
     return (
         <>
             {profile.badges
-                .filter((badge) => badge?.badgeImageUrl)
+                .filter(isRenderableBadge)
                 .map((badge) => {
-                    const badgeName =
-                        badge.badgeName || profileTitle || profile.id || '';
+                    const badgeImageUrl = resolveBadgeImageUrl(badge);
+                    const badgeName = resolveBadgeName(
+                        badge,
+                        profileTitle,
+                        profile.id
+                    );
                     const badgeTitle = badge.hidden
                         ? `${badgeName} (${hiddenLabel})`
                         : badgeName;
 
                     return (
                         <Popover
-                            key={badge.badgeId || badge.id || badge.badgeName}
+                            key={
+                                badge.badgeId ||
+                                badge.id ||
+                                badge.badgeName ||
+                                badgeImageUrl
+                            }
                         >
                             <PopoverTrigger asChild>
                                 <Button
                                     type="button"
                                     variant="ghost"
-                                    size="icon"
+                                    size={badgeImageUrl ? 'icon' : 'sm'}
                                     aria-label={badgeTitle}
                                     title={badgeTitle}
-                                    className="size-8 rounded-sm p-0"
+                                    className={
+                                        badgeImageUrl
+                                            ? 'size-8 rounded-sm p-0'
+                                            : 'h-8 max-w-full rounded-sm px-2 text-xs'
+                                    }
                                     onClick={(event) => event.stopPropagation()}
                                 >
-                                    <img
-                                        src={badge.badgeImageUrl}
-                                        alt={badge.badgeName || ''}
-                                        className={cn(
-                                            'size-8 rounded-sm object-cover',
-                                            badge.hidden && 'grayscale'
-                                        )}
-                                    />
+                                    {badgeImageUrl ? (
+                                        <img
+                                            src={badgeImageUrl}
+                                            alt={badge.badgeName || ''}
+                                            className={cn(
+                                                'size-8 rounded-sm object-cover',
+                                                badge.hidden && 'grayscale'
+                                            )}
+                                        />
+                                    ) : (
+                                        <span className="max-w-32 truncate">
+                                            {badgeName || badge.badgeId}
+                                        </span>
+                                    )}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent
@@ -156,18 +211,29 @@ export function UserDialogHeaderMediaBadges({
                                     variant="ghost"
                                     className="h-auto w-full p-0"
                                     onClick={() =>
-                                        badge.badgeImageUrl &&
+                                        badgeImageUrl &&
                                         onOpenImagePreview({
-                                            url: badge.badgeImageUrl,
+                                            url: badgeImageUrl,
                                             title: badgeName
                                         })
                                     }
                                 >
-                                    <img
-                                        src={badge.badgeImageUrl}
-                                        alt={badge.badgeName || ''}
-                                        className="max-h-56 w-full rounded-md object-contain"
-                                    />
+                                    {badgeImageUrl ? (
+                                        <img
+                                            src={badgeImageUrl}
+                                            alt={badge.badgeName || ''}
+                                            className="max-h-56 w-full rounded-md object-contain"
+                                        />
+                                    ) : (
+                                        <Badge
+                                            variant="outline"
+                                            className="mx-auto max-w-full"
+                                        >
+                                            <span className="truncate">
+                                                {badgeName || badge.badgeId}
+                                            </span>
+                                        </Badge>
+                                    )}
                                 </Button>
                                 <div className="flex flex-col gap-1 text-sm">
                                     <div className="font-medium">

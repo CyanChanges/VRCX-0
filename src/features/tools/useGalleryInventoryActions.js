@@ -1,3 +1,20 @@
+import { mergeCurrentUserPresenceFields } from '@/shared/utils/currentUserPresence.js';
+
+function mergeCurrentUserMediaUpdate(nextUser, previousUser) {
+    const mergedUser = mergeCurrentUserPresenceFields(nextUser, previousUser);
+    if (
+        Array.isArray(previousUser?.badges) &&
+        previousUser.badges.length > 0 &&
+        (!Array.isArray(nextUser?.badges) || nextUser.badges.length === 0)
+    ) {
+        return {
+            ...mergedUser,
+            badges: previousUser.badges
+        };
+    }
+    return mergedUser;
+}
+
 export function useGalleryInventoryActions({
     buildProfilePicOverride,
     confirm,
@@ -103,12 +120,16 @@ export function useGalleryInventoryActions({
             if (!isRuntimeAuthTarget(authTarget)) {
                 return;
             }
+            const mergedUser = mergeCurrentUserMediaUpdate(
+                nextUser,
+                useRuntimeStore.getState().auth.currentUserSnapshot
+            );
             useRuntimeStore.getState().setAuthBootstrap({
-                currentUserSnapshot: nextUser,
+                currentUserSnapshot: mergedUser,
                 currentUserDisplayName:
-                    nextUser.displayName ||
-                    nextUser.username ||
-                    nextUser.id ||
+                    mergedUser.displayName ||
+                    mergedUser.username ||
+                    mergedUser.id ||
                     currentUserId
             });
             toast.success(

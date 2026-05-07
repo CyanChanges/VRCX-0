@@ -1,6 +1,7 @@
 import {
     entityQueryPolicies,
     fetchCachedData,
+    getCachedQueryData,
     queryKeys,
     setCachedQueryData
 } from '@/lib/entityQueryCache.js';
@@ -53,6 +54,43 @@ async function collectPages(fetchPage, { pageSize = 100, maxPages = 50 } = {}) {
 
 function normalize(user) {
     return normalizeUserProfile(user);
+}
+
+function hasOwnField(source, field) {
+    return (
+        source &&
+        typeof source === 'object' &&
+        Object.prototype.hasOwnProperty.call(source, field)
+    );
+}
+
+function mergeCurrentUserUpdateResponse(responseJson, cachedUser, params) {
+    const responseUser =
+        responseJson && typeof responseJson === 'object' ? responseJson : {};
+    let nextUser = responseUser;
+
+    if (
+        Array.isArray(cachedUser?.badges) &&
+        cachedUser.badges.length > 0 &&
+        !hasOwnField(responseUser, 'badges') &&
+        !hasOwnField(params, 'badges')
+    ) {
+        nextUser = {
+            ...nextUser,
+            badges: cachedUser.badges
+        };
+    }
+
+    for (const [field, value] of Object.entries(params || {})) {
+        if (!hasOwnField(nextUser, field)) {
+            if (nextUser === responseUser) {
+                nextUser = { ...nextUser };
+            }
+            nextUser[field] = value;
+        }
+    }
+
+    return nextUser;
 }
 
 async function getUserProfile({
@@ -211,6 +249,8 @@ async function updateCurrentUser({ userId, endpoint = '', params = {} }) {
         );
     }
 
+    const queryKey = queryKeys.user(normalizedUserId, endpoint);
+    const cachedUser = getCachedQueryData(queryKey);
     const response = await vrchatAuthRepository.execute(
         `users/${encodeURIComponent(normalizedUserId)}`,
         {
@@ -219,11 +259,13 @@ async function updateCurrentUser({ userId, endpoint = '', params = {} }) {
             params
         }
     );
-    const nextUser = normalize(response.json);
-    setCachedQueryData(
-        queryKeys.user(normalizedUserId, endpoint),
-        response.json
+    const mergedJson = mergeCurrentUserUpdateResponse(
+        response.json,
+        cachedUser,
+        params
     );
+    const nextUser = normalize(mergedJson);
+    setCachedQueryData(queryKey, mergedJson);
     recordUserProfile(nextUser, {
         endpoint,
         source: 'currentUser',

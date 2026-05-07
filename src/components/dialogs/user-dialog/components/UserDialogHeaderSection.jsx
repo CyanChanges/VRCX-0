@@ -20,6 +20,7 @@ import {
 } from '../UserDialogViewParts.jsx';
 import { UserDialogHeaderActions } from './UserDialogHeaderActions.jsx';
 import {
+    hasRenderableUserProfileBadges,
     UserDialogHeaderBadges,
     UserDialogHeaderMediaBadges
 } from './UserDialogHeaderBadges.jsx';
@@ -325,6 +326,7 @@ export function UserDialogHeaderSection({ state = {}, actions = {}, t }) {
         ? userImage(profile, true, '256', true)
         : '';
     const hasTitleMeta = Boolean(profileLanguages?.length);
+    const hasProfileBadges = hasRenderableUserProfileBadges(profile);
 
     return (
         <EntityOverviewCard
@@ -455,7 +457,7 @@ export function UserDialogHeaderSection({ state = {}, actions = {}, t }) {
                 />
             </div>
 
-            {profile.badges?.some((badge) => badge?.badgeImageUrl) ? (
+            {hasProfileBadges ? (
                 <>
                     <Separator />
                     <div className="flex flex-wrap items-center gap-1.5">
