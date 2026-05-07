@@ -3858,6 +3858,8 @@
             "generated": {
                 "vrcx_0_update": "VRCX-0 Update",
                 "current_version": "Current version",
+                "latest_version": "Latest version",
+                "update_path": "Upgrade",
                 "an_update_is_downloaded_and_ready_to_install": "An update is downloaded and ready to install",
                 "install_and_restart": "Install And Restart",
                 "vrchat_registry_backup": "VRChat Registry Backup",
@@ -3876,6 +3878,9 @@
                 "enable_udon_debug_logging": "--enable-udon-debug-logging",
                 "saved_vrchat_config": "Saved VRChat config",
                 "migrate_and_restart": "Migrate And Restart"
+            },
+            "generated_dynamic": {
+                "version_summary": "Current version {current}. Latest version {latest}."
             }
         },
         "instance": {

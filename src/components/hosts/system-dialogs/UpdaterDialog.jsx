@@ -7,8 +7,9 @@ import { backend } from '@/platform/index.js';
 import {
     canInstallUpdatesOnPlatform,
     downloadAndInstallUpdate,
-    fetchBranchReleases,
-    formatReleaseDisplayVersion
+    fetchLatestBranchRelease,
+    formatReleaseDisplayVersion,
+    hasUpdateForBranch
 } from '@/services/updateService.js';
 import { links } from '@/shared/constants/link.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
@@ -22,14 +23,6 @@ import {
     DialogTitle
 } from '@/ui/shadcn/dialog';
 import { FieldGroup } from '@/ui/shadcn/field';
-import {
-    Select,
-    SelectContent,
-    SelectGroup,
-    SelectItem,
-    SelectTrigger,
-    SelectValue
-} from '@/ui/shadcn/select';
 
 const STABLE_BRANCH = 'Stable';
 
@@ -40,16 +33,31 @@ export function UpdaterDialog({ open, onOpenChange }) {
     );
     const canInstallUpdates = canInstallUpdatesOnPlatform(hostPlatform);
 
-    const [releases, setReleases] = useState([]);
-    const [releaseVersion, setReleaseVersion] = useState('');
+    const [latestRelease, setLatestRelease] = useState(null);
     const [loading, setLoading] = useState(false);
     const [downloading, setDownloading] = useState(false);
     const [progress, setProgress] = useState(0);
     const [detail, setDetail] = useState('');
-    const selectedRelease =
-        releases.find(
-            (release) => release.canonicalVersion === releaseVersion
-        ) || null;
+    const currentVersionText =
+        formatReleaseDisplayVersion(VERSION || '') || '-';
+    const latestVersionText =
+        latestRelease?.displayVersion ||
+        (latestRelease?.canonicalVersion
+            ? formatReleaseDisplayVersion(latestRelease.canonicalVersion)
+            : '') ||
+        '-';
+    const hasNewerRelease = latestRelease
+        ? hasUpdateForBranch(
+              STABLE_BRANCH,
+              VERSION || '',
+              latestRelease.canonicalVersion
+          )
+        : false;
+    const visibleDetail =
+        detail ||
+        (latestRelease && !hasNewerRelease
+            ? t('dialog.vrcx_updater.latest_version')
+            : '');
 
     useEffect(() => {
         if (!open) {
@@ -58,27 +66,21 @@ export function UpdaterDialog({ open, onOpenChange }) {
 
         let active = true;
         setLoading(true);
+        setLatestRelease(null);
         setDetail('Checking update state.');
 
-        fetchBranchReleases(STABLE_BRANCH, {
+        fetchLatestBranchRelease(STABLE_BRANCH, {
             hostPlatform,
             requireInstallerAsset: canInstallUpdates
         })
-            .then((nextReleases) => {
+            .then((nextRelease) => {
                 if (!active) {
                     return;
                 }
 
-                setReleases(nextReleases);
-                setReleaseVersion((current) =>
-                    nextReleases.some(
-                        (release) => release.canonicalVersion === current
-                    )
-                        ? current
-                        : nextReleases[0]?.canonicalVersion || ''
-                );
+                setLatestRelease(nextRelease);
                 setDetail(
-                    nextReleases.length
+                    nextRelease
                         ? ''
                         : canInstallUpdates
                           ? 'No downloadable releases found.'
@@ -107,7 +109,12 @@ export function UpdaterDialog({ open, onOpenChange }) {
     }, [canInstallUpdates, hostPlatform, open]);
 
     async function handleInstallUpdate() {
-        if (!canInstallUpdates || !selectedRelease || downloading) {
+        if (
+            !canInstallUpdates ||
+            !latestRelease ||
+            !hasNewerRelease ||
+            downloading
+        ) {
             return;
         }
 
@@ -115,11 +122,11 @@ export function UpdaterDialog({ open, onOpenChange }) {
         setProgress(0);
         setDetail(
             t('host.system_dialogs.generated_dynamic.downloading_value', {
-                value: selectedRelease.displayName
+                value: latestVersionText
             })
         );
         try {
-            await downloadAndInstallUpdate(selectedRelease, {
+            await downloadAndInstallUpdate(latestRelease, {
                 hostPlatform,
                 onProgress: setProgress
             });
@@ -135,7 +142,7 @@ export function UpdaterDialog({ open, onOpenChange }) {
     }
 
     async function handleOpenReleasePage() {
-        await openExternalLink(selectedRelease?.htmlUrl || links.releases);
+        await openExternalLink(latestRelease?.htmlUrl || links.releases);
     }
 
     return (
@@ -146,47 +153,21 @@ export function UpdaterDialog({ open, onOpenChange }) {
                         {t('dialog.system.generated.vrcx_0_update')}
                     </DialogTitle>
                     <DialogDescription>
-                        {t('dialog.system.generated.current_version')}{' '}
-                        {formatReleaseDisplayVersion(VERSION || '') || '-'}.
+                        {t('dialog.system.generated_dynamic.version_summary', {
+                            current: currentVersionText,
+                            latest: latestVersionText
+                        })}
                     </DialogDescription>
                 </DialogHeader>
                 <FieldGroup>
-                    {canInstallUpdates ? (
-                        <div className="border-input bg-background text-foreground flex h-9 w-full items-center truncate rounded-md border px-3 text-sm">
-                            {selectedRelease?.displayName ||
-                                (loading
-                                    ? 'Loading releases'
-                                    : 'Select release')}
+                    <div className="border-input bg-background flex w-full flex-col gap-1 rounded-md border px-3 py-2 text-sm">
+                        <div className="text-muted-foreground text-xs">
+                            {t('dialog.system.generated.update_path')}
                         </div>
-                    ) : (
-                        <Select
-                            value={releaseVersion}
-                            onValueChange={setReleaseVersion}
-                            disabled={loading || downloading}
-                        >
-                            <SelectTrigger>
-                                <SelectValue
-                                    placeholder={
-                                        loading
-                                            ? 'Loading releases'
-                                            : 'Select release'
-                                    }
-                                />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectGroup>
-                                    {releases.map((release) => (
-                                        <SelectItem
-                                            key={release.canonicalVersion}
-                                            value={release.canonicalVersion}
-                                        >
-                                            {release.displayName}
-                                        </SelectItem>
-                                    ))}
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    )}
+                        <div className="text-foreground truncate font-medium tabular-nums">
+                            {currentVersionText} -&gt; {latestVersionText}
+                        </div>
+                    </div>
                     {canInstallUpdates && downloading ? (
                         <div className="flex flex-col gap-2">
                             <div className="bg-muted h-2 overflow-hidden rounded-full">
@@ -202,10 +183,10 @@ export function UpdaterDialog({ open, onOpenChange }) {
                             </div>
                         </div>
                     ) : null}
-                    {detail ? (
+                    {visibleDetail ? (
                         <div className="text-muted-foreground text-sm">
                             {userFacingErrorMessage(
-                                detail,
+                                visibleDetail,
                                 'Failed to update VRCX-0.'
                             )}
                         </div>
@@ -216,7 +197,10 @@ export function UpdaterDialog({ open, onOpenChange }) {
                         <Button
                             type="button"
                             disabled={
-                                !selectedRelease || loading || downloading
+                                !latestRelease ||
+                                !hasNewerRelease ||
+                                loading ||
+                                downloading
                             }
                             onClick={() => void handleInstallUpdate()}
                         >
