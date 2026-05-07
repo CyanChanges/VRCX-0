@@ -1,4 +1,5 @@
 import { UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { timeToText } from '@/lib/dateTime.js';
 import { userStatusDotClassName } from '@/lib/userStatus.js';
@@ -19,6 +20,7 @@ import { openRow } from './userDialogEntityNavigation.js';
 import { UserGroupCard } from './UserDialogGroupCard.jsx';
 
 export function EntityList({ rows, kind = '', loading = false, error = '' }) {
+    const { t } = useTranslation();
     const currentEndpoint = useRuntimeStore(
         (state) => state.auth.currentUserEndpoint
     );
@@ -55,7 +57,7 @@ export function EntityList({ rows, kind = '', loading = false, error = '' }) {
                         : summarizeEntityRow(row);
                 const subtitle =
                     kind === 'user'
-                        ? userRowSubtitle(row, nowMs)
+                        ? userRowSubtitle(row, nowMs, t)
                         : kind === 'world'
                           ? worldOccupantSubtitle(row)
                           : row?.description || '';

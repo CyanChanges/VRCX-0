@@ -1,4 +1,5 @@
 import { formatDateFilter, timeToText } from '@/lib/dateTime.js';
+import { userStatusLabel } from '@/lib/userStatus.js';
 import {
     compareByDisplayName,
     compareByFriendOrder,
@@ -300,7 +301,7 @@ export function userTravelingTimestamp(row) {
     return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-export function userRowSubtitle(row, nowMs) {
+export function userRowSubtitle(row, nowMs, t) {
     if (userTravelingTimestamp(row)) {
         return '';
     }
@@ -320,13 +321,7 @@ export function userRowSubtitle(row, nowMs) {
     if (!Number.isNaN(timestamp) && Number.isFinite(normalizedNowMs)) {
         return timeToText(normalizedNowMs - timestamp);
     }
-    return (
-        row?.statusDescription ||
-        row?.status ||
-        row?.stateBucket ||
-        row?.state ||
-        ''
-    );
+    return row?.statusDescription || userStatusLabel(row, t);
 }
 
 export { resolveTabValue } from './userDialogTabs.js';

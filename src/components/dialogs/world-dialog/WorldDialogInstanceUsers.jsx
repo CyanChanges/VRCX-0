@@ -10,7 +10,7 @@ import {
 } from '@/components/instances/instanceRoster.js';
 import { timeToText } from '@/lib/dateTime.js';
 import { userImage } from '@/lib/entityMedia.js';
-import { userStatusDotClassName } from '@/lib/userStatus.js';
+import { userStatusDotClassName, userStatusLabel } from '@/lib/userStatus.js';
 import { cn } from '@/lib/utils.js';
 import { openUserDialog } from '@/services/dialogService.js';
 import { Button } from '@/ui/shadcn/button';
@@ -45,7 +45,7 @@ function instanceUserTravelingTimestamp(user) {
     );
 }
 
-function instanceUserSubtitle(user) {
+function instanceUserSubtitle(user, t) {
     if (user?.$subtitle) {
         return user.$subtitle;
     }
@@ -66,9 +66,7 @@ function instanceUserSubtitle(user) {
     return firstText(
         user?.subtitle,
         user?.statusDescription,
-        user?.status,
-        user?.stateBucket,
-        user?.state
+        userStatusLabel(user, t)
     );
 }
 
@@ -135,7 +133,7 @@ export function InstanceUserTiles({ instance }) {
                     userId,
                     'User'
                 );
-                const subtitle = instanceUserSubtitle(user);
+                const subtitle = instanceUserSubtitle(user, t);
                 const travelingTimestamp = instanceUserTravelingTimestamp(user);
                 return (
                     <Button

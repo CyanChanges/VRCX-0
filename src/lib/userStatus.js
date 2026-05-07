@@ -169,9 +169,45 @@ function userStatusSortRank(value) {
     return 4;
 }
 
+const statusLabelKeys = Object.freeze({
+    active: 'dialog.user.status.online',
+    'state-active': 'dialog.user.status.active',
+    'join me': 'dialog.user.status.join_me',
+    'ask me': 'dialog.user.status.ask_me',
+    busy: 'dialog.user.status.busy',
+    offline: 'dialog.user.status.offline',
+    private: 'location.private',
+    traveling: 'location.traveling'
+});
+
+const statusLabelFallbacks = Object.freeze({
+    active: 'Online',
+    'state-active': 'Active',
+    'join me': 'Join Me',
+    'ask me': 'Ask Me',
+    busy: 'Do Not Disturb',
+    offline: 'Offline',
+    private: 'Private',
+    traveling: 'Traveling'
+});
+
+function userStatusLabel(value, t) {
+    const status = normalizeUserStatus(value);
+    if (!status) {
+        return '';
+    }
+    const labelKey = statusLabelKeys[status];
+    const fallback = statusLabelFallbacks[status] || status;
+    if (!labelKey || typeof t !== 'function') {
+        return fallback;
+    }
+    return t(labelKey, { defaultValue: fallback });
+}
+
 export {
     normalizeUserStatus,
     userStatusDotClassName,
     userStatusIndicatorClassName,
+    userStatusLabel,
     userStatusSortRank
 };
