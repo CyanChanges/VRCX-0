@@ -785,3 +785,200 @@ impl MetadataCacheDb {
         let _ = conn.execute("DELETE FROM cache", []);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path =
+                std::env::temp_dir().join(format!("vrcx-0-{name}-{}-{nonce}", std::process::id()));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn write_test_png(path: &Path) -> Result<(), AppError> {
+        let img = image::DynamicImage::ImageRgba8(image::RgbaImage::from_pixel(
+            2,
+            2,
+            image::Rgba([12, 34, 56, 255]),
+        ));
+        let mut buf = Vec::new();
+        let encoder = image::codecs::png::PngEncoder::new(&mut buf);
+        img.write_with_encoder(encoder)
+            .map_err(|e| AppError::Custom(format!("png encode: {e}")))?;
+        std::fs::write(path, buf)?;
+        Ok(())
+    }
+
+    fn write_text_chunk(path: &Path, keyword: &str, text: &str) -> Result<(), AppError> {
+        let path_str = path.to_string_lossy();
+        let mut png = png::PngFile::open_rw(&path_str)
+            .map_err(|e| AppError::Custom(format!("png open: {e}")))?;
+        let chunk = png::generate_text_chunk(keyword, text);
+        assert!(png.write_chunk(&chunk));
+        Ok(())
+    }
+
+    #[test]
+    fn get_screenshot_metadata_reads_legacy_lfs_world_and_players_from_png() -> Result<(), AppError>
+    {
+        let dir = TestDir::new("screenshot-legacy-lfs");
+        let path = dir.path.join("legacy.png");
+        write_test_png(&path)?;
+        write_text_chunk(
+            &path,
+            "Description",
+            "lfs|2|author:usr_author,Ava|world:wrld_legacy,12345,Legacy World|pos:1.5,2.5,3.5|players:usr_one,1,2,3,Player One;usr_two,4.5,5.5,6.5,Player Two",
+        )?;
+
+        let path_str = path.to_string_lossy();
+        let metadata = get_screenshot_metadata(&path_str).expect("metadata");
+
+        assert_eq!(metadata.application.as_deref(), Some("lfs"));
+        assert_eq!(metadata.world.id, "wrld_legacy");
+        assert_eq!(metadata.world.name.as_deref(), Some("Legacy World"));
+        assert_eq!(metadata.world.instance_id, "wrld_legacy:12345");
+        assert_eq!(metadata.players.len(), 2);
+        assert_eq!(metadata.players[0].id, "usr_one");
+        assert_eq!(metadata.players[0].display_name, "Player One");
+        assert_eq!(metadata.players[0].pos, Some([1.0, 2.0, 3.0]));
+        assert_eq!(metadata.players[1].id, "usr_two");
+        assert_eq!(metadata.players[1].display_name, "Player Two");
+        assert_eq!(metadata.players[1].pos, Some([4.5, 5.5, 6.5]));
+        Ok(())
+    }
+
+    #[test]
+    fn add_screenshot_metadata_writes_vrcx_world_and_players_for_new_screenshot(
+    ) -> Result<(), AppError> {
+        let dir = TestDir::new("screenshot-vrcx-metadata");
+        let path = dir
+            .path
+            .join("VRChat_2026-05-08_00-00-00.000_3840x2160.png");
+        write_test_png(&path)?;
+        let path_str = path.to_string_lossy().into_owned();
+        let metadata_json = serde_json::json!({
+            "application": "VRCX-0",
+            "version": 1,
+            "author": {
+                "id": "usr_author",
+                "displayName": "Ava"
+            },
+            "world": {
+                "id": "wrld_new",
+                "name": "New Screenshot World",
+                "instanceId": "wrld_new:98765~region(us)"
+            },
+            "players": [
+                {
+                    "id": "usr_friend",
+                    "displayName": "Friend One"
+                }
+            ]
+        })
+        .to_string();
+
+        let written_path = add_screenshot_metadata(&path_str, &metadata_json, "wrld_new", false);
+        let metadata = get_screenshot_metadata(&path_str).expect("metadata");
+
+        assert_eq!(written_path, path_str);
+        assert!(has_vrcx_metadata(&path_str));
+        assert_eq!(metadata.application.as_deref(), Some("VRCX-0"));
+        assert_eq!(metadata.world.id, "wrld_new");
+        assert_eq!(metadata.world.name.as_deref(), Some("New Screenshot World"));
+        assert_eq!(metadata.world.instance_id, "wrld_new:98765~region(us)");
+        assert_eq!(metadata.players.len(), 1);
+        assert_eq!(metadata.players[0].id, "usr_friend");
+        assert_eq!(metadata.players[0].display_name, "Friend One");
+        Ok(())
+    }
+
+    #[test]
+    fn get_screenshot_metadata_merges_vrchat_world_name_with_vrcx_players() -> Result<(), AppError>
+    {
+        let dir = TestDir::new("screenshot-vrchat-vrcx-merge");
+        let path = dir
+            .path
+            .join("VRChat_2026-05-08_00-00-01.000_3840x2160.png");
+        write_test_png(&path)?;
+        write_text_chunk(
+            &path,
+            "XML:com.adobe.xmp",
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/"><CreatorTool>VRChat</CreatorTool><Author>VRChat User</Author><AuthorID>usr_author</AuthorID><DateTime>2026-05-08T00:00:01.000Z</DateTime><WorldID>wrld_current</WorldID><WorldDisplayName>Current World Friends</WorldDisplayName></x:xmpmeta>"#,
+        )?;
+        let path_str = path.to_string_lossy().into_owned();
+        let metadata_json = serde_json::json!({
+            "application": "VRCX-0",
+            "version": 1,
+            "author": {
+                "id": "usr_author",
+                "displayName": "Ava"
+            },
+            "world": {
+                "id": "wrld_current",
+                "name": "JSON World",
+                "instanceId": "wrld_current:12345~hidden(usr_hidden)~region(us)"
+            },
+            "players": [
+                {
+                    "id": "usr_one",
+                    "displayName": "Player One"
+                },
+                {
+                    "id": "usr_two",
+                    "displayName": "Player Two"
+                }
+            ]
+        })
+        .to_string();
+
+        assert_eq!(
+            add_screenshot_metadata(&path_str, &metadata_json, "wrld_current", false),
+            path_str
+        );
+        let metadata = get_screenshot_metadata(&path_str).expect("metadata");
+
+        assert_eq!(metadata.application.as_deref(), Some("VRChat"));
+        assert_eq!(metadata.author.id, "usr_author");
+        assert_eq!(metadata.author.display_name.as_deref(), Some("VRChat User"));
+        assert_eq!(
+            metadata.timestamp.as_deref(),
+            Some("2026-05-08T00:00:01.000Z")
+        );
+        assert_eq!(metadata.world.id, "wrld_current");
+        assert_eq!(
+            metadata.world.name.as_deref(),
+            Some("Current World Friends")
+        );
+        assert_eq!(
+            metadata.world.instance_id,
+            "wrld_current:12345~hidden(usr_hidden)~region(us)"
+        );
+        assert_eq!(
+            metadata
+                .players
+                .iter()
+                .map(|player| player.display_name.as_str())
+                .collect::<Vec<_>>(),
+            vec!["Player One", "Player Two"]
+        );
+        Ok(())
+    }
+}

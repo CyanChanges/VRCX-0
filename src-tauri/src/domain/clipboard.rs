@@ -196,3 +196,37 @@ pub fn copy_image_to_clipboard(path: &str) -> Result<(), AppError> {
         "copy image to clipboard is unsupported on this platform".into(),
     ))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recognizes_image_paths_used_by_screenshot_copy() {
+        assert!(is_supported_image_path(Path::new("VRChat_2026-05-08.png")));
+        assert!(is_supported_image_path(Path::new("VRChat_2026-05-08.JPG")));
+        assert!(!is_supported_image_path(Path::new("VRChat_2026-05-08.txt")));
+    }
+
+    #[test]
+    #[cfg(windows)]
+    fn windows_file_drop_list_encodes_screenshot_path_for_paste_targets() -> Result<(), AppError> {
+        let path = Path::new(r"C:\Users\about\Pictures\VRChat\VRChat_2026-05-08.png");
+        let data = build_windows_file_drop_list(path)?;
+
+        assert_eq!(u32::from_le_bytes(data[0..4].try_into().unwrap()), 20);
+        assert_eq!(u32::from_le_bytes(data[16..20].try_into().unwrap()), 1);
+
+        let wide_path: Vec<u16> = data[20..]
+            .chunks_exact(2)
+            .map(|chunk| u16::from_le_bytes(chunk.try_into().unwrap()))
+            .collect();
+        let first_nul = wide_path.iter().position(|value| *value == 0).unwrap();
+        let decoded_path = String::from_utf16(&wide_path[..first_nul])
+            .map_err(|e| AppError::Custom(format!("decode path: {e}")))?;
+
+        assert_eq!(decoded_path, path.to_string_lossy());
+        assert_eq!(wide_path[first_nul + 1], 0);
+        Ok(())
+    }
+}

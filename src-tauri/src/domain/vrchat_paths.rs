@@ -230,10 +230,15 @@ fn default_vrchat_photos_location() -> PathBuf {
 #[cfg(target_os = "linux")]
 pub fn discover_linux_steam_roots() -> Result<Vec<PathBuf>, String> {
     let home = dirs::home_dir().ok_or_else(|| "Linux home directory not found".to_string())?;
+    discover_linux_steam_roots_in(&home)
+}
+
+#[cfg(target_os = "linux")]
+fn discover_linux_steam_roots_in(home: &Path) -> Result<Vec<PathBuf>, String> {
     let mut roots = Vec::new();
     let mut seen = HashSet::new();
 
-    for steam_root in steam_root_candidates(&home) {
+    for steam_root in steam_root_candidates(home) {
         if steam_root
             .join("config")
             .join("libraryfolders.vdf")
@@ -534,5 +539,46 @@ fn newest_output_log(log_dir: &Path) -> Option<(SystemTime, PathBuf)> {
 fn push_unique_path(paths: &mut Vec<PathBuf>, seen: &mut HashSet<PathBuf>, path: PathBuf) {
     if seen.insert(path.clone()) {
         paths.push(path);
+    }
+}
+
+#[cfg(test)]
+#[cfg(target_os = "linux")]
+mod tests {
+    use super::*;
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path =
+                std::env::temp_dir().join(format!("vrcx-0-{name}-{}-{nonce}", std::process::id()));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    #[test]
+    fn discovers_fedora_default_steam_root_from_home() {
+        let dir = TestDir::new("fedora-steam-root");
+        let steam_root = dir.path.join(".local").join("share").join("Steam");
+        std::fs::create_dir_all(&steam_root).unwrap();
+        std::fs::write(steam_root.join("steam.sh"), b"").unwrap();
+
+        let roots = discover_linux_steam_roots_in(&dir.path).unwrap();
+
+        assert_eq!(roots, [steam_root]);
     }
 }
