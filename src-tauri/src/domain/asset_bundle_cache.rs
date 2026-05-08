@@ -22,6 +22,16 @@ pub fn get_vrchat_cache_full_location(
     variant_version: i32,
 ) -> String {
     let cache_path = PathBuf::from(vrchat_paths::vrchat_cache_location());
+    get_vrchat_cache_full_location_in(&cache_path, file_id, file_version, variant, variant_version)
+}
+
+fn get_vrchat_cache_full_location_in(
+    cache_path: &Path,
+    file_id: &str,
+    file_version: i32,
+    variant: &str,
+    variant_version: i32,
+) -> String {
     let id_hash = asset_id(file_id, variant);
     let top_dir = cache_path.join(id_hash);
     let version_location = asset_version(file_version, variant_version);
@@ -72,13 +82,30 @@ pub fn check_vrchat_cache(
     variant: &str,
     variant_version: i32,
 ) -> CacheCheckResult {
+    let cache_path = PathBuf::from(vrchat_paths::vrchat_cache_location());
+    check_vrchat_cache_in(&cache_path, file_id, file_version, variant, variant_version)
+}
+
+fn check_vrchat_cache_in(
+    cache_path: &Path,
+    file_id: &str,
+    file_version: i32,
+    variant: &str,
+    variant_version: i32,
+) -> CacheCheckResult {
     let mut file_size = -1i64;
     let mut is_locked = false;
 
-    let mut full_location = get_vrchat_cache_full_location(file_id, file_version, "", 0);
+    let mut full_location =
+        get_vrchat_cache_full_location_in(cache_path, file_id, file_version, "", 0);
     if !Path::new(&full_location).exists() {
-        full_location =
-            get_vrchat_cache_full_location(file_id, file_version, variant, variant_version);
+        full_location = get_vrchat_cache_full_location_in(
+            cache_path,
+            file_id,
+            file_version,
+            variant,
+            variant_version,
+        );
     }
 
     let file_location = PathBuf::from(&full_location).join("__data");
@@ -101,12 +128,29 @@ pub fn check_vrchat_cache(
 }
 
 pub fn delete_cache(file_id: &str, file_version: i32, variant: &str, variant_version: i32) {
-    let path = get_vrchat_cache_full_location(file_id, file_version, "", 0);
+    let cache_path = PathBuf::from(vrchat_paths::vrchat_cache_location());
+    delete_cache_in(&cache_path, file_id, file_version, variant, variant_version);
+}
+
+fn delete_cache_in(
+    cache_path: &Path,
+    file_id: &str,
+    file_version: i32,
+    variant: &str,
+    variant_version: i32,
+) {
+    let path = get_vrchat_cache_full_location_in(cache_path, file_id, file_version, "", 0);
     if Path::new(&path).exists() {
         let _ = fs::remove_dir_all(&path);
     }
 
-    let path = get_vrchat_cache_full_location(file_id, file_version, variant, variant_version);
+    let path = get_vrchat_cache_full_location_in(
+        cache_path,
+        file_id,
+        file_version,
+        variant,
+        variant_version,
+    );
     if Path::new(&path).exists() {
         let _ = fs::remove_dir_all(&path);
     }
@@ -114,6 +158,10 @@ pub fn delete_cache(file_id: &str, file_version: i32, variant: &str, variant_ver
 
 pub fn delete_all_cache() {
     let cache_path = PathBuf::from(vrchat_paths::vrchat_cache_location());
+    delete_all_cache_in(&cache_path);
+}
+
+fn delete_all_cache_in(cache_path: &Path) {
     if cache_path.exists() {
         let _ = fs::remove_dir_all(&cache_path);
         let _ = fs::create_dir_all(&cache_path);
@@ -202,10 +250,14 @@ pub fn sweep_cache() -> Vec<String> {
 
 pub fn cache_size() -> i64 {
     let cache_path = PathBuf::from(vrchat_paths::vrchat_cache_location());
+    cache_size_in(&cache_path)
+}
+
+fn cache_size_in(cache_path: &Path) -> i64 {
     if !cache_path.exists() {
         return 0;
     }
-    dir_size(&cache_path)
+    dir_size(cache_path)
 }
 
 fn asset_id(id: &str, variant: &str) -> String {
@@ -269,4 +321,109 @@ fn dir_size(path: &Path) -> i64 {
         .filter_map(|e| e.metadata().ok())
         .map(|m| m.len() as i64)
         .sum()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestDir {
+        path: PathBuf,
+    }
+
+    impl TestDir {
+        fn new(name: &str) -> Self {
+            let nonce = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos();
+            let path =
+                std::env::temp_dir().join(format!("vrcx-0-{name}-{}-{nonce}", std::process::id()));
+            std::fs::create_dir_all(&path).unwrap();
+            Self { path }
+        }
+    }
+
+    impl Drop for TestDir {
+        fn drop(&mut self) {
+            let _ = std::fs::remove_dir_all(&self.path);
+        }
+    }
+
+    fn write_cache_entry(
+        cache_root: &Path,
+        file_id: &str,
+        file_version: i32,
+        variant: &str,
+        variant_version: i32,
+        bytes: &[u8],
+        locked: bool,
+    ) -> PathBuf {
+        let path = cache_root
+            .join(asset_id(file_id, variant))
+            .join(asset_version(file_version, variant_version));
+        std::fs::create_dir_all(&path).unwrap();
+        std::fs::write(path.join("__data"), bytes).unwrap();
+        if locked {
+            std::fs::write(path.join("__lock"), b"").unwrap();
+        }
+        path
+    }
+
+    #[test]
+    fn checks_cache_size_lock_and_location_without_touching_real_vrchat_cache() {
+        let dir = TestDir::new("asset-cache-check");
+        let cache_path = write_cache_entry(
+            &dir.path,
+            "file_world",
+            42,
+            "security",
+            7,
+            b"cached-world",
+            true,
+        );
+
+        let result = check_vrchat_cache_in(&dir.path, "file_world", 42, "security", 7);
+
+        assert_eq!(result.item1, 12);
+        assert!(result.item2);
+        assert_eq!(result.item3, cache_path.to_string_lossy());
+        assert_eq!(cache_size_in(&dir.path), 12);
+    }
+
+    #[test]
+    fn deletes_specific_standard_and_variant_cache_entries() {
+        let dir = TestDir::new("asset-cache-delete");
+        let standard_path =
+            write_cache_entry(&dir.path, "file_avatar", 9, "", 0, b"standard", false);
+        let variant_path = write_cache_entry(
+            &dir.path,
+            "file_avatar",
+            9,
+            "security",
+            2,
+            b"variant",
+            false,
+        );
+        let other_path = write_cache_entry(&dir.path, "file_other", 1, "", 0, b"other", false);
+
+        delete_cache_in(&dir.path, "file_avatar", 9, "security", 2);
+
+        assert!(!standard_path.exists());
+        assert!(!variant_path.exists());
+        assert!(other_path.exists());
+        assert_eq!(cache_size_in(&dir.path), 5);
+    }
+
+    #[test]
+    fn delete_all_cache_recreates_empty_cache_root() {
+        let dir = TestDir::new("asset-cache-delete-all");
+        write_cache_entry(&dir.path, "file_world", 1, "", 0, b"cache", false);
+
+        delete_all_cache_in(&dir.path);
+
+        assert!(dir.path.is_dir());
+        assert_eq!(std::fs::read_dir(&dir.path).unwrap().count(), 0);
+        assert_eq!(cache_size_in(&dir.path), 0);
+    }
 }

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { backend } from '@/platform/tauri/index.js';
+
 vi.mock('@/platform/tauri/index.js', () => ({
     backend: {
         assetBundle: {
@@ -16,6 +18,7 @@ vi.mock('@/repositories/index.js', () => ({
 
 import {
     defaultWorldCacheInfo,
+    readWorldCacheInfo,
     resolveWorldAssetBundleArgs
 } from './worldAssetBundle.js';
 
@@ -134,5 +137,41 @@ describe('worldAssetBundle', () => {
             variant: 'security',
             variantVersion: 9
         });
+    });
+
+    it('reads visible VRChat cache size, lock state, and cache path', async () => {
+        vi.mocked(backend.assetBundle.CheckVRChatCache).mockResolvedValue({
+            Item1: 2 * 1048576,
+            Item2: true,
+            Item3: 'C:\\VRChat\\Cache-WindowsPlayer\\asset\\version'
+        });
+
+        await expect(
+            readWorldCacheInfo(
+                {
+                    assetUrl: assetUrl('file_world', 8, 9),
+                    unityPackages: [
+                        {
+                            platform: 'standalonewindows',
+                            variant: 'standard'
+                        }
+                    ]
+                },
+                '',
+                '2022.3.6f1'
+            )
+        ).resolves.toEqual({
+            inCache: true,
+            cacheSize: '2.00 MB',
+            cacheLocked: true,
+            cachePath: 'C:\\VRChat\\Cache-WindowsPlayer\\asset\\version'
+        });
+
+        expect(backend.assetBundle.CheckVRChatCache).toHaveBeenCalledWith(
+            'file_world',
+            8,
+            'security',
+            9
+        );
     });
 });
