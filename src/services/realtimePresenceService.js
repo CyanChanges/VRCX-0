@@ -8,6 +8,7 @@ import {
     buildAvatarWearSnapshotUpdate,
     persistAvatarWearTransition
 } from './avatarWearTimeService.js';
+import { refreshCurrentUser } from './backgroundMaintenanceService.js';
 import {
     recordCurrentUserSnapshot,
     recordFriendPatch
@@ -450,13 +451,24 @@ export async function handleRealtimePresenceEvent(message) {
                     return applyFriendPatch(userId, patch, 'online');
                 }
                 case 'user-update': {
-                    const previous =
-                        useRuntimeStore.getState().auth.currentUserSnapshot ??
-                        null;
+                    const runtimeState = useRuntimeStore.getState();
+                    const previous = runtimeState.auth.currentUserSnapshot ?? null;
                     const userPatch =
                         sanitizeTransportUser(content.user, {
                             preserveState: true
                         }) ?? {};
+                    const currentUserId = normalizeUserId(
+                        runtimeState.auth.currentUserId
+                    );
+                    const eventUserId = normalizeUserId(
+                        userPatch.id || content.userId
+                    );
+                    if (!currentUserId || !eventUserId) {
+                        return false;
+                    }
+                    if (eventUserId !== currentUserId) {
+                        return false;
+                    }
                     const stateBucket = resolveStateBucketFromEvent(
                         content,
                         userPatch,
@@ -471,6 +483,21 @@ export async function handleRealtimePresenceEvent(message) {
                         return false;
                     }
                     patchCurrentUserSnapshot(patch);
+                    try {
+                        await refreshCurrentUser({
+                            expectedUserId: currentUserId,
+                            expectedEndpoint:
+                                runtimeState.auth.currentUserEndpoint,
+                            expectedWebsocket:
+                                runtimeState.auth.currentUserWebsocket,
+                            overlayPatch: patch
+                        });
+                    } catch (error) {
+                        console.warn(
+                            'Current user refresh after realtime update failed:',
+                            error
+                        );
+                    }
                     return true;
                 }
                 case 'user-location': {

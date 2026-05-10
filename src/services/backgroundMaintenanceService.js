@@ -47,7 +47,6 @@ import {
 const APP_UPDATE_CHECK_INTERVAL_SECONDS = 3 * 3600;
 
 const timers = {
-    currentUserRefresh: 300,
     friendsRefresh: 3600,
     groupInstanceRefresh: 0,
     appUpdateCheck: APP_UPDATE_CHECK_INTERVAL_SECONDS,
@@ -70,7 +69,6 @@ let lastTickAt = Date.now();
 let running = false;
 
 function resetTimers() {
-    timers.currentUserRefresh = 300;
     timers.friendsRefresh = 3600;
     timers.groupInstanceRefresh = 0;
     timers.appUpdateCheck = APP_UPDATE_CHECK_INTERVAL_SECONDS;
@@ -339,17 +337,228 @@ function getRuntimeAuth() {
     };
 }
 
-export async function refreshCurrentUser() {
-    const { currentUserEndpoint, currentUserWebsocket } = getRuntimeAuth();
-    const response = await vrchatAuthRepository.getCurrentUser({
-        endpoint: currentUserEndpoint
-    });
-    const user = response.json;
-    if (!user?.id) {
+function normalizeRuntimeAuthValue(value) {
+    return typeof value === 'string'
+        ? value.trim()
+        : String(value ?? '').trim();
+}
+
+function getRuntimeAuthTargetKey(target) {
+    return `${target.currentUserEndpoint}\u0000${target.currentUserId}\u0000${target.currentUserWebsocket}`;
+}
+
+const currentUserRefreshes = new Map();
+const CURRENT_USER_LOCAL_AUTHORITY_FIELDS = [
+    'friends',
+    'onlineFriends',
+    'activeFriends',
+    'offlineFriends',
+    'status',
+    'statusDescription',
+    'state',
+    'stateBucket',
+    'pendingOffline',
+    'location',
+    '$location',
+    '$location_at',
+    'locationUpdatedAt',
+    'worldId',
+    'instanceId',
+    'travelingToLocation',
+    'travelingToWorld',
+    'travelingToInstance',
+    '$travelingToLocation',
+    '$travelingToTime',
+    'travelingToTime',
+    '$previousLocation',
+    '$previousLocation_at'
+];
+
+function mergeCurrentUserRefreshOverlayPatch(record, patch) {
+    if (!patch || typeof patch !== 'object') {
         return;
     }
 
+    record.overlayPatch = {
+        ...(record.overlayPatch || {}),
+        ...patch
+    };
+}
+
+function areCurrentUserSnapshotValuesEqual(left, right) {
+    if (Object.is(left, right)) {
+        return true;
+    }
+
+    if (
+        (left && typeof left === 'object') ||
+        (right && typeof right === 'object')
+    ) {
+        try {
+            return JSON.stringify(left) === JSON.stringify(right);
+        } catch {
+            return false;
+        }
+    }
+
+    return false;
+}
+
+function hasCurrentUserSnapshotField(source, field) {
+    return (
+        source &&
+        typeof source === 'object' &&
+        Object.prototype.hasOwnProperty.call(source, field)
+    );
+}
+
+function mergeCurrentUserRefreshSnapshot({
+    responseUser,
+    baseSnapshot,
+    currentSnapshot,
+    overlayPatch
+}) {
+    let user =
+        currentSnapshot && typeof currentSnapshot === 'object'
+            ? { ...currentSnapshot, ...responseUser }
+            : { ...responseUser };
+
+    for (const field of CURRENT_USER_LOCAL_AUTHORITY_FIELDS) {
+        if (hasCurrentUserSnapshotField(currentSnapshot, field)) {
+            user[field] = currentSnapshot[field];
+        }
+    }
+
+    if (
+        baseSnapshot &&
+        typeof baseSnapshot === 'object' &&
+        currentSnapshot &&
+        typeof currentSnapshot === 'object' &&
+        normalizeRuntimeAuthValue(baseSnapshot.id) ===
+            normalizeRuntimeAuthValue(currentSnapshot.id)
+    ) {
+        const keys = new Set([
+            ...Object.keys(baseSnapshot),
+            ...Object.keys(currentSnapshot)
+        ]);
+        keys.delete('id');
+        for (const key of keys) {
+            if (
+                !areCurrentUserSnapshotValuesEqual(
+                    baseSnapshot[key],
+                    currentSnapshot[key]
+                )
+            ) {
+                user[key] = currentSnapshot[key];
+            }
+        }
+    }
+
+    if (overlayPatch && typeof overlayPatch === 'object') {
+        user = { ...user, ...overlayPatch };
+    }
+
+    return user;
+}
+
+export async function refreshCurrentUser({
+    expectedUserId = '',
+    expectedEndpoint = '',
+    expectedWebsocket = '',
+    overlayPatch = null
+} = {}) {
+    const initialAuth = getRuntimeAuth();
+    const target = {
+        currentUserId: normalizeRuntimeAuthValue(
+            expectedUserId || initialAuth.currentUserId
+        ),
+        currentUserEndpoint: normalizeRuntimeAuthValue(
+            expectedEndpoint || initialAuth.currentUserEndpoint
+        ),
+        currentUserWebsocket: normalizeRuntimeAuthValue(
+            expectedWebsocket || initialAuth.currentUserWebsocket
+        )
+    };
+
+    if (!target.currentUserId) {
+        return null;
+    }
+
+    const key = getRuntimeAuthTargetKey(target);
+    const activeRecord = currentUserRefreshes.get(key);
+    if (activeRecord) {
+        mergeCurrentUserRefreshOverlayPatch(activeRecord, overlayPatch);
+        return activeRecord.promise;
+    }
+
+    const record = {
+        target,
+        overlayPatch: null,
+        promise: null
+    };
+    mergeCurrentUserRefreshOverlayPatch(record, overlayPatch);
+    record.promise = refreshCurrentUserForTarget({
+        target,
+        record
+    }).finally(() => {
+        if (currentUserRefreshes.get(key) === record) {
+            currentUserRefreshes.delete(key);
+        }
+    });
+    currentUserRefreshes.set(key, record);
+
+    return record.promise;
+}
+
+async function refreshCurrentUserForTarget({ target, record }) {
+    const {
+        currentUserId,
+        currentUserEndpoint,
+        currentUserWebsocket,
+        currentUserSnapshot: baseSnapshot
+    } = getRuntimeAuth();
+    if (
+        target.currentUserEndpoint !==
+            normalizeRuntimeAuthValue(currentUserEndpoint) ||
+        target.currentUserId !== normalizeRuntimeAuthValue(currentUserId) ||
+        target.currentUserWebsocket !==
+            normalizeRuntimeAuthValue(currentUserWebsocket)
+    ) {
+        return null;
+    }
+
+    const response = await vrchatAuthRepository.getCurrentUser({
+        endpoint: target.currentUserEndpoint
+    });
+    const responseUser =
+        response.json && typeof response.json === 'object'
+            ? response.json
+            : null;
+    if (!responseUser?.id) {
+        return null;
+    }
+    if (normalizeRuntimeAuthValue(responseUser.id) !== target.currentUserId) {
+        return null;
+    }
+
     const runtimeStore = useRuntimeStore.getState();
+    if (
+        normalizeRuntimeAuthValue(runtimeStore.auth.currentUserId) !==
+            target.currentUserId ||
+        normalizeRuntimeAuthValue(runtimeStore.auth.currentUserEndpoint) !==
+            target.currentUserEndpoint ||
+        normalizeRuntimeAuthValue(runtimeStore.auth.currentUserWebsocket) !==
+            target.currentUserWebsocket
+    ) {
+        return null;
+    }
+    const user = mergeCurrentUserRefreshSnapshot({
+        responseUser,
+        baseSnapshot,
+        currentSnapshot: runtimeStore.auth.currentUserSnapshot,
+        overlayPatch: record.overlayPatch
+    });
+
     const { snapshot: nextSnapshot, transition } =
         buildAvatarWearSnapshotUpdate({
             previousSnapshot: runtimeStore.auth.currentUserSnapshot,
@@ -364,16 +573,19 @@ export async function refreshCurrentUser() {
             nextSnapshot.displayName ||
             nextSnapshot.username ||
             nextSnapshot.id,
-        currentUserEndpoint,
-        currentUserWebsocket,
+        currentUserEndpoint: target.currentUserEndpoint,
+        currentUserWebsocket: target.currentUserWebsocket,
         currentUserSnapshot: nextSnapshot
     });
-    recordCurrentUserSnapshot(nextSnapshot, { endpoint: currentUserEndpoint });
+    recordCurrentUserSnapshot(nextSnapshot, {
+        endpoint: target.currentUserEndpoint
+    });
     persistAvatarWearTransition(transition);
     syncFriendRosterStateFromCurrentUserSnapshot(
         nextSnapshot,
         `Friend roster states refreshed for ${nextSnapshot.displayName || nextSnapshot.username || nextSnapshot.id}.`
     );
+    return nextSnapshot;
 }
 
 async function refreshFriendsAndFavorites() {
@@ -396,8 +608,7 @@ async function refreshFriendsAndFavorites() {
     ]);
 }
 
-export async function refreshCurrentUserFriendsAndFavorites() {
-    await refreshCurrentUser();
+export async function refreshFriendAndFavoriteSnapshots() {
     await refreshFriendsAndFavorites();
 }
 
@@ -826,7 +1037,6 @@ export async function runBackgroundMaintenanceTick() {
     }
 
     try {
-        await runDueTask('currentUserRefresh', 300, refreshCurrentUser);
         await runDueTask('friendsRefresh', 3600, refreshFriendsAndFavorites);
         await runGroupUserInstancesIfDue();
         await runDueTask('moderationRefresh', 3600, refreshPlayerModerations);

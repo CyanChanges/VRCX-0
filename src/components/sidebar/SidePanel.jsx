@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { buildFavoriteCollectionFriendIdSet } from '@/components/sidebar/friends-sidebar/favoriteCollectionSidebarRows.js';
 import { cn } from '@/lib/utils.js';
 import { configRepository } from '@/repositories/index.js';
-import { refreshCurrentUserFriendsAndFavorites } from '@/services/backgroundMaintenanceService.js';
+import { refreshFriendAndFavoriteSnapshots } from '@/services/backgroundMaintenanceService.js';
 import { getNavIconComponent } from '@/shared/constants/navIcons.js';
 import { useFavoriteStore } from '@/state/favoriteStore.js';
 import { useFriendRosterStore } from '@/state/friendRosterStore.js';
@@ -511,7 +511,7 @@ export const SidePanel = forwardRef(function SidePanel(
         }
         setIsRefreshing(true);
         try {
-            await refreshCurrentUserFriendsAndFavorites();
+            await refreshFriendAndFavoriteSnapshots();
             toast.success(
                 t(
                     'side_panel.generated.friend_and_favorite_snapshots_refreshed'

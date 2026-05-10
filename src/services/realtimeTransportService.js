@@ -5,7 +5,7 @@ import { useNotificationStore } from '@/state/notificationStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { useSessionStore } from '@/state/sessionStore.js';
 
-import { refreshCurrentUserFriendsAndFavorites } from './backgroundMaintenanceService.js';
+import { refreshFriendAndFavoriteSnapshots } from './backgroundMaintenanceService.js';
 import { isHostCapabilityAvailable } from './hostCapabilityService.js';
 import { handleRealtimePresenceEvent } from './realtimePresenceService.js';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
@@ -131,7 +131,7 @@ function handleTransportFailure(error, { reconnecting = false } = {}) {
 }
 
 function refreshBaselineAfterReconnect() {
-    void refreshCurrentUserFriendsAndFavorites().catch((error) => {
+    void refreshFriendAndFavoriteSnapshots().catch((error) => {
         useNotificationStore.getState().pushNotification({
             level: 'warning',
             title: 'Realtime baseline refresh failed',
