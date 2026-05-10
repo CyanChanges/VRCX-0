@@ -2912,6 +2912,7 @@
                 "favorite_tooltip": "Favorites",
                 "refresh": "Refresh",
                 "share": "Share",
+                "current_avatar": "Current Avatar",
                 "select": "Select Avatar",
                 "select_fallback": "Select Fallback Avatar",
                 "block": "Block Avatar",

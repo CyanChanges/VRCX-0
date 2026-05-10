@@ -1931,6 +1931,7 @@
                 "favorite_tooltip": "添加到收藏夹",
                 "refresh": "刷新",
                 "share": "分享",
+                "current_avatar": "当前模型",
                 "select": "使用此模型",
                 "select_fallback": "用作后备模型",
                 "block": "屏蔽模型",

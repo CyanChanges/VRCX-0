@@ -53,17 +53,24 @@ export function AvatarDialogHeaderActions({
         onDelete
     } = actions;
 
+    const selectLabel = isCurrentAvatar
+        ? t('dialog.avatar.actions.current_avatar')
+        : t('dialog.avatar.actions.select');
+    const SelectIcon = isCurrentAvatar ? CheckCircleIcon : UserIcon;
+
     return (
         <>
             <Button
                 type="button"
-                size="icon-lg"
-                className="rounded-full"
-                aria-label={t('dialog.avatar.actions.select')}
+                size="sm"
+                variant={canSelectAvatar ? 'default' : 'outline'}
+                className="min-w-0 flex-1"
+                aria-label={selectLabel}
                 disabled={!canSelectAvatar || actionStatus === 'selecting'}
                 onClick={onSelect}
             >
-                <CheckCircleIcon data-icon="inline-start" />
+                <SelectIcon data-icon="inline-start" />
+                <span className="truncate">{selectLabel}</span>
             </Button>
             <FavoriteActionMenu
                 kind="avatar"

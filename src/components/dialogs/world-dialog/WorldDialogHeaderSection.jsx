@@ -43,6 +43,11 @@ function overviewValue(value) {
     return value || value === 0 ? String(value) : '—';
 }
 
+function scoreValue(value) {
+    const displayValue = overviewValue(value);
+    return displayValue === '—' ? displayValue : `${displayValue}/10`;
+}
+
 function WorldOverviewMetric({ label, value }) {
     const displayValue = overviewValue(value);
     if (displayValue === '—') {
@@ -435,6 +440,10 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
     const favoritesText = world.favorites
         ? `${world.favorites}${favoriteRate ? ` (${favoriteRate}%)` : ''}`
         : '';
+    const capacityText =
+        world.recommendedCapacity && world.capacity
+            ? `${world.recommendedCapacity}/${world.capacity}`
+            : world.recommendedCapacity || world.capacity || '';
 
     return (
         <EntityOverviewCard
@@ -497,38 +506,6 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
 
             <WorldOverviewActions handlers={handlers} state={state} t={t} />
 
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-                <WorldOverviewMetric
-                    label={t('dialog.world.info.players')}
-                    value={world.occupants}
-                />
-                <WorldOverviewMetric
-                    label={t('dialog.world.info.visits')}
-                    value={world.visits}
-                />
-                <WorldOverviewMetric
-                    label={t('dialog.world.info.favorites')}
-                    value={favoritesText}
-                />
-                <WorldOverviewMetric
-                    label={t('dialog.world.info.heat')}
-                    value={world.heat}
-                />
-                <WorldOverviewMetric
-                    label={t('dialog.world.info.popularity')}
-                    value={world.popularity}
-                />
-            </div>
-
-            <WorldOverviewFacts
-                onCopyWorldId={onCopyWorldId}
-                onCopyWorldUrl={onCopyWorldUrl}
-                onOpenWorldPage={onOpenWorldPage}
-                t={t}
-                world={world}
-                worldUrl={worldUrl}
-            />
-
             <div className="flex flex-wrap gap-1.5">
                 <Badge
                     variant={
@@ -570,6 +547,33 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
                 ))}
             </div>
 
+            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.players')}
+                    value={world.occupants}
+                />
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.capacity')}
+                    value={capacityText}
+                />
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.favorites')}
+                    value={favoritesText}
+                />
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.visits')}
+                    value={world.visits}
+                />
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.heat')}
+                    value={scoreValue(world.heat)}
+                />
+                <WorldOverviewMetric
+                    label={t('dialog.world.info.popularity')}
+                    value={scoreValue(world.popularity)}
+                />
+            </div>
+
             {world.description ? (
                 <>
                     <Separator />
@@ -604,6 +608,15 @@ export function WorldDialogOverviewSection({ handlers, state, t }) {
                     </div>
                 </>
             ) : null}
+
+            <WorldOverviewFacts
+                onCopyWorldId={onCopyWorldId}
+                onCopyWorldUrl={onCopyWorldUrl}
+                onOpenWorldPage={onOpenWorldPage}
+                t={t}
+                world={world}
+                worldUrl={worldUrl}
+            />
 
             {detail ? (
                 <div className="text-muted-foreground text-xs">

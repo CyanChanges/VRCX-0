@@ -421,7 +421,7 @@ export function UserDialogHeaderSection({ state = {}, actions = {}, t }) {
                             <Button
                                 type="button"
                                 variant="ghost"
-                                className="text-muted-foreground hover:text-primary mr-1.5 h-auto justify-start p-0 text-left font-mono text-xs break-all whitespace-normal"
+                                className="text-muted-foreground hover:text-primary mr-1.5 ml-2 h-auto justify-start p-0 text-left font-mono text-xs break-all whitespace-normal"
                                 onClick={onSubtitleClick}
                             >
                                 {userSubtitle}
