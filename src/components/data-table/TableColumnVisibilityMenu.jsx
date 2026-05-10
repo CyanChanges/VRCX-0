@@ -186,7 +186,7 @@ export function TableColumnHeaderContextMenu({
                                 }
                                 onSelect={(event) => event.preventDefault()}
                             >
-                                {renderColumnLockLabel(columnOrderLocked)}
+                                {renderColumnLockLabel(columnOrderLocked, t)}
                             </ContextMenuCheckboxItem>
                         ) : null}
                         {showReset ? (
