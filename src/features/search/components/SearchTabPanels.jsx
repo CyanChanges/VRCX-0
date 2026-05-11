@@ -125,25 +125,18 @@ export function SearchWorldTabPanel({
         >
             <div className="flex min-h-0 flex-col" style={{ flex: 9 }}>
                 <div className="mb-4 flex w-full shrink-0 justify-end gap-2">
-                    <FieldGroup
-                        data-slot="checkbox-group"
-                        className="w-auto flex-row items-center gap-2"
-                    >
-                        <Field orientation="horizontal" className="w-auto">
-                            <Checkbox
-                                id="search-world-community-lab"
-                                checked={includeCommunityLabs}
-                                onCheckedChange={(checked) =>
-                                    onIncludeCommunityLabsChange(
-                                        checked === true
-                                    )
-                                }
-                            />
-                            <FieldLabel htmlFor="search-world-community-lab">
-                                {t('view.search.world.community_lab')}
-                            </FieldLabel>
-                        </Field>
-                    </FieldGroup>
+                    <Field orientation="horizontal" className="w-auto">
+                        <Checkbox
+                            id="search-world-community-lab"
+                            checked={includeCommunityLabs}
+                            onCheckedChange={(checked) =>
+                                onIncludeCommunityLabsChange(checked === true)
+                            }
+                        />
+                        <FieldLabel htmlFor="search-world-community-lab">
+                            {t('view.search.world.community_lab')}
+                        </FieldLabel>
+                    </Field>
                     <Select
                         value={selectedWorldCategory}
                         onValueChange={onWorldCategoryChange}
