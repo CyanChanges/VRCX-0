@@ -383,7 +383,7 @@ export function UserDialogHeaderSection({ state = {}, actions = {} }) {
                 <div className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <CardTitle className="flex min-w-0 flex-wrap items-center gap-1.5 text-lg leading-tight">
                         {statusIndicatorClassName ? (
-                            <span
+                            <i
                                 aria-label={statusStateText || undefined}
                                 className={statusIndicatorClassName}
                                 role={statusStateText ? 'img' : undefined}
