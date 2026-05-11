@@ -8,9 +8,10 @@ import { useShellStore } from '@/state/shellStore.js';
 
 const VALID_THEME_MODES = new Set(['light', 'dark', 'system']);
 const VALID_THEME_COLORS = new Set(Object.keys(THEME_COLOR_CONFIG));
-const DEFAULT_ZOOM_LEVEL = 100;
-const MIN_ZOOM_LEVEL = 30;
-const MAX_ZOOM_LEVEL = 300;
+export const DEFAULT_ZOOM_LEVEL = 100;
+export const MIN_ZOOM_LEVEL = 30;
+export const MAX_ZOOM_LEVEL = 300;
+export const ZOOM_STEP = 5;
 const APP_FONT_STYLE_ATTR = 'data-vrcx-app-font';
 const APP_CJK_FONT_STYLE_ATTR = 'data-vrcx-cjk-font';
 

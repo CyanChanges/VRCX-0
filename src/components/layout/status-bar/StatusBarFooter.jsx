@@ -1,9 +1,21 @@
-import { ClockIcon, NetworkIcon } from 'lucide-react';
+import { ClockIcon, MinusIcon, NetworkIcon, PlusIcon } from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils.js';
+import {
+    MAX_ZOOM_LEVEL,
+    MIN_ZOOM_LEVEL,
+    ZOOM_STEP
+} from '@/services/themeService.js';
 import { Button } from '@/ui/shadcn/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
+import {
+    Popover,
+    PopoverContent,
+    PopoverDescription,
+    PopoverHeader,
+    PopoverTitle,
+    PopoverTrigger
+} from '@/ui/shadcn/popover';
 import {
     Select,
     SelectContent,
@@ -12,6 +24,7 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/ui/shadcn/select';
+import { Slider } from '@/ui/shadcn/slider';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { StatusDot, StatusSegment } from './StatusBarParts.jsx';
@@ -125,6 +138,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
         visibility,
         visibleClocks,
         vrcStatus,
+        zoomLevel,
         zoomLabel
     } = state;
     const { formatClock, formatDuration, formatStatusDate, formatAppUptime } =
@@ -133,10 +147,36 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
         onOpenMediaLink,
         onOpenStatusPage,
         onPromptProxySettings,
-        onPromptZoomSettings,
+        onSetZoomLevel,
+        onStepZoomLevel,
         onSetClockPopoverValue,
         onUpdateClockTimezone
     } = handlers;
+    const [zoomPopoverOpen, setZoomPopoverOpen] = useState(false);
+
+    useEffect(() => {
+        if (!zoomPopoverOpen) {
+            return undefined;
+        }
+
+        function handleZoomWheel(event) {
+            if (event.deltaY === 0) {
+                return;
+            }
+
+            event.preventDefault();
+            onStepZoomLevel(event.deltaY < 0 ? ZOOM_STEP : -ZOOM_STEP);
+        }
+
+        window.addEventListener('wheel', handleZoomWheel, {
+            passive: false,
+            capture: true
+        });
+
+        return () => {
+            window.removeEventListener('wheel', handleZoomWheel, true);
+        };
+    }, [onStepZoomLevel, zoomPopoverOpen]);
 
     return (
         <footer
@@ -384,14 +424,17 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                           ))
                         : null}
                     {visibility.zoom ? (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
+                        <Popover
+                            open={zoomPopoverOpen}
+                            onOpenChange={setZoomPopoverOpen}
+                        >
+                            <PopoverTrigger asChild>
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
+                                    aria-label={t('status_bar.zoom_tooltip')}
                                     className="h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal"
-                                    onClick={onPromptZoomSettings}
                                 >
                                     <span className="text-muted-foreground">
                                         {t('status_bar.zoom')}
@@ -400,11 +443,67 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                         {zoomLabel}
                                     </span>
                                 </Button>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                                {t('status_bar.zoom_tooltip')}
-                            </TooltipContent>
-                        </Tooltip>
+                            </PopoverTrigger>
+                            <PopoverContent
+                                side="top"
+                                align="end"
+                                className="w-72"
+                            >
+                                <PopoverHeader>
+                                    <PopoverTitle>
+                                        {t('status_bar.zoom')}
+                                    </PopoverTitle>
+                                    <PopoverDescription>
+                                        {t('status_bar.zoom_tooltip')}
+                                    </PopoverDescription>
+                                </PopoverHeader>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        aria-label={t('app_menu.zoom_out')}
+                                        className="size-7 shrink-0"
+                                        disabled={zoomLevel <= MIN_ZOOM_LEVEL}
+                                        onClick={() =>
+                                            onStepZoomLevel(-ZOOM_STEP)
+                                        }
+                                    >
+                                        <MinusIcon data-icon="icon" />
+                                    </Button>
+                                    <div className="bg-muted/40 flex min-w-16 justify-center rounded-md border px-2 py-1 text-sm font-medium tabular-nums">
+                                        {zoomLabel}
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="icon"
+                                        aria-label={t('app_menu.zoom_in')}
+                                        className="size-7 shrink-0"
+                                        disabled={zoomLevel >= MAX_ZOOM_LEVEL}
+                                        onClick={() =>
+                                            onStepZoomLevel(ZOOM_STEP)
+                                        }
+                                    >
+                                        <PlusIcon data-icon="icon" />
+                                    </Button>
+                                </div>
+                                <Slider
+                                    aria-label={t('status_bar.zoom')}
+                                    min={MIN_ZOOM_LEVEL}
+                                    max={MAX_ZOOM_LEVEL}
+                                    step={ZOOM_STEP}
+                                    value={[zoomLevel]}
+                                    onValueChange={(value) =>
+                                        onSetZoomLevel(value[0])
+                                    }
+                                />
+                                <div className="text-muted-foreground flex justify-between text-[11px] tabular-nums">
+                                    <span>{`${MIN_ZOOM_LEVEL}%`}</span>
+                                    <span>{`${MAX_ZOOM_LEVEL}%`}</span>
+                                </div>
+                            </PopoverContent>
+                        </Popover>
                     ) : null}
                     {visibility.uptime ? (
                         <Tooltip>

@@ -6,13 +6,17 @@ import { backend } from '@/platform/index.js';
 import { configRepository } from '@/repositories/index.js';
 import {
     loadPreferenceSnapshot,
-    setProxyServerPreference,
-    setZoomLevelPreference
+    setProxyServerPreference
 } from '@/services/preferencesService.js';
 import {
     formatZoomPercentage,
     normalizeZoomLevel
 } from '@/services/themeService.js';
+import {
+    queueZoomLevelPreference,
+    stepQueuedZoomLevelPreference,
+    syncQueuedZoomLevel
+} from '@/services/zoomPreferenceService.js';
 import { useModalStore } from '@/state/modalStore.js';
 import { usePreferencesStore } from '@/state/preferencesStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
@@ -279,6 +283,10 @@ export function AppStatusBar() {
     const timezoneOptions = TIMEZONE_OPTIONS;
 
     useEffect(() => {
+        syncQueuedZoomLevel(currentZoomLevel);
+    }, [currentZoomLevel]);
+
+    useEffect(() => {
         let active = true;
 
         Promise.all([
@@ -449,22 +457,20 @@ export function AppStatusBar() {
         await setProxyServerPreference(nextProxyServer);
     }
 
-    async function promptZoomSettings() {
-        const currentZoom = normalizeZoomLevel(
-            useShellStore.getState().zoomLevel
+    function showZoomError(error) {
+        toast.error(
+            error instanceof Error
+                ? error.message
+                : t('app_menu.messages.zoom_failed')
         );
-        const result = await prompt({
-            title: t('status_bar.zoom'),
-            description: t('status_bar.zoom_tooltip'),
-            inputValue: String(currentZoom),
-            confirmText: t('common.actions.save'),
-            cancelText: t('common.actions.close')
-        });
-        if (!result.ok) {
-            return;
-        }
+    }
 
-        await setZoomLevelPreference(result.value);
+    function setQueuedZoomLevel(nextZoom) {
+        queueZoomLevelPreference(nextZoom, { onError: showZoomError });
+    }
+
+    function stepQueuedZoomLevel(delta) {
+        stepQueuedZoomLevelPreference(delta, { onError: showZoomError });
     }
 
     return (
@@ -504,15 +510,8 @@ export function AppStatusBar() {
                                 );
                             });
                         },
-                        onPromptZoomSettings: () => {
-                            void promptZoomSettings().catch((error) => {
-                                toast.error(
-                                    error instanceof Error
-                                        ? error.message
-                                        : t('app_menu.messages.zoom_failed')
-                                );
-                            });
-                        },
+                        onSetZoomLevel: setQueuedZoomLevel,
+                        onStepZoomLevel: stepQueuedZoomLevel,
                         onSetClockPopoverValue: setClockPopoverValue,
                         onUpdateClockTimezone: updateClockTimezone
                     }}
@@ -532,6 +531,7 @@ export function AppStatusBar() {
                         visibility,
                         visibleClocks,
                         vrcStatus,
+                        zoomLevel: currentZoomLevel,
                         zoomLabel: formatZoomPercentage(currentZoomLevel)
                     }}
                 />
