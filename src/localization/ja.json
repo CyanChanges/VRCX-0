@@ -263,7 +263,6 @@
         "about_title": "VRCX-0 について",
         "about_description": "VRChat 用のデスクトップコンパニオンです。",
         "version": "バージョン",
-        "close": "閉じる",
         "messages": {
             "zoom_failed": "ズームの適用に失敗しました",
             "logout_failed": "VRCX-0 からのログアウトに失敗しました"

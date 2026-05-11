@@ -263,7 +263,6 @@
         "about_title": "About VRCX-0",
         "about_description": "Desktop companion for VRChat.",
         "version": "Version",
-        "close": "Close",
         "messages": {
             "zoom_failed": "Failed to apply zoom",
             "logout_failed": "Failed to sign out of VRCX-0"

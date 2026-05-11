@@ -32,10 +32,8 @@ import { formatReleaseDisplayVersion } from '@/shared/utils/releaseVersion.js';
 import { usePreferencesStore } from '@/state/preferencesStore.js';
 import { useRuntimeStore } from '@/state/runtimeStore.js';
 import { useShellStore } from '@/state/shellStore.js';
-import { Button } from '@/ui/shadcn/button';
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -503,13 +501,7 @@ export function AppMenuBar({
                             </span>
                         </div>
                     </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="outline">
-                                {t('app_menu.close')}
-                            </Button>
-                        </DialogClose>
-                    </DialogFooter>
+                    <DialogFooter showCloseButton />
                 </DialogContent>
             </Dialog>
         </>

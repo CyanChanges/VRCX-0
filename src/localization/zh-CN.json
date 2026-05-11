@@ -263,7 +263,6 @@
         "about_title": "关于 VRCX-0",
         "about_description": "VRChat 桌面辅助工具。",
         "version": "当前程序版本",
-        "close": "关闭并保存",
         "messages": {
             "zoom_failed": "应用缩放失败",
             "logout_failed": "退出 VRCX-0 登录失败"
