@@ -33,7 +33,7 @@ jobs:
             - run: npm run test
 
     tauri-windows:
-        name: Tauri Rust (windows-latest)
+        name: Tauri Rust (Windows)
         runs-on: windows-latest
         defaults:
             run:
@@ -47,7 +47,7 @@ jobs:
             - run: cargo test --manifest-path src-tauri/Cargo.toml
 
     tauri-linux:
-        name: Tauri Rust (ubuntu-24.04)
+        name: Tauri Rust (Linux)
         runs-on: ubuntu-24.04
         steps:
             - uses: actions/checkout@v4
@@ -66,7 +66,7 @@ jobs:
             - run: cargo test --manifest-path src-tauri/Cargo.toml
 
     tauri-macos:
-        name: Tauri Rust (macos-latest)
+        name: Tauri Rust (macOS)
         runs-on: macos-latest
         defaults:
             run:
