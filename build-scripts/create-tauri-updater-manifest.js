@@ -31,8 +31,9 @@ function requireArg(argName) {
 
 function validateTarget(target) {
     if (
-        /^(linux|windows)-x86_64-stable$/.test(target) === false &&
-        /^darwin-(aarch64|x86_64)-stable$/.test(target) === false
+        /^windows-x86_64-stable$/.test(target) === false &&
+        /^linux-x86_64-(appimage|deb|rpm)-stable$/.test(target) === false &&
+        /^macos-(aarch64|x86_64)-stable$/.test(target) === false
     ) {
         throw new Error(`Invalid updater target: ${target}`);
     }

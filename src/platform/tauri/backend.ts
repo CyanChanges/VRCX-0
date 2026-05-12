@@ -46,6 +46,8 @@ export interface HostCapabilityStatus {
 
 export interface HostCapabilities {
     platform: 'windows' | 'linux' | 'macos' | 'unknown';
+    arch: 'x86_64' | 'aarch64' | 'unknown';
+    linuxPackageKind: 'appimage' | 'deb' | 'rpm' | 'unknown';
     localDatabase: HostCapabilityStatus;
     websocketRuntime: HostCapabilityStatus;
     gameLogWatcher: HostCapabilityStatus;

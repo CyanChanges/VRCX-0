@@ -50,19 +50,24 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - label: Linux AppImage
+                    - label: Linux Packages
                       os: ubuntu-24.04
                       rust_target: ''
-                      build_command: npm run tauri:build -- --config src-tauri/tauri.linux.conf.json --bundles appimage
-                      artifact_name: linux-appimage
+                      build_command: npm run tauri:build -- --config src-tauri/tauri.linux.conf.json --bundles appimage,deb,rpm
+                      artifact_name: linux-packages
                       artifact_path: |
                           src-tauri/target/release/bundle/appimage/*.AppImage
                           src-tauri/target/release/bundle/appimage/*.AppImage.sig
-                          src-tauri/target/release/bundle/appimage/vrcx-0-updater-linux-x86_64-stable.json
+                          src-tauri/target/release/bundle/deb/*.deb
+                          src-tauri/target/release/bundle/deb/*.deb.sig
+                          src-tauri/target/release/bundle/rpm/*.rpm
+                          src-tauri/target/release/bundle/rpm/*.rpm.sig
+                          src-tauri/target/release/bundle/latest_linux_and_macos.json
                     - label: macOS DMG (Apple Silicon)
                       os: macos-15
                       rust_target: aarch64-apple-darwin
-                      updater_target: darwin-aarch64-stable
+                      updater_target: macos-aarch64-stable
+                      updater_asset_name: update_macos_aarch64.app.tar.gz
                       build_command: npm run tauri:build -- --target aarch64-apple-darwin --bundles app,dmg
                       artifact_name: macos-aarch64-dmg
                       artifact_path: |
@@ -72,7 +77,8 @@ jobs:
                     - label: macOS DMG (Intel)
                       os: macos-15-intel
                       rust_target: x86_64-apple-darwin
-                      updater_target: darwin-x86_64-stable
+                      updater_target: macos-x86_64-stable
+                      updater_asset_name: update_macos_x86_64.app.tar.gz
                       build_command: npm run tauri:build -- --target x86_64-apple-darwin --bundles app,dmg
                       artifact_name: macos-x86_64-dmg
                       artifact_path: |
@@ -111,6 +117,7 @@ jobs:
                       libwebkit2gtk-4.1-dev \
                       libxdo-dev \
                       patchelf \
+                      rpm \
                       wget
 
             - run: npm ci
@@ -137,27 +144,85 @@ jobs:
                   TAURI_UPDATER_PUBLIC_KEY: ${{ vars.TAURI_UPDATER_PUBLIC_KEY }}
               run: ${{ matrix.build_command }}
 
-            - name: Create Linux updater manifest
+            - name: Prepare Linux release and updater assets
               if: runner.os == 'Linux'
               run: |
-                  find src-tauri/target/release/bundle/appimage -maxdepth 1 -type f | sort
-                  appimage_path="$(find src-tauri/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage' | sort | head -n 1)"
-                  if [[ -z "$appimage_path" ]]; then
-                      echo "No AppImage artifact found" >&2
+                  bundle_dir="src-tauri/target/release/bundle"
+                  manifest_path="$bundle_dir/latest_linux_and_macos.json"
+
+                  find "$bundle_dir" -maxdepth 2 -type f | sort
+
+                  rename_asset() {
+                      local source="$1"
+                      local destination="$2"
+                      local source_signature="${source}.sig"
+                      local destination_signature="${destination}.sig"
+
+                      if [[ "$source" != "$destination" ]]; then
+                          if [[ -e "$destination" ]]; then
+                              echo "Target release asset already exists: $destination" >&2
+                              exit 1
+                          fi
+                          mv "$source" "$destination"
+                      fi
+
+                      if [[ -f "$source_signature" && "$source_signature" != "$destination_signature" ]]; then
+                          if [[ -e "$destination_signature" ]]; then
+                              echo "Target release signature already exists: $destination_signature" >&2
+                              exit 1
+                          fi
+                          mv "$source_signature" "$destination_signature"
+                      fi
+
+                      if [[ ! -f "$destination_signature" ]]; then
+                          node node_modules/@tauri-apps/cli/tauri.js signer sign "$destination" > "$destination_signature"
+                      fi
+                      if [[ ! -s "$destination_signature" ]]; then
+                          echo "No updater signature found at $destination_signature" >&2
+                          exit 1
+                      fi
+                  }
+
+                  appimage_source="$(find "$bundle_dir/appimage" -maxdepth 1 -name '*.AppImage' | sort | head -n 1)"
+                  deb_source="$(find "$bundle_dir/deb" -maxdepth 1 -name '*.deb' | sort | head -n 1)"
+                  rpm_source="$(find "$bundle_dir/rpm" -maxdepth 1 -name '*.rpm' | sort | head -n 1)"
+
+                  if [[ -z "$appimage_source" || -z "$deb_source" || -z "$rpm_source" ]]; then
+                      echo "Missing Linux release artifact. AppImage=$appimage_source deb=$deb_source rpm=$rpm_source" >&2
                       exit 1
                   fi
-                  signature_path="${appimage_path}.sig"
-                  if [[ ! -f "$signature_path" ]]; then
-                      echo "No AppImage signature found at $signature_path" >&2
-                      exit 1
-                  fi
+
+                  appimage_path="$bundle_dir/appimage/VRCX-0_${{ needs.prepare.outputs.build_version }}_linux_x86_64.AppImage"
+                  deb_path="$bundle_dir/deb/VRCX-0_${{ needs.prepare.outputs.build_version }}_linux_x86_64.deb"
+                  rpm_path="$bundle_dir/rpm/VRCX-0_${{ needs.prepare.outputs.build_version }}_linux_x86_64.rpm"
+
+                  rename_asset "$appimage_source" "$appimage_path"
+                  rename_asset "$deb_source" "$deb_path"
+                  rename_asset "$rpm_source" "$rpm_path"
+
                   node build-scripts/create-tauri-updater-manifest.js \
                       --version "${{ needs.prepare.outputs.build_version }}" \
                       --tag "${{ needs.prepare.outputs.tag }}" \
-                      --target "linux-x86_64-stable" \
+                      --target "linux-x86_64-appimage-stable" \
                       --asset-name "$(basename "$appimage_path")" \
-                      --signature-file "$signature_path" \
-                      --out "src-tauri/target/release/bundle/appimage/vrcx-0-updater-linux-x86_64-stable.json"
+                      --signature-file "${appimage_path}.sig" \
+                      --out "$manifest_path"
+                  node build-scripts/create-tauri-updater-manifest.js \
+                      --version "${{ needs.prepare.outputs.build_version }}" \
+                      --tag "${{ needs.prepare.outputs.tag }}" \
+                      --target "linux-x86_64-deb-stable" \
+                      --asset-name "$(basename "$deb_path")" \
+                      --signature-file "${deb_path}.sig" \
+                      --base "$manifest_path" \
+                      --out "$manifest_path"
+                  node build-scripts/create-tauri-updater-manifest.js \
+                      --version "${{ needs.prepare.outputs.build_version }}" \
+                      --tag "${{ needs.prepare.outputs.tag }}" \
+                      --target "linux-x86_64-rpm-stable" \
+                      --asset-name "$(basename "$rpm_path")" \
+                      --signature-file "${rpm_path}.sig" \
+                      --base "$manifest_path" \
+                      --out "$manifest_path"
 
             - name: Prepare macOS updater assets
               if: runner.os == 'macOS'
@@ -173,7 +238,7 @@ jobs:
                       echo "No macOS updater signature found at $signature_path" >&2
                       exit 1
                   fi
-                  renamed_archive="$updater_dir/VRCX-0_${{ needs.prepare.outputs.build_version }}_${{ matrix.updater_target }}.app.tar.gz"
+                  renamed_archive="$updater_dir/${{ matrix.updater_asset_name }}"
                   mv "$archive_path" "$renamed_archive"
                   mv "$signature_path" "$renamed_archive.sig"
 
@@ -212,17 +277,19 @@ jobs:
             - name: List release assets
               run: find release-assets -type f | sort
 
-            - name: Add macOS updater entries to Linux manifest
+            - name: Add macOS updater entries to Linux/macOS manifest
               run: |
-                  manifest_path="release-assets/vrcx-0-updater-linux-x86_64-stable.json"
+                  manifest_path="release-assets/latest_linux_and_macos.json"
                   if [[ ! -f "$manifest_path" ]]; then
-                      echo "No Linux updater manifest found at $manifest_path" >&2
+                      echo "No Linux/macOS updater manifest found at $manifest_path" >&2
                       exit 1
                   fi
 
-                  for target in darwin-aarch64-stable darwin-x86_64-stable; do
-                      archive_path="$(find release-assets -maxdepth 1 -type f -name "*_${target}.app.tar.gz" | sort | head -n 1)"
-                      if [[ -z "$archive_path" ]]; then
+                  for target in macos-aarch64-stable macos-x86_64-stable; do
+                      archive_name="update_${target%-stable}.app.tar.gz"
+                      archive_name="${archive_name//-/_}"
+                      archive_path="release-assets/$archive_name"
+                      if [[ ! -f "$archive_path" ]]; then
                           echo "No macOS updater archive found for $target" >&2
                           exit 1
                       fi

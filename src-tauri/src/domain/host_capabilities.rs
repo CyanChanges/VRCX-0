@@ -17,6 +17,7 @@ pub struct CapabilityStatus {
 pub struct HostCapabilities {
     pub platform: String,
     pub arch: String,
+    pub linux_package_kind: String,
     pub local_database: CapabilityStatus,
     pub websocket_runtime: CapabilityStatus,
     pub game_log_watcher: CapabilityStatus,
@@ -125,6 +126,38 @@ pub fn current_arch() -> &'static str {
     }
 }
 
+#[cfg(target_os = "linux")]
+fn command_succeeds(program: &str, args: &[&str], stdout_match: Option<&str>) -> bool {
+    let Ok(output) = std::process::Command::new(program).args(args).output() else {
+        return false;
+    };
+    if !output.status.success() {
+        return false;
+    }
+    if let Some(expected) = stdout_match {
+        return String::from_utf8_lossy(&output.stdout).contains(expected);
+    }
+    true
+}
+
+#[cfg(target_os = "linux")]
+fn current_linux_package_kind() -> &'static str {
+    if std::env::var_os("APPIMAGE").is_some() {
+        return "appimage";
+    }
+    if command_succeeds(
+        "dpkg-query",
+        &["-W", "-f=${Status}", "vrcx-0"],
+        Some("install ok installed"),
+    ) {
+        return "deb";
+    }
+    if command_succeeds("rpm", &["-q", "vrcx-0"], None) {
+        return "rpm";
+    }
+    "unknown"
+}
+
 pub fn current_host_capabilities() -> HostCapabilities {
     let platform = current_platform();
     let arch = current_arch();
@@ -134,6 +167,7 @@ pub fn current_host_capabilities() -> HostCapabilities {
         "windows" => HostCapabilities {
             platform: platform.to_string(),
             arch: arch.to_string(),
+            linux_package_kind: "unknown".to_string(),
             local_database: available.clone(),
             websocket_runtime: available.clone(),
             game_log_watcher: available.clone(),
@@ -152,6 +186,7 @@ pub fn current_host_capabilities() -> HostCapabilities {
         "macos" => HostCapabilities {
             platform: platform.to_string(),
             arch: arch.to_string(),
+            linux_package_kind: "unknown".to_string(),
             local_database: available.clone(),
             websocket_runtime: available,
             game_log_watcher: CapabilityStatus::unsupported("GameLog watcher", "macOS"),
@@ -174,6 +209,7 @@ pub fn current_host_capabilities() -> HostCapabilities {
         _ => HostCapabilities {
             platform: platform.to_string(),
             arch: arch.to_string(),
+            linux_package_kind: "unknown".to_string(),
             local_database: available.clone(),
             websocket_runtime: available,
             game_log_watcher: CapabilityStatus::unsupported("GameLog watcher", platform),
@@ -235,6 +271,7 @@ fn linux_host_capabilities(platform: &str, available: &CapabilityStatus) -> Host
     HostCapabilities {
         platform: platform.to_string(),
         arch: current_arch().to_string(),
+        linux_package_kind: current_linux_package_kind().to_string(),
         local_database: available.clone(),
         websocket_runtime: available.clone(),
         game_log_watcher,

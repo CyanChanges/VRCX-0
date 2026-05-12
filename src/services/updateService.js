@@ -9,6 +9,7 @@ import {
 } from '@/shared/utils/releaseVersion.js';
 
 const INSTALLABLE_PLATFORMS = new Set(['windows', 'linux', 'macos']);
+const LINUX_UPDATER_PACKAGE_KINDS = new Set(['appimage', 'deb', 'rpm']);
 let updateInstallInFlight = null;
 
 function normalizeHostArch(hostArch) {
@@ -22,45 +23,72 @@ function normalizeHostArch(hostArch) {
     return normalized;
 }
 
-function platformIdForHost(hostPlatform, hostArch = '') {
+function linuxPackageKindForUpdater(linuxPackageKind) {
+    const normalized = String(linuxPackageKind || '').toLowerCase();
+    return LINUX_UPDATER_PACKAGE_KINDS.has(normalized)
+        ? normalized
+        : 'appimage';
+}
+
+function platformIdForHost(hostPlatform, hostArch = '', linuxPackageKind = '') {
     const normalizedArch = normalizeHostArch(hostArch);
     if (hostPlatform === 'linux') {
-        return 'linux-x86_64';
+        return `linux-x86_64-${linuxPackageKindForUpdater(linuxPackageKind)}`;
     }
     if (hostPlatform === 'windows') {
         return 'windows-x86_64';
     }
     if (hostPlatform === 'macos' && normalizedArch === 'aarch64') {
-        return 'darwin-aarch64';
+        return 'macos-aarch64';
     }
     if (hostPlatform === 'macos' && normalizedArch === 'x86_64') {
-        return 'darwin-x86_64';
+        return 'macos-x86_64';
     }
     return '';
 }
 
-function getUpdaterTarget(hostPlatform, hostArch = '') {
-    const platformId = platformIdForHost(hostPlatform, hostArch);
+function getUpdaterTarget(hostPlatform, hostArch = '', linuxPackageKind = '') {
+    const platformId = platformIdForHost(
+        hostPlatform,
+        hostArch,
+        linuxPackageKind
+    );
     return platformId ? `${platformId}-stable` : '';
 }
 
-function getUpdaterManifestAssetName(hostPlatform, hostArch = '') {
-    const target = getUpdaterTarget(hostPlatform, hostArch);
+function getUpdaterManifestAssetName(
+    hostPlatform,
+    hostArch = '',
+    linuxPackageKind = ''
+) {
+    const target = getUpdaterTarget(hostPlatform, hostArch, linuxPackageKind);
     if (!target) {
         return '';
     }
-    if (hostPlatform === 'macos') {
-        return 'vrcx-0-updater-linux-x86_64-stable.json';
+    if (hostPlatform === 'linux' || hostPlatform === 'macos') {
+        return 'latest_linux_and_macos.json';
     }
-    return `vrcx-0-updater-${target}.json`;
+    if (hostPlatform === 'windows') {
+        return 'latest_windows.json';
+    }
+    return '';
 }
 
 function canInstallUpdatesOnPlatform(hostPlatform) {
     return INSTALLABLE_PLATFORMS.has(hostPlatform);
 }
 
-function getTauriManifestAssetOfInterest(assets = [], hostPlatform, hostArch) {
-    const manifestName = getUpdaterManifestAssetName(hostPlatform, hostArch);
+function getTauriManifestAssetOfInterest(
+    assets = [],
+    hostPlatform,
+    hostArch,
+    linuxPackageKind
+) {
+    const manifestName = getUpdaterManifestAssetName(
+        hostPlatform,
+        hostArch,
+        linuxPackageKind
+    );
     if (!manifestName) {
         return null;
     }
@@ -74,7 +102,7 @@ function getTauriManifestAssetOfInterest(assets = [], hostPlatform, hostArch) {
 
     return {
         manifestUrl: asset.browser_download_url,
-        target: getUpdaterTarget(hostPlatform, hostArch),
+        target: getUpdaterTarget(hostPlatform, hostArch, linuxPackageKind),
         updaterType: 'tauri'
     };
 }
@@ -84,6 +112,7 @@ function normalizeGitHubRelease(
     {
         hostPlatform = 'unknown',
         hostArch = 'unknown',
+        linuxPackageKind = 'unknown',
         requireInstallerAsset = true
     } = {}
 ) {
@@ -95,7 +124,8 @@ function normalizeGitHubRelease(
     const tauriAsset = getTauriManifestAssetOfInterest(
         release.assets,
         hostPlatform,
-        hostArch
+        hostArch,
+        linuxPackageKind
     );
     const asset = tauriAsset;
     if (requireInstallerAsset && !asset) {
@@ -205,12 +235,19 @@ function shouldAllowDowngradesForBranch() {
     return false;
 }
 
-async function buildTauriUpdaterRequest(release, hostPlatform, hostArch) {
+async function buildTauriUpdaterRequest(
+    release,
+    hostPlatform,
+    hostArch,
+    linuxPackageKind
+) {
     if (!canInstallUpdatesOnPlatform(hostPlatform)) {
         throw new Error(`Updates are not installable on ${hostPlatform}.`);
     }
 
-    const target = release?.target || getUpdaterTarget(hostPlatform, hostArch);
+    const target =
+        release?.target ||
+        getUpdaterTarget(hostPlatform, hostArch, linuxPackageKind);
     if (!target) {
         throw new Error('No Tauri updater target is available.');
     }
@@ -231,7 +268,8 @@ async function checkTauriUpdateForRelease(release, options = {}) {
     const request = await buildTauriUpdaterRequest(
         release,
         options.hostPlatform || 'unknown',
-        options.hostArch || 'unknown'
+        options.hostArch || 'unknown',
+        options.linuxPackageKind || 'unknown'
     );
     return invoke('app__check_tauri_update', request);
 }
@@ -251,7 +289,11 @@ function handleTauriDownloadEvent(event, onProgress) {
 
 async function checkInstallableUpdate(
     branch,
-    { hostPlatform = 'unknown', hostArch = 'unknown' } = {}
+    {
+        hostPlatform = 'unknown',
+        hostArch = 'unknown',
+        linuxPackageKind = 'unknown'
+    } = {}
 ) {
     if (!canInstallUpdatesOnPlatform(hostPlatform)) {
         return null;
@@ -259,6 +301,7 @@ async function checkInstallableUpdate(
 
     const release = await fetchLatestBranchRelease(branch, {
         hostArch,
+        linuxPackageKind,
         hostPlatform,
         requireInstallerAsset: true
     });
@@ -269,6 +312,7 @@ async function checkInstallableUpdate(
     return checkTauriUpdateForRelease(release, {
         branch,
         hostArch,
+        linuxPackageKind,
         hostPlatform
     });
 }
@@ -288,7 +332,8 @@ async function downloadAndInstallUpdate(release, options = {}) {
         const request = await buildTauriUpdaterRequest(
             release,
             hostPlatform,
-            options.hostArch || 'unknown'
+            options.hostArch || 'unknown',
+            options.linuxPackageKind || 'unknown'
         );
         const onEvent = new Channel((event) => {
             const state = handleTauriDownloadEvent(event, options.onProgress);

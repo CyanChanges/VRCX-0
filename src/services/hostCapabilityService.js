@@ -18,6 +18,7 @@ const HOST_CAPABILITY_KEYS = Object.freeze([
 
 const HOST_PLATFORMS = new Set(['windows', 'linux', 'macos', 'unknown']);
 const HOST_ARCHITECTURES = new Set(['x86_64', 'aarch64', 'unknown']);
+const LINUX_PACKAGE_KINDS = new Set(['appimage', 'deb', 'rpm', 'unknown']);
 
 function normalizeCapabilityStatus(value, fallbackReason) {
     let reason = '';
@@ -43,7 +44,7 @@ function createUnavailableCapabilities(reason) {
             acc[key] = normalizeCapabilityStatus(null, reason);
             return acc;
         },
-        { platform: 'unknown', arch: 'unknown' }
+        { platform: 'unknown', arch: 'unknown', linuxPackageKind: 'unknown' }
     );
 }
 
@@ -54,6 +55,9 @@ function normalizeHostCapabilities(payload) {
     const arch = HOST_ARCHITECTURES.has(payload?.arch)
         ? payload.arch
         : 'unknown';
+    const linuxPackageKind = LINUX_PACKAGE_KINDS.has(payload?.linuxPackageKind)
+        ? payload.linuxPackageKind
+        : 'unknown';
     return HOST_CAPABILITY_KEYS.reduce(
         (acc, key) => {
             acc[key] = normalizeCapabilityStatus(
@@ -62,7 +66,7 @@ function normalizeHostCapabilities(payload) {
             );
             return acc;
         },
-        { platform, arch }
+        { platform, arch, linuxPackageKind }
     );
 }
 
