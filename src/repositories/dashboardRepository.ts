@@ -6,21 +6,21 @@ import { normalizeNavIconKey } from '@/shared/constants/navIcons.js';
 
 import configRepository from './configRepository.js';
 
-type DashboardDirection = 'horizontal' | 'vertical';
-type DashboardPanel =
+export type DashboardDirection = 'horizontal' | 'vertical';
+export type DashboardPanel =
     | string
     | {
           key: string;
           config: Record<string, unknown>;
       };
 
-interface DashboardRow {
+export interface DashboardRow {
     id?: string;
     panels: Array<DashboardPanel | null>;
     direction: DashboardDirection;
 }
 
-interface Dashboard {
+export interface Dashboard {
     id: string;
     name: string;
     icon: string;

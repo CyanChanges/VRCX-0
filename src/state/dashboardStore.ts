@@ -1,11 +1,37 @@
 import { create } from 'zustand';
 
 import dashboardRepository, {
-    sanitizeDashboard
+    sanitizeDashboard,
+    type Dashboard
 } from '@/repositories/dashboardRepository.js';
 import { DEFAULT_DASHBOARD_ICON } from '@/shared/constants/dashboard.js';
 
-const initialState = {
+type DashboardLoadStatus = 'idle' | 'running' | 'ready' | 'error';
+
+interface DashboardStateSnapshot {
+    dashboards: Dashboard[];
+    loaded: boolean;
+    loadStatus: DashboardLoadStatus;
+    detail: string;
+    editingDashboardId: string | null;
+}
+
+export interface DashboardStoreState extends DashboardStateSnapshot {
+    loadDashboards: () => Promise<Dashboard[]>;
+    ensureLoaded: () => Promise<Dashboard[]>;
+    getDashboard: (id: unknown) => Dashboard | null;
+    createDashboard: (baseName?: string) => Promise<Dashboard>;
+    updateDashboard: (
+        id: string,
+        updates?: Record<string, unknown>
+    ) => Promise<Dashboard>;
+    deleteDashboard: (id: string) => Promise<void>;
+    setEditingDashboardId: (id: unknown) => void;
+    consumeEditingDashboardId: (id: unknown) => boolean;
+    resetDashboardState: () => void;
+}
+
+const initialState: DashboardStateSnapshot = {
     dashboards: [],
     loaded: false,
     loadStatus: 'idle',
@@ -13,9 +39,9 @@ const initialState = {
     editingDashboardId: null
 };
 
-let loadPromise = null;
+let loadPromise: Promise<Dashboard[]> | null = null;
 
-export const useDashboardStore = create((set, get) => ({
+export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
     ...initialState,
     async loadDashboards() {
         set({
@@ -84,7 +110,7 @@ export const useDashboardStore = create((set, get) => ({
             ),
             icon: DEFAULT_DASHBOARD_ICON,
             rows: []
-        });
+        }) as Dashboard;
 
         const dashboards = await dashboardRepository.saveDashboards([
             ...get().dashboards,
@@ -155,7 +181,7 @@ export const useDashboardStore = create((set, get) => ({
     },
     setEditingDashboardId(id) {
         set({
-            editingDashboardId: id || null
+            editingDashboardId: (id || null) as string | null
         });
     },
     consumeEditingDashboardId(id) {

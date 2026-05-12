@@ -1,13 +1,38 @@
 import { parseLocation } from './location';
 
-function locationCacheKey(parsed) {
+type ParsedInviteLocation = ReturnType<typeof parseLocation>;
+
+export type InviteInstanceCache = Map<
+    string,
+    {
+        closedAt?: unknown;
+    }
+>;
+
+export interface CheckCanInviteDeps {
+    currentUserId: string;
+    lastLocationStr: string;
+    cachedInstances?: InviteInstanceCache | null;
+}
+
+export interface CheckCanInviteSelfDeps {
+    currentUserId: string;
+    cachedInstances?: InviteInstanceCache | null;
+    friends?: Map<string, unknown> | Set<string> | null;
+}
+
+function locationCacheKey(parsed: ParsedInviteLocation): string {
     if (!parsed.worldId || !parsed.instanceId) {
         return '';
     }
     return `${parsed.worldId}:${parsed.instanceId}`;
 }
 
-function getCachedInstance(location, parsed, cachedInstances) {
+function getCachedInstance(
+    location: string,
+    parsed: ParsedInviteLocation,
+    cachedInstances?: InviteInstanceCache | null
+) {
     if (!cachedInstances) {
         return null;
     }
@@ -27,7 +52,7 @@ function getCachedInstance(location, parsed, cachedInstances) {
  * @param {Map} deps.cachedInstances - instance cache map
  * @returns {boolean}
  */
-function checkCanInvite(location, deps) {
+function checkCanInvite(location: string, deps: CheckCanInviteDeps): boolean {
     if (!location) {
         return false;
     }
@@ -64,7 +89,10 @@ function checkCanInvite(location, deps) {
  * @param {Map} deps.friends - friends map
  * @returns {boolean}
  */
-function checkCanInviteSelf(location, deps) {
+function checkCanInviteSelf(
+    location: string,
+    deps: CheckCanInviteSelfDeps
+): boolean {
     if (!location) {
         return false;
     }

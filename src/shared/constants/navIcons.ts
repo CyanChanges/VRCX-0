@@ -51,13 +51,21 @@ import {
     UsersIcon,
     WrenchIcon
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 const LUCIDE_ICON_PREFIX = 'lucide:';
 
 export const DEFAULT_NAV_ICON_KEY = 'lucide:Circle';
 export const DEFAULT_FOLDER_ICON = 'lucide:Folder';
 
-const navIconEntries = [
+export type NavIconKey = `${typeof LUCIDE_ICON_PREFIX}${string}`;
+
+export interface NavIconOption {
+    key: string;
+    label: string;
+}
+
+const navIconEntries: Array<readonly [NavIconKey, string, LucideIcon]> = [
     ['lucide:Circle', 'Circle', CircleIcon],
     ['lucide:Rss', 'RSS', RssIcon],
     ['lucide:MapPin', 'Map Pin', MapPinIcon],
@@ -116,14 +124,14 @@ const navIconComponentByName = Object.fromEntries(
         key.slice(LUCIDE_ICON_PREFIX.length),
         icon
     ])
-);
+) as Record<string, LucideIcon>;
 
-export const NAV_ICON_OPTIONS = navIconEntries.map(([key, label]) => ({
+export const NAV_ICON_OPTIONS: NavIconOption[] = navIconEntries.map(([key, label]) => ({
     key,
     label
 }));
 
-function extractLucideIconName(value) {
+function extractLucideIconName(value: unknown): string {
     if (typeof value !== 'string') {
         return '';
     }
@@ -137,7 +145,10 @@ function extractLucideIconName(value) {
     return rawName.endsWith('Icon') ? rawName.slice(0, -4) : rawName;
 }
 
-export function normalizeNavIconKey(value, fallback = DEFAULT_NAV_ICON_KEY) {
+export function normalizeNavIconKey(
+    value: unknown,
+    fallback: unknown = DEFAULT_NAV_ICON_KEY
+): string {
     const name = extractLucideIconName(value);
     if (name && navIconComponentByName[name]) {
         return `${LUCIDE_ICON_PREFIX}${name}`;
@@ -151,7 +162,10 @@ export function normalizeNavIconKey(value, fallback = DEFAULT_NAV_ICON_KEY) {
     return '';
 }
 
-export function getNavIconComponent(value, fallback = DEFAULT_NAV_ICON_KEY) {
+export function getNavIconComponent(
+    value: unknown,
+    fallback: unknown = DEFAULT_NAV_ICON_KEY
+): LucideIcon {
     const normalized = normalizeNavIconKey(value, fallback);
     const name = extractLucideIconName(normalized);
     return navIconComponentByName[name] || CircleIcon;

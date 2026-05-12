@@ -1,5 +1,33 @@
-const getOptions = (optionTypes) => {
-    const optionMap = {
+export type SharedFeedFilterOptionValue =
+    | 'Off'
+    | 'On'
+    | 'VIP'
+    | 'Friends'
+    | 'Everyone';
+
+export interface SharedFeedFilterOption {
+    label: SharedFeedFilterOptionValue;
+    textKey: string;
+}
+
+export interface SharedFeedFilterDefinition {
+    key: string;
+    name: string;
+    options: SharedFeedFilterOption[];
+    textKey?: string;
+    tooltip?: string;
+    tooltipWarning?: boolean;
+}
+
+export type SharedFeedFilterDefaults = Record<
+    'noty' | 'wrist',
+    Record<string, SharedFeedFilterOptionValue>
+>;
+
+const getOptions = (
+    optionTypes: SharedFeedFilterOptionValue[]
+): SharedFeedFilterOption[] => {
+    const optionMap: Record<SharedFeedFilterOptionValue, SharedFeedFilterOption> = {
         Off: { label: 'Off', textKey: 'dialog.shared_feed_filters.off' },
         On: { label: 'On', textKey: 'dialog.shared_feed_filters.on' },
         VIP: {
@@ -18,8 +46,11 @@ const getOptions = (optionTypes) => {
     return optionTypes.map((type) => optionMap[type]);
 };
 
-function feedFiltersOptions() {
-    const baseOptions = [
+function feedFiltersOptions(): {
+    notyFeedFiltersOptions: SharedFeedFilterDefinition[];
+    wristFeedFiltersOptions: SharedFeedFilterDefinition[];
+} {
+    const baseOptions: SharedFeedFilterDefinition[] = [
         {
             key: 'OnPlayerJoining',
             name: 'OnPlayerJoining',
@@ -222,7 +253,7 @@ function feedFiltersOptions() {
     };
 }
 
-const sharedFeedFiltersDefaults = {
+const sharedFeedFiltersDefaults: SharedFeedFilterDefaults = {
     noty: {
         Location: 'Off',
         OnPlayerJoined: 'VIP',

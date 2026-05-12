@@ -9,25 +9,43 @@ export const FEED_FILTER_TYPES = Object.freeze([
     'Status',
     'Avatar',
     'Bio'
-]);
+] as const);
 
-function normalizeUserId(value) {
+export type FeedFilterType = (typeof FEED_FILTER_TYPES)[number];
+export type FeedEntry = Record<string, unknown>;
+
+export interface FeedQueryOptions {
+    userId: unknown;
+    search?: unknown;
+    filters?: unknown[];
+    favoriteUserIds?: unknown[];
+    dateFrom?: string;
+    dateTo?: string;
+}
+
+interface FeedReadyState {
+    normalizedUserId: string;
+    maxTableSize: number;
+    searchLimit: number;
+}
+
+function normalizeUserId(value: unknown): string {
     return typeof value === 'string'
         ? value.trim()
         : String(value ?? '').trim();
 }
 
-function normalizeFilterList(filters = []) {
+function normalizeFilterList(filters: unknown[] = []): FeedFilterType[] {
     if (!Array.isArray(filters)) {
         return [];
     }
 
-    return filters.filter((filter, index, source) => {
+    return filters.filter((filter, index, source): filter is FeedFilterType => {
         if (typeof filter !== 'string') {
             return false;
         }
 
-        if (!FEED_FILTER_TYPES.includes(filter)) {
+        if (!FEED_FILTER_TYPES.includes(filter as FeedFilterType)) {
             return false;
         }
 
@@ -36,9 +54,9 @@ function normalizeFilterList(filters = []) {
 }
 
 class FeedRepository {
-    #currentUserId = '';
+    #currentUserId: string = '';
 
-    async #ensureReady(userId) {
+    async #ensureReady(userId: unknown): Promise<FeedReadyState> {
         const normalizedUserId = normalizeUserId(userId);
         if (!normalizedUserId) {
             throw new Error('FeedRepository requires a current user id.');
@@ -56,8 +74,8 @@ class FeedRepository {
 
         return {
             normalizedUserId,
-            maxTableSize,
-            searchLimit
+            maxTableSize: Number(maxTableSize),
+            searchLimit: Number(searchLimit)
         };
     }
 
@@ -68,7 +86,7 @@ class FeedRepository {
         favoriteUserIds = [],
         dateFrom = '',
         dateTo = ''
-    }) {
+    }: FeedQueryOptions) {
         const { normalizedUserId, maxTableSize, searchLimit } =
             await this.#ensureReady(userId);
         const normalizedFilters = normalizeFilterList(filters);
@@ -101,30 +119,30 @@ class FeedRepository {
         );
     }
 
-    async addGpsEntryForUser(userId, entry) {
+    async addGpsEntryForUser(userId: unknown, entry: FeedEntry) {
         return feedLocalRepository.addGPSToDatabaseForUser(userId, entry);
     }
 
-    async addStatusEntryForUser(userId, entry) {
+    async addStatusEntryForUser(userId: unknown, entry: FeedEntry) {
         return feedLocalRepository.addStatusToDatabaseForUser(userId, entry);
     }
 
-    async addBioEntryForUser(userId, entry) {
+    async addBioEntryForUser(userId: unknown, entry: FeedEntry) {
         return feedLocalRepository.addBioToDatabaseForUser(userId, entry);
     }
 
-    async addAvatarEntryForUser(userId, entry) {
+    async addAvatarEntryForUser(userId: unknown, entry: FeedEntry) {
         return feedLocalRepository.addAvatarToDatabaseForUser(userId, entry);
     }
 
-    async addOnlineOfflineEntryForUser(userId, entry) {
+    async addOnlineOfflineEntryForUser(userId: unknown, entry: FeedEntry) {
         return feedLocalRepository.addOnlineOfflineToDatabaseForUser(
             userId,
             entry
         );
     }
 
-    async purgeAvatarFeedData(userId, cutoffDate = null) {
+    async purgeAvatarFeedData(userId: unknown, cutoffDate: string | null = null) {
         return feedLocalRepository.purgeAvatarFeedData(userId, cutoffDate);
     }
 }

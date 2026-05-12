@@ -1,4 +1,5 @@
 import sqliteRepository from './sqliteRepository.js';
+import type { SQLiteParams, SQLiteValue } from './sqliteRepository.js';
 import { normalizeUserTablePrefix } from './userSessionRepository.js';
 
 const FRIEND_LOG_TYPES = Object.freeze([
@@ -8,56 +9,100 @@ const FRIEND_LOG_TYPES = Object.freeze([
     'CancelFriendRequest',
     'DisplayName',
     'TrustLevel'
-]);
+] as const);
 
-function normalizeFriendLogHistoryRow(row) {
+export type FriendLogType = (typeof FRIEND_LOG_TYPES)[number];
+
+export interface FriendLogHistoryRow {
+    rowId: number;
+    created_at: string;
+    type: FriendLogType | string;
+    userId: string;
+    displayName: string;
+    friendNumber: number;
+    previousDisplayName?: string;
+    trustLevel?: string;
+    previousTrustLevel?: string;
+}
+
+export interface FriendLogHistoryEntry {
+    rowId?: number | string | null;
+    created_at?: string | null;
+    type?: FriendLogType | string | null;
+    userId?: string | null;
+    displayName?: string | null;
+    friendNumber?: number | string | null;
+    previousDisplayName?: string | null;
+    trustLevel?: string | null;
+    previousTrustLevel?: string | null;
+}
+
+export interface FriendLogHistoryOptions {
+    targetUserId?: unknown;
+    types?: unknown[];
+}
+
+type FriendLogHistorySourceRow = unknown[] | Record<string, unknown>;
+
+function valueAsString(value: unknown): string {
+    return value == null ? '' : String(value);
+}
+
+function valueAsInt(value: unknown): number {
+    return Number.parseInt(String(value ?? 0), 10) || 0;
+}
+
+function normalizeFriendLogHistoryRow(
+    row: FriendLogHistorySourceRow
+): FriendLogHistoryRow {
     if (Array.isArray(row)) {
-        const normalizedRow = {
-            rowId: Number.parseInt(row[0] ?? 0, 10) || 0,
-            created_at: row[1] ?? '',
-            type: row[2] ?? '',
-            userId: row[3] ?? '',
-            displayName: row[4] ?? '',
-            friendNumber: Number.parseInt(row[8] ?? 0, 10) || 0
+        const normalizedRow: FriendLogHistoryRow = {
+            rowId: valueAsInt(row[0]),
+            created_at: valueAsString(row[1]),
+            type: valueAsString(row[2]),
+            userId: valueAsString(row[3]),
+            displayName: valueAsString(row[4]),
+            friendNumber: valueAsInt(row[8])
         };
 
         if (normalizedRow.type === 'DisplayName') {
-            normalizedRow.previousDisplayName = row[5] ?? '';
+            normalizedRow.previousDisplayName = valueAsString(row[5]);
         } else if (normalizedRow.type === 'TrustLevel') {
-            normalizedRow.trustLevel = row[6] ?? '';
-            normalizedRow.previousTrustLevel = row[7] ?? '';
+            normalizedRow.trustLevel = valueAsString(row[6]);
+            normalizedRow.previousTrustLevel = valueAsString(row[7]);
         }
 
         return normalizedRow;
     }
 
-    const normalizedRow = {
-        rowId: Number.parseInt(row?.id ?? row?.rowId ?? 0, 10) || 0,
-        created_at: row?.created_at ?? row?.createdAt ?? '',
-        type: row?.type ?? '',
-        userId: row?.user_id ?? row?.userId ?? '',
-        displayName: row?.display_name ?? row?.displayName ?? '',
-        friendNumber:
-            Number.parseInt(row?.friend_number ?? row?.friendNumber ?? 0, 10) ||
-            0
+    const normalizedRow: FriendLogHistoryRow = {
+        rowId: valueAsInt(row.id ?? row.rowId),
+        created_at: valueAsString(row.created_at ?? row.createdAt),
+        type: valueAsString(row.type),
+        userId: valueAsString(row.user_id ?? row.userId),
+        displayName: valueAsString(row.display_name ?? row.displayName),
+        friendNumber: valueAsInt(row.friend_number ?? row.friendNumber)
     };
 
     if (normalizedRow.type === 'DisplayName') {
         normalizedRow.previousDisplayName =
-            row?.previous_display_name ?? row?.previousDisplayName ?? '';
+            valueAsString(row.previous_display_name ?? row.previousDisplayName);
     } else if (normalizedRow.type === 'TrustLevel') {
-        normalizedRow.trustLevel = row?.trust_level ?? row?.trustLevel ?? '';
+        normalizedRow.trustLevel = valueAsString(row.trust_level ?? row.trustLevel);
         normalizedRow.previousTrustLevel =
-            row?.previous_trust_level ?? row?.previousTrustLevel ?? '';
+            valueAsString(row.previous_trust_level ?? row.previousTrustLevel);
     }
 
     return normalizedRow;
 }
 
-async function getFriendLogHistory(userId, options = {}) {
+async function getFriendLogHistory(
+    userId: unknown,
+    options: FriendLogHistoryOptions = {}
+): Promise<FriendLogHistoryRow[]> {
     const userPrefix = normalizeUserTablePrefix(userId);
-    const whereClauses = [];
-    const args = {};
+    const whereClauses: string[] = [];
+    const args: Record<string, SQLiteValue> = {};
 
     const normalizedTargetUserId =
         typeof options.targetUserId === 'string'
@@ -75,7 +120,11 @@ async function getFriendLogHistory(userId, options = {}) {
                       ? entry.trim()
                       : String(entry ?? '').trim()
               )
-              .filter((entry) => entry && FRIEND_LOG_TYPES.includes(entry))
+              .filter(
+                  (entry): entry is FriendLogType =>
+                      Boolean(entry) &&
+                      FRIEND_LOG_TYPES.includes(entry as FriendLogType)
+              )
         : [];
     if (normalizedTypes.length) {
         const typePlaceholders = normalizedTypes.map((type, index) => {
@@ -89,9 +138,9 @@ async function getFriendLogHistory(userId, options = {}) {
     const whereSql = whereClauses.length
         ? ` WHERE ${whereClauses.join(' AND ')}`
         : '';
-    const rows = await sqliteRepository.query(
+    const rows = await sqliteRepository.query<FriendLogHistorySourceRow>(
         `SELECT id, created_at, type, user_id, display_name, previous_display_name, trust_level, previous_trust_level, friend_number FROM ${userPrefix}_friend_log_history${whereSql} ORDER BY created_at DESC, id DESC`,
-        args
+        args as SQLiteParams
     );
 
     if (!Array.isArray(rows)) {
@@ -103,7 +152,10 @@ async function getFriendLogHistory(userId, options = {}) {
         .filter((row) => typeof row.userId === 'string' && row.userId.trim());
 }
 
-async function addFriendLogHistory(userId, entry) {
+async function addFriendLogHistory(
+    userId: unknown,
+    entry: FriendLogHistoryEntry | null | undefined
+) {
     const userPrefix = normalizeUserTablePrefix(userId);
     await sqliteRepository.executeNonQuery(
         `INSERT OR IGNORE INTO ${userPrefix}_friend_log_history (created_at, type, user_id, display_name, previous_display_name, trust_level, previous_trust_level, friend_number) VALUES (@created_at, @type, @user_id, @display_name, @previous_display_name, @trust_level, @previous_trust_level, @friend_number)`,
@@ -115,20 +167,26 @@ async function addFriendLogHistory(userId, entry) {
             '@previous_display_name': entry?.previousDisplayName ?? '',
             '@trust_level': entry?.trustLevel ?? '',
             '@previous_trust_level': entry?.previousTrustLevel ?? '',
-            '@friend_number': Number.parseInt(entry?.friendNumber ?? 0, 10) || 0
+            '@friend_number': valueAsInt(entry?.friendNumber)
         }
     );
 }
 
-async function addFriendLogHistoryArray(userId, entries = []) {
+async function addFriendLogHistoryArray(
+    userId: unknown,
+    entries: FriendLogHistoryEntry[] = []
+) {
     for (const entry of Array.isArray(entries) ? entries : []) {
         await addFriendLogHistory(userId, entry);
     }
 }
 
-async function deleteFriendLogHistory(userId, entry) {
+async function deleteFriendLogHistory(
+    userId: unknown,
+    entry: FriendLogHistoryEntry | null | undefined
+) {
     const userPrefix = normalizeUserTablePrefix(userId);
-    const rowId = Number.parseInt(entry?.rowId ?? 0, 10) || 0;
+    const rowId = valueAsInt(entry?.rowId);
 
     if (rowId > 0) {
         return sqliteRepository.executeNonQuery(
