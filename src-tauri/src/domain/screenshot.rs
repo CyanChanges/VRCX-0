@@ -904,7 +904,7 @@ fn screenshot_library_entry_from_path(
 ) -> Option<ScreenshotLibraryEntry> {
     let metadata = std::fs::metadata(path).ok()?;
     let path_value = path_string(path);
-    let folder_path = path.parent().map(path_string).unwrap_or_else(String::new);
+    let folder_path = path.parent().map(path_string).unwrap_or_default();
     let file_name = path
         .file_name()
         .map(|name| name.to_string_lossy().into_owned())
