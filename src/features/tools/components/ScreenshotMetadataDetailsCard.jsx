@@ -26,7 +26,8 @@ export function ScreenshotMetadataDetailsCard({
     currentEndpoint,
     onBackToResults
 }) {
-    const { t } = useTranslation();
+    const { i18n, t } = useTranslation();
+    const dateLocale = i18n.resolvedLanguage || i18n.language;
 
     return (
         <Card className="flex min-h-0 flex-col">
@@ -152,7 +153,10 @@ export function ScreenshotMetadataDetailsCard({
                                 )}
                             </div>
                             <div className="text-sm">
-                                {formatScreenshotDateTime(metadata.dateTime)}
+                                {formatScreenshotDateTime(
+                                    metadata.dateTime,
+                                    dateLocale
+                                )}
                             </div>
                             <div className="text-muted-foreground text-sm">
                                 {[

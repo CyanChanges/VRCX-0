@@ -126,6 +126,7 @@ export function DialogHost() {
                         worldId={activeDialog?.entityId}
                         seedData={dialogPayload?.seedData ?? null}
                         initialAction={dialogPayload?.initialAction ?? ''}
+                        openNonce={activeDialog?.openNonce ?? 0}
                         initialActionNonce={
                             dialogPayload?.initialActionNonce ?? 0
                         }

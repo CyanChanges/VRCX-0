@@ -34,6 +34,70 @@ pub fn app__find_screenshots_by_search(
 }
 
 #[tauri::command]
+pub fn app__start_screenshot_library_scan(
+    state: State<'_, AppState>,
+    force: Option<bool>,
+) -> Result<screenshot::ScreenshotLibraryScanStatus, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    Ok(screenshot::start_screenshot_library_scan(
+        &state.screenshot_cache,
+        state.paths.screenshot_thumbs.clone(),
+        force.unwrap_or(false),
+    ))
+}
+
+#[tauri::command]
+pub fn app__get_screenshot_library_status(
+    state: State<'_, AppState>,
+) -> Result<screenshot::ScreenshotLibraryScanStatus, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    Ok(state.screenshot_cache.scan_status())
+}
+
+#[tauri::command]
+pub fn app__get_screenshot_folder_tree(
+    state: State<'_, AppState>,
+) -> Result<screenshot::ScreenshotFolderTree, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    state.screenshot_cache.screenshot_folder_tree()
+}
+
+#[tauri::command]
+pub fn app__get_screenshot_folder_images(
+    state: State<'_, AppState>,
+    folder_path: String,
+) -> Result<Vec<screenshot::ScreenshotLibraryImage>, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    state
+        .screenshot_cache
+        .list_screenshot_folder_images(&folder_path)
+}
+
+#[tauri::command]
+pub fn app__get_world_screenshots(
+    state: State<'_, AppState>,
+    world_id: String,
+) -> Result<Vec<screenshot::ScreenshotLibraryImage>, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    state.screenshot_cache.list_world_screenshots(&world_id)
+}
+
+#[tauri::command]
+pub async fn app__ensure_screenshot_thumbnail(
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<String, AppError> {
+    require_host_capability(HostCapability::ScreenshotCache)?;
+    let cache = state.screenshot_cache.clone();
+    let cache_dir = state.paths.screenshot_thumbs.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        screenshot::ensure_screenshot_thumbnail(&path, &cache_dir, &cache)
+    })
+    .await
+    .map_err(|error| AppError::Custom(format!("thumbnail task failed: {error}")))?
+}
+
+#[tauri::command]
 pub fn app__get_last_screenshot() -> Result<String, AppError> {
     require_host_capability(HostCapability::ScreenshotCache)?;
     Ok(screenshot::last_screenshot())
@@ -48,7 +112,10 @@ pub fn app__delete_screenshot_metadata(path: String) -> Result<bool, AppError> {
 #[tauri::command]
 pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) -> Result<(), AppError> {
     require_host_capability(HostCapability::ScreenshotCache)?;
-    screenshot::delete_all_screenshot_metadata(&state.screenshot_cache);
+    screenshot::delete_all_screenshot_metadata(
+        &state.screenshot_cache,
+        &state.paths.screenshot_thumbs,
+    );
     Ok(())
 }
 

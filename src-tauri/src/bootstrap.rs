@@ -104,6 +104,55 @@ pub fn screenshot_protocol_response(request: Request<Vec<u8>>) -> Response<Cow<'
     }
 }
 
+pub fn screenshot_thumbnail_protocol_response(
+    request: Request<Vec<u8>>,
+) -> Response<Cow<'static, [u8]>> {
+    let path = match percent_encoding::percent_decode_str(&request.uri().path()[1..]).decode_utf8()
+    {
+        Ok(path) => path.into_owned(),
+        Err(_) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(Vec::new().into())
+                .unwrap();
+        }
+    };
+
+    let Ok(paths) = crate::domain::app_paths::AppPaths::resolve() else {
+        return Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Vec::new().into())
+            .unwrap();
+    };
+
+    let path_buf = std::path::PathBuf::from(&path);
+    let is_webp = path_buf
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("webp"));
+
+    if !is_webp
+        || !path_buf.is_file()
+        || !crate::domain::screenshot::is_path_inside_directory(&path_buf, &paths.screenshot_thumbs)
+    {
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Vec::new().into())
+            .unwrap();
+    }
+
+    match std::fs::read(&path_buf) {
+        Ok(bytes) => Response::builder()
+            .header(CONTENT_TYPE, "image/webp")
+            .body(bytes.into())
+            .unwrap(),
+        Err(_) => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Vec::new().into())
+            .unwrap(),
+    }
+}
+
 pub fn apply_linux_webkit_workaround() {
     #[cfg(target_os = "linux")]
     {

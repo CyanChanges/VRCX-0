@@ -395,7 +395,7 @@ export function ScreenshotMetadataPreviewCard({
                 onDragEnter={onDragOver}
                 onDrop={onDrop}
             >
-                {isMetadataLoading ? (
+                {isMetadataLoading && !imageUrl ? (
                     <EmptyState
                         loading
                         title={t('view.tools.loading.loading_screenshot')}

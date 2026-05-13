@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 export function useScreenshotMetadataNavigation({
     loadScreenshot,
     metadata,
+    onPathChange,
     searchNavigationPaths,
     selectedPath,
     setSelectedPath
@@ -21,20 +22,27 @@ export function useScreenshotMetadataNavigation({
                     currentIndex > 0
                         ? currentIndex - 1
                         : searchNavigationPaths.length - 1;
-                setSelectedPath(searchNavigationPaths[prevIndex]);
-                await loadScreenshotRef.current(
-                    searchNavigationPaths[prevIndex],
-                    false
-                );
+                const nextPath = searchNavigationPaths[prevIndex];
+                setSelectedPath(nextPath);
+                if (onPathChange) {
+                    onPathChange(nextPath);
+                    return;
+                }
+                await loadScreenshotRef.current(nextPath, false);
                 return;
             }
         }
 
         if (metadata?.previousFilePath) {
+            if (onPathChange) {
+                onPathChange(metadata.previousFilePath);
+                return;
+            }
             await loadScreenshotRef.current(metadata.previousFilePath, true);
         }
     }, [
         metadata?.previousFilePath,
+        onPathChange,
         searchNavigationPaths,
         selectedPath,
         setSelectedPath
@@ -48,20 +56,27 @@ export function useScreenshotMetadataNavigation({
                     currentIndex < searchNavigationPaths.length - 1
                         ? currentIndex + 1
                         : 0;
-                setSelectedPath(searchNavigationPaths[nextIndex]);
-                await loadScreenshotRef.current(
-                    searchNavigationPaths[nextIndex],
-                    false
-                );
+                const nextPath = searchNavigationPaths[nextIndex];
+                setSelectedPath(nextPath);
+                if (onPathChange) {
+                    onPathChange(nextPath);
+                    return;
+                }
+                await loadScreenshotRef.current(nextPath, false);
                 return;
             }
         }
 
         if (metadata?.nextFilePath) {
+            if (onPathChange) {
+                onPathChange(metadata.nextFilePath);
+                return;
+            }
             await loadScreenshotRef.current(metadata.nextFilePath, true);
         }
     }, [
         metadata?.nextFilePath,
+        onPathChange,
         searchNavigationPaths,
         selectedPath,
         setSelectedPath

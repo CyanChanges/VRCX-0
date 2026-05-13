@@ -1,11 +1,21 @@
-import { UserIcon, UsersIcon } from 'lucide-react';
+import { RefreshCwIcon, UserIcon, UsersIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import { InstanceActionBar } from '@/components/instances/InstanceActionBar.jsx';
 import { LocationWorld } from '@/components/LocationWorld.jsx';
 import { timeToText } from '@/lib/dateTime.js';
 import { openExternalLink } from '@/lib/entityMedia.js';
+import { ScreenshotThumbnailCard } from '@/features/tools/components/ScreenshotThumbnailGrid.jsx';
+import { useScreenshotGalleryGrid } from '@/features/tools/useScreenshotGalleryGrid.js';
 import { Badge } from '@/ui/shadcn/badge';
+import { Button } from '@/ui/shadcn/button';
+import {
+    Empty,
+    EmptyDescription,
+    EmptyHeader,
+    EmptyTitle
+} from '@/ui/shadcn/empty';
+import { Spinner } from '@/ui/shadcn/spinner';
 
 import {
     EntityDialogTabContent,
@@ -32,6 +42,86 @@ function firstKnownValue(...values) {
     return undefined;
 }
 
+function WorldScreenshotsEmptyState({ loading = false, message = '' }) {
+    const { t } = useTranslation();
+
+    return (
+        <Empty className="min-h-32 border">
+            <EmptyHeader>
+                {loading ? <Spinner /> : null}
+                <EmptyTitle>
+                    {t('dialog.world.screenshots.header')}
+                </EmptyTitle>
+                <EmptyDescription>
+                    {message ||
+                        t(
+                            loading
+                                ? 'dialog.world.screenshots.loading'
+                                : 'dialog.world.screenshots.empty'
+                        )}
+                </EmptyDescription>
+            </EmptyHeader>
+        </Empty>
+    );
+}
+
+function WorldScreenshotsGrid({
+    screenshots,
+    worldId,
+    worldName,
+    onOpenScreenshot
+}) {
+    const { t } = useTranslation();
+    const safeScreenshots = Array.isArray(screenshots) ? screenshots : [];
+    const {
+        gridColumnCount,
+        gridGap,
+        gridMinWidth,
+        totalHeight,
+        viewportRef,
+        visibleRows
+    } = useScreenshotGalleryGrid({
+        compact: true,
+        items: safeScreenshots,
+        resetKey: worldId
+    });
+
+    return (
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+            <Badge variant="outline" className="w-fit">
+                {t('dialog.screenshot_metadata.image_count', {
+                    count: safeScreenshots.length
+                })}
+            </Badge>
+            <div ref={viewportRef} className="min-h-0 flex-1 overflow-auto pr-1">
+                <div className="relative" style={{ height: totalHeight }}>
+                    {visibleRows.map((row) => (
+                        <div
+                            key={row.key}
+                            className="absolute right-0 left-0 grid"
+                            style={{
+                                top: row.top,
+                                gridTemplateColumns: `repeat(${gridColumnCount}, minmax(${gridMinWidth}px, 1fr))`,
+                                gap: gridGap
+                            }}
+                        >
+                            {row.items.map((item) => (
+                                <ScreenshotThumbnailCard
+                                    key={item.path}
+                                    compact
+                                    item={item}
+                                    onOpen={onOpenScreenshot}
+                                    worldNameHint={worldName}
+                                />
+                            ))}
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export function WorldDialogTabPanels({ handlers, helpers, state }) {
     const { t } = useTranslation();
     const {
@@ -46,13 +136,23 @@ export function WorldDialogTabPanels({ handlers, helpers, state }) {
         memo,
         previousInstances,
         previewUrl,
+        screenshots,
+        screenshotsError,
+        screenshotsRefreshDisabled,
+        screenshotsStatus,
         tabs,
         totalVisitTime,
         world,
         worldDialogShortName
     } = state;
-    const { onChangeTab, onOpenAuthor, onPreviousInstancesChange, onSaveMemo } =
-        handlers;
+    const {
+        onChangeTab,
+        onOpenAuthor,
+        onOpenScreenshot,
+        onPreviousInstancesChange,
+        onRefreshScreenshots,
+        onSaveMemo
+    } = handlers;
     const { formatDate } = helpers;
 
     return (
@@ -198,6 +298,51 @@ export function WorldDialogTabPanels({ handlers, helpers, state }) {
                     onRowsChange={onPreviousInstancesChange}
                     className="flex-1"
                 />
+            </EntityDialogTabContent>
+            <EntityDialogTabContent
+                value="screenshots"
+                className="flex min-h-0 flex-col gap-3 px-px pt-3 pb-px"
+            >
+                <div className="flex shrink-0 justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={screenshotsRefreshDisabled}
+                        onClick={onRefreshScreenshots}
+                    >
+                        {screenshotsRefreshDisabled ? (
+                            <Spinner data-icon="inline-start" />
+                        ) : (
+                            <RefreshCwIcon data-icon="inline-start" />
+                        )}
+                        {t('common.actions.refresh')}
+                    </Button>
+                </div>
+                {screenshotsError &&
+                Array.isArray(screenshots) &&
+                screenshots.length ? (
+                    <div className="border-destructive/30 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-xs">
+                        {screenshotsError}
+                    </div>
+                ) : null}
+                {screenshotsStatus === 'loading' ? (
+                    <WorldScreenshotsEmptyState loading />
+                ) : screenshotsError &&
+                  (!Array.isArray(screenshots) || !screenshots.length) ? (
+                    <WorldScreenshotsEmptyState message={screenshotsError} />
+                ) : Array.isArray(screenshots) && screenshots.length ? (
+                    <WorldScreenshotsGrid
+                        screenshots={screenshots}
+                        worldId={world.id}
+                        worldName={world.name || ''}
+                        onOpenScreenshot={onOpenScreenshot}
+                    />
+                ) : (
+                    <WorldScreenshotsEmptyState
+                        message={t('dialog.world.screenshots.empty')}
+                    />
+                )}
             </EntityDialogTabContent>
             <EntityDialogTabContent value="info" forceMount>
                 <EntityInfoGrid>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { CopyIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { EmptyState as AppEmptyState } from '@/components/layout/PageScaffold.jsx';
@@ -171,10 +172,12 @@ export function WorldDialogContent({
     worldId,
     seedData = null,
     initialAction = '',
+    openNonce = 0,
     initialActionNonce = 0,
     initialNewInstanceDefaults = null
 }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const normalizedWorldId = normalizeEntityId(worldId);
     const profileWorldId = normalizedWorldId.split(':')[0] || normalizedWorldId;
@@ -1380,6 +1383,16 @@ export function WorldDialogContent({
         }
     }
 
+    function openScreenshotMetadata(path) {
+        if (!path) {
+            return;
+        }
+        const params = new URLSearchParams();
+        params.set('path', path);
+        closeDialog();
+        navigate(`/tools/screenshot-metadata?${params.toString()}`);
+    }
+
     return (
         <>
             <WorldDialogTabbedView
@@ -1394,6 +1407,7 @@ export function WorldDialogContent({
                 isHomeWorld={isHomeWorld}
                 canUpdateHome={canUpdateHome}
                 canManageWorld={canManageWorld}
+                openNonce={openNonce}
                 onRefresh={() => void refreshWorldProfile()}
                 onLaunch={() => void launchInstance()}
                 onHome={() => void updateHomeLocation()}
@@ -1416,6 +1430,7 @@ export function WorldDialogContent({
                     void ownerActions.deleteWorldPersistentData()
                 }
                 onDelete={() => void ownerActions.deleteWorld()}
+                onOpenScreenshot={openScreenshotMetadata}
                 previousInstances={previousInstances}
                 onPreviousInstancesChange={setPreviousInstances}
                 hasPersistData={hasPersistData}

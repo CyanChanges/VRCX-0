@@ -30,13 +30,18 @@ import mediaFileRepository, {
     cropAllPrints,
     cropPrintImage,
     deleteScreenshotMetadata,
+    ensureScreenshotThumbnail,
     findScreenshotsBySearch,
     getExtraScreenshotData,
+    getScreenshotFolderImages,
+    getScreenshotFolderTree,
+    getScreenshotLibraryStatus,
     getFileBase64,
     getLastScreenshot,
     getScreenshotMetadata,
     getUgcPhotoLocation,
     getVrchatPhotosLocation,
+    getWorldScreenshots,
     invokeApp,
     openFileSelectorDialog,
     openFolderAndSelectItem,
@@ -44,7 +49,8 @@ import mediaFileRepository, {
     saveEmojiToFile,
     saveImageFile,
     savePrintToFile,
-    saveStickerToFile
+    saveStickerToFile,
+    startScreenshotLibraryScan
 } from './mediaFileRepository.js';
 
 type MediaRepository = typeof mediaApiRepository & typeof mediaFileRepository;
@@ -87,6 +93,12 @@ export {
     addScreenshotMetadata,
     getExtraScreenshotData,
     findScreenshotsBySearch,
+    startScreenshotLibraryScan,
+    getScreenshotLibraryStatus,
+    getScreenshotFolderTree,
+    getScreenshotFolderImages,
+    getWorldScreenshots,
+    ensureScreenshotThumbnail,
     getLastScreenshot,
     getVrchatPhotosLocation,
     getUgcPhotoLocation,

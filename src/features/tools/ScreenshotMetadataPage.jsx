@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { convertFileSrc } from '@/platform/tauri/index.js';
@@ -16,6 +16,7 @@ import {
     ScreenshotMetadataResultsTable,
     ScreenshotMetadataToolbar
 } from './components/ScreenshotMetadataSections.jsx';
+import { ScreenshotGalleryView } from './components/ScreenshotGalleryView.jsx';
 import {
     buildScreenshotSearchRow,
     DEFAULT_SCREENSHOT_SEARCH_SORT,
@@ -29,16 +30,45 @@ import { useScreenshotMetadataNavigation } from './useScreenshotMetadataNavigati
 
 function openSearchResult(
     row,
-    { setSelectedPath, setSearchViewMode, loadScreenshot }
+    { openDetailPath, setSelectedPath, setSearchViewMode }
 ) {
     setSelectedPath(row.filePath);
     setSearchViewMode('detail');
-    void loadScreenshot(row.filePath, false);
+    openDetailPath(row.filePath);
+}
+
+function getFolderLatestModifiedAt(folder) {
+    return Number(folder?.latestModifiedAt) || 0;
+}
+
+function resolveGalleryFolder(folderTree, preferredFolder) {
+    const folders = Array.isArray(folderTree?.folders) ? folderTree.folders : [];
+    if (
+        preferredFolder &&
+        folders.some((folder) => folder.path === preferredFolder)
+    ) {
+        return preferredFolder;
+    }
+    const latestFolder = folders
+        .filter((folder) => Number(folder.imageCount) > 0)
+        .sort(
+            (left, right) =>
+                getFolderLatestModifiedAt(right) -
+                    getFolderLatestModifiedAt(left) ||
+                String(right.path || '').localeCompare(String(left.path || ''))
+        )[0];
+    return (
+        latestFolder?.path ||
+        folderTree?.rootPath ||
+        folders[0]?.path ||
+        ''
+    );
 }
 
 export function ScreenshotMetadataPage() {
     const navigate = useNavigate();
-    const { t } = useTranslation();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { i18n, t } = useTranslation();
     const confirm = useModalStore((state) => state.confirm);
     const openImagePreview = useModalStore((state) => state.openImagePreview);
     const currentEndpoint = useRuntimeStore(
@@ -58,6 +88,10 @@ export function ScreenshotMetadataPage() {
     const imageVersionRef = useRef(0);
     const metadataRequestRef = useRef(0);
     const searchRequestRef = useRef(0);
+    const galleryRequestRef = useRef(0);
+    const routePath = searchParams.get('path') || '';
+    const routeFolder = searchParams.get('folder') || '';
+    const isGalleryMode = !routePath;
     const [searchQuery, setSearchQuery] = useState('');
     const [searchType, setSearchType] = useState(
         SCREENSHOT_METADATA_SEARCH_TYPES[0].value
@@ -75,6 +109,18 @@ export function ScreenshotMetadataPage() {
     const [isSearchLoading, setIsSearchLoading] = useState(false);
     const [isDeletingMetadata, setIsDeletingMetadata] = useState(false);
     const [isUploadingScreenshot, setIsUploadingScreenshot] = useState(false);
+    const [folderTree, setFolderTree] = useState(null);
+    const [galleryImages, setGalleryImages] = useState([]);
+    const [galleryImagesFolder, setGalleryImagesFolder] = useState('');
+    const [selectedGalleryFolder, setSelectedGalleryFolder] = useState('');
+    const [scanStatus, setScanStatus] = useState(null);
+    const [galleryScanError, setGalleryScanError] = useState('');
+    const [galleryTreeError, setGalleryTreeError] = useState('');
+    const [galleryImagesError, setGalleryImagesError] = useState('');
+    const [isGalleryTreeLoading, setIsGalleryTreeLoading] = useState(false);
+    const [isGalleryImagesLoading, setIsGalleryImagesLoading] =
+        useState(false);
+    const [galleryRevision, setGalleryRevision] = useState(0);
 
     const currentSearchType =
         SCREENSHOT_METADATA_SEARCH_TYPES.find(
@@ -91,6 +137,50 @@ export function ScreenshotMetadataPage() {
         [sortedSearchRows]
     );
     const selectedPathIndex = searchNavigationPaths.indexOf(selectedPath);
+    const dateLocale = i18n.resolvedLanguage || i18n.language;
+    const visibleGalleryImages =
+        galleryImagesFolder === selectedGalleryFolder ? galleryImages : [];
+    const shouldShowGalleryImagesLoading =
+        isGalleryImagesLoading && visibleGalleryImages.length === 0;
+
+    const updateRoutePath = useCallback(
+        (path) => {
+            const nextParams = new URLSearchParams();
+            nextParams.set('path', path);
+            const folder = selectedGalleryFolder || routeFolder;
+            if (folder) {
+                nextParams.set('folder', folder);
+            }
+            setSearchParams(nextParams);
+        },
+        [routeFolder, selectedGalleryFolder, setSearchParams]
+    );
+
+    const openDetailPath = useCallback(
+        (path, { clearPreview = true } = {}) => {
+            if (path) {
+                if (clearPreview) {
+                    metadataRequestRef.current += 1;
+                    setMetadata(null);
+                    setMetadataError('');
+                    setImageUrl('');
+                }
+                updateRoutePath(path);
+            }
+        },
+        [updateRoutePath]
+    );
+
+    const openGalleryRoute = useCallback(
+        (folder = selectedGalleryFolder || routeFolder) => {
+            const nextParams = new URLSearchParams();
+            if (folder) {
+                nextParams.set('folder', folder);
+            }
+            setSearchParams(nextParams);
+        },
+        [routeFolder, selectedGalleryFolder, setSearchParams]
+    );
 
     function resetSearchContext({
         clearQuery = false,
@@ -195,7 +285,7 @@ export function ScreenshotMetadataPage() {
                 toast.error(message);
                 return;
             }
-            await loadScreenshot(path, true);
+            openDetailPath(path);
         } catch (error) {
             const message =
                 error instanceof Error
@@ -209,16 +299,184 @@ export function ScreenshotMetadataPage() {
     }
 
     useEffect(() => {
-        void loadLastScreenshot();
-    }, []);
+        if (!routePath) {
+            return;
+        }
+        setSearchViewMode('detail');
+        void loadScreenshot(routePath, true);
+    }, [routePath]);
 
     const { navigateNext, navigatePrev } = useScreenshotMetadataNavigation({
         loadScreenshot,
         metadata,
+        onPathChange: updateRoutePath,
         searchNavigationPaths,
         selectedPath,
         setSelectedPath
     });
+
+    async function loadGalleryTree({ preferPopulated = false } = {}) {
+        setIsGalleryTreeLoading(true);
+        try {
+            const tree = await mediaRepository.getScreenshotFolderTree();
+            setFolderTree(tree || null);
+            setGalleryTreeError('');
+            setSelectedGalleryFolder((current) =>
+                resolveGalleryFolder(
+                    tree,
+                    preferPopulated ? routeFolder : routeFolder || current
+                )
+            );
+            setGalleryRevision((current) => current + 1);
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : t('dialog.screenshot_metadata.gallery_load_failed');
+            setGalleryTreeError(message);
+            toast.error(message);
+        } finally {
+            setIsGalleryTreeLoading(false);
+        }
+    }
+
+    async function refreshGallery(force = false) {
+        setGalleryScanError('');
+        setGalleryTreeError('');
+        setGalleryImagesError('');
+        try {
+            const status =
+                await mediaRepository.startScreenshotLibraryScan(force);
+            setScanStatus(status || null);
+            setGalleryScanError(status?.error || '');
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : t('dialog.screenshot_metadata.scan_failed');
+            setGalleryScanError(message);
+            toast.error(message);
+        }
+        await loadGalleryTree({ preferPopulated: force });
+    }
+
+    useEffect(() => {
+        if (!isGalleryMode || !screenshotCacheStatus?.available) {
+            return;
+        }
+        void refreshGallery(false);
+    }, [isGalleryMode, screenshotCacheStatus?.available]);
+
+    useEffect(() => {
+        if (!isGalleryMode || !folderTree) {
+            return;
+        }
+        setSelectedGalleryFolder(resolveGalleryFolder(folderTree, routeFolder));
+    }, [folderTree, isGalleryMode, routeFolder]);
+
+    useEffect(() => {
+        if (!isGalleryMode || !scanStatus?.running) {
+            return undefined;
+        }
+
+        let active = true;
+        let pollInFlight = false;
+        let scanCompleted = false;
+        const timer = window.setInterval(() => {
+            if (pollInFlight || scanCompleted) {
+                return;
+            }
+            pollInFlight = true;
+            mediaRepository
+                .getScreenshotLibraryStatus()
+                .then((status) => {
+                    if (!active) {
+                        return;
+                    }
+                    setScanStatus(status || null);
+                    setGalleryScanError(status?.error || '');
+                    if (!status?.running) {
+                        scanCompleted = true;
+                        window.clearInterval(timer);
+                        void loadGalleryTree({ preferPopulated: true });
+                    }
+                })
+                .catch((error) => {
+                    if (!active) {
+                        return;
+                    }
+                    const message =
+                        error instanceof Error
+                            ? error.message
+                            : t('dialog.screenshot_metadata.scan_failed');
+                    setGalleryScanError(message);
+                    setScanStatus((current) =>
+                        current ? { ...current, running: false } : current
+                    );
+                })
+                .finally(() => {
+                    pollInFlight = false;
+                });
+        }, 1000);
+
+        return () => {
+            active = false;
+            window.clearInterval(timer);
+        };
+    }, [isGalleryMode, scanStatus?.running, t]);
+
+    useEffect(() => {
+        if (!isGalleryMode || !selectedGalleryFolder) {
+            galleryRequestRef.current += 1;
+            setGalleryImages([]);
+            setGalleryImagesFolder('');
+            setIsGalleryImagesLoading(false);
+            return;
+        }
+
+        const requestId = galleryRequestRef.current + 1;
+        galleryRequestRef.current = requestId;
+        const requestedFolder = selectedGalleryFolder;
+        setIsGalleryImagesLoading(true);
+
+        mediaRepository
+            .getScreenshotFolderImages(requestedFolder)
+            .then((images) => {
+                if (galleryRequestRef.current === requestId) {
+                    setGalleryImagesError('');
+                    setGalleryImages(Array.isArray(images) ? images : []);
+                    setGalleryImagesFolder(requestedFolder);
+                }
+            })
+            .catch((error) => {
+                if (galleryRequestRef.current === requestId) {
+                    const message =
+                        error instanceof Error
+                            ? error.message
+                            : t(
+                                  'dialog.screenshot_metadata.gallery_load_failed'
+                        );
+                    setGalleryImagesError(message);
+                    setGalleryImages([]);
+                    setGalleryImagesFolder(requestedFolder);
+                    toast.error(message);
+                }
+            })
+            .finally(() => {
+                if (galleryRequestRef.current === requestId) {
+                    setIsGalleryImagesLoading(false);
+                }
+            });
+    }, [galleryRevision, isGalleryMode, selectedGalleryFolder, t]);
+
+    function selectGalleryFolder(folder) {
+        setSelectedGalleryFolder(folder);
+        const nextParams = new URLSearchParams();
+        if (folder) {
+            nextParams.set('folder', folder);
+        }
+        setSearchParams(nextParams);
+    }
 
     async function browseForScreenshot() {
         try {
@@ -234,7 +492,7 @@ export function ScreenshotMetadataPage() {
             }
 
             resetSearchContext({ clearQuery: true });
-            await loadScreenshot(filePath, true);
+            openDetailPath(filePath);
         } catch (error) {
             toast.error(
                 error instanceof Error
@@ -412,7 +670,8 @@ export function ScreenshotMetadataPage() {
                         return buildScreenshotSearchRow(
                             normalized,
                             selectedSearchType,
-                            query
+                            query,
+                            dateLocale
                         );
                     } catch (error) {
                         console.error(
@@ -488,7 +747,7 @@ export function ScreenshotMetadataPage() {
             return;
         }
         resetSearchContext({ clearQuery: true });
-        await loadScreenshot(filePath, true);
+        openDetailPath(filePath);
     }
 
     function handleScreenshotDragOver(event) {
@@ -529,76 +788,104 @@ export function ScreenshotMetadataPage() {
                 uploading={isUploadingScreenshot}
                 deletingLabel={t('view.tools.loading.deleting_metadata')}
                 uploadingLabel={t('view.tools.loading.uploading_screenshot')}
-                onBack={() => navigate('/tools')}
+                onBack={() =>
+                    isGalleryMode ? navigate('/tools') : openGalleryRoute()
+                }
             />
 
-            <ScreenshotMetadataToolbar
-                metadata={metadata}
-                isVrcPlusSupporter={isVrcPlusSupporter}
-                isUploadingScreenshot={isUploadingScreenshot}
-                isDeletingMetadata={isDeletingMetadata}
-                searchQuery={searchQuery}
-                searchType={searchType}
-                searchViewMode={searchViewMode}
-                searchRowsCount={searchRows.length}
-                searchNavigationCount={searchNavigationPaths.length}
-                selectedPathIndex={selectedPathIndex}
-                onSearchQueryChange={setSearchQuery}
-                onSearchTypeChange={handleSearchTypeChange}
-                onSearch={() => void runSearch()}
-                onBrowse={() => void browseForScreenshot()}
-                onLoadLast={() => void loadLastScreenshot()}
-                onOpenFolder={() => void openFolder()}
-                onCopyImage={() => void copyImage()}
-                onUpload={() => void uploadScreenshotToGallery()}
-                onDelete={() => void deleteMetadata()}
-            />
-
-            {searchViewMode === 'table' ? (
-                <ScreenshotMetadataResultsTable
-                    isSearchLoading={isSearchLoading}
-                    currentSearchType={currentSearchType}
-                    searchSort={searchSort}
-                    sortedSearchRows={sortedSearchRows}
-                    selectedPath={selectedPath}
-                    onToggleSearchSort={toggleSearchSort}
-                    onOpenResult={(row) =>
-                        openSearchResult(row, {
-                            setSelectedPath,
-                            setSearchViewMode,
-                            loadScreenshot
-                        })
+            {isGalleryMode ? (
+                <ScreenshotGalleryView
+                    folderTree={folderTree}
+                    images={visibleGalleryImages}
+                    isImagesLoading={shouldShowGalleryImagesLoading}
+                    isTreeLoading={isGalleryTreeLoading && !folderTree}
+                    error={
+                        galleryScanError ||
+                        galleryTreeError ||
+                        galleryImagesError
                     }
+                    scanStatus={scanStatus}
+                    selectedFolder={selectedGalleryFolder}
+                    onOpenImage={openDetailPath}
+                    onRefresh={() => void refreshGallery(true)}
+                    onSelectFolder={selectGalleryFolder}
                 />
             ) : (
-                <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_380px]">
-                    <ScreenshotMetadataPreviewCard
+                <>
+                    <ScreenshotMetadataToolbar
                         metadata={metadata}
-                        imageUrl={imageUrl}
-                        isMetadataLoading={isMetadataLoading}
-                        onNavigatePrev={() => void navigatePrev()}
-                        onNavigateNext={() => void navigateNext()}
-                        onImagePreview={() =>
-                            openImagePreview({
-                                url: imageUrl,
-                                title:
-                                    metadata?.fileName || 'Screenshot preview',
-                                fileName: metadata?.fileName || '',
-                                sourcePath: metadata?.filePath || ''
-                            })
-                        }
-                        onDragOver={handleScreenshotDragOver}
-                        onDrop={(event) => void handleScreenshotDrop(event)}
+                        isVrcPlusSupporter={isVrcPlusSupporter}
+                        isUploadingScreenshot={isUploadingScreenshot}
+                        isDeletingMetadata={isDeletingMetadata}
+                        searchQuery={searchQuery}
+                        searchType={searchType}
+                        searchViewMode={searchViewMode}
+                        searchRowsCount={searchRows.length}
+                        searchNavigationCount={searchNavigationPaths.length}
+                        selectedPathIndex={selectedPathIndex}
+                        onSearchQueryChange={setSearchQuery}
+                        onSearchTypeChange={handleSearchTypeChange}
+                        onSearch={() => void runSearch()}
+                        onBrowse={() => void browseForScreenshot()}
+                        onLoadLast={() => void loadLastScreenshot()}
+                        onOpenFolder={() => void openFolder()}
+                        onCopyImage={() => void copyImage()}
+                        onUpload={() => void uploadScreenshotToGallery()}
+                        onDelete={() => void deleteMetadata()}
                     />
 
-                    <ScreenshotMetadataDetailsCard
-                        metadata={metadata}
-                        metadataError={metadataError}
-                        searchRowsCount={searchRows.length}
-                        currentEndpoint={currentEndpoint}
-                        onBackToResults={() => setSearchViewMode('table')}
-                    />
-                </div>
+                    {searchViewMode === 'table' ? (
+                        <ScreenshotMetadataResultsTable
+                            isSearchLoading={isSearchLoading}
+                            currentSearchType={currentSearchType}
+                            searchSort={searchSort}
+                            sortedSearchRows={sortedSearchRows}
+                            selectedPath={selectedPath}
+                            onToggleSearchSort={toggleSearchSort}
+                            onOpenResult={(row) =>
+                                openSearchResult(row, {
+                                    openDetailPath,
+                                    setSelectedPath,
+                                    setSearchViewMode
+                                })
+                            }
+                        />
+                    ) : (
+                        <div className="grid min-h-0 flex-1 gap-6 xl:grid-cols-[minmax(0,1.15fr)_380px]">
+                            <ScreenshotMetadataPreviewCard
+                                metadata={metadata}
+                                imageUrl={imageUrl}
+                                isMetadataLoading={isMetadataLoading}
+                                onNavigatePrev={() => void navigatePrev()}
+                                onNavigateNext={() => void navigateNext()}
+                                onImagePreview={() =>
+                                    openImagePreview({
+                                        url: imageUrl,
+                                        title:
+                                            metadata?.fileName ||
+                                            'Screenshot preview',
+                                        fileName: metadata?.fileName || '',
+                                        sourcePath: metadata?.filePath || ''
+                                    })
+                                }
+                                onDragOver={handleScreenshotDragOver}
+                                onDrop={(event) =>
+                                    void handleScreenshotDrop(event)
+                                }
+                            />
+
+                            <ScreenshotMetadataDetailsCard
+                                metadata={metadata}
+                                metadataError={metadataError}
+                                searchRowsCount={searchRows.length}
+                                currentEndpoint={currentEndpoint}
+                                onBackToResults={() =>
+                                    setSearchViewMode('table')
+                                }
+                            />
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

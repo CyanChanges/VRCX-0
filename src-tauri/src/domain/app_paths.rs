@@ -7,6 +7,7 @@ pub struct AppPaths {
     pub db_file: PathBuf,
     pub config_file: PathBuf,
     pub image_cache: PathBuf,
+    pub screenshot_thumbs: PathBuf,
 }
 
 impl AppPaths {
@@ -24,6 +25,7 @@ impl AppPaths {
             db_file: app_data.join("VRCX-0.sqlite3"),
             config_file: app_data.join("VRCX-0.json"),
             image_cache: app_data.join("ImageCache"),
+            screenshot_thumbs: app_data.join("ScreenshotThumbs"),
             app_data,
         }
     }

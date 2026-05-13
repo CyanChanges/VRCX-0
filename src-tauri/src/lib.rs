@@ -23,6 +23,11 @@ pub fn run() {
                 responder.respond(bootstrap::screenshot_protocol_response(request));
             });
         })
+        .register_asynchronous_uri_scheme_protocol("vrcx-0-thumb", |_ctx, request, responder| {
+            tauri::async_runtime::spawn_blocking(move || {
+                responder.respond(bootstrap::screenshot_thumbnail_protocol_response(request));
+            });
+        })
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
@@ -195,6 +200,12 @@ pub fn run() {
             api::app::screenshots::app__get_extra_screenshot_data,
             api::app::screenshots::app__get_screenshot_metadata,
             api::app::screenshots::app__find_screenshots_by_search,
+            api::app::screenshots::app__start_screenshot_library_scan,
+            api::app::screenshots::app__get_screenshot_library_status,
+            api::app::screenshots::app__get_screenshot_folder_tree,
+            api::app::screenshots::app__get_screenshot_folder_images,
+            api::app::screenshots::app__get_world_screenshots,
+            api::app::screenshots::app__ensure_screenshot_thumbnail,
             api::app::screenshots::app__get_last_screenshot,
             api::app::screenshots::app__delete_screenshot_metadata,
             api::app::screenshots::app__delete_all_screenshot_metadata,

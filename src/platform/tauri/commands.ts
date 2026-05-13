@@ -109,6 +109,12 @@ const commandArgs: Record<string, string[]> = {
     app__get_extra_screenshot_data: ['path', 'carouselCache'],
     app__get_screenshot_metadata: ['path'],
     app__find_screenshots_by_search: ['searchQuery', 'searchType'],
+    app__start_screenshot_library_scan: ['force'],
+    app__get_screenshot_library_status: [],
+    app__get_screenshot_folder_tree: [],
+    app__get_screenshot_folder_images: ['folderPath'],
+    app__get_world_screenshots: ['worldId'],
+    app__ensure_screenshot_thumbnail: ['path'],
     app__delete_screenshot_metadata: ['path'],
     app__add_screenshot_metadata: [
         'path',

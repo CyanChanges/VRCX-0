@@ -2914,6 +2914,12 @@
             "json": {
                 "header": "JSON"
             },
+            "screenshots": {
+                "header": "スクリーンショット",
+                "loading": "このワールドのインデックス済みスクリーンショットを読み込んでいます",
+                "empty": "このワールドのインデックス済みスクリーンショットはありません",
+                "load_failed": "ワールドのスクリーンショットを読み込めませんでした"
+            },
             "label": {
                 "access": "アクセス",
                 "world": "ワールド",
@@ -3871,7 +3877,20 @@
             "col_match": "一致",
             "col_author": "作者",
             "back_to_results": "{count} 件の結果に戻る",
-            "result_count": "{count} 件の結果"
+            "result_count": "{count} 件の結果",
+            "gallery": "ギャラリー",
+            "folders": "フォルダー",
+            "scanning": "スクリーンショットをスキャン中",
+            "image_count": "{count} 枚",
+            "empty_gallery": "このフォルダーにスクリーンショットはありません",
+            "empty_gallery_description": "別のフォルダーを選択するか、スクリーンショットライブラリを更新してください。",
+            "empty_folders": "スクリーンショットフォルダーがありません",
+            "empty_folders_description": "VRChat がスクリーンショットを保存した後に更新してください。",
+            "loading_gallery": "スクリーンショットを読み込み中",
+            "loading_gallery_description": "インデックス済みのスクリーンショット一覧を読み込んでいます。",
+            "gallery_load_failed": "スクリーンショットギャラリーの読み込みに失敗しました",
+            "scan_failed": "スクリーンショットライブラリのスキャンに失敗しました",
+            "thumbnail_failed": "サムネイルを表示できません"
         },
         "set_world_tags": {
             "header": "ワールドのタグを設定",

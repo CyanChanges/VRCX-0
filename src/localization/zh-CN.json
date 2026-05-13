@@ -2914,6 +2914,12 @@
             "json": {
                 "header": "原始 JSON 信息"
             },
+            "screenshots": {
+                "header": "截图",
+                "loading": "正在加载此世界的已索引截图",
+                "empty": "此世界没有已索引的截图",
+                "load_failed": "加载此世界截图失败"
+            },
             "label": {
                 "access": "访问权限",
                 "world": "世界",
@@ -3871,7 +3877,20 @@
             "col_match": "匹配",
             "col_author": "作者",
             "back_to_results": "返回 {count} 个结果",
-            "result_count": "{count} 个结果"
+            "result_count": "{count} 个结果",
+            "gallery": "图库",
+            "folders": "文件夹",
+            "scanning": "正在扫描截图",
+            "image_count": "{count} 张图片",
+            "empty_gallery": "此文件夹没有截图",
+            "empty_gallery_description": "选择其他文件夹，或刷新截图图库。",
+            "empty_folders": "没有截图文件夹",
+            "empty_folders_description": "VRChat 保存截图后再刷新。",
+            "loading_gallery": "正在加载截图",
+            "loading_gallery_description": "正在读取已索引的截图列表。",
+            "gallery_load_failed": "加载截图图库失败",
+            "scan_failed": "扫描截图图库失败",
+            "thumbnail_failed": "缩略图不可用"
         },
         "set_world_tags": {
             "header": "设置世界标签",

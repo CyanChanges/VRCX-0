@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -10,6 +10,7 @@ import {
 import {
     groupProfileRepository,
     instanceRepository,
+    mediaRepository,
     playerListRepository,
     userProfileRepository
 } from '@/repositories/index.js';
@@ -181,6 +182,7 @@ export function WorldDialogTabbedView({
     isHomeWorld,
     canUpdateHome,
     canManageWorld,
+    openNonce = 0,
     onRefresh,
     onHome,
     onEditDetails,
@@ -195,6 +197,7 @@ export function WorldDialogTabbedView({
     onDeleteCache,
     onDeletePersistentData,
     onDelete,
+    onOpenScreenshot,
     previousInstances = [],
     onPreviousInstancesChange,
     hasPersistData = false
@@ -206,6 +209,9 @@ export function WorldDialogTabbedView({
     );
     const currentUserSnapshot = useRuntimeStore(
         (state) => state.auth.currentUserSnapshot
+    );
+    const screenshotCacheStatus = useRuntimeStore(
+        (state) => state.hostCapabilities.screenshotCache
     );
     const currentGameLocation = useRuntimeStore(
         (state) => state.gameState.currentLocation
@@ -226,6 +232,13 @@ export function WorldDialogTabbedView({
         {}
     );
     const [creatorGroupsById, setCreatorGroupsById] = useState({});
+    const [worldScreenshots, setWorldScreenshots] = useState([]);
+    const [worldScreenshotsStatus, setWorldScreenshotsStatus] =
+        useState('idle');
+    const [worldScreenshotsError, setWorldScreenshotsError] = useState('');
+    const [worldScreenshotsRefreshToken, setWorldScreenshotsRefreshToken] =
+        useState(0);
+    const worldScreenshotsForceRefreshRef = useRef(false);
     const openImagePreview = useModalStore((state) => state.openImagePreview);
     const instanceRows = useMemo(
         () => resolveInstanceRows(world),
@@ -315,6 +328,14 @@ export function WorldDialogTabbedView({
             value: 'visit-history',
             label: t('dialog.previous_instances.header')
         },
+        ...(screenshotCacheStatus?.available
+            ? [
+                  {
+                      value: 'screenshots',
+                      label: t('dialog.world.screenshots.header')
+                  }
+              ]
+            : []),
         { value: 'info', label: t('dialog.world.info.header') },
         { value: 'json', label: t('dialog.world.json.header') }
     ];
@@ -323,6 +344,157 @@ export function WorldDialogTabbedView({
         lastWorldDialogTab = resolveWorldDialogTab(tabs, tab);
         setActiveTab(lastWorldDialogTab);
     }
+
+    function refreshWorldScreenshots() {
+        worldScreenshotsForceRefreshRef.current = true;
+        setWorldScreenshotsRefreshToken((current) => current + 1);
+    }
+
+    useEffect(() => {
+        setWorldScreenshots([]);
+        setWorldScreenshotsStatus('idle');
+        setWorldScreenshotsError('');
+    }, [world?.id]);
+
+    useEffect(() => {
+        if (activeTab !== 'screenshots' || !world?.id) {
+            return undefined;
+        }
+
+        let active = true;
+        let pollTimer = 0;
+        let pollInFlight = false;
+        let scanCompleted = false;
+        let scanError = '';
+
+        const loadWorldScreenshots = async () => {
+            try {
+                const screenshots =
+                    await mediaRepository.getWorldScreenshots(world.id);
+                if (!active) {
+                    return;
+                }
+                const screenshotList = Array.isArray(screenshots)
+                    ? screenshots
+                    : [];
+                setWorldScreenshots(screenshotList);
+                if (scanError) {
+                    setWorldScreenshotsError(scanError);
+                    setWorldScreenshotsStatus(
+                        screenshotList.length ? 'ready' : 'error'
+                    );
+                    return;
+                }
+                setWorldScreenshotsError('');
+                setWorldScreenshotsStatus('ready');
+            } catch (error) {
+                if (!active) {
+                    return;
+                }
+                setWorldScreenshots([]);
+                setWorldScreenshotsError(
+                    error instanceof Error
+                        ? error.message
+                        : t('dialog.world.screenshots.load_failed')
+                );
+                setWorldScreenshotsStatus('error');
+            }
+        };
+
+        const completeScan = (status) => {
+            if (scanCompleted) {
+                return;
+            }
+            scanCompleted = true;
+            if (status?.error) {
+                scanError = status.error;
+            }
+            void loadWorldScreenshots();
+        };
+
+        const pollScanStatus = () => {
+            if (pollInFlight || scanCompleted) {
+                return;
+            }
+            pollInFlight = true;
+            mediaRepository
+                .getScreenshotLibraryStatus()
+                .then((status) => {
+                    if (!active) {
+                        return;
+                    }
+                    if (status?.error) {
+                        scanError = status.error;
+                    }
+                    if (!status?.running) {
+                        if (pollTimer) {
+                            window.clearInterval(pollTimer);
+                            pollTimer = 0;
+                        }
+                        completeScan(status);
+                    }
+                })
+                .catch((error) => {
+                    if (!active) {
+                        return;
+                    }
+                    if (pollTimer) {
+                        window.clearInterval(pollTimer);
+                        pollTimer = 0;
+                    }
+                    setWorldScreenshots([]);
+                    setWorldScreenshotsError(
+                        error instanceof Error
+                            ? error.message
+                            : t('dialog.world.screenshots.load_failed')
+                    );
+                    setWorldScreenshotsStatus('error');
+                })
+                .finally(() => {
+                    pollInFlight = false;
+                });
+        };
+
+        setWorldScreenshotsStatus('loading');
+        setWorldScreenshotsError('');
+        const forceRefresh = worldScreenshotsForceRefreshRef.current;
+        worldScreenshotsForceRefreshRef.current = false;
+        mediaRepository
+            .startScreenshotLibraryScan(forceRefresh)
+            .then((status) => {
+                if (!active) {
+                    return;
+                }
+                if (status?.error) {
+                    scanError = status.error;
+                }
+                if (status?.running) {
+                    pollTimer = window.setInterval(pollScanStatus, 1000);
+                    pollScanStatus();
+                    return;
+                }
+                completeScan(status);
+            })
+            .catch((error) => {
+                if (!active) {
+                    return;
+                }
+                setWorldScreenshots([]);
+                setWorldScreenshotsError(
+                    error instanceof Error
+                        ? error.message
+                        : t('dialog.world.screenshots.load_failed')
+                );
+                setWorldScreenshotsStatus('error');
+            });
+
+        return () => {
+            active = false;
+            if (pollTimer) {
+                window.clearInterval(pollTimer);
+            }
+        };
+    }, [activeTab, openNonce, t, world?.id, worldScreenshotsRefreshToken]);
 
     useEffect(() => {
         if (!instanceDetailTargets.length) {
@@ -724,6 +896,10 @@ export function WorldDialogTabbedView({
         memo,
         previousInstances,
         previewUrl,
+        screenshots: worldScreenshots,
+        screenshotsError: worldScreenshotsError,
+        screenshotsStatus: worldScreenshotsStatus,
+        screenshotsRefreshDisabled: worldScreenshotsStatus === 'loading',
         tabs,
         totalVisitTime,
         world,
@@ -736,7 +912,9 @@ export function WorldDialogTabbedView({
                 userId: world.authorId,
                 title: world.authorName || undefined
             }),
+        onOpenScreenshot,
         onPreviousInstancesChange,
+        onRefreshScreenshots: refreshWorldScreenshots,
         onSaveMemo
     };
 

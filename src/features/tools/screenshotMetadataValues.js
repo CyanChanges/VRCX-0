@@ -1,4 +1,5 @@
 import { parseVrchatScreenshotDateFromFileName } from '@/shared/utils/screenshot.js';
+import { useShellStore } from '@/state/shellStore.js';
 
 export const SCREENSHOT_METADATA_SEARCH_TYPES = [
     {
@@ -113,7 +114,23 @@ export function formatScreenshotBytes(bytes) {
     return `${size.toFixed(precision)} ${units[unitIndex]}`;
 }
 
-export function formatScreenshotDateTime(value) {
+function normalizeDateLocale(locale) {
+    const dateLocale = String(locale || '')
+        .trim()
+        .replace('_', '-');
+    return dateLocale || 'en';
+}
+
+function formatIsoDateTime(date) {
+    const pad = (value) => String(value).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+        date.getDate()
+    )} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
+        date.getSeconds()
+    )}`;
+}
+
+export function formatScreenshotDateTime(value, locale) {
     if (!value) {
         return '—';
     }
@@ -123,9 +140,17 @@ export function formatScreenshotDateTime(value) {
         return '—';
     }
 
-    return new Intl.DateTimeFormat(undefined, {
+    const { dateHour12, dateIsoFormat, locale: appLocale } =
+        useShellStore.getState();
+
+    if (dateIsoFormat) {
+        return formatIsoDateTime(date);
+    }
+
+    return new Intl.DateTimeFormat(normalizeDateLocale(locale || appLocale), {
         dateStyle: 'medium',
-        timeStyle: 'short'
+        timeStyle: 'short',
+        hour12: Boolean(dateHour12)
     }).format(date);
 }
 
@@ -186,7 +211,8 @@ export function normalizeScreenshotMetadata(metadata, extra) {
 export function buildScreenshotSearchRow(
     normalized,
     selectedSearchType,
-    query
+    query,
+    locale
 ) {
     let match = '';
     if (selectedSearchType?.index === 0) {
@@ -208,7 +234,7 @@ export function buildScreenshotSearchRow(
     return {
         filePath: normalized.filePath,
         dateTime: normalized.dateTime,
-        dateLabel: formatScreenshotDateTime(normalized.dateTime),
+        dateLabel: formatScreenshotDateTime(normalized.dateTime, locale),
         world: normalized.world?.name || '—',
         author: normalized.author?.displayName || '—',
         playerCount: normalized.players.length,

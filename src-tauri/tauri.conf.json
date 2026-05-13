@@ -17,8 +17,10 @@
                     "https:",
                     "http://localhost:*",
                     "http://vrcx-0-img.localhost",
+                    "http://vrcx-0-thumb.localhost",
                     "asset:",
                     "vrcx-0-img:",
+                    "vrcx-0-thumb:",
                     "data:",
                     "blob:"
                 ],

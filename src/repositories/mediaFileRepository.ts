@@ -66,11 +66,35 @@ async function getExtraScreenshotData(path: string, carouselCache = false) {
 
 async function findScreenshotsBySearch(
     searchQuery: string,
-    searchType: string
+    searchType: number
 ) {
     return parseResponseValue(
         await invokeApp('FindScreenshotsBySearch', searchQuery, searchType)
     );
+}
+
+async function startScreenshotLibraryScan(force = false) {
+    return invokeApp('StartScreenshotLibraryScan', force);
+}
+
+async function getScreenshotLibraryStatus() {
+    return invokeApp('GetScreenshotLibraryStatus');
+}
+
+async function getScreenshotFolderTree() {
+    return invokeApp('GetScreenshotFolderTree');
+}
+
+async function getScreenshotFolderImages(folderPath: string) {
+    return invokeApp('GetScreenshotFolderImages', folderPath);
+}
+
+async function getWorldScreenshots(worldId: string) {
+    return invokeApp('GetWorldScreenshots', worldId);
+}
+
+async function ensureScreenshotThumbnail(path: string) {
+    return invokeApp('EnsureScreenshotThumbnail', path);
 }
 
 async function getLastScreenshot() {
@@ -172,6 +196,12 @@ const mediaFileRepository = Object.freeze({
     addScreenshotMetadata,
     getExtraScreenshotData,
     findScreenshotsBySearch,
+    startScreenshotLibraryScan,
+    getScreenshotLibraryStatus,
+    getScreenshotFolderTree,
+    getScreenshotFolderImages,
+    getWorldScreenshots,
+    ensureScreenshotThumbnail,
     getLastScreenshot,
     getVrchatPhotosLocation,
     getUgcPhotoLocation,
@@ -195,6 +225,12 @@ export {
     addScreenshotMetadata,
     getExtraScreenshotData,
     findScreenshotsBySearch,
+    startScreenshotLibraryScan,
+    getScreenshotLibraryStatus,
+    getScreenshotFolderTree,
+    getScreenshotFolderImages,
+    getWorldScreenshots,
+    ensureScreenshotThumbnail,
     getLastScreenshot,
     getVrchatPhotosLocation,
     getUgcPhotoLocation,

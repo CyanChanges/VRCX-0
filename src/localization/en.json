@@ -2914,6 +2914,12 @@
             "json": {
                 "header": "JSON"
             },
+            "screenshots": {
+                "header": "Screenshots",
+                "loading": "Loading indexed screenshots for this world",
+                "empty": "No indexed screenshots for this world",
+                "load_failed": "Failed to load world screenshots"
+            },
             "label": {
                 "access": "Access",
                 "world": "World",
@@ -3871,7 +3877,20 @@
             "col_match": "Match",
             "col_author": "Author",
             "back_to_results": "Back to {count} results",
-            "result_count": "{count} results"
+            "result_count": "{count} results",
+            "gallery": "Gallery",
+            "folders": "Folders",
+            "scanning": "Scanning screenshots",
+            "image_count": "{count} images",
+            "empty_gallery": "No screenshots in this folder",
+            "empty_gallery_description": "Select another folder or refresh the screenshot library.",
+            "empty_folders": "No screenshot folders",
+            "empty_folders_description": "Refresh after VRChat has saved screenshots.",
+            "loading_gallery": "Loading screenshots",
+            "loading_gallery_description": "Reading the indexed screenshot list.",
+            "gallery_load_failed": "Failed to load screenshot gallery",
+            "scan_failed": "Failed to scan screenshot library",
+            "thumbnail_failed": "Thumbnail unavailable"
         },
         "set_world_tags": {
             "header": "Set World Tags",
