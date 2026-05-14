@@ -1,11 +1,7 @@
-import mediaApiRepository, {
+import vrchatMediaRepository, {
     consumeInventoryBundle,
     deleteFile,
     deletePrint,
-    executeDelete,
-    executeFilePut,
-    executeGet,
-    executeRequest,
     getFileList,
     getFiles,
     getInventoryItems,
@@ -14,16 +10,16 @@ import mediaApiRepository, {
     getUserInventoryItem,
     redeemReward,
     updateInventoryItem,
+    uploadAssetImage,
     uploadAvatarGalleryImage,
     uploadAvatarImageLegacy,
     uploadEmoji,
     uploadGalleryImage,
-    uploadImage,
     uploadPrint,
     uploadSticker,
     uploadVrcPlusIcon,
     uploadWorldImageLegacy
-} from './mediaApiRepository.js';
+} from './vrchatMediaRepository';
 import mediaFileRepository, {
     addScreenshotMetadata,
     copyImageToClipboard,
@@ -51,21 +47,16 @@ import mediaFileRepository, {
     savePrintToFile,
     saveStickerToFile,
     startScreenshotLibraryScan
-} from './mediaFileRepository.js';
+} from './mediaFileRepository';
 
-type MediaRepository = typeof mediaApiRepository & typeof mediaFileRepository;
+type MediaRepository = typeof vrchatMediaRepository & typeof mediaFileRepository;
 
 const mediaRepository = Object.freeze({
-    ...mediaApiRepository,
+    ...vrchatMediaRepository,
     ...mediaFileRepository
 }) as MediaRepository;
 
 export {
-    executeFilePut,
-    executeRequest,
-    executeGet,
-    executeDelete,
-    uploadImage,
     getFiles,
     getFileList,
     deleteFile,
@@ -75,6 +66,7 @@ export {
     uploadEmoji,
     uploadSticker,
     uploadPrint,
+    uploadAssetImage,
     getPrints,
     getPrint,
     deletePrint,

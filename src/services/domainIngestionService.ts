@@ -1,12 +1,12 @@
-import { parseLocation } from '@/shared/utils/location.js';
-import { useInstancePresenceStore } from '@/state/instancePresenceStore.js';
-import { useLocationHintStore } from '@/state/locationHintStore.js';
-import { useUserFactsStore } from '@/state/userFactsStore.js';
+import { parseLocation } from '@/shared/utils/locationParser';
+import { useInstancePresenceStore } from '@/state/instancePresenceStore';
+import { useLocationHintStore } from '@/state/locationHintStore';
+import { useUserFactsStore } from '@/state/userFactsStore';
 
 import type {
     UserFactMergeOptions,
     UserFactSource
-} from '@/domain/users/userFacts.js';
+} from '@/domain/users/userFacts';
 
 interface RecordKnownUserOptions extends UserFactMergeOptions {
     source?: UserFactSource;
@@ -68,7 +68,7 @@ function recordKnownUsers(
 ) {
     useUserFactsStore.getState().upsertUserFacts(
         (Array.isArray(users) ? users : []).filter(
-            (user): user is Record<string, unknown> =>
+            (user: any): user is Record<string, unknown> =>
                 Boolean(user && typeof user === 'object')
         ),
         options
@@ -117,8 +117,8 @@ function recordFriendRosterFacts({
 }: FriendRosterFactsInput = {}) {
     useUserFactsStore.getState().upsertUserFactEntries(
         Object.entries(friendsById || {})
-            .filter(([, friend]) => Boolean(friend))
-            .map(([userId, friend]) => ({
+            .filter(([, friend]: any) => Boolean(friend))
+            .map(([userId, friend]: any) => ({
                 input: {
                     ...friend,
                     id: friend.id || userId,
@@ -256,7 +256,7 @@ function recordLocationHintsFromInstances({
             ...(Array.isArray(source.playerList) ? source.playerList : []),
             ...(Array.isArray(source.userList) ? source.userList : []),
             ...(Array.isArray(source.userIds)
-                ? source.userIds.map((userId) =>
+                ? source.userIds.map((userId: any) =>
                       typeof userId === 'string'
                           ? {
                                 id: userId,

@@ -2,9 +2,15 @@ import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
-} from '@/lib/entityQueryCache.js';
+} from '@/lib/entityQueryCache';
+import { tauriClient } from '@/platform/tauri/client';
 
-import { executeVrchatRequest } from './vrchatRequest.js';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
 const FAVORITES_PAGE_SIZE = 300;
 const FAVORITE_GROUPS_PAGE_SIZE = 50;
@@ -13,8 +19,12 @@ const FAVORITE_DETAIL_PAGE_SIZE = 300;
 type RequestOptions = {
     endpoint?: string;
 };
-type RequestParams = Record<string, string | number | boolean | undefined>;
 type RequestPayload = Record<string, unknown>;
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
 
 interface FavoritePagingInput extends RequestOptions {
     n?: number;
@@ -53,55 +63,35 @@ interface FavoriteGroupMutationInput extends RequestOptions {
     visibility?: unknown;
 }
 
-async function executeGet(
-    path: string,
-    params: RequestParams = {},
-    { endpoint = '' }: RequestOptions = {}
-) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method: 'GET',
-        params,
-        fallbackMessage: 'VRChat favorite request failed'
-    });
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
 }
 
-async function executePost(
+function unwrapVrchatFavoriteResponse<TJson = unknown>(
+    response: VrchatApiResult,
     path: string,
-    payload: RequestPayload = {},
-    { endpoint = '' }: RequestOptions = {}
+    fallbackMessage: string
 ) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method: 'POST',
-        body: payload,
-        fallbackMessage: 'VRChat favorite request failed'
-    });
-}
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const message = unwrapErrorMessage(json, response.status, {
+            fallbackMessage
+        });
+        const requestError = createRequestError(
+            message,
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
 
-async function executePut(
-    path: string,
-    payload: RequestPayload = {},
-    { endpoint = '' }: RequestOptions = {}
-) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method: 'PUT',
-        body: payload,
-        fallbackMessage: 'VRChat favorite request failed'
-    });
-}
-
-async function executeDelete(
-    path: string,
-    { endpoint = '' }: RequestOptions = {}
-) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method: 'DELETE',
-        jsonBody: false,
-        fallbackMessage: 'VRChat favorite request failed'
-    });
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
 }
 
 async function getFavoriteLimits({
@@ -112,7 +102,16 @@ async function getFavoriteLimits({
         queryKey: queryKeys.favoriteLimits(endpoint),
         policy: entityQueryPolicies.favoriteLimits,
         force,
-        queryFn: () => executeGet('auth/user/favoritelimits', {}, { endpoint })
+        queryFn: async () => {
+            const response = await tauriClient.app.VrchatFavoriteLimitsGet({
+                endpoint
+            });
+            return unwrapVrchatFavoriteResponse(
+                response,
+                'auth/user/favoritelimits',
+                'VRChat favorite request failed'
+            );
+        }
     });
 }
 
@@ -121,13 +120,15 @@ async function getFavorites({
     n = FAVORITES_PAGE_SIZE,
     offset = 0
 }: FavoritePagingInput = {}) {
-    return executeGet(
+    const response = await tauriClient.app.VrchatFavoritesGet({
+        endpoint,
+        n,
+        offset
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
         'favorites',
-        {
-            n,
-            offset
-        },
-        { endpoint }
+        'VRChat favorite request failed'
     );
 }
 
@@ -157,14 +158,19 @@ async function addFavorite({
     favoriteId,
     tags
 }: FavoriteMutationInput = {}) {
-    return executePost(
+    const response = await tauriClient.app.VrchatFavoriteAdd({
+        endpoint,
+        type: typeof type === 'string' ? type : String(type ?? ''),
+        favoriteId:
+            typeof favoriteId === 'string'
+                ? favoriteId
+                : String(favoriteId ?? ''),
+        tags: typeof tags === 'string' ? tags : String(tags ?? '')
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
         'favorites',
-        {
-            type,
-            favoriteId,
-            tags
-        },
-        { endpoint }
+        'VRChat favorite request failed'
     );
 }
 
@@ -182,9 +188,14 @@ async function deleteFavorite({
         );
     }
 
-    return executeDelete(
+    const response = await tauriClient.app.VrchatFavoriteDelete({
+        endpoint,
+        objectId: normalizedObjectId
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
         `favorites/${encodeURIComponent(normalizedObjectId)}`,
-        { endpoint }
+        'VRChat favorite request failed'
     );
 }
 
@@ -196,18 +207,19 @@ async function getFavoriteWorlds({
     userId = '',
     tag = ''
 }: FavoriteWorldsInput = {}) {
-    const params: RequestParams = { n, offset };
-    if (ownerId) {
-        params.ownerId = ownerId;
-    }
-    if (userId) {
-        params.userId = userId;
-    }
-    if (tag) {
-        params.tag = tag;
-    }
-
-    return executeGet('worlds/favorites', params, { endpoint });
+    const response = await tauriClient.app.VrchatFavoriteWorldsGet({
+        endpoint,
+        n,
+        offset,
+        ownerId,
+        userId,
+        tag
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
+        'worlds/favorites',
+        'VRChat favorite request failed'
+    );
 }
 
 async function getAllFavoriteWorlds({
@@ -244,16 +256,17 @@ async function getFavoriteAvatars({
     offset = 0,
     tag
 }: FavoriteAvatarsInput = {}) {
-    const params: RequestParams = {
+    const response = await tauriClient.app.VrchatFavoriteAvatarsGet({
+        endpoint,
         n,
-        offset
-    };
-
-    if (typeof tag === 'string' && tag.trim()) {
-        params.tag = tag.trim();
-    }
-
-    return executeGet('avatars/favorites', params, { endpoint });
+        offset,
+        tag: typeof tag === 'string' ? tag.trim() : ''
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
+        'avatars/favorites',
+        'VRChat favorite request failed'
+    );
 }
 
 async function getAllFavoriteAvatars({
@@ -308,12 +321,17 @@ async function getFavoriteGroups({
     offset = 0,
     ownerId = ''
 }: FavoriteGroupsInput = {}) {
-    const params: RequestParams = { n, offset };
-    if (ownerId) {
-        params.ownerId = ownerId;
-    }
-
-    return executeGet('favorite/groups', params, { endpoint });
+    const response = await tauriClient.app.VrchatFavoriteGroupsGet({
+        endpoint,
+        n,
+        offset,
+        ownerId
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
+        'favorite/groups',
+        'VRChat favorite request failed'
+    );
 }
 
 async function getAllFavoriteGroups({
@@ -374,10 +392,18 @@ async function saveFavoriteGroup({
         payload.visibility = visibility;
     }
 
-    return executePut(
+    const response = await tauriClient.app.VrchatFavoriteGroupSave({
+        endpoint,
+        ownerId: normalizedOwnerId,
+        type: normalizedType,
+        group: normalizedGroup,
+        displayName: payload.displayName as string | undefined,
+        visibility: payload.visibility as string | undefined
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
         `favorite/group/${encodeURIComponent(normalizedType)}/${encodeURIComponent(normalizedGroup)}/${encodeURIComponent(normalizedOwnerId)}`,
-        payload,
-        { endpoint }
+        'VRChat favorite request failed'
     );
 }
 
@@ -402,17 +428,20 @@ async function clearFavoriteGroup({
         );
     }
 
-    return executeDelete(
+    const response = await tauriClient.app.VrchatFavoriteGroupClear({
+        endpoint,
+        ownerId: normalizedOwnerId,
+        type: normalizedType,
+        group: normalizedGroup
+    });
+    return unwrapVrchatFavoriteResponse(
+        response,
         `favorite/group/${encodeURIComponent(normalizedType)}/${encodeURIComponent(normalizedGroup)}/${encodeURIComponent(normalizedOwnerId)}`,
-        { endpoint }
+        'VRChat favorite request failed'
     );
 }
 
 const vrchatFavoriteRepository = Object.freeze({
-    executeGet,
-    executePost,
-    executePut,
-    executeDelete,
     getFavoriteLimits,
     getFavorites,
     getAllFavorites,
@@ -429,10 +458,6 @@ const vrchatFavoriteRepository = Object.freeze({
 });
 
 export {
-    executeGet,
-    executePost,
-    executePut,
-    executeDelete,
     getFavoriteLimits,
     getFavorites,
     getAllFavorites,

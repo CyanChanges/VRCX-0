@@ -1,5 +1,3 @@
-import dayjs from '@/lib/dayjs.js';
-
 type NotificationCategory = 'friend' | 'group' | 'other';
 type NotificationLike = {
     created_at?: string | number | null;
@@ -31,7 +29,7 @@ function getNotificationCategory(type: string): NotificationCategory {
     if (FRIEND_TYPES.has(type)) return 'friend';
     if (
         GROUP_EXACT_TYPES.has(type) ||
-        GROUP_TYPES_PREFIX.some((p) => type.startsWith(p))
+        GROUP_TYPES_PREFIX.some((p: any) => type.startsWith(p))
     )
         return 'group';
     return 'other';
@@ -46,7 +44,7 @@ function getNotificationTs(n: NotificationLike): number {
     const raw = n.created_at ?? n.createdAt;
     if (typeof raw === 'number') return raw > 1e12 ? raw : raw * 1000;
     if (raw === null || raw === undefined || raw === '') return 0;
-    const ts = dayjs(raw).valueOf();
+    const ts = Date.parse(String(raw));
     return Number.isFinite(ts) ? ts : 0;
 }
 

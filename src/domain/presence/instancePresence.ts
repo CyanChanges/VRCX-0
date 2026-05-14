@@ -2,7 +2,7 @@ import {
     normalizeLocationValue,
     parseLocation,
     resolveFriendPresenceLocation
-} from '@/shared/utils/location.js';
+} from '@/shared/utils/location';
 
 type InstancePresenceSource =
     | 'seed'
@@ -199,7 +199,7 @@ function mergeRosterRow(existing: RosterUserRow | undefined, incoming: RosterUse
     if (!existing) {
         return incoming;
     }
-    const merged = { ...incoming, ...existing };
+    const merged: any = { ...incoming, ...existing };
     for (const [key, value] of Object.entries(incoming)) {
         if (!valuePresent(merged[key]) && valuePresent(value)) {
             merged[key] = value;
@@ -354,7 +354,7 @@ function buildInstanceRosterModel({
     }
     const mergedOwnerRow = ownerRowId ? rowsByKey.get(ownerRowId) : null;
     const playerRows = Array.from(rowsByKey.values()).filter(
-        (row) => !ownerRowId || row.id !== ownerRowId
+        (row: any) => !ownerRowId || row.id !== ownerRowId
     );
     const rows = mergedOwnerRow ? [mergedOwnerRow, ...playerRows] : playerRows;
 
@@ -362,7 +362,7 @@ function buildInstanceRosterModel({
         ownerId,
         ownerIsGroup,
         rows,
-        friendCount: rows.filter((row) => row.isFriend).length,
+        friendCount: rows.filter((row: any) => row.isFriend).length,
         playerCount: rows.length
     };
 }

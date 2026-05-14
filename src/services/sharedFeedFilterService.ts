@@ -1,13 +1,13 @@
-import { onPreferenceChanged } from '@/lib/preferenceEvents.js';
-import { configRepository } from '@/repositories/index.js';
-import i18n from '@/services/i18nService.js';
+import { onPreferenceChanged } from '@/shared/events/preferenceEvents';
+import configRepository from '@/repositories/configRepository';
+import i18n from '@/services/i18nService';
 import {
     sharedFeedFiltersDefaults,
     type SharedFeedFilterDefaults
-} from '@/shared/constants/feedFilters.js';
-import { useFavoriteStore } from '@/state/favoriteStore.js';
-import { useFriendRosterStore } from '@/state/friendRosterStore.js';
-import { useNotificationStore } from '@/state/notificationStore.js';
+} from '@/shared/constants/feedFilters';
+import { useFavoriteStore } from '@/state/favoriteStore';
+import { useFriendRosterStore } from '@/state/friendRosterStore';
+import { useNotificationStore } from '@/state/notificationStore';
 
 type SharedFeedMode = keyof SharedFeedFilterDefaults;
 type SharedFeedFilters = {
@@ -81,7 +81,7 @@ function initSharedFeedFilterSubscription(): void {
     }
     unsubscribeSharedFeedFilters = onPreferenceChanged(
         'sharedFeedFilters',
-        (value) => {
+        (value: any) => {
             cachedSharedFeedFilters = parseSharedFeedFilters(value);
             sharedFeedFiltersLoaded = true;
             sharedFeedFiltersLoadPromise = null;
@@ -100,7 +100,7 @@ async function loadSharedFeedFilters(): Promise<SharedFeedFilters> {
                 'sharedFeedFilters',
                 JSON.stringify(sharedFeedFiltersDefaults)
             )
-            .then((value) => {
+            .then((value: any) => {
                 cachedSharedFeedFilters = parseSharedFeedFilters(value);
                 sharedFeedFiltersLoaded = true;
                 sharedFeedFiltersLoadPromise = null;
@@ -134,9 +134,9 @@ function isLocalFavoriteFriend(userId: unknown): boolean {
     const localFriendFavorites =
         useFavoriteStore.getState().localFriendFavorites;
     return Object.values(localFriendFavorites ?? {}).some(
-        (ids) =>
+        (ids: any) =>
             Array.isArray(ids) &&
-            ids.some((id) => normalizeId(id) === normalizedUserId)
+            ids.some((id: any) => normalizeId(id) === normalizedUserId)
     );
 }
 

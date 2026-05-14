@@ -5,7 +5,7 @@ import {
     instancePresenceKey,
     type InstancePresenceFact,
     type InstancePresenceFactInput
-} from '@/domain/presence/instancePresence.js';
+} from '@/domain/presence/instancePresence';
 
 interface InstancePresenceStoreState {
     version: number;
@@ -15,7 +15,7 @@ interface InstancePresenceStoreState {
     resetInstancePresence: () => void;
 }
 
-const initialState = {
+const initialState: any = {
     version: 0,
     presenceByKey: {},
     locationsByEndpoint: {}
@@ -26,10 +26,10 @@ function endpointFromKey(key: string): string {
 }
 
 export const useInstancePresenceStore = create<InstancePresenceStoreState>(
-    (set) => ({
+    (set: any) => ({
         ...initialState,
-        upsertInstancePresence(input) {
-            set((state) => {
+        upsertInstancePresence(input: any) {
+            set((state: any) => {
                 const key = instancePresenceKey(input.endpoint, input.location);
                 const fact = buildInstancePresenceFact(input);
                 if (!key || !fact) {

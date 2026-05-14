@@ -6,7 +6,7 @@ type TaskState = {
     updatedAt: string | null;
 };
 
-type BackendEventState = {
+type RuntimeEventState = {
     count: number;
     lastPayload: unknown;
     lastReceivedAt: string | null;
@@ -35,29 +35,46 @@ type ActivityState = Record<string, unknown> & {
 
 type RuntimeStore = {
     startup: Record<string, TaskState>;
-    hostCapabilities: Record<string, unknown>;
-    auth: Record<string, unknown> & {
+    hostCapabilities: Record<string, any> & {
+        platform: string;
+        arch: string;
+        linuxPackageKind: string;
+    };
+    auth: Record<string, any> & {
         currentUserId: string | null;
         currentUserDisplayName: string;
         currentUserEndpoint: string;
         currentUserWebsocket: string;
+        currentUserSnapshot: Record<string, any> | null;
     };
-    updateLoop: Record<string, unknown>;
+    updateLoop: Record<string, any> & {
+        isRunning: boolean;
+        tickCount: number;
+        hasAvailableUpdate: boolean;
+    };
     activity: ActivityState;
     transport: TransportState;
-    gameState: Record<string, unknown> & {
+    gameState: Record<string, any> & {
         isGameRunning: boolean | null;
         isSteamVRRunning: boolean | null;
+        isGameNoVR: boolean;
         currentLocation: string;
         currentWorldId: string;
         currentWorldName: string;
         currentDestination: string;
+        currentLocationStartedAt: string | null;
         currentLocationPlayerIds: unknown[];
         currentLocationPlayers: unknown[];
     };
-    nowPlaying: Record<string, unknown>;
-    vrcStatus: Record<string, unknown>;
-    groupInstances: Record<string, unknown> & {
+    nowPlaying: Record<string, any> & {
+        url: string;
+        name: string;
+        thumbnailUrl: string;
+        length: number;
+        startedAt: string | null;
+    };
+    vrcStatus: Record<string, any>;
+    groupInstances: Record<string, any> & {
         instances: unknown[];
         groupOrder: unknown[];
     };
@@ -70,7 +87,7 @@ type RuntimeStore = {
         detail: string;
         legacyMigrationAvailable: boolean;
     };
-    backendEvents: Record<string, BackendEventState>;
+    runtimeEvents: Record<string, RuntimeEventState>;
     setStartupTask(task: string, status: string, detail?: string): void;
     setAuthBootstrap(payload: Partial<RuntimeStore['auth']>): void;
     setHostCapabilities(payload?: Record<string, unknown> | null): void;
@@ -79,7 +96,7 @@ type RuntimeStore = {
     resetActivityState(): void;
     setTransportState(patch: Partial<TransportState>): void;
     incrementTransportReconnect(): void;
-    recordBackendEvent(name: string, payload: unknown): void;
+    recordRuntimeEvent(name: string, payload: unknown): void;
     setGameState(patch: Partial<RuntimeStore['gameState']>): void;
     setNowPlayingState(patch: Record<string, unknown>): void;
     setVrcStatusState(patch: Record<string, unknown>): void;
@@ -97,7 +114,7 @@ function createTaskState(): TaskState {
     };
 }
 
-function createBackendEventState(): BackendEventState {
+function createRuntimeEventState(): RuntimeEventState {
     return {
         count: 0,
         lastPayload: null,
@@ -134,6 +151,10 @@ const HOST_CAPABILITY_KEYS = Object.freeze([
     'localDatabase',
     'websocketRuntime',
     'gameLogWatcher',
+    'runtimeGameLogIngest',
+    'runtimeGameLogSideEffects',
+    'runtimeGameClientLifecycle',
+    'runtimeRealtimeTransport',
     'gameProcessMonitor',
     'vrchatPathDiscovery',
     'steamLibraryDiscovery',
@@ -145,7 +166,7 @@ const HOST_CAPABILITY_KEYS = Object.freeze([
     'screenshotCache'
 ]);
 
-function createCapabilityStatus(reason = 'Host capabilities have not loaded.') {
+function createCapabilityStatus(reason: any = 'Host capabilities have not loaded.') {
     return {
         supported: false,
         enabled: false,
@@ -154,8 +175,8 @@ function createCapabilityStatus(reason = 'Host capabilities have not loaded.') {
     };
 }
 
-function createHostCapabilities(): Record<string, unknown> {
-    const capabilities: Record<string, unknown> = {
+function createHostCapabilities(): RuntimeStore['hostCapabilities'] {
+    const capabilities: RuntimeStore['hostCapabilities'] = {
         platform: 'unknown',
         arch: 'unknown',
         linuxPackageKind: 'unknown'
@@ -275,11 +296,18 @@ const initialState = {
         detail: '',
         legacyMigrationAvailable: false
     },
-    backendEvents: {
-        addGameLogEvent: createBackendEventState(),
-        updateIsGameRunning: createBackendEventState(),
-        ipcEvent: createBackendEventState(),
-        browserFocus: createBackendEventState()
+    runtimeEvents: {
+        addGameLogEvent: createRuntimeEventState(),
+        gameLogPersistenceFallback: createRuntimeEventState(),
+        gameLogSideEffect: createRuntimeEventState(),
+        realtimeWsStatus: createRuntimeEventState(),
+        realtimeFriendProjection: createRuntimeEventState(),
+        realtimeNotificationProjection: createRuntimeEventState(),
+        realtimeCurrentUserProjection: createRuntimeEventState(),
+        realtimeInstanceClosedProjection: createRuntimeEventState(),
+        updateIsGameRunning: createRuntimeEventState(),
+        ipcEvent: createRuntimeEventState(),
+        browserFocus: createRuntimeEventState()
     }
 } satisfies Omit<
     RuntimeStore,
@@ -291,7 +319,7 @@ const initialState = {
     | 'resetActivityState'
     | 'setTransportState'
     | 'incrementTransportReconnect'
-    | 'recordBackendEvent'
+    | 'recordRuntimeEvent'
     | 'setGameState'
     | 'setNowPlayingState'
     | 'setVrcStatusState'
@@ -301,10 +329,10 @@ const initialState = {
     | 'resetRuntimeState'
 >;
 
-export const useRuntimeStore = create<RuntimeStore>((set) => ({
+export const useRuntimeStore = create<RuntimeStore>((set: any) => ({
     ...initialState,
-    setStartupTask(task, status, detail = '') {
-        set((state) => ({
+    setStartupTask(task: any, status: any, detail: any = '') {
+        set((state: any) => ({
             startup: {
                 ...state.startup,
                 [task]: {
@@ -315,29 +343,30 @@ export const useRuntimeStore = create<RuntimeStore>((set) => ({
             }
         }));
     },
-    setAuthBootstrap(payload) {
-        set((state) => ({
+    setAuthBootstrap(payload: any) {
+        set((state: any) => ({
             auth: {
                 ...state.auth,
                 ...payload
             }
         }));
     },
-    setHostCapabilities(payload) {
+    setHostCapabilities(payload: any) {
         set({
-            hostCapabilities: payload || createHostCapabilities()
+            hostCapabilities: (payload ||
+                createHostCapabilities()) as RuntimeStore['hostCapabilities']
         });
     },
-    setUpdateLoopState(patch) {
-        set((state) => ({
+    setUpdateLoopState(patch: any) {
+        set((state: any) => ({
             updateLoop: {
                 ...state.updateLoop,
                 ...patch
             }
         }));
     },
-    setActivityState(patch) {
-        set((state) => ({
+    setActivityState(patch: any) {
+        set((state: any) => ({
             activity: {
                 ...state.activity,
                 ...patch,
@@ -354,8 +383,8 @@ export const useRuntimeStore = create<RuntimeStore>((set) => ({
             activity: createActivityState()
         });
     },
-    setTransportState(patch) {
-        set((state) => ({
+    setTransportState(patch: any) {
+        set((state: any) => ({
             transport: {
                 ...state.transport,
                 ...patch
@@ -363,20 +392,20 @@ export const useRuntimeStore = create<RuntimeStore>((set) => ({
         }));
     },
     incrementTransportReconnect() {
-        set((state) => ({
+        set((state: any) => ({
             transport: {
                 ...state.transport,
                 reconnectCount: state.transport.reconnectCount + 1
             }
         }));
     },
-    recordBackendEvent(name, payload) {
-        set((state) => {
+    recordRuntimeEvent(name: any, payload: any) {
+        set((state: any) => {
             const current =
-                state.backendEvents[name] ?? createBackendEventState();
+                state.runtimeEvents[name] ?? createRuntimeEventState();
             return {
-                backendEvents: {
-                    ...state.backendEvents,
+                runtimeEvents: {
+                    ...state.runtimeEvents,
                     [name]: {
                         count: current.count + 1,
                         lastPayload: payload,
@@ -386,48 +415,48 @@ export const useRuntimeStore = create<RuntimeStore>((set) => ({
             };
         });
     },
-    setGameState(patch) {
-        set((state) => ({
+    setGameState(patch: any) {
+        set((state: any) => ({
             gameState: {
                 ...state.gameState,
                 ...patch
             }
         }));
     },
-    setNowPlayingState(patch) {
-        set((state) => ({
+    setNowPlayingState(patch: any) {
+        set((state: any) => ({
             nowPlaying: {
                 ...state.nowPlaying,
                 ...patch
             }
         }));
     },
-    setVrcStatusState(patch) {
-        set((state) => ({
+    setVrcStatusState(patch: any) {
+        set((state: any) => ({
             vrcStatus: {
                 ...state.vrcStatus,
                 ...patch
             }
         }));
     },
-    setGroupInstancesState(patch) {
-        set((state) => ({
+    setGroupInstancesState(patch: any) {
+        set((state: any) => ({
             groupInstances: {
                 ...state.groupInstances,
                 ...patch
             }
         }));
     },
-    setSystemHostOpen(name, value) {
-        set((state) => ({
+    setSystemHostOpen(name: any, value: any) {
+        set((state: any) => ({
             systemHosts: {
                 ...state.systemHosts,
                 [name]: Boolean(value)
             }
         }));
     },
-    setDatabaseUpgradeState(patch) {
-        set((state) => ({
+    setDatabaseUpgradeState(patch: any) {
+        set((state: any) => ({
             databaseUpgrade: {
                 ...state.databaseUpgrade,
                 ...patch

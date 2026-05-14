@@ -1,4 +1,4 @@
-import { accessTypeLocaleKeyMap } from '@/shared/constants/accessType.js';
+import { accessTypeLocaleKeyMap } from '@/shared/constants/accessType';
 
 export const dayOptions = [
     { value: 1, labelKey: 'common.days.monday' },
@@ -69,7 +69,7 @@ export const priorityOptions = [
     }
 ];
 
-export function priorityValueFromNumber(priority, fallback = 'medium') {
+export function priorityValueFromNumber(priority: any, fallback: any = 'medium') {
     const numericPriority = Number(priority);
     if (!Number.isFinite(numericPriority)) {
         return fallback;
@@ -83,31 +83,31 @@ export function priorityValueFromNumber(priority, fallback = 'medium') {
     return 'low';
 }
 
-export function priorityLabelKeyFromNumber(priority, fallback = 'medium') {
+export function priorityLabelKeyFromNumber(priority: any, fallback: any = 'medium') {
     const value = priorityValueFromNumber(priority, fallback);
     return (
-        priorityOptions.find((option) => option.value === value)?.labelKey ||
+        priorityOptions.find((option: any) => option.value === value)?.labelKey ||
         priorityOptions[1].labelKey
     );
 }
 
-export function priorityNumberFromValue(value, fallback = 400) {
+export function priorityNumberFromValue(value: any, fallback: any = 400) {
     return (
-        priorityOptions.find((option) => option.value === value)?.priority ||
+        priorityOptions.find((option: any) => option.value === value)?.priority ||
         fallback
     );
 }
 
-export function contextPresetLabelKeyFromValue(value) {
+export function contextPresetLabelKeyFromValue(value: any) {
     return (
-        contextPresetOptions.find((option) => option.value === value)
+        contextPresetOptions.find((option: any) => option.value === value)
             ?.labelKey ||
         'view.tools.social_automation.preset_custom'
     );
 }
 
-export function createInstanceOptions(instanceTypes, t) {
-    return instanceTypes.map((type) => {
+export function createInstanceOptions(instanceTypes: any, t: any) {
+    return instanceTypes.map((type: any) => {
         const mapKey = type === 'groupOnly' ? 'groupMembers' : type;
         const localeKey = accessTypeLocaleKeyMap[mapKey];
         const groupKey = accessTypeLocaleKeyMap.group;
@@ -128,23 +128,23 @@ export function createInstanceOptions(instanceTypes, t) {
 export function createGroupOptions({
     favoriteFriendGroups,
     localFriendFavoriteGroups
-}) {
-    const remoteGroupOptions = (favoriteFriendGroups || []).map((group) => ({
+}: any) {
+    const remoteGroupOptions = (favoriteFriendGroups || []).map((group: any) => ({
         value: group.key,
         label: group.displayName || group.name || group.key
     }));
     const localGroupOptions = (localFriendFavoriteGroups || []).map(
-        (group) => ({
+        (group: any) => ({
             value: `local:${group}`,
             label: group
         })
     );
     return [...remoteGroupOptions, ...localGroupOptions].filter(
-        (group) => group.value
+        (group: any) => group.value
     );
 }
 
-export function createTimeRule(label = '') {
+export function createTimeRule(label: any = '') {
     return {
         id: `time-${Date.now()}`,
         enabled: true,
@@ -165,9 +165,9 @@ export function createTimeRule(label = '') {
     };
 }
 
-export function getTimeWindow(rule) {
+export function getTimeWindow(rule: any) {
     return (
-        rule.conditions?.find((condition) => condition.type === 'timeWindow') || {
+        rule.conditions?.find((condition: any) => condition.type === 'timeWindow') || {
             type: 'timeWindow',
             start: '21:00',
             end: '02:00',
@@ -177,23 +177,23 @@ export function getTimeWindow(rule) {
     );
 }
 
-export function shouldRestorePreviousState(rule) {
+export function shouldRestorePreviousState(rule: any) {
     return rule?.restorePreviousState !== false;
 }
 
-export function hasGameRunningCondition(rule) {
+export function hasGameRunningCondition(rule: any) {
     return Boolean(
         rule.conditions?.some(
-            (condition) =>
+            (condition: any) =>
                 condition?.type === 'isGameRunning' &&
                 condition.value !== false
         )
     );
 }
 
-export function setGameRunningCondition(rule, enabled) {
+export function setGameRunningCondition(rule: any, enabled: any) {
     const otherConditions = (rule.conditions || []).filter(
-        (condition) => condition?.type !== 'isGameRunning'
+        (condition: any) => condition?.type !== 'isGameRunning'
     );
     return {
         ...rule,
@@ -203,8 +203,10 @@ export function setGameRunningCondition(rule, enabled) {
     };
 }
 
-export function buildContextConditions(rule) {
-    const conditions = [{ type: 'isGameRunning' }];
+export function buildContextConditions(rule: any) {
+    const conditions: Array<Record<string, unknown>> = [
+        { type: 'isGameRunning' }
+    ];
     if (rule.preset === 'alone') {
         conditions.push({ type: 'isAlone' });
     } else if (rule.preset === 'withAnyone') {
@@ -244,8 +246,8 @@ export function buildContextConditions(rule) {
     return conditions;
 }
 
-export function createContextRule(label = '') {
-    const rule = {
+export function createContextRule(label: any = '') {
+    const rule: any = {
         id: `context-${Date.now()}`,
         enabled: true,
         domain: 'context',
@@ -267,8 +269,8 @@ export function createContextRule(label = '') {
     };
 }
 
-export function normalizeContextRule(rule) {
-    const normalized = {
+export function normalizeContextRule(rule: any) {
+    const normalized: any = {
         ...rule,
         domain: 'context',
         preset: rule.preset || 'alone',
@@ -291,8 +293,8 @@ export function normalizeContextRule(rule) {
     };
 }
 
-export function updateRule(rules, ruleId, updater) {
-    return rules.map((rule) => {
+export function updateRule(rules: any, ruleId: any, updater: any) {
+    return rules.map((rule: any) => {
         if (rule.id !== ruleId) {
             return rule;
         }

@@ -5,7 +5,7 @@ import {
     userFactKey,
     type UserFact,
     type UserFactMergeOptions
-} from '@/domain/users/userFacts.js';
+} from '@/domain/users/userFacts';
 
 interface UserFactsStoreState {
     version: number;
@@ -28,7 +28,7 @@ interface UserFactsStoreState {
     resetUserFacts: () => void;
 }
 
-const initialState = {
+const initialState: any = {
     version: 0,
     usersByKey: {},
     userIdsByEndpoint: {}
@@ -85,10 +85,10 @@ function mergeEntries(
         : null;
 }
 
-export const useUserFactsStore = create<UserFactsStoreState>((set) => ({
+export const useUserFactsStore = create<UserFactsStoreState>((set: any) => ({
     ...initialState,
-    upsertUserFact(input, options = {}) {
-        set((state) => {
+    upsertUserFact(input: any, options: any = {}) {
+        set((state: any) => {
             const merged = mergeEntries(state, [{ input, options }]);
             if (!merged) {
                 return state;
@@ -99,16 +99,16 @@ export const useUserFactsStore = create<UserFactsStoreState>((set) => ({
             };
         });
     },
-    upsertUserFacts(entries, options = {}) {
+    upsertUserFacts(entries: any, options: any = {}) {
         useUserFactsStore.getState().upsertUserFactEntries(
-            (Array.isArray(entries) ? entries : []).map((input) => ({
+            (Array.isArray(entries) ? entries : []).map((input: any) => ({
                 input,
                 options
             }))
         );
     },
-    upsertUserFactEntries(entries) {
-        set((state) => {
+    upsertUserFactEntries(entries: any) {
+        set((state: any) => {
             const merged = mergeEntries(
                 state,
                 Array.isArray(entries) ? entries : []

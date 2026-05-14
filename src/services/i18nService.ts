@@ -1,7 +1,7 @@
 import { createInstance } from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
-import { getAllLocalizedStrings } from '@/localization/index.js';
+import { getAllLocalizedStrings } from '@/localization/index';
 
 type LocalizedMessages = Record<string, unknown>;
 type LocalizedStringMap = Record<string, LocalizedMessages>;
@@ -10,7 +10,7 @@ type TranslationParams = Record<string, unknown>;
 
 const allLocalizedStrings = getAllLocalizedStrings() as LocalizedStringMap;
 const i18nResources = Object.fromEntries(
-    Object.entries(allLocalizedStrings).map(([locale, messages]) => [
+    Object.entries(allLocalizedStrings).map(([locale, messages]: any) => [
         locale,
         { translation: messages || {} }
     ])
@@ -44,7 +44,7 @@ function resolveMessage(messages: unknown, key: string): unknown {
     return key
         .split('.')
         .reduce(
-            (current, part) => (isRecord(current) ? current[part] : undefined),
+            (current: any, part: any) => (isRecord(current) ? current[part] : undefined),
             messages
         );
 }

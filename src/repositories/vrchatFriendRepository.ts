@@ -1,41 +1,70 @@
-import { executeVrchatRequest } from './vrchatRequest.js';
+import { tauriClient } from '@/platform/tauri/client';
+
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
 const PAGE_SIZE = 50;
 const MAX_OFFSET = 7500;
 
-function isValidFriendUser(user) {
+type FriendRecord = Record<string, unknown> & { id: string };
+
+interface FriendsPageInput {
+    endpoint?: string;
+    offline?: boolean;
+    n?: number;
+    offset?: number;
+}
+
+interface FriendEndpointInput {
+    userId?: unknown;
+    endpoint?: string;
+}
+
+interface CancelFriendRequestInput extends FriendEndpointInput {
+    notificationId?: unknown;
+}
+
+function isValidFriendUser(user: unknown): user is FriendRecord {
     return Boolean(
         user &&
         typeof user === 'object' &&
+        'id' in user &&
         typeof user.id === 'string' &&
         user.id.trim()
     );
 }
 
-async function execute(
-    path,
-    { endpoint = '', method = 'GET', params = null } = {}
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatFriendResponse<TJson = unknown>(
+    response: { status: number; data: unknown; raw: unknown },
+    path: string
 ) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method,
-        params,
-        body: params,
-        jsonBody: method !== 'GET' && params !== null,
-        fallbackMessage: 'VRChat friend request failed'
-    });
-}
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage: 'VRChat friend request failed'
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
 
-async function executeGet(path, params = {}, { endpoint = '' } = {}) {
-    return execute(path, { endpoint, method: 'GET', params });
-}
-
-async function executeDelete(path, params = null, { endpoint = '' } = {}) {
-    return execute(path, { endpoint, method: 'DELETE', params });
-}
-
-async function executePost(path, params = null, { endpoint = '' } = {}) {
-    return execute(path, { endpoint, method: 'POST', params });
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
 }
 
 async function getFriends({
@@ -43,20 +72,24 @@ async function getFriends({
     offline = false,
     n = PAGE_SIZE,
     offset = 0
-} = {}) {
-    return executeGet(
-        'auth/user/friends',
-        {
-            offline: Boolean(offline),
-            n,
-            offset
-        },
-        { endpoint }
+}: FriendsPageInput = {}) {
+    const response = await tauriClient.app.VrchatFriendsGet({
+        endpoint,
+        offline: Boolean(offline),
+        n,
+        offset
+    });
+    return unwrapVrchatFriendResponse<FriendRecord[]>(
+        response,
+        'auth/user/friends'
     );
 }
 
-async function getAllFriends({ endpoint = '', offline = false } = {}) {
-    const friends = [];
+async function getAllFriends({
+    endpoint = '',
+    offline = false
+}: Pick<FriendsPageInput, 'endpoint' | 'offline'> = {}) {
+    const friends: FriendRecord[] = [];
 
     for (let offset = 0; offset <= MAX_OFFSET; offset += PAGE_SIZE) {
         const response = await getFriends({
@@ -78,7 +111,7 @@ async function getAllFriends({ endpoint = '', offline = false } = {}) {
     return friends;
 }
 
-async function getUser({ userId, endpoint = '' }) {
+async function getUser({ userId, endpoint = '' }: FriendEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -87,14 +120,17 @@ async function getUser({ userId, endpoint = '' }) {
         throw new Error('VrchatFriendRepository.getUser requires a user id.');
     }
 
-    return executeGet(
-        `users/${encodeURIComponent(normalizedUserId)}`,
-        {},
-        { endpoint }
+    const response = await tauriClient.app.VrchatUserGet({
+        userId: normalizedUserId,
+        endpoint
+    });
+    return unwrapVrchatFriendResponse<FriendRecord>(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function deleteFriend({ userId, endpoint = '' }) {
+async function deleteFriend({ userId, endpoint = '' }: FriendEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -105,14 +141,17 @@ async function deleteFriend({ userId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `auth/user/friends/${encodeURIComponent(normalizedUserId)}`,
-        null,
-        { endpoint }
+    const response = await tauriClient.app.VrchatFriendDelete({
+        userId: normalizedUserId,
+        endpoint
+    });
+    return unwrapVrchatFriendResponse<Record<string, unknown>>(
+        response,
+        `auth/user/friends/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function getFriendStatus({ userId, endpoint = '' }) {
+async function getFriendStatus({ userId, endpoint = '' }: FriendEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -123,14 +162,20 @@ async function getFriendStatus({ userId, endpoint = '' }) {
         );
     }
 
-    return executeGet(
-        `user/${encodeURIComponent(normalizedUserId)}/friendStatus`,
-        {},
-        { endpoint }
+    const response = await tauriClient.app.VrchatFriendStatusGet({
+        userId: normalizedUserId,
+        endpoint
+    });
+    return unwrapVrchatFriendResponse<Record<string, unknown>>(
+        response,
+        `user/${encodeURIComponent(normalizedUserId)}/friendStatus`
     );
 }
 
-async function sendFriendRequest({ userId, endpoint = '' }) {
+async function sendFriendRequest({
+    userId,
+    endpoint = ''
+}: FriendEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -141,10 +186,13 @@ async function sendFriendRequest({ userId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `user/${encodeURIComponent(normalizedUserId)}/friendRequest`,
-        null,
-        { endpoint }
+    const response = await tauriClient.app.VrchatFriendRequestSend({
+        userId: normalizedUserId,
+        endpoint
+    });
+    return unwrapVrchatFriendResponse<Record<string, unknown>>(
+        response,
+        `user/${encodeURIComponent(normalizedUserId)}/friendRequest`
     );
 }
 
@@ -152,7 +200,7 @@ async function cancelFriendRequest({
     userId,
     notificationId = '',
     endpoint = ''
-}) {
+}: CancelFriendRequestInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -168,18 +216,18 @@ async function cancelFriendRequest({
             ? { notificationId: notificationId.trim() }
             : null;
 
-    return executeDelete(
-        `user/${encodeURIComponent(normalizedUserId)}/friendRequest`,
-        params,
-        { endpoint }
+    const response = await tauriClient.app.VrchatFriendRequestCancel({
+        userId: normalizedUserId,
+        notificationId: params?.notificationId || '',
+        endpoint
+    });
+    return unwrapVrchatFriendResponse<Record<string, unknown>>(
+        response,
+        `user/${encodeURIComponent(normalizedUserId)}/friendRequest`
     );
 }
 
 const vrchatFriendRepository = Object.freeze({
-    execute,
-    executeGet,
-    executeDelete,
-    executePost,
     getFriends,
     getAllFriends,
     getUser,
@@ -190,10 +238,6 @@ const vrchatFriendRepository = Object.freeze({
 });
 
 export {
-    execute,
-    executeGet,
-    executeDelete,
-    executePost,
     getFriends,
     getAllFriends,
     getUser,

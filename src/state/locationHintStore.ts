@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { instanceLocationKey } from '@/domain/presence/instancePresence.js';
+import { instanceLocationKey } from '@/domain/presence/instancePresence';
 
 interface LocationHint {
     endpoint: string;
@@ -37,7 +37,7 @@ interface LocationHintStoreState {
     resetLocationHints: () => void;
 }
 
-const initialState = {
+const initialState: any = {
     version: 0,
     hintsByKey: {}
 };
@@ -53,10 +53,10 @@ function hintKey(endpoint: unknown, location: unknown): string {
     return key ? `${text(endpoint) || 'default'}::${key}` : '';
 }
 
-export const useLocationHintStore = create<LocationHintStoreState>((set) => ({
+export const useLocationHintStore = create<LocationHintStoreState>((set: any) => ({
     ...initialState,
-    upsertLocationHint(input) {
-        set((state) => {
+    upsertLocationHint(input: any) {
+        set((state: any) => {
             const key = hintKey(input.endpoint, input.location);
             if (!key) {
                 return state;

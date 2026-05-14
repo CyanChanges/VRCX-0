@@ -1,15 +1,15 @@
 import { toast } from 'sonner';
 
-import { webRepository } from '@/repositories/index.js';
+import webRepository from '@/repositories/webRepository';
 import {
     isVrchatMissingCredentialsError,
     setVrchatAuthFailureHandler
-} from '@/repositories/vrchatRequest.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useSessionStore } from '@/state/sessionStore.js';
+} from '@/repositories/vrchatRequest';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useSessionStore } from '@/state/sessionStore';
 
-import { refreshSavedAuthSnapshot } from './authSnapshotService.js';
-import i18n from './i18nService.js';
+import { refreshSavedAuthSnapshot } from './authSnapshotService';
+import i18n from './i18nService';
 
 type AuthExecutionServiceModule = {
     resetCurrentUserRuntimeAuth: () => void;
@@ -17,7 +17,7 @@ type AuthExecutionServiceModule = {
 };
 
 const authExecutionServiceLoaders =
-    import.meta.glob<AuthExecutionServiceModule>('./authExecutionService.js');
+    import.meta.glob<AuthExecutionServiceModule>('./authExecutionService.ts');
 
 let recoveryPromise: Promise<void> | null = null;
 
@@ -61,7 +61,7 @@ async function runRuntimeAuthRecovery(error: unknown): Promise<void> {
     }
 
     const loadAuthExecutionService =
-        authExecutionServiceLoaders['./authExecutionService.js'];
+        authExecutionServiceLoaders['./authExecutionService.ts'];
     if (typeof loadAuthExecutionService !== 'function') {
         throw new Error('Auth execution service is unavailable.');
     }
@@ -80,7 +80,9 @@ async function runRuntimeAuthRecovery(error: unknown): Promise<void> {
     }
 }
 
-function handleRuntimeAuthFailure(error: unknown): Promise<void> | undefined {
+export function handleRuntimeAuthFailure(
+    error: unknown
+): Promise<void> | undefined {
     if (!shouldHandleRuntimeAuthFailure(error)) {
         return;
     }

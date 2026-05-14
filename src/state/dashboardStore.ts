@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import dashboardRepository, {
     sanitizeDashboard,
     type Dashboard
-} from '@/repositories/dashboardRepository.js';
-import { DEFAULT_DASHBOARD_ICON } from '@/shared/constants/dashboard.js';
+} from '@/repositories/dashboardRepository';
+import { DEFAULT_DASHBOARD_ICON } from '@/shared/constants/dashboard';
 
 type DashboardLoadStatus = 'idle' | 'running' | 'ready' | 'error';
 
@@ -41,7 +41,7 @@ const initialState: DashboardStateSnapshot = {
 
 let loadPromise: Promise<Dashboard[]> | null = null;
 
-export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
+export const useDashboardStore = create<DashboardStoreState>((set: any, get: any) => ({
     ...initialState,
     async loadDashboards() {
         set({
@@ -87,7 +87,7 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
 
         return loadPromise;
     },
-    getDashboard(id) {
+    getDashboard(id: any) {
         const normalizedId = String(id || '').trim();
         if (!normalizedId) {
             return null;
@@ -95,11 +95,11 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
 
         return (
             get().dashboards.find(
-                (dashboard) => dashboard.id === normalizedId
+                (dashboard: any) => dashboard.id === normalizedId
             ) || null
         );
     },
-    async createDashboard(baseName = 'Dashboard') {
+    async createDashboard(baseName: any = 'Dashboard') {
         await get().ensureLoaded();
 
         const nextDashboard = sanitizeDashboard({
@@ -125,11 +125,11 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
 
         return nextDashboard;
     },
-    async updateDashboard(id, updates = {}) {
+    async updateDashboard(id: any, updates: any = {}) {
         await get().ensureLoaded();
 
         const dashboards = get().dashboards;
-        const index = dashboards.findIndex((dashboard) => dashboard.id === id);
+        const index = dashboards.findIndex((dashboard: any) => dashboard.id === id);
         if (index < 0) {
             throw new Error('Dashboard not found.');
         }
@@ -159,16 +159,16 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
 
         return nextDashboard;
     },
-    async deleteDashboard(id) {
+    async deleteDashboard(id: any) {
         await get().ensureLoaded();
 
         const nextDashboards = get().dashboards.filter(
-            (dashboard) => dashboard.id !== id
+            (dashboard: any) => dashboard.id !== id
         );
         const savedDashboards =
             await dashboardRepository.saveDashboards(nextDashboards);
 
-        set((state) => ({
+        set((state: any) => ({
             dashboards: savedDashboards,
             loaded: true,
             loadStatus: 'ready',
@@ -179,12 +179,12 @@ export const useDashboardStore = create<DashboardStoreState>((set, get) => ({
                     : state.editingDashboardId
         }));
     },
-    setEditingDashboardId(id) {
+    setEditingDashboardId(id: any) {
         set({
             editingDashboardId: (id || null) as string | null
         });
     },
-    consumeEditingDashboardId(id) {
+    consumeEditingDashboardId(id: any) {
         if (get().editingDashboardId !== id) {
             return false;
         }

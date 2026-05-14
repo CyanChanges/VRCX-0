@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 
-import { userStatusLabel } from '@/lib/userStatus.js';
+import { userStatusLabel } from '@/shared/utils/userStatus';
 import {
     Field,
     FieldDescription,
@@ -20,7 +20,7 @@ import {
 } from '@/ui/shadcn/select';
 import { Switch } from '@/ui/shadcn/switch';
 
-import { statusOptions } from '../toolsDialogUtils.js';
+import { statusOptions } from '../toolsDialogUtils';
 
 const I18N_ROOT = 'view.tools.social_automation';
 
@@ -77,7 +77,7 @@ export function PresenceRuleActionFields({
                                 <SelectItem value="no-change">
                                     {t(`${I18N_ROOT}.do_not_change`)}
                                 </SelectItem>
-                                {statusOptions.map((statusOption) => (
+                                {statusOptions.map((statusOption: any) => (
                                     <SelectItem
                                         key={statusOption}
                                         value={statusOption}
@@ -114,7 +114,7 @@ export function PresenceRuleActionFields({
                                 'view.settings.general.automation.status_description_placeholder'
                             )}
                             aria-label={t(`${I18N_ROOT}.signature`)}
-                            onChange={(event) =>
+                            onChange={(event: any) =>
                                 onStatusDescriptionChange(event.target.value)
                             }
                         />

@@ -1,20 +1,120 @@
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::time::Duration;
 
 use tauri::http::{header::CONTENT_TYPE, Request, Response, StatusCode};
 use tauri::menu::{Menu, MenuItem};
-use tauri::{Manager, WebviewWindowBuilder};
+use tauri::{Emitter, Manager, WebviewWindowBuilder};
 use tauri_plugin_autostart::ManagerExt as _;
 use tracing_subscriber::filter::LevelFilter;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
 
-use crate::domain::host_capabilities::{
+use crate::adapters::application::host_actions::RuntimeHostActions;
+use crate::adapters::application::process_monitor::HostGameProcessMonitorActions;
+use crate::state::AppState;
+use vrcx_0_application::GameProcessEventSink;
+use vrcx_0_application::RuntimeEventSink;
+use vrcx_0_application::{RuntimeTask, RuntimeTaskExecutor, RuntimeTaskHandle};
+use vrcx_0_host::host_capabilities::{
     current_host_capabilities, is_host_capability_available, HostCapability,
 };
-use crate::state::AppState;
+
+#[derive(Clone)]
+struct TauriRuntimeEventSink {
+    app_handle: tauri::AppHandle,
+}
+
+impl TauriRuntimeEventSink {
+    fn new(app_handle: tauri::AppHandle) -> Self {
+        Self { app_handle }
+    }
+}
+
+impl RuntimeEventSink for TauriRuntimeEventSink {
+    fn emit(&self, event: &str, payload: serde_json::Value) {
+        let frontend_event = match event {
+            "runtimeGameLogEvent" => "addGameLogEvent",
+            event => event,
+        };
+        let _ = self.app_handle.emit(frontend_event, payload);
+    }
+}
+
+#[derive(Clone)]
+struct TauriRuntimeHostActions {
+    app_handle: tauri::AppHandle,
+}
+
+impl TauriRuntimeHostActions {
+    fn new(app_handle: tauri::AppHandle) -> Self {
+        Self { app_handle }
+    }
+}
+
+impl RuntimeHostActions for TauriRuntimeHostActions {
+    fn focus_main_window(&self) {
+        if let Some(window) = self.app_handle.get_webview_window("main") {
+            let _ = window.set_focus();
+        }
+    }
+}
+
+#[derive(Clone)]
+struct TauriRuntimeTaskExecutor;
+
+struct TauriRuntimeTaskHandle(tauri::async_runtime::JoinHandle<()>);
+
+impl RuntimeTaskHandle for TauriRuntimeTaskHandle {
+    fn abort(&self) {
+        self.0.abort();
+    }
+
+    fn is_finished(&self) -> bool {
+        self.0.inner().is_finished()
+    }
+
+    fn join_or_abort(&mut self, timeout: Duration) {
+        if self.is_finished() {
+            let _ = block_on_runtime_task(&mut self.0);
+            return;
+        }
+
+        let Some(joined) =
+            block_on_runtime_task(async { tokio::time::timeout(timeout, &mut self.0).await })
+        else {
+            self.0.abort();
+            return;
+        };
+        if joined.is_ok() {
+            return;
+        }
+
+        self.0.abort();
+        let _ = block_on_runtime_task(async {
+            tokio::time::timeout(Duration::from_millis(50), &mut self.0).await
+        });
+    }
+}
+
+fn block_on_runtime_task<F>(future: F) -> Option<F::Output>
+where
+    F: std::future::Future,
+{
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) if handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+            Some(tokio::task::block_in_place(|| handle.block_on(future)))
+        }
+        Ok(_) => None,
+        Err(_) => Some(tauri::async_runtime::block_on(future)),
+    }
+}
+
+impl RuntimeTaskExecutor for TauriRuntimeTaskExecutor {
+    fn spawn(&self, task: RuntimeTask) -> Box<dyn RuntimeTaskHandle> {
+        Box::new(TauriRuntimeTaskHandle(tauri::async_runtime::spawn(task)))
+    }
+}
 
 pub fn show_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
@@ -26,14 +126,14 @@ pub fn show_main_window(app: &tauri::AppHandle) {
 }
 
 pub fn init_error_logging() {
-    let Some(app_data) = crate::domain::error_log::default_app_data_dir() else {
+    let Some(app_data) = vrcx_0_host::error_log::default_app_data_dir() else {
         return;
     };
 
     let default_panic_hook = std::panic::take_hook();
     let panic_app_data = app_data.clone();
     std::panic::set_hook(Box::new(move |panic_info| {
-        crate::domain::error_log::append_error_log(
+        vrcx_0_host::error_log::append_error_log(
             &panic_app_data,
             "rust:panic",
             &panic_info.to_string(),
@@ -53,11 +153,15 @@ pub fn init_error_logging() {
             tracing_subscriber::fmt::layer()
                 .with_ansi(false)
                 .with_writer(move || {
-                    crate::domain::error_log::ErrorLogWriter::new(tracing_app_data.clone())
+                    vrcx_0_host::error_log::ErrorLogWriter::new(tracing_app_data.clone())
                 })
                 .with_filter(LevelFilter::ERROR),
         )
         .init();
+}
+
+pub fn init_tls_crypto_provider() {
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
 }
 
 pub fn updater_public_key() -> String {
@@ -92,6 +196,20 @@ pub fn screenshot_protocol_response(request: Request<Vec<u8>>) -> Response<Cow<'
             .unwrap();
     }
 
+    let Ok(paths) = vrcx_0_host::app_paths::AppPaths::resolve() else {
+        return Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(Vec::new().into())
+            .unwrap();
+    };
+
+    if !crate::adapters::host_file_access::is_known_root_path(&path_buf, &paths) {
+        return Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Vec::new().into())
+            .unwrap();
+    }
+
     match std::fs::read(&path_buf) {
         Ok(bytes) => Response::builder()
             .header(CONTENT_TYPE, "image/png")
@@ -118,7 +236,7 @@ pub fn screenshot_thumbnail_protocol_response(
         }
     };
 
-    let Ok(paths) = crate::domain::app_paths::AppPaths::resolve() else {
+    let Ok(paths) = vrcx_0_host::app_paths::AppPaths::resolve() else {
         return Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Vec::new().into())
@@ -133,7 +251,7 @@ pub fn screenshot_thumbnail_protocol_response(
 
     if !is_webp
         || !path_buf.is_file()
-        || !crate::domain::screenshot::is_path_inside_directory(&path_buf, &paths.screenshot_thumbs)
+        || !vrcx_0_host::path_utils::is_path_inside_directory(&path_buf, &paths.screenshot_thumbs)
     {
         return Response::builder()
             .status(StatusCode::NOT_FOUND)
@@ -172,16 +290,40 @@ pub fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>>
     app.manage(app_state);
 
     let state = app.state::<AppState>();
+    state.runtime_context.runtime.record_phase(
+        "appState",
+        "completed",
+        "Backend AppState initialized.",
+    );
+    state.runtime_context.sync.record(
+        "startup",
+        "running",
+        "Tauri setup is wiring runtime services.",
+        0,
+    );
     create_main_window(app, state.web.proxy_url())?;
+    state.runtime_context.runtime.record_phase(
+        "mainWindow",
+        "completed",
+        "Main webview window created.",
+    );
 
     disable_windows_default_context_menu(app);
 
     let state = app.state::<AppState>();
     configure_tray(app)?;
+    state
+        .runtime_context
+        .runtime
+        .record_phase("tray", "completed", "System tray configured.");
     sync_autostart_from_db(app, &state);
     hide_autostart_window_if_needed(app, &state);
     start_host_services(app, &state);
     open_devtools_if_enabled(app);
+    state
+        .runtime_context
+        .sync
+        .record("startup", "ready", "Backend host services are ready.", 0);
 
     Ok(())
 }
@@ -217,19 +359,7 @@ fn create_main_window(
 }
 
 fn db_config_bool(state: &AppState, key: &str) -> Option<bool> {
-    let mut args = HashMap::new();
-    args.insert(
-        "@key".to_string(),
-        serde_json::Value::String(key.to_string()),
-    );
-
-    state
-        .db
-        .execute("SELECT value FROM configs WHERE key = @key LIMIT 1", &args)
-        .ok()
-        .and_then(|rows| rows.into_iter().next())
-        .and_then(|row| row.into_iter().next())
-        .and_then(|value| value.as_str().map(|s| s == "true"))
+    state.runtime_context.config().get_bool(key, false).ok()
 }
 
 fn disable_windows_default_context_menu(app: &tauri::App) {
@@ -275,10 +405,22 @@ fn sync_autostart_from_db(app: &tauri::App, state: &AppState) {
         {
             let _ = app.autolaunch().enable();
         }
+        state.runtime_context.runtime.record_phase(
+            "autostart",
+            "completed",
+            "Autostart preference synchronized.",
+        );
     }
 
     #[cfg(not(any(target_os = "windows", target_os = "linux")))]
-    let _ = (app, state);
+    {
+        let _ = app;
+        state.runtime_context.runtime.record_phase(
+            "autostart",
+            "skipped",
+            "Autostart synchronization is unavailable on this platform.",
+        );
+    }
 }
 
 fn hide_autostart_window_if_needed(app: &tauri::App, state: &AppState) {
@@ -302,17 +444,92 @@ fn start_host_services(app: &tauri::App, state: &AppState) {
         platform = %host_capabilities.platform,
         "host capabilities resolved"
     );
+    state
+        .runtime_context
+        .event_bus
+        .set_sink(TauriRuntimeEventSink::new(app.handle().clone()));
+    state
+        .runtime_context
+        .host
+        .set_actions(TauriRuntimeHostActions::new(app.handle().clone()));
+    state
+        .runtime_context
+        .tasks
+        .set_executor(TauriRuntimeTaskExecutor);
+    state
+        .runtime_context
+        .runtime
+        .set_host_services_started(true, "Tauri event sink and host action adapters installed.");
+    state
+        .runtime_context
+        .background_jobs
+        .register_frontend_job_catalog();
+    state.runtime_context.background_jobs.register_job(
+        "startupRecovery",
+        "rust-host",
+        None,
+        "checkpoint",
+        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
+    );
+    state.runtime_context.runtime.record_phase(
+        "startupRecovery",
+        "checkpoint",
+        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
+    );
+    state.runtime_context.sync.record(
+        "startupRecovery",
+        "observed",
+        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
+        0,
+    );
+    state
+        .runtime_context
+        .background_jobs
+        .start_database_optimize_loop(
+            std::sync::Arc::clone(&state.db),
+            state.runtime_context.tasks.clone(),
+        );
 
     if is_host_capability_available(HostCapability::GameProcessMonitor) {
+        let game_process_sinks: Vec<std::sync::Arc<dyn GameProcessEventSink>> = vec![
+            state.session_runtime.clone(),
+            state.game_log_runtime.clone(),
+            state.game_client_runtime.clone(),
+            state.realtime_runtime.clone(),
+        ];
         state.process_monitor.start(
-            app.handle().clone(),
-            state.auto_launch.clone(),
+            HostGameProcessMonitorActions::new(state.auto_launch.clone()),
             state.log_watcher.clone(),
+            game_process_sinks,
+        );
+        state
+            .runtime_context
+            .background_jobs
+            .mark_running("gameProcessMonitor", "Game process monitor is active.");
+    } else {
+        state.runtime_context.background_jobs.register_job(
+            "gameProcessMonitor",
+            "rust-host",
+            None,
+            "unavailable",
+            "Game process monitor capability is unavailable.",
         );
     }
 
     if is_host_capability_available(HostCapability::Ipc) {
         state.ipc.start(app.handle().clone());
+        state
+            .runtime_context
+            .background_jobs
+            .mark_running("ipcServer", "Local IPC server is active.");
+    } else {
+        state.runtime_context.background_jobs.register_job(
+            "ipcServer",
+            "rust-host",
+            None,
+            "unavailable",
+            "IPC capability is unavailable.",
+        );
     }
 
     #[cfg(target_os = "windows")]
@@ -320,12 +537,33 @@ fn start_host_services(app: &tauri::App, state: &AppState) {
         let local_low = std::env::var("LOCALAPPDATA")
             .map(|p| std::path::PathBuf::from(p).join("..\\LocalLow\\VRChat\\VRChat"))
             .unwrap_or_default();
-        state.log_watcher.start(local_low, app.handle().clone());
+        if let Err(error) = state.game_log_runtime.prime_log_watcher(&state.log_watcher) {
+            tracing::warn!("failed to prime GameLog watcher from runtime DB: {error}");
+        }
+        state.log_watcher.start(local_low);
+        state
+            .log_watcher_compat_bridge
+            .start(app.handle().clone(), state.log_watcher.clone());
+        state
+            .runtime_context
+            .background_jobs
+            .mark_running("gameLogWatcher", "Windows GameLog watcher is active.");
+    }
+
+    #[cfg(target_os = "windows")]
+    if !is_host_capability_available(HostCapability::GameLogWatcher) {
+        state.runtime_context.background_jobs.register_job(
+            "gameLogWatcher",
+            "rust-host",
+            None,
+            "unavailable",
+            "GameLog watcher capability is unavailable.",
+        );
     }
 
     #[cfg(target_os = "linux")]
-    if is_host_capability_available(HostCapability::VrchatPathDiscovery) {
-        match crate::domain::vrchat_paths::discover_linux_vrchat_paths() {
+    if is_host_capability_available(HostCapability::GameLogWatcher) {
+        match vrcx_0_host::vrchat_paths::discover_linux_vrchat_log_paths() {
             Ok(paths) => {
                 let latest_log = paths
                     .latest_log
@@ -337,15 +575,56 @@ fn start_host_services(app: &tauri::App, state: &AppState) {
                     latest_log,
                     "starting Linux GameLog watcher"
                 );
+                if let Err(error) = state.game_log_runtime.prime_log_watcher(&state.log_watcher) {
+                    tracing::warn!("failed to prime GameLog watcher from runtime DB: {error}");
+                }
                 state
                     .log_watcher
-                    .start_without_process_monitor(paths.app_data, app.handle().clone());
+                    .start_without_process_monitor(paths.app_data);
+                state
+                    .log_watcher_compat_bridge
+                    .start(app.handle().clone(), state.log_watcher.clone());
+                state
+                    .runtime_context
+                    .background_jobs
+                    .mark_running("gameLogWatcher", "Linux GameLog watcher is active.");
             }
             Err(reason) => {
                 tracing::warn!(reason, "Linux GameLog watcher is unavailable");
+                state.runtime_context.background_jobs.register_job(
+                    "gameLogWatcher",
+                    "rust-host",
+                    None,
+                    "unavailable",
+                    reason,
+                );
             }
         }
     }
+
+    #[cfg(target_os = "linux")]
+    if !is_host_capability_available(HostCapability::GameLogWatcher) {
+        state.runtime_context.background_jobs.register_job(
+            "gameLogWatcher",
+            "rust-host",
+            None,
+            "unavailable",
+            host_capabilities
+                .game_log_watcher
+                .reason
+                .clone()
+                .unwrap_or_else(|| "GameLog watcher capability is unavailable.".into()),
+        );
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
+    state.runtime_context.background_jobs.register_job(
+        "gameLogWatcher",
+        "rust-host",
+        None,
+        "unavailable",
+        "GameLog watcher is unavailable on this platform.",
+    );
 }
 
 fn open_devtools_if_enabled(app: &tauri::App) {

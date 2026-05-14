@@ -1,23 +1,22 @@
-import {
-    configRepository,
-    notificationRepository,
-    vrchatSearchRepository
-} from '@/repositories/index.js';
-import { checkCanInvite } from '@/shared/utils/invite.js';
-import { parseLocation } from '@/shared/utils/locationParser.js';
-import { useFavoriteStore } from '@/state/favoriteStore.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useVrcNotificationStore } from '@/state/vrcNotificationStore.js';
+import configRepository from '@/repositories/configRepository';
+import notificationPersistenceRepository from '@/repositories/notificationPersistenceRepository';
+import vrchatSearchRepository from '@/repositories/vrchatSearchRepository';
+import { tauriClient } from '@/platform/tauri/client';
+import { checkCanInvite } from '@/shared/utils/invite';
+import { parseLocation } from '@/shared/utils/locationParser';
+import { useFavoriteStore } from '@/state/favoriteStore';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useVrcNotificationStore } from '@/state/vrcNotificationStore';
 
 const AUTO_ACCEPT_OFF = 'Off';
 const AUTO_ACCEPT_ALL_FAVORITES = 'All Favorites';
 const AUTO_ACCEPT_SELECTED_FAVORITES = 'Selected Favorites';
 const DEFAULT_AUTO_INVITE_SENDER_COOLDOWN_MS = 10 * 60 * 1000;
 
-const senderCooldowns = new Map();
-const pendingSenderInvites = new Set();
+const senderCooldowns = new Map<string, number>();
+const pendingSenderInvites = new Set<string>();
 
-function safeJsonParse(value, fallback) {
+function safeJsonParse(value: any, fallback: any) {
     if (Array.isArray(value)) {
         return value;
     }
@@ -32,7 +31,7 @@ function safeJsonParse(value, fallback) {
     }
 }
 
-function normalizeAutoAcceptMode(value) {
+function normalizeAutoAcceptMode(value: any) {
     if (
         value === true ||
         value === 'true' ||
@@ -46,7 +45,7 @@ function normalizeAutoAcceptMode(value) {
     return AUTO_ACCEPT_OFF;
 }
 
-function getCachedInstanceLocation(instance) {
+function getCachedInstanceLocation(instance: any) {
     return String(
         instance?.location ||
             instance?.$location ||
@@ -56,7 +55,7 @@ function getCachedInstanceLocation(instance) {
     ).trim();
 }
 
-function buildCachedInstanceMap(instances) {
+function buildCachedInstanceMap(instances: any) {
     const map = new Map();
     for (const instance of Array.isArray(instances) ? instances : []) {
         const location = getCachedInstanceLocation(instance);
@@ -67,22 +66,22 @@ function buildCachedInstanceMap(instances) {
     return map;
 }
 
-function resolveCurrentInviteLocation(gameState) {
+function resolveCurrentInviteLocation(gameState: any) {
     const currentLocation = String(gameState?.currentLocation || '').trim();
     return currentLocation && currentLocation !== 'traveling'
         ? currentLocation
         : '';
 }
 
-function getVerifiedCurrentLocation(gameState) {
+function getVerifiedCurrentLocation(gameState: any) {
     const currentLocation = String(gameState?.currentLocation || '').trim();
     return currentLocation && currentLocation !== 'traveling'
         ? currentLocation
         : '';
 }
 
-function isCurrentInviteScope({ endpoint, currentUserId }) {
-    const auth = useRuntimeStore.getState().auth || {};
+function isCurrentInviteScope({ endpoint, currentUserId }: any) {
+    const auth = useRuntimeStore.getState().auth;
     const authCurrentUserId =
         auth.currentUserId || auth.currentUserSnapshot?.id || '';
     return (
@@ -91,7 +90,7 @@ function isCurrentInviteScope({ endpoint, currentUserId }) {
     );
 }
 
-function isUserInLocalGroups(userId, localFriendFavorites, groupNames) {
+function isUserInLocalGroups(userId: any, localFriendFavorites: any, groupNames: any[] = []) {
     const localGroups = groupNames?.length
         ? groupNames
         : Object.keys(localFriendFavorites || {});
@@ -104,7 +103,7 @@ function isUserInLocalGroups(userId, localFriendFavorites, groupNames) {
     return false;
 }
 
-function isSenderAllowed({ senderUserId, mode, selectedGroups }) {
+function isSenderAllowed({ senderUserId, mode, selectedGroups }: any) {
     if (!senderUserId || mode === AUTO_ACCEPT_OFF) {
         return false;
     }
@@ -145,11 +144,11 @@ function isSenderAllowed({ senderUserId, mode, selectedGroups }) {
     return false;
 }
 
-function buildSenderScopeKey({ endpoint, currentUserId, senderUserId }) {
+function buildSenderScopeKey({ endpoint, currentUserId, senderUserId }: any) {
     return [endpoint || '', currentUserId || '', senderUserId || ''].join(':');
 }
 
-function isAutoInviteSafeLocation(parsedLocation) {
+function isAutoInviteSafeLocation(parsedLocation: any) {
     if (!parsedLocation?.isRealInstance) {
         return false;
     }
@@ -162,7 +161,7 @@ function isAutoInviteSafeLocation(parsedLocation) {
     );
 }
 
-function isSenderCoolingDown(senderScopeKey, nowMs) {
+function isSenderCoolingDown(senderScopeKey: any, nowMs: any) {
     const lastSentAt = senderCooldowns.get(senderScopeKey) || 0;
     return nowMs - lastSentAt < DEFAULT_AUTO_INVITE_SENDER_COOLDOWN_MS;
 }
@@ -171,7 +170,7 @@ function validateCurrentInviteLocation({
     endpoint,
     currentUserId,
     expectedLocation = ''
-}) {
+}: any) {
     if (!isCurrentInviteScope({ endpoint, currentUserId })) {
         return { valid: false, reason: 'auth-context-changed' };
     }
@@ -226,14 +225,11 @@ function validateCurrentInviteLocation({
     };
 }
 
-async function expireNotificationLocally({ userId, notification }) {
+async function expireNotificationLocally({ userId, notification }: any) {
     if (!userId || !notification?.id) {
         return;
     }
-    await notificationRepository.expireNotification({
-        userId,
-        id: notification.id
-    });
+    await tauriClient.app.ExpireRealtimeNotification(userId, notification.id);
     const store = useVrcNotificationStore.getState();
     store.expireNotifications(notification.id);
     store.markNotificationsSeen(notification.id);
@@ -244,11 +240,11 @@ async function cleanupHandledInviteRequestNotification({
     endpoint,
     notification,
     senderUserId
-}) {
+}: any) {
     let cleanupFailed = false;
 
     try {
-        await notificationRepository.hideRemoteNotification({
+        await notificationPersistenceRepository.hideRemoteNotification({
             id: notification.id,
             version: notification.version,
             type: notification.type,
@@ -282,7 +278,7 @@ async function sendInviteForRequest({
     currentUserId,
     currentInviteLocation,
     parsedLocation
-}) {
+}: any) {
     const worldResponse = await vrchatSearchRepository.getWorlds(
         {},
         parsedLocation.worldId,
@@ -296,20 +292,21 @@ async function sendInviteForRequest({
     if (!currentLocationValidation.valid) {
         return { sent: false, reason: currentLocationValidation.reason };
     }
-    await notificationRepository.sendInvite({
+    const worldJson = worldResponse.json as Record<string, any> | undefined;
+    await notificationPersistenceRepository.sendInvite({
         receiverUserId: notification.senderUserId,
         endpoint,
         params: {
             instanceId: currentInviteLocation,
             worldId: parsedLocation.worldId,
-            worldName: worldResponse.json?.name || parsedLocation.worldId,
+            worldName: worldJson?.name || parsedLocation.worldId,
             rsvp: true
         }
     });
     return { sent: true };
 }
 
-export async function handleInviteAutomationNotification(notification) {
+export async function handleInviteAutomationNotification(notification: any) {
     if (notification?.type !== 'requestInvite') {
         return { handled: false, reason: 'not-request-invite' };
     }
@@ -338,7 +335,7 @@ export async function handleInviteAutomationNotification(notification) {
     }
 
     const runtimeState = useRuntimeStore.getState();
-    const auth = runtimeState.auth || {};
+    const auth = runtimeState.auth;
     if (!runtimeState.gameState?.isGameRunning) {
         return { handled: false, reason: 'game-not-running' };
     }

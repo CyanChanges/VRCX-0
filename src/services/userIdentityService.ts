@@ -1,16 +1,14 @@
-import {
-    gameLogRepository as defaultGameLogRepository,
-    vrchatSearchRepository as defaultVrchatSearchRepository
-} from '@/repositories/index.js';
+import defaultGameLogRepository from '@/repositories/gameLogRepository';
+import defaultVrchatSearchRepository from '@/repositories/vrchatSearchRepository';
 import {
     getKnownUserFact,
     normalizeEndpoint,
     normalizeUserId,
     recordUserProfile
-} from '@/domain/users/userFactAccess.js';
-import { useFriendRosterStore } from '@/state/friendRosterStore.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useUserFactsStore } from '@/state/userFactsStore.js';
+} from '@/domain/users/userFactAccess';
+import { useFriendRosterStore } from '@/state/friendRosterStore';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useUserFactsStore } from '@/state/userFactsStore';
 
 type UserIdentityRecord = Record<string, unknown> & {
     id?: unknown;
@@ -57,7 +55,7 @@ function displayNameOf(user: unknown): string {
     return text(record?.displayName || record?.username || record?.name);
 }
 
-function titleForUser(user: unknown, fallback = ''): string {
+function titleForUser(user: unknown, fallback: any = ''): string {
     const record = asUserRecord(user);
     return (
         displayNameOf(user) ||
@@ -80,7 +78,7 @@ function resolvedEndpoint(endpoint: unknown): string {
 function resolvedUser(
     user: unknown,
     source: ResolvedUserSource,
-    fallbackTitle = ''
+    fallbackTitle: any = ''
 ) {
     const record = asUserRecord(user);
     const userId = normalizeUserId(record?.id || record?.userId);
@@ -125,7 +123,7 @@ function findFriendByDisplayName(displayName: unknown): UserIdentityRecord | nul
 
     const { friendsById } = useFriendRosterStore.getState();
     return (
-        Object.values(friendsById || {}).find((friend) =>
+        Object.values(friendsById || {}).find((friend: any) =>
             displayNameMatches(friend, targetDisplayName)
         ) as UserIdentityRecord | undefined
     ) || null;
@@ -224,9 +222,9 @@ async function resolveUserByDisplayName(
     );
     const rows = Array.isArray(response?.json) ? response.json : [];
     const match =
-        rows.find((user) => displayNameMatches(user, targetDisplayName)) ||
+        rows.find((user: any) => displayNameMatches(user, targetDisplayName)) ||
         rows.find(
-            (user) =>
+            (user: any) =>
                 normalizeUserId(asUserRecord(user)?.id) ===
                 normalizedDisplayName
         );

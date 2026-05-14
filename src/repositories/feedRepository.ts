@@ -1,6 +1,6 @@
-import configRepository from './configRepository.js';
-import feedLocalRepository from './feedLocalRepository.js';
-import userSessionRepository from './userSessionRepository.js';
+import configRepository from './configRepository';
+import feedPersistenceRepository from './feedPersistenceRepository';
+import userSessionRepository from './userSessionRepository';
 
 export const FEED_FILTER_TYPES = Object.freeze([
     'GPS',
@@ -21,6 +21,17 @@ export interface FeedQueryOptions {
     favoriteUserIds?: unknown[];
     dateFrom?: string;
     dateTo?: string;
+}
+
+export interface FeedReadModelQueryOptions extends FeedQueryOptions {
+    liveEntries?: unknown[];
+    minLiveSequence?: number;
+    favoritesOnly?: boolean;
+    maxRows?: number;
+}
+
+export interface FeedLiveRowsMergeOptions extends FeedReadModelQueryOptions {
+    rows?: FeedEntry[];
 }
 
 interface FeedReadyState {
@@ -100,7 +111,7 @@ class FeedRepository {
         const normalizedSearch = String(search || '').trim();
 
         if (normalizedSearch || dateFrom || dateTo) {
-            return feedLocalRepository.searchFeedDatabase(
+            return feedPersistenceRepository.searchFeedDatabase(
                 normalizedSearch,
                 normalizedFilters,
                 normalizedFavorites,
@@ -111,7 +122,7 @@ class FeedRepository {
             );
         }
 
-        return feedLocalRepository.lookupFeedDatabase(
+        return feedPersistenceRepository.lookupFeedDatabase(
             normalizedUserId,
             normalizedFilters,
             normalizedFavorites,
@@ -119,31 +130,116 @@ class FeedRepository {
         );
     }
 
+    async queryFeedReadModel({
+        userId,
+        search = '',
+        filters = [],
+        favoriteUserIds = [],
+        dateFrom = '',
+        dateTo = '',
+        liveEntries = [],
+        minLiveSequence = 0,
+        favoritesOnly = false,
+        maxRows
+    }: FeedReadModelQueryOptions) {
+        const { normalizedUserId, maxTableSize, searchLimit } =
+            await this.#ensureReady(userId);
+        const normalizedFilters = normalizeFilterList(filters);
+        const normalizedFavorites = Array.from(
+            new Set(
+                (Array.isArray(favoriteUserIds) ? favoriteUserIds : [])
+                    .map((value) => normalizeUserId(value))
+                    .filter(Boolean)
+            )
+        );
+        const normalizedSearch = String(search || '').trim();
+        const isSearchMode = Boolean(normalizedSearch || dateFrom || dateTo);
+        const maxEntries = isSearchMode ? searchLimit : maxTableSize;
+
+        return feedPersistenceRepository.queryFeedReadModel({
+            userId: normalizedUserId,
+            mode: isSearchMode ? 'search' : 'lookup',
+            search: normalizedSearch,
+            filters: normalizedFilters,
+            vipList: favoritesOnly ? normalizedFavorites : [],
+            maxEntries,
+            dateFrom,
+            dateTo,
+            liveEntries: Array.isArray(liveEntries)
+                ? (liveEntries as never[])
+                : [],
+            minLiveSequence,
+            favoritesOnly,
+            favoriteUserIds: normalizedFavorites,
+            maxRows: maxRows ?? maxEntries
+        });
+    }
+
+    async mergeLiveRows({
+        userId,
+        rows = [],
+        search = '',
+        filters = [],
+        favoriteUserIds = [],
+        dateFrom = '',
+        dateTo = '',
+        liveEntries = [],
+        minLiveSequence = 0,
+        favoritesOnly = false,
+        maxRows
+    }: FeedLiveRowsMergeOptions) {
+        const normalizedUserId = normalizeUserId(userId);
+        const normalizedFilters = normalizeFilterList(filters);
+        const normalizedFavorites = Array.from(
+            new Set(
+                (Array.isArray(favoriteUserIds) ? favoriteUserIds : [])
+                    .map((value) => normalizeUserId(value))
+                    .filter(Boolean)
+            )
+        );
+
+        return feedPersistenceRepository.mergeFeedLiveRows({
+            rows,
+            currentUserId: normalizedUserId,
+            filters: normalizedFilters,
+            search: String(search || '').trim(),
+            dateFrom,
+            dateTo,
+            liveEntries: Array.isArray(liveEntries)
+                ? (liveEntries as never[])
+                : [],
+            minLiveSequence,
+            favoritesOnly,
+            favoriteUserIds: normalizedFavorites,
+            maxRows
+        });
+    }
+
     async addGpsEntryForUser(userId: unknown, entry: FeedEntry) {
-        return feedLocalRepository.addGPSToDatabaseForUser(userId, entry);
+        return feedPersistenceRepository.addGPSToDatabaseForUser(userId, entry);
     }
 
     async addStatusEntryForUser(userId: unknown, entry: FeedEntry) {
-        return feedLocalRepository.addStatusToDatabaseForUser(userId, entry);
+        return feedPersistenceRepository.addStatusToDatabaseForUser(userId, entry);
     }
 
     async addBioEntryForUser(userId: unknown, entry: FeedEntry) {
-        return feedLocalRepository.addBioToDatabaseForUser(userId, entry);
+        return feedPersistenceRepository.addBioToDatabaseForUser(userId, entry);
     }
 
     async addAvatarEntryForUser(userId: unknown, entry: FeedEntry) {
-        return feedLocalRepository.addAvatarToDatabaseForUser(userId, entry);
+        return feedPersistenceRepository.addAvatarToDatabaseForUser(userId, entry);
     }
 
     async addOnlineOfflineEntryForUser(userId: unknown, entry: FeedEntry) {
-        return feedLocalRepository.addOnlineOfflineToDatabaseForUser(
+        return feedPersistenceRepository.addOnlineOfflineToDatabaseForUser(
             userId,
             entry
         );
     }
 
     async purgeAvatarFeedData(userId: unknown, cutoffDate: string | null = null) {
-        return feedLocalRepository.purgeAvatarFeedData(userId, cutoffDate);
+        return feedPersistenceRepository.purgeAvatarFeedData(userId, cutoffDate);
     }
 }
 

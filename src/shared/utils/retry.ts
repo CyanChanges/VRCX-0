@@ -24,7 +24,7 @@ export async function executeWithBackoff<T>(
             const delay =
                 baseDelay *
                 Math.pow(2, (options.maxRetries || maxRetries) - remaining);
-            await new Promise((resolve) => setTimeout(resolve, delay));
+            await new Promise((resolve: any) => setTimeout(resolve, delay));
             return attempt(remaining - 1);
         }
     }

@@ -1,7 +1,7 @@
-import { useShellStore } from '@/state/shellStore.js';
+import { useShellStore } from '@/state/shellStore';
 
-import { setZoomLevelPreference } from './preferencesService.js';
-import { normalizeZoomLevel } from './themeService.js';
+import { setZoomLevelPreference } from './preferencesService';
+import { normalizeZoomLevel } from './themeService';
 
 type ZoomErrorHandler = (error: unknown) => void;
 type ZoomPreferenceOptions = {
@@ -38,7 +38,7 @@ async function flushPendingZoom(): Promise<void> {
     } finally {
         applyingZoom = false;
         if (pendingZoom !== null) {
-            void flushPendingZoom();
+            flushPendingZoom();
         }
     }
 }
@@ -61,7 +61,7 @@ export function queueZoomLevelPreference(
 
     targetZoom = normalizeZoomLevel(value);
     pendingZoom = targetZoom;
-    void flushPendingZoom();
+    flushPendingZoom();
     return targetZoom;
 }
 

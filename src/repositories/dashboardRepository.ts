@@ -1,10 +1,10 @@
 import {
     DASHBOARD_STORAGE_KEY,
     DEFAULT_DASHBOARD_ICON
-} from '@/shared/constants/dashboard.js';
-import { normalizeNavIconKey } from '@/shared/constants/navIcons.js';
+} from '@/shared/constants/dashboard';
+import { normalizeNavIconKey } from '@/shared/constants/navIcons';
 
-import configRepository from './configRepository.js';
+import configRepository from './configRepository';
 
 export type DashboardDirection = 'horizontal' | 'vertical';
 export type DashboardPanel =
@@ -31,7 +31,7 @@ interface CloneRowsOptions {
     generateMissingRowIds?: boolean;
 }
 
-function isRecord(value: unknown): value is Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value && typeof value === 'object');
 }
 
@@ -149,7 +149,9 @@ async function getDashboards(): Promise<Dashboard[]> {
             .map((dashboard) =>
                 sanitizeDashboard(dashboard, { generateMissingRowIds: false })
             )
-            .filter(Boolean);
+            .filter((dashboard): dashboard is Dashboard =>
+                Boolean(dashboard)
+            );
     } catch {
         return [];
     }
@@ -184,7 +186,7 @@ function generateDashboardId(): string {
 
 function generateNextDashboardName(
     dashboards: unknown[] = [],
-    baseName = 'Dashboard'
+    baseName: unknown = 'Dashboard'
 ): string {
     const normalizedBaseName =
         typeof baseName === 'string' && baseName.trim()
@@ -193,7 +195,10 @@ function generateNextDashboardName(
     const existingNames = new Set(
         (Array.isArray(dashboards) ? dashboards : [])
             .map((dashboard) => (isRecord(dashboard) ? dashboard.name : ''))
-            .filter((name) => typeof name === 'string' && name)
+            .filter(
+                (name): name is string =>
+                    typeof name === 'string' && Boolean(name)
+            )
     );
 
     if (!existingNames.has(normalizedBaseName)) {

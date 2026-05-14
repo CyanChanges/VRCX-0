@@ -4,16 +4,40 @@ import {
     invalidateEntityQueries,
     queryKeys,
     setCachedQueryData
-} from '@/lib/entityQueryCache.js';
-import { storeAvatarImage } from '@/shared/utils/avatar.js';
-import { extractFileId } from '@/shared/utils/fileUtils.js';
-import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint.js';
+} from '@/lib/entityQueryCache';
+import { tauriClient } from '@/platform/tauri/client';
+import { storeAvatarImage } from '@/shared/utils/avatar';
+import { extractFileId } from '@/shared/utils/fileUtils';
+import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint';
 
-import avatarLocalRepository from './avatarLocalRepository.js';
-import memoRepository from './memoRepository.js';
-import { executeVrchatRequest, type QueryParams } from './vrchatRequest.js';
+import avatarCacheRepository from './avatarCacheRepository';
+import memoPersistenceRepository from './memoPersistenceRepository';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
-type AvatarRecord = Record<string, any>;
+type AvatarRecord = Record<string, unknown>;
+type CachedAvatarImage = ReturnType<typeof storeAvatarImage>;
+type AvatarProfileRecord = AvatarRecord & {
+    id: string;
+    name: string;
+    description: string;
+    authorId: string;
+    authorName: string;
+    releaseStatus: string;
+    thumbnailImageUrl: string;
+    imageUrl: string;
+    version: number;
+    tags: string[];
+    unityPackages: AvatarRecord[];
+    $tags: Array<{ tag: string; color: string | null }>;
+    $timeSpent: number;
+    $memo: string;
+    $isCached: boolean;
+};
 
 interface AvatarProfileExtras extends AvatarRecord {
     cachedAvatar?: AvatarRecord | null;
@@ -33,7 +57,45 @@ interface AvatarListOptions {
     releaseStatus?: string;
 }
 
-const cachedAvatarNames = new Map<string, any>();
+interface AvatarRequestOptions {
+    endpoint?: string;
+}
+
+interface AvatarIdInput extends AvatarRequestOptions {
+    avatarId?: unknown;
+}
+
+interface SaveAvatarInput extends AvatarIdInput {
+    params?: Record<string, unknown>;
+}
+
+interface AvatarStylesInput extends AvatarRequestOptions {
+    force?: boolean;
+}
+
+interface CollectPagesOptions {
+    pageSize?: number;
+    maxPages?: number;
+}
+
+interface AvatarProfileInput extends AvatarIdInput {
+    force?: boolean;
+    dialog?: boolean;
+    allowLocalFallback?: boolean;
+    currentUserId?: unknown;
+}
+
+interface AvatarModerationInput extends AvatarIdInput {
+    type?: unknown;
+}
+
+const cachedAvatarNames = new Map<string, CachedAvatarImage>();
+
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
 
 function normalizeEntityId(value: unknown): string {
     return typeof value === 'string'
@@ -63,6 +125,35 @@ function normalizeArray(values: unknown): string[] {
         .filter(Boolean);
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatAvatarResponse<TJson = unknown>(
+    response: VrchatApiResult,
+    path: string
+) {
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage: 'VRChat avatar request failed'
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
+
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
+}
+
 function normalizeLocalTags(
     values: unknown
 ): Array<{ tag: string; color: string | null }> {
@@ -71,10 +162,13 @@ function normalizeLocalTags(
     }
 
     return values
-        .map((entry) => ({
-            tag: normalizeString(entry?.tag),
-            color: normalizeString(entry?.color) || null
-        }))
+        .map((entry) => {
+            const source = isRecord(entry) ? entry : {};
+            return {
+                tag: normalizeString(source.tag),
+                color: normalizeString(source.color) || null
+            };
+        })
         .filter((entry) => entry.tag);
 }
 
@@ -83,7 +177,9 @@ function normalizeUnityPackages(values: unknown): AvatarRecord[] {
         return [];
     }
 
-    return values.filter((value) => value && typeof value === 'object');
+    return values.filter((value): value is AvatarRecord =>
+        Boolean(value && typeof value === 'object')
+    );
 }
 
 function parseInteger(value: unknown): number {
@@ -91,46 +187,63 @@ function parseInteger(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function normalizeFileResponse(json: unknown): {
+    versions: Array<{ created_at?: string }>;
+    name?: string;
+    ownerId?: string;
+} {
+    if (isRecord(json) && Array.isArray(json.versions)) {
+        return {
+            versions: json.versions.filter(isRecord),
+            name: typeof json.name === 'string' ? json.name : '',
+            ownerId: typeof json.ownerId === 'string' ? json.ownerId : ''
+        };
+    }
+
+    return { versions: [], name: '', ownerId: '' };
+}
+
 function normalizeAvatarProfile(
-    avatar: AvatarRecord | null | undefined,
+    avatar: unknown,
     extras: AvatarProfileExtras = {}
-) {
+): AvatarProfileRecord {
+    const source = isRecord(avatar) ? avatar : {};
     return {
-        ...avatar,
-        id: normalizeEntityId(avatar?.id),
-        name: normalizeString(avatar?.name),
-        description: normalizeString(avatar?.description),
-        authorId: normalizeEntityId(avatar?.authorId ?? avatar?.author_id),
+        ...source,
+        id: normalizeEntityId(source.id),
+        name: normalizeString(source.name),
+        description: normalizeString(source.description),
+        authorId: normalizeEntityId(source.authorId ?? source.author_id),
         authorName:
-            normalizeEntityId(avatar?.authorName ?? avatar?.author_name) ||
-            normalizeEntityId(avatar?.authorId ?? avatar?.author_id) ||
+            normalizeEntityId(source.authorName ?? source.author_name) ||
+            normalizeEntityId(source.authorId ?? source.author_id) ||
             'Unknown author',
         releaseStatus:
             normalizeEntityId(
-                avatar?.releaseStatus ?? avatar?.release_status
+                source.releaseStatus ?? source.release_status
             ) || 'unknown',
         thumbnailImageUrl: normalizeString(
-            avatar?.thumbnailImageUrl ?? avatar?.thumbnail_image_url
+            source.thumbnailImageUrl ?? source.thumbnail_image_url
         ),
-        imageUrl: normalizeString(avatar?.imageUrl ?? avatar?.image_url),
-        created_at: avatar?.created_at ?? avatar?.createdAt ?? '',
-        updated_at: avatar?.updated_at ?? avatar?.updatedAt ?? '',
-        version: parseInteger(avatar?.version),
-        tags: normalizeArray(avatar?.tags),
-        unityPackages: normalizeUnityPackages(avatar?.unityPackages),
-        $tags: normalizeLocalTags(extras.localTags ?? avatar?.$tags),
+        imageUrl: normalizeString(source.imageUrl ?? source.image_url),
+        created_at: source.created_at ?? source.createdAt ?? '',
+        updated_at: source.updated_at ?? source.updatedAt ?? '',
+        version: parseInteger(source.version),
+        tags: normalizeArray(source.tags),
+        unityPackages: normalizeUnityPackages(source.unityPackages),
+        $tags: normalizeLocalTags(extras.localTags ?? source.$tags),
         $timeSpent: Math.max(
             0,
-            parseInteger(extras.timeSpent ?? avatar?.$timeSpent)
+            parseInteger(extras.timeSpent ?? source.$timeSpent)
         ),
-        $memo: normalizeMemoString(extras.memo ?? avatar?.$memo),
+        $memo: normalizeMemoString(extras.memo ?? source.$memo),
         $isCached: Boolean(extras.cachedAvatar)
-    };
+    } as AvatarProfileRecord;
 }
 
 async function collectPages<T>(
     fetchPage: (page: { n: number; offset: number }) => Promise<T[]>,
-    { pageSize = 100, maxPages = 50 } = {}
+    { pageSize = 100, maxPages = 50 }: CollectPagesOptions = {}
 ): Promise<T[]> {
     const rows: T[] = [];
 
@@ -149,7 +262,10 @@ async function collectPages<T>(
     return rows;
 }
 
-function normalize(avatar: AvatarRecord, extras: AvatarProfileExtras = {}) {
+function normalize(
+    avatar: unknown,
+    extras: AvatarProfileExtras = {}
+): AvatarProfileRecord {
     return normalizeAvatarProfile(avatar, extras);
 }
 
@@ -163,64 +279,9 @@ function getAvatarNameCacheSize() {
     return cachedAvatarNames.size;
 }
 
-async function executeGet(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<AvatarRecord | AvatarRecord[]>(path, {
-        endpoint,
-        method: 'GET',
-        params,
-        fallbackMessage: 'VRChat avatar request failed'
-    });
-}
-
-async function executePut(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<AvatarRecord>(path, {
-        endpoint,
-        method: 'PUT',
-        body: params,
-        jsonBody: params !== null,
-        fallbackMessage: 'VRChat avatar request failed'
-    });
-}
-
-async function executePost(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<AvatarRecord>(path, {
-        endpoint,
-        method: 'POST',
-        body: params,
-        fallbackMessage: 'VRChat avatar request failed'
-    });
-}
-
-async function executeDelete(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<AvatarRecord>(path, {
-        endpoint,
-        method: 'DELETE',
-        params,
-        queryParams: params,
-        jsonBody: false,
-        fallbackMessage: 'VRChat avatar request failed'
-    });
-}
-
 async function getLocalSnapshot(
     avatarId: unknown,
-    currentUserId = ''
+    currentUserId: unknown = ''
 ): Promise<AvatarProfileExtras> {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
@@ -234,18 +295,18 @@ async function getLocalSnapshot(
 
     const [cachedAvatar, localTags, timeSpentEntry, memoEntry] =
         await Promise.all([
-            avatarLocalRepository
+            avatarCacheRepository
                 .getCachedAvatarById(normalizedAvatarId)
                 .catch(() => null),
-            avatarLocalRepository
+            avatarCacheRepository
                 .getAvatarTags(normalizedAvatarId)
                 .catch(() => []),
             currentUserId
-                ? avatarLocalRepository
+                ? avatarCacheRepository
                       .getAvatarTimeSpent(currentUserId, normalizedAvatarId)
                       .catch(() => null)
                 : Promise.resolve(null),
-            memoRepository.getAvatarMemo(normalizedAvatarId).catch(() => null)
+            memoPersistenceRepository.getAvatarMemo(normalizedAvatarId).catch(() => null)
         ]);
 
     return {
@@ -263,7 +324,7 @@ async function getAvatarProfile({
     dialog = false,
     allowLocalFallback = true,
     currentUserId = ''
-}) {
+}: AvatarProfileInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -285,10 +346,12 @@ async function getAvatarProfile({
                     : entityQueryPolicies.avatar,
                 force,
                 queryFn: async () => {
-                    const response = await executeGet(
-                        `avatars/${encodeURIComponent(normalizedAvatarId)}`,
-                        {},
-                        { endpoint }
+                    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+                        await tauriClient.app.VrchatAvatarGet({
+                            avatarId: normalizedAvatarId,
+                            endpoint
+                        }),
+                        `avatars/${encodeURIComponent(normalizedAvatarId)}`
                     );
                     return response.json;
                 }
@@ -328,15 +391,14 @@ async function getAvatarGallery({
         policy: entityQueryPolicies.avatarGallery,
         force,
         queryFn: async () => {
-            const response = await executeGet(
-                'files',
-                {
-                    tag: 'avatargallery',
-                    galleryId: normalizedAvatarId,
-                    n: 100,
-                    offset: 0
-                },
-                { endpoint }
+            const response = unwrapVrchatAvatarResponse<
+                AvatarRecord[] | { files?: AvatarRecord[] }
+            >(
+                await tauriClient.app.VrchatAvatarGalleryGet({
+                    avatarId: normalizedAvatarId,
+                    endpoint
+                }),
+                'files'
             );
             return Array.isArray(response.json)
                 ? response.json
@@ -370,14 +432,19 @@ async function getAvatarsByUser({
         );
     }
 
-    const params: QueryParams = { n, offset, sort, order, releaseStatus };
-    if (user) {
-        params.user = user;
-    } else {
-        params.userId = normalizedUserId;
-    }
-
-    const response = await executeGet('avatars', params, { endpoint });
+    const response = unwrapVrchatAvatarResponse<AvatarRecord[]>(
+        await tauriClient.app.VrchatAvatarListByUserGet({
+            endpoint,
+            userId: normalizedUserId,
+            user,
+            n,
+            offset,
+            sort,
+            order,
+            releaseStatus
+        }),
+        'avatars'
+    );
     return Array.isArray(response.json)
         ? response.json.map((avatar) => normalize(avatar))
         : [];
@@ -405,7 +472,7 @@ async function getAllAvatarsByUser({
     );
 }
 
-async function selectAvatar({ avatarId, endpoint = '' }) {
+async function selectAvatar({ avatarId, endpoint = '' }: AvatarIdInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -413,10 +480,12 @@ async function selectAvatar({ avatarId, endpoint = '' }) {
         );
     }
 
-    const response = await executePut(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}/select`,
-        null,
-        { endpoint }
+    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarSelect({
+            avatarId: normalizedAvatarId,
+            endpoint
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}/select`
     );
     if (response.json && typeof response.json === 'object') {
         setCachedQueryData(
@@ -427,7 +496,10 @@ async function selectAvatar({ avatarId, endpoint = '' }) {
     return response;
 }
 
-async function selectFallbackAvatar({ avatarId, endpoint = '' }) {
+async function selectFallbackAvatar({
+    avatarId,
+    endpoint = ''
+}: AvatarIdInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -435,10 +507,12 @@ async function selectFallbackAvatar({ avatarId, endpoint = '' }) {
         );
     }
 
-    const response = await executePut(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}/selectfallback`,
-        null,
-        { endpoint }
+    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarSelectFallback({
+            avatarId: normalizedAvatarId,
+            endpoint
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}/selectfallback`
     );
     if (response.json && typeof response.json === 'object') {
         setCachedQueryData(
@@ -449,7 +523,11 @@ async function selectFallbackAvatar({ avatarId, endpoint = '' }) {
     return response;
 }
 
-async function saveAvatar({ avatarId, params = {}, endpoint = '' }) {
+async function saveAvatar({
+    avatarId,
+    params = {},
+    endpoint = ''
+}: SaveAvatarInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -457,10 +535,13 @@ async function saveAvatar({ avatarId, params = {}, endpoint = '' }) {
         );
     }
 
-    const response = await executePut(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}`,
-        params,
-        { endpoint }
+    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarSave({
+            avatarId: normalizedAvatarId,
+            endpoint,
+            params
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}`
     );
     if (response.json && typeof response.json === 'object') {
         setCachedQueryData(
@@ -471,19 +552,25 @@ async function saveAvatar({ avatarId, params = {}, endpoint = '' }) {
     return response;
 }
 
-async function getAvatarStyles({ endpoint = '', force = false } = {}) {
+async function getAvatarStyles({
+    endpoint = '',
+    force = false
+}: AvatarStylesInput = {}) {
     return fetchCachedData({
         queryKey: queryKeys.avatarStyles(endpoint),
         policy: entityQueryPolicies.avatarStyles,
         force,
         queryFn: async () => {
-            const response = await executeGet('avatarStyles', {}, { endpoint });
+            const response = unwrapVrchatAvatarResponse(
+                await tauriClient.app.VrchatAvatarStylesGet({ endpoint }),
+                'avatarStyles'
+            );
             return Array.isArray(response.json) ? response.json : [];
         }
     });
 }
 
-async function deleteAvatar({ avatarId, endpoint = '' }) {
+async function deleteAvatar({ avatarId, endpoint = '' }: AvatarIdInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -491,10 +578,12 @@ async function deleteAvatar({ avatarId, endpoint = '' }) {
         );
     }
 
-    const response = await executeDelete(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}`,
-        {},
-        { endpoint }
+    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarDelete({
+            avatarId: normalizedAvatarId,
+            endpoint
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}`
     );
     await Promise.allSettled([
         invalidateEntityQueries(queryKeys.avatar(normalizedAvatarId, endpoint)),
@@ -505,7 +594,7 @@ async function deleteAvatar({ avatarId, endpoint = '' }) {
     return response;
 }
 
-async function createImposter({ avatarId, endpoint = '' }) {
+async function createImposter({ avatarId, endpoint = '' }: AvatarIdInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -513,14 +602,17 @@ async function createImposter({ avatarId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor/enqueue`,
-        {},
-        { endpoint }
+    return unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarImpostorCreate({
+            avatarId: normalizedAvatarId,
+            endpoint,
+            emptyBody: true
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor/enqueue`
     );
 }
 
-async function deleteImposter({ avatarId, endpoint = '' }) {
+async function deleteImposter({ avatarId, endpoint = '' }: AvatarIdInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     if (!normalizedAvatarId) {
         throw new Error(
@@ -528,22 +620,27 @@ async function deleteImposter({ avatarId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor`,
-        {},
-        { endpoint }
+    return unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarImpostorDelete({
+            avatarId: normalizedAvatarId,
+            endpoint
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor`
     );
 }
 
-async function getAvatarModerations({ endpoint = '' } = {}) {
-    return executeGet('auth/user/avatarmoderations', {}, { endpoint });
+async function getAvatarModerations({ endpoint = '' }: AvatarRequestOptions = {}) {
+    return unwrapVrchatAvatarResponse(
+        await tauriClient.app.VrchatAvatarModerationsGet({ endpoint }),
+        'auth/user/avatarmoderations'
+    );
 }
 
 async function sendAvatarModeration({
     avatarId,
     type = 'block',
     endpoint = ''
-}) {
+}: AvatarModerationInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     const normalizedType = normalizeString(type) || 'block';
     if (!normalizedAvatarId) {
@@ -552,13 +649,13 @@ async function sendAvatarModeration({
         );
     }
 
-    return executePost(
-        'auth/user/avatarmoderations',
-        {
-            avatarModerationType: normalizedType,
-            targetAvatarId: normalizedAvatarId
-        },
-        { endpoint }
+    return unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarModerationSend({
+            avatarId: normalizedAvatarId,
+            type: normalizedType,
+            endpoint
+        }),
+        'auth/user/avatarmoderations'
     );
 }
 
@@ -566,7 +663,7 @@ async function deleteAvatarModeration({
     avatarId,
     type = 'block',
     endpoint = ''
-}) {
+}: AvatarModerationInput) {
     const normalizedAvatarId = normalizeEntityId(avatarId);
     const normalizedType = normalizeString(type) || 'block';
     if (!normalizedAvatarId) {
@@ -575,18 +672,21 @@ async function deleteAvatarModeration({
         );
     }
 
-    return executeDelete(
-        'auth/user/avatarmoderations',
-        {
-            avatarModerationType: normalizedType,
-            targetAvatarId: normalizedAvatarId
-        },
-        { endpoint }
+    return unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarModerationDelete({
+            avatarId: normalizedAvatarId,
+            type: normalizedType,
+            endpoint
+        }),
+        'auth/user/avatarmoderations'
     );
 }
 
-async function getAvatarNameFromImageUrl(imageUrl, { endpoint = '' } = {}) {
-    const fileId = extractFileId(imageUrl || '');
+async function getAvatarNameFromImageUrl(
+    imageUrl: unknown,
+    { endpoint = '' }: AvatarRequestOptions = {}
+) {
+    const fileId = extractFileId(String(imageUrl || ''));
     if (!fileId) {
         return {
             ownerId: '',
@@ -603,16 +703,18 @@ async function getAvatarNameFromImageUrl(imageUrl, { endpoint = '' } = {}) {
         const response = await fetchCachedData({
             queryKey: queryKeys.file(fileId, endpoint),
             policy: entityQueryPolicies.fileObject,
-            queryFn: () =>
-                executeGet(
-                    `file/${encodeURIComponent(fileId)}`,
-                    {},
-                    { endpoint }
+            queryFn: async () =>
+                unwrapVrchatAvatarResponse(
+                    await tauriClient.app.VrchatAvatarFileGet({
+                        fileId,
+                        endpoint
+                    }),
+                    `file/${encodeURIComponent(fileId)}`
                 )
         });
         const nextInfo = storeAvatarImage(
             {
-                json: response.json,
+                json: normalizeFileResponse(response.json),
                 params: { fileId }
             },
             new Map()
@@ -631,10 +733,6 @@ const avatarProfileRepository = Object.freeze({
     normalize,
     clearAvatarNameCache,
     getAvatarNameCacheSize,
-    executeGet,
-    executePut,
-    executePost,
-    executeDelete,
     getLocalSnapshot,
     getAvatarProfile,
     getAvatarGallery,
@@ -657,10 +755,6 @@ export {
     normalize,
     clearAvatarNameCache,
     getAvatarNameCacheSize,
-    executeGet,
-    executePut,
-    executePost,
-    executeDelete,
     getLocalSnapshot,
     getAvatarProfile,
     getAvatarGallery,

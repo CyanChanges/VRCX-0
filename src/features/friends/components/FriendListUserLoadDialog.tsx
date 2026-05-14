@@ -1,0 +1,64 @@
+import { Button } from '@/ui/shadcn/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle
+} from '@/ui/shadcn/dialog';
+import { useTranslation } from 'react-i18next';
+
+export function FriendListUserLoadDialog({
+    open,
+    progress,
+    percent,
+    onCancel
+}: any) {
+    const { t } = useTranslation();
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(nextOpen: any) => !nextOpen && onCancel()}
+        >
+            <DialogContent showCloseButton={false} className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>
+                        {t('view.friend_list.loading.loading_friend_details')}
+                    </DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-2">
+                    <div className="bg-muted h-4 overflow-hidden rounded-full border">
+                        <div
+                            className="bg-primary h-full"
+                            role="progressbar"
+                            aria-label={t(
+                                'view.friend_list.loading.loading_friend_details'
+                            )}
+                            aria-valuemin={0}
+                            aria-valuemax={progress.total || 100}
+                            aria-valuenow={progress.current}
+                            aria-valuetext={`${progress.current} / ${progress.total}`}
+                            style={{ width: `${percent}%` }}
+                        />
+                    </div>
+                    <div className="text-muted-foreground text-right text-xs">
+                        {progress.current} / {progress.total}
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={progress.cancelled}
+                        onClick={onCancel}
+                    >
+                        {progress.cancelled
+                            ? t('view.friend_list.description.cancelling')
+                            : t('view.friend_list.load_cancel')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}

@@ -1,4 +1,4 @@
-export const THEME_CONFIG = {
+export const THEME_CONFIG: any = {
     system: {
         isDark: 'system',
         name: 'System'
@@ -116,7 +116,7 @@ export const THEME_COLOR_CONFIG: Record<string, ThemeColorConfig> = {
 };
 
 export const THEME_COLORS = Object.freeze(
-    Object.values(THEME_COLOR_CONFIG).map(({ key, label, swatch }) => ({
+    Object.values(THEME_COLOR_CONFIG).map(({ key, label, swatch }: any) => ({
         key,
         label,
         swatch

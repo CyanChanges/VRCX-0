@@ -1,0 +1,47 @@
+use serde::{Deserialize, Serialize};
+use vrcx_0_core::json::RawJson;
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialFavoritesBaselineInput {
+    #[serde(default)]
+    pub user_id: String,
+    #[serde(default)]
+    pub endpoint: String,
+    #[serde(default)]
+    pub current_user_snapshot: RawJson,
+    #[serde(default)]
+    pub friend_roster_by_id: RawJson,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialFavoritesBaselineOutput {
+    pub user_id: String,
+    pub stale: bool,
+    pub count: usize,
+    pub snapshot: Option<RawJson>,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialFriendRosterBaselineInput {
+    #[serde(default)]
+    pub user_id: String,
+    #[serde(default)]
+    pub endpoint: String,
+    #[serde(default)]
+    pub current_user_snapshot: RawJson,
+    #[serde(default)]
+    pub explicit_add_intent_user_ids: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SocialFriendRosterBaselineOutput {
+    pub user_id: String,
+    pub stale: bool,
+    pub count: usize,
+    pub detail: String,
+    pub snapshot: Option<RawJson>,
+}

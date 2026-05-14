@@ -1,4 +1,4 @@
-import { languageMappings } from '@/shared/constants/language.js';
+import { languageMappings } from '@/shared/constants/language';
 
 type LanguageOption = {
     key?: unknown;
@@ -46,7 +46,7 @@ export function languageOptionLabel(option: LanguageOption): string {
 export function fallbackLanguageOptions(): Array<{ key: string; value: string }> {
     return Object.keys(languageMappings)
         .sort()
-        .map((key) => ({ key, value: key.toUpperCase() }));
+        .map((key: any) => ({ key, value: key.toUpperCase() }));
 }
 
 export function normalizeLanguageOptionsFromConfig(
@@ -62,17 +62,17 @@ export function normalizeLanguageOptionsFromConfig(
     }
 
     return Object.entries(options)
-        .map(([key, value]) => ({
+        .map(([key, value]: any) => ({
             key: normalizeLanguageKey(key),
             value: normalizeLanguageText(value)
         }))
-        .filter((option) => option.key && option.value)
-        .sort((left, right) => left.value.localeCompare(right.value));
+        .filter((option: any) => option.key && option.value)
+        .sort((left: any, right: any) => left.value.localeCompare(right.value));
 }
 
 export function normalizeProfileLanguageRows(
     profile: ProfileLanguageSource | null | undefined,
-    languageOptionMap = new Map()
+    languageOptionMap: any = new Map()
 ): Array<{ key: string; value: string }> {
     const rows: Array<{ key: string; value: string }> = [];
     const seen = new Set<string>();
@@ -112,7 +112,7 @@ export function normalizeProfileLanguageRows(
         profile.languages.forEach(addRow);
     }
     if (Array.isArray(profile?.tags)) {
-        profile.tags.forEach((tag) => {
+        profile.tags.forEach((tag: any) => {
             const normalizedTag = normalizeLanguageText(tag).toLowerCase();
             if (normalizedTag.startsWith('language_')) {
                 addRow(normalizedTag);

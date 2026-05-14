@@ -1,4 +1,4 @@
-import { replaceBioSymbols } from './base/string';
+import { replaceBioSymbols } from './string';
 
 type EntityRecord = Record<string, any>;
 
@@ -43,7 +43,7 @@ export function createDefaultFavoriteGroupRef(json: EntityRecord = {}) {
  * @returns {object}
  */
 export function createDefaultFavoriteCachedRef(json: EntityRecord = {}) {
-    const ref = {
+    const ref: any = {
         id: '',
         type: '',
         favoriteId: '',

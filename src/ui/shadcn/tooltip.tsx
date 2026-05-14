@@ -5,7 +5,7 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
-const titleBarCollisionPadding = { top: 40, right: 8, bottom: 8, left: 8 };
+const titleBarCollisionPadding: any = { top: 40, right: 8, bottom: 8, left: 8 };
 
 function TooltipProvider({
     delayDuration = 0,

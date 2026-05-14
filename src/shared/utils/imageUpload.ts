@@ -1,4 +1,4 @@
-import { bytesToBase64 } from './binary.js';
+import { bytesToBase64 } from './binary';
 
 export interface ImageUploadValidationOptions {
     maxSize?: number;
@@ -39,7 +39,7 @@ const SAFE_RASTER_IMAGE_TYPES = new Set([
  */
 export function withUploadTimeout<T>(promise: Promise<T>): Promise<T> {
     let timeoutId: ReturnType<typeof setTimeout>;
-    const timeout = new Promise<never>((_, reject) => {
+    const timeout = new Promise<never>((_: any, reject: any) => {
         timeoutId = setTimeout(
             () => reject(new Error('Upload timed out')),
             UPLOAD_TIMEOUT_MS
@@ -63,7 +63,7 @@ export async function readFileAsBase64(blob: Blob): Promise<string> {
 
 export function validateImageUploadFile(
     file: Blob | File | null | undefined,
-    { maxSize = DEFAULT_MAX_IMAGE_UPLOAD_BYTES } = {}
+    { maxSize = DEFAULT_MAX_IMAGE_UPLOAD_BYTES }: any = {}
 ): ImageUploadValidationResult {
     if (!file) {
         return { ok: false, reason: 'missing' };
@@ -123,8 +123,8 @@ export async function cropImageFileToAspect(
             crop.width,
             crop.height
         );
-        return await new Promise((resolve, reject) => {
-            canvas.toBlob((blob) => {
+        return await new Promise((resolve: any, reject: any) => {
+            canvas.toBlob((blob: any) => {
                 if (blob) {
                     resolve(blob);
                 } else {

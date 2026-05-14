@@ -60,7 +60,7 @@ export const TAG_COLORS = Object.freeze([
  * Uses djb2 hash so the same tag always gets the same color.
  * @param tagName
  */
-export function getTagColor(tagName) {
+export function getTagColor(tagName: any) {
     let hash = 5381;
     for (let i = 0; i < tagName.length; i++) {
         hash = ((hash << 5) + hash + tagName.charCodeAt(i)) >>> 0;

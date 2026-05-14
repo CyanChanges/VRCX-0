@@ -4,7 +4,7 @@ import {
     mergeUserFact,
     normalizeUserId,
     userFactKey
-} from './userFacts.js';
+} from './userFacts';
 
 describe('userFacts domain model', () => {
     it('normalizes ids and scopes facts by endpoint', () => {

@@ -3,8 +3,8 @@ import { create } from 'zustand';
 import {
     TRUST_COLOR_DEFAULTS,
     normalizeTrustColors
-} from '@/lib/trustColors.js';
-import { sharedFeedFiltersDefaults } from '@/shared/constants/feedFilters.js';
+} from '@/shared/utils/trustColors';
+import { sharedFeedFiltersDefaults } from '@/shared/constants/feedFilters';
 import {
     DEFAULT_MAX_TABLE_SIZE,
     DEFAULT_SEARCH_LIMIT,
@@ -12,9 +12,9 @@ import {
     SEARCH_LIMIT_MIN,
     TABLE_MAX_SIZE_MAX,
     TABLE_MAX_SIZE_MIN
-} from '@/shared/constants/settings.js';
+} from '@/shared/constants/settings';
 
-import { normalizeNavWidth, normalizeTableDensity } from './shellStore.js';
+import { normalizeNavWidth, normalizeTableDensity } from './shellStore';
 
 export const DEFAULT_TABLE_PAGE_SIZE = 20;
 export const DEFAULT_TABLE_PAGE_SIZES = Object.freeze([
@@ -23,6 +23,31 @@ export const DEFAULT_TABLE_PAGE_SIZES = Object.freeze([
 const DEFAULT_TRANSLATION_ENDPOINT =
     'https://api.openai.com/v1/chat/completions';
 const DEFAULT_TRANSLATION_MODEL = 'gpt-4o-mini';
+
+export type NotificationLayoutPreference = 'notification-center' | 'table';
+export type TableDensityPreference = 'standard' | 'compact';
+export type TranslationApiType = 'google' | 'openai';
+export type TrustColorKey = keyof typeof TRUST_COLOR_DEFAULTS;
+export type TrustColorsPreference = Record<TrustColorKey, string>;
+export type DiscordPreferenceKey =
+    | 'discordActive'
+    | 'discordInstance'
+    | 'discordHideInvite'
+    | 'discordJoinButton'
+    | 'discordHideImage'
+    | 'discordShowPlatform'
+    | 'discordWorldIntegration'
+    | 'discordWorldNameAsDiscordStatus';
+
+export interface TableLimitsPreference {
+    maxTableSize: number;
+    searchLimit: number;
+}
+
+export interface SharedFeedFiltersPreference {
+    noty: Record<string, unknown>;
+    wrist: Record<string, unknown>;
+}
 
 type BoundedIntOptions = {
     min?: number;
@@ -37,7 +62,7 @@ type SharedFeedFilterSnapshot = {
     noty?: unknown;
     wrist?: unknown;
 };
-type PreferenceSnapshot = Record<string, unknown>;
+type PreferenceInputSnapshot = Record<string, unknown>;
 
 function asRecord(value: unknown): Record<string, unknown> {
     return value && typeof value === 'object'
@@ -73,19 +98,19 @@ function normalizeBoundedInt(
 export function normalizeTablePageSizes(value: unknown): number[] {
     const source = Array.isArray(value) ? value : DEFAULT_TABLE_PAGE_SIZES;
     const nextSizes = source
-        .map((entry) => Number.parseInt(entry as string, 10))
+        .map((entry: any) => Number.parseInt(entry as string, 10))
         .filter(
-            (entry) => Number.isFinite(entry) && entry > 0 && entry <= 1000
+            (entry: any) => Number.isFinite(entry) && entry > 0 && entry <= 1000
         );
     const normalized = Array.from(new Set(nextSizes)).sort(
-        (left, right) => left - right
+        (left: any, right: any) => left - right
     );
     return normalized.length ? normalized : [...DEFAULT_TABLE_PAGE_SIZES];
 }
 
 export function normalizeTablePageSize(
     value: unknown,
-    fallback = DEFAULT_TABLE_PAGE_SIZE
+    fallback: any = DEFAULT_TABLE_PAGE_SIZE
 ): number {
     return normalizeBoundedInt(value, {
         min: 1,
@@ -113,7 +138,9 @@ export function normalizeTableLimits(value: unknown = {}): {
     };
 }
 
-export function normalizeSharedFeedFilters(value: unknown = {}) {
+export function normalizeSharedFeedFilters(
+    value: unknown = {}
+): SharedFeedFiltersPreference {
     const filters = asRecord(value) as SharedFeedFilterSnapshot;
     const noty = asRecord(filters.noty);
     const wrist = asRecord(filters.wrist);
@@ -143,7 +170,7 @@ export function parseSharedFeedFilters(value?: unknown) {
     }
 }
 
-export const DEFAULT_PREFERENCES: PreferenceSnapshot = Object.freeze({
+export const DEFAULT_PREFERENCES: PreferenceInputSnapshot = Object.freeze({
     notificationLayout: 'notification-center',
     dataTableStriped: false,
     tableDensity: 'standard',
@@ -224,8 +251,10 @@ export const DEFAULT_PREFERENCES: PreferenceSnapshot = Object.freeze({
     discordWorldNameAsDiscordStatus: false
 });
 
-export function normalizePreferenceSnapshot(snapshot: PreferenceSnapshot = {}) {
-    const next = {
+export function normalizePreferenceSnapshot(
+    snapshot: PreferenceInputSnapshot = {}
+) {
+    const next: any = {
         ...DEFAULT_PREFERENCES,
         ...snapshot
     };
@@ -345,29 +374,38 @@ export function normalizePreferenceSnapshot(snapshot: PreferenceSnapshot = {}) {
     };
 }
 
-export const usePreferencesStore = create((set) => ({
+export type PreferencesSnapshot = ReturnType<typeof normalizePreferenceSnapshot>;
+
+export type PreferencesStoreState = PreferencesSnapshot & {
+    preferencesHydrated: boolean;
+    hydratePreferences(snapshot: unknown): void;
+    patchPreferences(patch: Record<string, unknown>): void;
+    setPreferenceValue(key: string, value: unknown): void;
+};
+
+export const usePreferencesStore = create<PreferencesStoreState>((set: any) => ({
     ...normalizePreferenceSnapshot(DEFAULT_PREFERENCES),
     preferencesHydrated: false,
-    hydratePreferences(snapshot) {
+    hydratePreferences(snapshot: unknown) {
         set({
-            ...normalizePreferenceSnapshot(snapshot),
+            ...normalizePreferenceSnapshot(snapshot as PreferenceInputSnapshot),
             preferencesHydrated: true
         });
     },
-    patchPreferences(patch) {
-        set((state) =>
+    patchPreferences(patch: Record<string, unknown>) {
+        set((state: any) =>
             normalizePreferenceSnapshot({
                 ...state,
                 ...patch
-            })
+            } as PreferenceInputSnapshot)
         );
     },
-    setPreferenceValue(key, value) {
-        set((state) =>
+    setPreferenceValue(key: string, value: unknown) {
+        set((state: any) =>
             normalizePreferenceSnapshot({
                 ...state,
                 [key]: value
-            })
+            } as PreferenceInputSnapshot)
         );
     }
 }));

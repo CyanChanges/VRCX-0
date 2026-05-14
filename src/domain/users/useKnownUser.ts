@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useUserFactsStore } from '@/state/userFactsStore.js';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useUserFactsStore } from '@/state/userFactsStore';
 
-import { getKnownUserFact } from './userFactAccess.js';
-import { normalizeEndpoint, normalizeUserId, userFactKey } from './userFacts.js';
+import { getKnownUserFact } from './userFactAccess';
+import { normalizeEndpoint, normalizeUserId, userFactKey } from './userFacts';
 
 interface UseKnownUserOptions {
     endpoint?: unknown;
@@ -26,7 +26,7 @@ function normalizeUserIdList(userIds: unknown): string[] {
 
 function useKnownUserFact(userId: unknown, options: UseKnownUserOptions = {}) {
     const storeEndpoint = useRuntimeStore(
-        (state) => state.auth.currentUserEndpoint
+        (state: any) => state.auth.currentUserEndpoint
     );
     const endpoint = normalizeEndpoint(options.endpoint || storeEndpoint);
     const normalizedUserId = normalizeUserId(userId);
@@ -34,7 +34,7 @@ function useKnownUserFact(userId: unknown, options: UseKnownUserOptions = {}) {
         () => userFactKey(endpoint, normalizedUserId),
         [endpoint, normalizedUserId]
     );
-    return useUserFactsStore((state) =>
+    return useUserFactsStore((state: any) =>
         key ? state.usersByKey[key] || null : null
     );
 }
@@ -44,10 +44,10 @@ function useKnownUserFacts(
     options: UseKnownUserOptions = {}
 ) {
     const storeEndpoint = useRuntimeStore(
-        (state) => state.auth.currentUserEndpoint
+        (state: any) => state.auth.currentUserEndpoint
     );
     const endpoint = normalizeEndpoint(options.endpoint || storeEndpoint);
-    const version = useUserFactsStore((state) => state.version);
+    const version = useUserFactsStore((state: any) => state.version);
     const normalizedUserIds = useMemo(
         () => normalizeUserIdList(userIds),
         [userIds]

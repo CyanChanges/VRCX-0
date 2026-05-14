@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
     createLocationViewModel,
     resolveLocationMetadataModel
-} from './locationViewModel.js';
+} from './locationViewModel';
 
 describe('locationViewModel domain model', () => {
     it('uses traveling destination as the display target', () => {

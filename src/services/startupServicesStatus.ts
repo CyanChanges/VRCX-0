@@ -1,5 +1,5 @@
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useSessionStore } from '@/state/sessionStore.js';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useSessionStore } from '@/state/sessionStore';
 
 type StartupServicesStatus = {
     completed: boolean;

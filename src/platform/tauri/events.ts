@@ -1,23 +1,23 @@
-import type { UnlistenFn } from '@tauri-apps/api/event';
+import type { Event, UnlistenFn } from '@tauri-apps/api/event';
 
-import { normalizePlatformError } from './errors.js';
+import { normalizePlatformError } from './errors';
 
-export type BackendEventHandler = (payload: unknown) => void;
+export type TauriEventHandler = (payload: unknown) => void;
 
-interface BackendEventRegistration {
+interface TauriEventRegistration {
     promise: Promise<UnlistenFn>;
     unlisten: UnlistenFn | null;
 }
 
-const listeners = new Map<string, Set<BackendEventHandler>>();
-const tauriRegistrations = new Map<string, BackendEventRegistration>();
+const listeners = new Map<string, Set<TauriEventHandler>>();
+const tauriRegistrations = new Map<string, TauriEventRegistration>();
 
 async function loadListen() {
     const event = await import('@tauri-apps/api/event');
     return event.listen;
 }
 
-function getBucket(name: string): Set<BackendEventHandler> {
+function getBucket(name: string): Set<TauriEventHandler> {
     let bucket = listeners.get(name);
     if (!bucket) {
         bucket = new Set();
@@ -36,7 +36,7 @@ function dispatch(name: string, payload: unknown): void {
         try {
             handler(payload);
         } catch (error) {
-            console.error(`Error in backend event handler for ${name}:`, error);
+            console.error(`Error in Tauri event handler for ${name}:`, error);
         }
     }
 }
@@ -47,14 +47,14 @@ async function ensureTauriSubscription(name: string): Promise<UnlistenFn> {
         return existing.promise;
     }
 
-    const bucket: BackendEventRegistration = {
+    const bucket: TauriEventRegistration = {
         promise: Promise.resolve(() => undefined),
         unlisten: null
     };
     bucket.promise = (async () => {
         try {
             const listen = await loadListen();
-            const unlisten = await listen<unknown>(name, (event) => {
+            const unlisten = await listen<unknown>(name, (event: Event<unknown>) => {
                 dispatch(name, event.payload);
             });
             bucket.unlisten = unlisten;
@@ -72,7 +72,7 @@ async function ensureTauriSubscription(name: string): Promise<UnlistenFn> {
         } catch (error) {
             throw normalizePlatformError(
                 error,
-                `Unable to subscribe to backend event: ${name}`
+                `Unable to subscribe to Tauri event: ${name}`
             );
         }
     })();
@@ -81,19 +81,19 @@ async function ensureTauriSubscription(name: string): Promise<UnlistenFn> {
     return bucket.promise;
 }
 
-export async function onBackendEvent(
+export async function onTauriEvent(
     name: string,
-    handler: BackendEventHandler
+    handler: TauriEventHandler
 ): Promise<() => void> {
     getBucket(name).add(handler);
     await ensureTauriSubscription(name);
 
-    return () => offBackendEvent(name, handler);
+    return () => offTauriEvent(name, handler);
 }
 
-export function offBackendEvent(
+export function offTauriEvent(
     name: string,
-    handler: BackendEventHandler
+    handler: TauriEventHandler
 ): void {
     const bucket = listeners.get(name);
     if (!bucket) {
@@ -115,11 +115,11 @@ export function offBackendEvent(
     }
 }
 
-export function emitBackendEvent(name: string, payload?: unknown): void {
+export function emitTauriEvent(name: string, payload?: unknown): void {
     dispatch(name, payload);
 }
 
-export function clearBackendEventListeners(name: string | null = null): void {
+export function clearTauriEventListeners(name: string | null = null): void {
     if (name === null) {
         for (const registration of tauriRegistrations.values()) {
             if (registration?.unlisten) {
@@ -147,10 +147,10 @@ export function clearBackendEventListeners(name: string | null = null): void {
     tauriRegistrations.delete(name);
 }
 
-export const backendEvents = Object.freeze({
-    on: onBackendEvent,
-    off: offBackendEvent,
-    emit: emitBackendEvent,
-    clear: clearBackendEventListeners,
-    subscribe: onBackendEvent
+export const tauriEvents = Object.freeze({
+    on: onTauriEvent,
+    off: offTauriEvent,
+    emit: emitTauriEvent,
+    clear: clearTauriEventListeners,
+    subscribe: onTauriEvent
 });

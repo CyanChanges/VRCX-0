@@ -49,6 +49,8 @@ interface UserFact {
     platform?: string;
     last_platform?: string;
     developerType?: string;
+    memo?: string;
+    note?: string;
     updatedAt: string;
     fieldRanks: Record<string, number>;
     fieldSources: Record<string, string>;

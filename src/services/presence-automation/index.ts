@@ -1,9 +1,9 @@
-import { buildPresenceFacts } from './presenceFacts.js';
-import { loadPresenceAutomationConfig } from './presenceConfig.js';
-import { applyPresenceAutomationResult } from './presenceExecutor.js';
-import { evaluatePresenceRules } from './presenceRuleEngine.js';
+import { buildPresenceFacts } from './presenceFacts';
+import { loadPresenceAutomationConfig } from './presenceConfig';
+import { applyPresenceAutomationResult } from './presenceExecutor';
+import { evaluatePresenceRules } from './presenceRuleEngine';
 
-export async function runPresenceAutomation({ now = new Date() } = {}) {
+export async function runPresenceAutomation({ now = new Date() }: any = {}) {
     const config = await loadPresenceAutomationConfig();
     if (!config.enabled) {
         return {
@@ -42,10 +42,10 @@ export async function runPresenceAutomation({ now = new Date() } = {}) {
     };
 }
 
-export { buildPresenceFacts } from './presenceFacts.js';
-export { loadPresenceAutomationConfig } from './presenceConfig.js';
+export { buildPresenceFacts } from './presenceFacts';
+export { loadPresenceAutomationConfig } from './presenceConfig';
 export {
     applyPresenceAutomationResult,
     resetPresenceAutomationExecutor
-} from './presenceExecutor.js';
-export { evaluatePresenceRules } from './presenceRuleEngine.js';
+} from './presenceExecutor';
+export { evaluatePresenceRules } from './presenceRuleEngine';

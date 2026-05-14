@@ -1,0 +1,167 @@
+use std::sync::Arc;
+
+use crate::adapters::application::context::RuntimeHostContext;
+use crate::adapters::application::host_actions::RuntimeHost;
+use crate::adapters::host_file_access::{ensure_vrchat_launch_path_allowed, HostFileAccess};
+use crate::adapters::log_watcher::LogWatcher;
+
+use vrcx_0_application::Error as RuntimeError;
+use vrcx_0_application::Result as RuntimeResult;
+use vrcx_0_application::{
+    GameClientActions, GameClientCacheActions, GameClientLocationSource, GameClientRuntime,
+    GameClientRuntimeDeps, GameClientWindowActions,
+};
+use vrcx_0_application::{GameProcessEvent, GameProcessEventSink};
+use vrcx_0_core::log_watcher::LogLocationSnapshot;
+use vrcx_0_host::app_paths::AppPaths;
+use vrcx_0_host::{asset_bundle_cache, game_launch, process_status};
+
+fn host_error(error: vrcx_0_host::Error) -> RuntimeError {
+    match error {
+        vrcx_0_host::Error::Io(error) => RuntimeError::Io(error),
+        vrcx_0_host::Error::Json(error) => RuntimeError::Json(error),
+        vrcx_0_host::Error::Custom(message) => RuntimeError::Custom(message),
+    }
+}
+
+struct SystemGameClientActions {
+    file_access: HostFileAccess,
+    app_paths: AppPaths,
+}
+
+impl GameClientActions for SystemGameClientActions {
+    fn is_game_running(&self) -> bool {
+        process_status::detect_game_running()
+    }
+
+    fn is_steamvr_running(&self) -> bool {
+        process_status::detect_steamvr_running()
+    }
+
+    fn start_game(&self, arguments: &str) -> RuntimeResult<bool> {
+        game_launch::start_game(arguments).map_err(host_error)
+    }
+
+    fn start_game_from_path(&self, path: &str, arguments: &str) -> RuntimeResult<bool> {
+        let path = ensure_vrchat_launch_path_allowed(&self.file_access, &self.app_paths, path)
+            .map_err(|error| RuntimeError::Custom(error.to_string()))?;
+        game_launch::start_game_from_path(&path, arguments).map_err(host_error)
+    }
+}
+
+#[derive(Default)]
+struct SystemGameClientCacheActions;
+
+impl GameClientCacheActions for SystemGameClientCacheActions {
+    fn sweep_vrchat_cache(&self) -> Vec<String> {
+        asset_bundle_cache::sweep_cache()
+    }
+}
+
+#[derive(Clone)]
+struct LogWatcherLocationSource {
+    log_watcher: LogWatcher,
+}
+
+impl GameClientLocationSource for LogWatcherLocationSource {
+    fn vrc_closed_gracefully(&self) -> bool {
+        self.log_watcher.vrc_closed_gracefully()
+    }
+
+    fn current_location_snapshot(&self) -> Option<LogLocationSnapshot> {
+        self.log_watcher.current_location_snapshot()
+    }
+}
+
+#[derive(Clone)]
+struct RuntimeGameClientWindowActions {
+    host: RuntimeHost,
+}
+
+impl GameClientWindowActions for RuntimeGameClientWindowActions {
+    fn focus_main_window(&self) {
+        self.host.focus_main_window();
+    }
+}
+
+pub struct GameClientHostRuntime {
+    inner: GameClientRuntime,
+}
+
+impl GameClientHostRuntime {
+    pub fn new(
+        context: Arc<RuntimeHostContext>,
+        log_watcher: LogWatcher,
+        file_access: HostFileAccess,
+        app_paths: AppPaths,
+    ) -> Self {
+        Self::new_with_actions(
+            context,
+            log_watcher,
+            Arc::new(SystemGameClientActions {
+                file_access,
+                app_paths,
+            }),
+        )
+    }
+
+    fn new_with_actions(
+        context: Arc<RuntimeHostContext>,
+        log_watcher: LogWatcher,
+        actions: Arc<dyn GameClientActions>,
+    ) -> Self {
+        let inner = GameClientRuntime::new(GameClientRuntimeDeps {
+            db: Arc::clone(&context.db),
+            config: context.config.clone(),
+            event_bus: context.event_bus.clone(),
+            tasks: context.tasks.clone(),
+            session: context.session.clone(),
+            actions: Arc::clone(&actions),
+            cache_actions: Arc::new(SystemGameClientCacheActions),
+            location_source: Arc::new(LogWatcherLocationSource { log_watcher }),
+            window_actions: Arc::new(RuntimeGameClientWindowActions {
+                host: context.host.clone(),
+            }),
+        });
+
+        Self { inner }
+    }
+
+    pub fn set_runtime_state(&self, session_active: bool, current_location: &str) {
+        self.inner
+            .set_runtime_state(session_active, current_location);
+    }
+
+    pub fn stop(&self) {
+        self.inner.stop();
+    }
+
+    pub(super) fn on_ipc_packet(
+        &self,
+        packet: &str,
+    ) -> RuntimeResult<vrcx_0_core::ipc::IpcEventDisposition> {
+        self.inner.on_ipc_packet(packet)
+    }
+
+    #[cfg(test)]
+    pub(super) fn wait_until_idle(&self) -> bool {
+        self.inner.wait_until_idle()
+    }
+}
+
+impl GameProcessEventSink for GameClientHostRuntime {
+    fn on_game_process_event(&self, event: GameProcessEvent) -> RuntimeResult<()> {
+        self.inner.on_game_process_event(event)
+    }
+}
+
+#[cfg(test)]
+impl GameClientHostRuntime {
+    pub(super) fn test_with_actions(
+        context: Arc<RuntimeHostContext>,
+        log_watcher: LogWatcher,
+        actions: Arc<dyn GameClientActions>,
+    ) -> Self {
+        Self::new_with_actions(context, log_watcher, actions)
+    }
+}

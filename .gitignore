@@ -5,8 +5,10 @@ dist/
 *.log
 
 # Tauri / Rust
+target/
 src-tauri/target/
 src-tauri/gen/
+src-tauri/LOCAL_ARCHITECTURE.md
 src-tauri/resources/licenses/THIRD_PARTY_NOTICES.txt
 
 # Misc

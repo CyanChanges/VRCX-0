@@ -1,5 +1,5 @@
-import { backend } from '@/platform/index.js';
-import type { LegacyVrcxMigrationStatus } from '@/platform/tauri/backend.js';
+import { tauriClient } from '@/platform/tauri/client';
+import type { LegacyVrcxMigrationStatus } from '@/platform/tauri/client';
 
 type ConfirmResult = {
     ok?: boolean;
@@ -34,7 +34,7 @@ export async function promptLegacyVrcxForceMigration({
 }: LegacyMigrationPromptOptions): Promise<void> {
     let status: LegacyVrcxMigrationStatus | null = null;
     try {
-        status = await backend.app.GetLegacyVrcxForceMigrationStatus();
+        status = await tauriClient.app.GetLegacyVrcxForceMigrationStatus();
     } catch (error) {
         toast.error(
             t(`${LEGACY_MIGRATION_I18N_PREFIX}.legacy_migration_failed`, {
@@ -75,7 +75,7 @@ export async function promptLegacyVrcxForceMigration({
     }
 
     try {
-        const willRestart = await backend.app.RequestLegacyVrcxForceMigration();
+        const willRestart = await tauriClient.app.RequestLegacyVrcxForceMigration();
         if (!willRestart) {
             toast.warning(
                 t(

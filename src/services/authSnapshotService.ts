@@ -1,5 +1,5 @@
-import { authRepository } from '@/repositories/index.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+import authRepository from '@/repositories/authRepository';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
 type SavedAuthSnapshot = Record<string, unknown> & {
     lastUserLoggedIn: unknown;

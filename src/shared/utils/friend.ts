@@ -6,8 +6,8 @@ import {
     compareByName,
     compareByPrivate,
     compareByStatus
-} from './compare.js';
-import { sortStatus } from './friendStatus.js';
+} from './compare';
+import { sortStatus } from './friendStatus';
 
 type FriendSortMethod =
     | 'Sort Alphabetically'
@@ -44,7 +44,7 @@ function getFriendsSortFunction(
                 sorts.push(compareByLastSeen);
                 break;
             case 'Sort by Time in Instance':
-                sorts.push((a, b) => {
+                sorts.push((a: any, b: any) => {
                     if (
                         typeof a.ref === 'undefined' ||
                         typeof b.ref === 'undefined'

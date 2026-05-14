@@ -1,5 +1,5 @@
-import { getPlatformInfo } from './avatarPlatform.js';
-import { replaceBioSymbols } from './base/string';
+import { getPlatformInfo } from './avatarPlatform';
+import { replaceBioSymbols } from './string';
 
 interface AvatarImageArgs {
     json: {
@@ -38,7 +38,7 @@ function storeAvatarImage(
         avatarName = replaceBioSymbols(avatarNameRegex[1]);
     }
     const ownerId = args.json.ownerId;
-    const avatarInfo = {
+    const avatarInfo: any = {
         ownerId,
         avatarName,
         fileCreatedAt

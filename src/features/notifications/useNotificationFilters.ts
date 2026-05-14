@@ -1,0 +1,69 @@
+import { useDeferredValue, useEffect, useState } from 'react';
+
+import configRepository from '@/repositories/configRepository';
+import { NOTIFICATION_TYPES } from '@/repositories/notificationPersistenceRepository';
+
+import {
+    safeJsonParse,
+    sanitizeNotificationFilters
+} from './notificationTableState';
+
+const NOTIFICATION_TABLE_FILTERS_CONFIG_KEY = 'VRCX_notificationTableFilters';
+
+export function useNotificationFilters() {
+    const [activeTypes, setActiveTypes] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filtersReady, setFiltersReady] = useState(false);
+    const deferredSearchQuery = useDeferredValue(searchQuery);
+
+    useEffect(() => {
+        let active = true;
+        configRepository
+            .getString(NOTIFICATION_TABLE_FILTERS_CONFIG_KEY, '[]')
+            .then((savedFilters: any) => {
+                if (!active) {
+                    return;
+                }
+                setActiveTypes(
+                    sanitizeNotificationFilters(
+                        safeJsonParse(savedFilters),
+                        NOTIFICATION_TYPES
+                    )
+                );
+                setFiltersReady(true);
+            })
+            .catch(() => {
+                if (active) {
+                    setFiltersReady(true);
+                }
+            });
+
+        return () => {
+            active = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!filtersReady) {
+            return;
+        }
+        configRepository.setString(
+            NOTIFICATION_TABLE_FILTERS_CONFIG_KEY,
+            JSON.stringify(activeTypes)
+        );
+    }, [activeTypes, filtersReady]);
+
+    function clearFilters() {
+        setActiveTypes([]);
+    }
+
+    return {
+        activeTypes,
+        clearFilters,
+        deferredSearchQuery,
+        filtersReady,
+        searchQuery,
+        setActiveTypes,
+        setSearchQuery
+    };
+}

@@ -1,0 +1,22 @@
+[workspace]
+members = [
+    "src-tauri",
+    "crates/core",
+    "crates/persistence",
+    "crates/integrations",
+    "crates/vrchat-client",
+    "crates/host",
+    "crates/media",
+    "crates/application",
+]
+default-members = [
+    "src-tauri",
+    "crates/core",
+    "crates/persistence",
+    "crates/integrations",
+    "crates/vrchat-client",
+    "crates/host",
+    "crates/media",
+    "crates/application",
+]
+resolver = "2"

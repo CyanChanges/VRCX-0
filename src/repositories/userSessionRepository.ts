@@ -1,8 +1,4 @@
-import {
-    buildInitUserTableStatements,
-    normalizeUserTablePrefix as baseNormalizeUserTablePrefix
-} from './localDatabaseSchema.js';
-import sqliteRepository from './sqliteRepository.js';
+import { tauriClient } from '@/platform/tauri/client';
 
 export interface UserTableContext {
     userId: string;
@@ -24,7 +20,20 @@ export interface UserSessionRepository {
 const userTableInitPromises = new Map<string, Promise<UserTableContext>>();
 
 function normalizeUserTablePrefix(userId: unknown): string {
-    return baseNormalizeUserTablePrefix(userId);
+    const normalizedUserId = normalizeUserId(userId);
+    if (!normalizedUserId) {
+        throw new Error('User table prefix requires a user id.');
+    }
+
+    let userPrefix = normalizedUserId.replaceAll('-', '').replaceAll('_', '');
+    if (!/^[A-Za-z0-9]+$/.test(userPrefix)) {
+        throw new Error('User table prefix contains invalid characters.');
+    }
+    if (/^\d/.test(userPrefix)) {
+        userPrefix = `_${userPrefix}`;
+    }
+
+    return userPrefix;
 }
 
 function normalizeUserId(userId: unknown): string {
@@ -41,15 +50,15 @@ async function ensureUserTables(userId: unknown): Promise<UserTableContext> {
     }
 
     const promise = (async () => {
-        for (const sql of buildInitUserTableStatements(userPrefix)) {
-            await sqliteRepository.executeNonQuery(sql);
-        }
+        const context = (await tauriClient.app.UserTablesEnsure({
+            userId: normalizeUserId(userId)
+        })) as UserTableContext;
 
         return {
-            userId: normalizeUserId(userId),
-            userPrefix
+            userId: context.userId || normalizeUserId(userId),
+            userPrefix: context.userPrefix || userPrefix
         };
-    })().catch((error) => {
+    })().catch((error: unknown) => {
         if (userTableInitPromises.get(userPrefix) === promise) {
             userTableInitPromises.delete(userPrefix);
         }
@@ -72,13 +81,13 @@ async function initUserTablesUncached(
     userId: unknown
 ): Promise<UserTableContext> {
     const userPrefix = normalizeUserTablePrefix(userId);
-    for (const sql of buildInitUserTableStatements(userPrefix)) {
-        await sqliteRepository.executeNonQuery(sql);
-    }
+    const context = (await tauriClient.app.UserTablesEnsure({
+        userId: normalizeUserId(userId)
+    })) as UserTableContext;
 
     return {
-        userId: normalizeUserId(userId),
-        userPrefix
+        userId: context.userId || normalizeUserId(userId),
+        userPrefix: context.userPrefix || userPrefix
     };
 }
 
@@ -86,20 +95,10 @@ async function purgeAvatarFeedData(
     userId: unknown,
     cutoffDate: string | null = null
 ): Promise<void> {
-    const userPrefix = normalizeUserTablePrefix(userId);
-    if (cutoffDate) {
-        await sqliteRepository.executeNonQuery(
-            `DELETE FROM ${userPrefix}_feed_avatar WHERE created_at < @cutoff`,
-            {
-                '@cutoff': cutoffDate
-            }
-        );
-        return;
-    }
-
-    await sqliteRepository.executeNonQuery(
-        `DELETE FROM ${userPrefix}_feed_avatar`
-    );
+    await tauriClient.app.FeedAvatarPurge({
+        userId: normalizeUserId(userId),
+        cutoffDate: cutoffDate || null
+    });
 }
 
 const userSessionRepository: UserSessionRepository = {

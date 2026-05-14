@@ -1,4 +1,4 @@
-import { buildSameInstanceGroups, normalizeId } from './friendsSidebarModel.js';
+import { buildSameInstanceGroups, normalizeId } from './friendsSidebarModel';
 
 interface BuildFavoriteCollectionFriendIdSetOptions {
     sourceGroupKeys?: string[];
@@ -29,7 +29,10 @@ function pushFriendRows(
     nextRows: Array<Record<string, unknown>>,
     sectionKey: string,
     sectionRows: unknown[],
-    { currentUserId, isGroupByInstance = false } = {}
+    {
+        currentUserId,
+        isGroupByInstance = false
+    }: { currentUserId?: string; isGroupByInstance?: boolean } = {}
 ) {
     for (const friend of sectionRows as Array<Record<string, unknown>>) {
         const friendId = normalizeId(friend?.id);
@@ -46,7 +49,7 @@ function pushFriendRows(
 function pushSkeletonRows(
     nextRows: Array<Record<string, unknown>>,
     key: string,
-    count = 6
+    count: any = 6
 ) {
     for (let index = 0; index < count; index += 1) {
         nextRows.push({
@@ -141,7 +144,7 @@ export function buildFavoriteCollectionSidebarVirtualRows({
             open: openGroups.sameInstance
         });
         if (openGroups.sameInstance) {
-            sameInstanceGroups.forEach((group, index) => {
+            sameInstanceGroups.forEach((group: any, index: any) => {
                 nextRows.push({
                     type: 'instance-header',
                     key: `instance:${group.location}:${index}`,

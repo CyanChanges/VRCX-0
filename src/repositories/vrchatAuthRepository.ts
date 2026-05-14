@@ -1,112 +1,216 @@
-import { DEFAULT_VRCHAT_API_ENDPOINT } from '@/shared/vrchatEndpoint.js';
+import { tauriClient } from '@/platform/tauri/client';
+import {
+    DEFAULT_VRCHAT_API_ENDPOINT,
+    normalizeVrchatEndpoint
+} from '@/shared/vrchatEndpoint';
 
-import { executeVrchatRequest } from './vrchatRequest.js';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    type VrchatRequestResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
 export const DEFAULT_ENDPOINT_DOMAIN = DEFAULT_VRCHAT_API_ENDPOINT;
 export const DEFAULT_WEBSOCKET_DOMAIN = 'wss://pipeline.vrchat.cloud';
 
-async function execute(
-    path,
-    { endpoint = '', method = 'GET', headers = {}, params = null } = {}
-) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method,
-        headers,
-        body: params,
-        normalizeEndpoint: true,
-        fallbackMessage: 'VRChat request failed',
-        returnEndpointDomain: true
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
+type AuthRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatAuthResponse<TJson = unknown>(
+    response: VrchatApiResult,
+    path: string,
+    endpoint: string
+): VrchatRequestResponse<TJson> {
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage: 'VRChat request failed'
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
+
+    return {
+        json: json as TJson,
+        status: response.status,
+        endpointDomain: normalizeVrchatEndpoint(endpoint),
+        raw: response.raw
+    };
+}
+
+interface EndpointOptions {
+    endpoint?: string;
+}
+
+interface BasicAuthInput extends EndpointOptions {
+    username?: unknown;
+    password?: unknown;
+}
+
+interface AuthCodeInput extends EndpointOptions {
+    code?: unknown;
+}
+
+interface FileAnalysisInput extends EndpointOptions {
+    fileId?: unknown;
+    version?: unknown;
+    variant?: unknown;
+}
+
+async function getConfig({ endpoint = '' }: EndpointOptions = {}) {
+    const response = await tauriClient.app.VrchatAuthConfigGet({
+        endpoint: normalizeVrchatEndpoint(endpoint)
     });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'config', endpoint);
 }
 
-async function executeGet(path, options = {}) {
-    return execute(path, { ...options, method: 'GET' });
-}
-
-async function executePost(path, params, options = {}) {
-    return execute(path, { ...options, method: 'POST', params });
-}
-
-async function getConfig({ endpoint = '' } = {}) {
-    return executeGet('config', { endpoint });
-}
-
-async function getCurrentUser({ endpoint = '' } = {}) {
-    return executeGet('auth/user', { endpoint });
-}
-
-async function getAuthSession({ endpoint = '' } = {}) {
-    return executeGet('auth', { endpoint });
-}
-
-async function loginWithBasicAuth({ username, password, endpoint = '' }) {
-    const auth = globalThis.btoa(
-        `${encodeURIComponent(username)}:${encodeURIComponent(password)}`
-    );
-
-    return executeGet('auth/user', {
-        endpoint,
-        headers: {
-            Authorization: `Basic ${auth}`
-        }
+async function getCurrentUser({ endpoint = '' }: EndpointOptions = {}) {
+    const response = await tauriClient.app.VrchatAuthCurrentUserGet({
+        endpoint: normalizeVrchatEndpoint(endpoint)
     });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
 }
 
-async function verifyTOTP({ code, endpoint = '' }) {
-    return executePost(
+async function getAuthSession({ endpoint = '' }: EndpointOptions = {}) {
+    const response = await tauriClient.app.VrchatAuthSessionGet({
+        endpoint: normalizeVrchatEndpoint(endpoint)
+    });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth', endpoint);
+}
+
+async function restoreCookieSession({ endpoint = '' }: EndpointOptions = {}) {
+    const response = await tauriClient.app.VrchatAuthCookieSessionRestore({
+        endpoint: normalizeVrchatEndpoint(endpoint)
+    });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
+}
+
+async function loginWithBasicAuth({
+    username,
+    password,
+    endpoint = ''
+}: BasicAuthInput) {
+    const response = await tauriClient.app.VrchatAuthLoginBasicStart({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        username: typeof username === 'string' ? username : String(username ?? ''),
+        password: typeof password === 'string' ? password : String(password ?? '')
+    });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
+}
+
+async function loginWithSavedCredential({
+    userId,
+    endpoint = ''
+}: EndpointOptions & { userId?: unknown }) {
+    const response = await tauriClient.app.VrchatAuthSavedCredentialLoginStart({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        userId: typeof userId === 'string' ? userId : String(userId ?? '')
+    });
+    return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
+}
+
+async function verifyTOTP({ code, endpoint = '' }: AuthCodeInput) {
+    const response = await tauriClient.app.VrchatAuthTotpVerify({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        code: typeof code === 'string' ? code : String(code ?? '')
+    });
+    return unwrapVrchatAuthResponse(
+        response,
         'auth/twofactorauth/totp/verify',
-        { code: typeof code === 'string' ? code.trim() : '' },
-        { endpoint }
+        endpoint
     );
 }
 
-async function verifyOTP({ code, endpoint = '' }) {
-    const normalizedCode =
-        typeof code === 'string' ? code.replace(/\s+/g, '') : '';
-    const formattedCode =
-        normalizedCode.length > 4 && !normalizedCode.includes('-')
-            ? `${normalizedCode.slice(0, 4)}-${normalizedCode.slice(4)}`
-            : normalizedCode;
-
-    return executePost(
+async function verifyOTP({ code, endpoint = '' }: AuthCodeInput) {
+    const response = await tauriClient.app.VrchatAuthOtpVerify({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        code: typeof code === 'string' ? code : String(code ?? '')
+    });
+    return unwrapVrchatAuthResponse(
+        response,
         'auth/twofactorauth/otp/verify',
-        { code: formattedCode },
-        { endpoint }
+        endpoint
     );
 }
 
-async function verifyEmailOTP({ code, endpoint = '' }) {
-    return executePost(
+async function verifyEmailOTP({ code, endpoint = '' }: AuthCodeInput) {
+    const response = await tauriClient.app.VrchatAuthEmailOtpVerify({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        code: typeof code === 'string' ? code : String(code ?? '')
+    });
+    return unwrapVrchatAuthResponse(
+        response,
         'auth/twofactorauth/emailotp/verify',
-        { code: typeof code === 'string' ? code.trim() : '' },
-        { endpoint }
+        endpoint
+    );
+}
+
+async function getOnlineVisits({ endpoint = '' }: EndpointOptions = {}) {
+    const response = await tauriClient.app.VrchatAuthVisitsGet({
+        endpoint: normalizeVrchatEndpoint(endpoint)
+    });
+    return unwrapVrchatAuthResponse<unknown[]>(response, 'visits', endpoint);
+}
+
+async function getFileAnalysis({
+    endpoint = '',
+    fileId,
+    version,
+    variant
+}: FileAnalysisInput) {
+    const response = await tauriClient.app.VrchatAuthFileAnalysisGet({
+        endpoint: normalizeVrchatEndpoint(endpoint),
+        fileId: typeof fileId === 'string' ? fileId : String(fileId ?? ''),
+        version: Number(version) || 0,
+        variant: typeof variant === 'string' ? variant : String(variant ?? '')
+    });
+    return unwrapVrchatAuthResponse(
+        response,
+        `analysis/${encodeURIComponent(String(fileId ?? ''))}/${Number(version) || 0}/${encodeURIComponent(String(variant ?? ''))}`,
+        endpoint
     );
 }
 
 const vrchatAuthRepository = Object.freeze({
-    execute,
-    executeGet,
-    executePost,
     getConfig,
     getCurrentUser,
     getAuthSession,
+    restoreCookieSession,
     loginWithBasicAuth,
+    loginWithSavedCredential,
     verifyTOTP,
     verifyOTP,
-    verifyEmailOTP
+    verifyEmailOTP,
+    getOnlineVisits,
+    getFileAnalysis
 });
 
 export {
-    execute,
-    executeGet,
-    executePost,
     getConfig,
     getCurrentUser,
     getAuthSession,
+    restoreCookieSession,
     loginWithBasicAuth,
+    loginWithSavedCredential,
     verifyTOTP,
     verifyOTP,
-    verifyEmailOTP
+    verifyEmailOTP,
+    getOnlineVisits,
+    getFileAnalysis
 };
 export default vrchatAuthRepository;

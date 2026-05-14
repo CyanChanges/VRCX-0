@@ -49,30 +49,37 @@ function AlertDialogOverlay({
     );
 }
 
+type AlertDialogContentProps = React.ComponentProps<
+    typeof AlertDialogPrimitive.Content
+> & {
+    size?: 'default' | 'sm';
+    onPointerDownOutside?: (event: any) => void;
+    onInteractOutside?: (event: any) => void;
+};
+
 function AlertDialogContent({
     className,
     size = 'default',
     onPointerDownOutside,
     onInteractOutside,
     ...props
-}: React.ComponentProps<typeof AlertDialogPrimitive.Content> & {
-    size?: 'default' | 'sm';
-}) {
+}: AlertDialogContentProps) {
+    const Content = AlertDialogPrimitive.Content as React.ComponentType<any>;
     return (
         <AlertDialogPortal>
             <AlertDialogOverlay />
-            <AlertDialogPrimitive.Content
+            <Content
                 data-slot="alert-dialog-content"
                 data-size={size}
                 className={cn(
                     'group/alert-dialog-content bg-popover text-popover-foreground ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95 fixed top-[calc(50%+1rem)] left-1/2 z-50 grid max-h-[calc(100vh-4rem)] w-full -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl p-4 ring-1 duration-100 outline-none data-[size=default]:max-w-xs data-[size=sm]:max-w-xs data-[size=default]:sm:max-w-sm',
                     className
                 )}
-                onPointerDownOutside={(event) => {
+                onPointerDownOutside={(event: any) => {
                     preserveAppTitleBarOutsideInteraction(event);
                     onPointerDownOutside?.(event);
                 }}
-                onInteractOutside={(event) => {
+                onInteractOutside={(event: any) => {
                     preserveAppTitleBarOutsideInteraction(event);
                     onInteractOutside?.(event);
                 }}

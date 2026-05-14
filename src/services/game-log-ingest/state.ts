@@ -1,6 +1,6 @@
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
-import { normalizeString } from './parsing.js';
+import { normalizeString } from './parsing';
 
 type GameLogPlayer = {
     userId?: unknown;
@@ -65,7 +65,7 @@ function getCurrentLocationPlayerIds(): string[] {
     return Array.from(
         new Set(
             Array.from(ingestState.playersByKey.values())
-                .map((player) => normalizeString(player.userId))
+                .map((player: any) => normalizeString(player.userId))
                 .filter(Boolean)
         )
     );
@@ -73,7 +73,7 @@ function getCurrentLocationPlayerIds(): string[] {
 
 function getCurrentLocationPlayers(): CurrentLocationPlayer[] {
     return Array.from(ingestState.playersByKey.values())
-        .map((player) => {
+        .map((player: any) => {
             const userId = normalizeString(player.userId);
             const displayName = normalizeString(player.displayName);
             const joinTime = Number(player.joinTime) || 0;
@@ -88,7 +88,7 @@ function getCurrentLocationPlayers(): CurrentLocationPlayer[] {
                 source: 'runtime' as const
             };
         })
-        .filter((player) => player.id && (player.userId || player.displayName));
+        .filter((player: any) => player.id && (player.userId || player.displayName));
 }
 
 function getCurrentLocation(): string {

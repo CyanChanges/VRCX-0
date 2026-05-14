@@ -1,4 +1,4 @@
-import { replaceBioSymbols } from './base/string';
+import { replaceBioSymbols } from './string';
 
 export type NotificationRecord = Record<string, unknown>;
 
@@ -89,7 +89,7 @@ export function parseNotificationDetails(details: unknown): NotificationRecord {
 export function createDefaultNotificationRef(
     json: NotificationRecord
 ): NotificationV1Ref {
-    const ref = {
+    const ref: any = {
         id: '',
         senderUserId: '',
         senderUsername: '',

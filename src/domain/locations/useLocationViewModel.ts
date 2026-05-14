@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 
-import { createLocationViewModel } from '@/domain/locations/locationViewModel.js';
-import { instancePresenceKey } from '@/domain/presence/instancePresence.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useLocationHintStore } from '@/state/locationHintStore.js';
+import { createLocationViewModel } from '@/domain/locations/locationViewModel';
+import { instancePresenceKey } from '@/domain/presence/instancePresence';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useLocationHintStore } from '@/state/locationHintStore';
 
 interface UseLocationViewModelOptions {
     endpoint?: unknown;
@@ -19,14 +19,14 @@ function useLocationViewModel({
     hint = ''
 }: UseLocationViewModelOptions = {}) {
     const storeEndpoint = useRuntimeStore(
-        (state) => state.auth.currentUserEndpoint
+        (state: any) => state.auth.currentUserEndpoint
     );
     const resolvedEndpoint = endpoint || storeEndpoint;
     const key = useMemo(
         () => instancePresenceKey(resolvedEndpoint, location),
         [location, resolvedEndpoint]
     );
-    const locationHint = useLocationHintStore((state) =>
+    const locationHint = useLocationHintStore((state: any) =>
         key ? state.hintsByKey[key] || null : null
     );
 

@@ -1,4 +1,4 @@
-import { normalizeUserId, type UserFact } from '@/domain/users/userFacts.js';
+import { normalizeUserId, type UserFact } from '@/domain/users/userFacts';
 
 interface FriendRosterViewInput {
     orderedFriendIds?: string[];
@@ -23,11 +23,11 @@ function buildFriendRosterView({
 }: FriendRosterViewInput = {}) {
     const favorites = toSet(favoriteIds);
     const rows = orderedFriendIds
-        .map((id) => normalizeUserId(id))
+        .map((id: any) => normalizeUserId(id))
         .filter(Boolean)
-        .map((id) => usersById[id])
+        .map((id: any) => usersById[id])
         .filter(Boolean)
-        .map((user) => ({
+        .map((user: any) => ({
             ...user,
             isFavorite: favorites.has(user.id)
         }));
@@ -37,7 +37,7 @@ function buildFriendRosterView({
         onlineIds,
         activeIds,
         offlineIds,
-        favoriteIds: rows.filter((row) => row.isFavorite).map((row) => row.id)
+        favoriteIds: rows.filter((row: any) => row.isFavorite).map((row: any) => row.id)
     };
 }
 

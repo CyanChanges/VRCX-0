@@ -4,22 +4,92 @@ import {
     getCachedQueryData,
     queryKeys,
     setCachedQueryData
-} from '@/lib/entityQueryCache.js';
-import { recordUserProfile } from '@/domain/users/userFactAccess.js';
+} from '@/lib/entityQueryCache';
+import { recordUserProfile } from '@/domain/users/userFactAccess';
+import { tauriClient } from '@/platform/tauri/client';
 import {
     computeTrustLevel,
     computeUserPlatform,
-    createDefaultUserRef
-} from '@/shared/utils/userTransforms.js';
+    createDefaultUserRef,
+    type UserRecord
+} from '@/shared/utils/userTransforms';
 
-import vrchatAuthRepository from './vrchatAuthRepository.js';
-import vrchatFriendRepository from './vrchatFriendRepository.js';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
-function normalizeUserProfile(user) {
-    const base = createDefaultUserRef(user ?? {});
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
+
+type UserProfileRecord = UserRecord & {
+    id?: string;
+    displayName?: string;
+    username?: string;
+    name?: string;
+    $trustLevel: string;
+    $trustClass: string;
+    $trustSortNum: number;
+    $isModerator: boolean;
+    $isTroll: boolean;
+    $isProbableTroll: boolean;
+    $platform: string;
+};
+
+interface PageRequest {
+    n: number;
+    offset: number;
+}
+
+interface CollectPagesOptions {
+    pageSize?: number;
+    maxPages?: number;
+}
+
+interface UserEndpointInput {
+    userId?: unknown;
+    endpoint?: string;
+}
+
+interface UserProfileInput extends UserEndpointInput {
+    force?: boolean;
+    dialog?: boolean;
+}
+
+interface UserGroupsInput extends UserEndpointInput {
+    force?: boolean;
+}
+
+interface MutualFriendsInput extends UserEndpointInput {
+    n?: number;
+    offset?: number;
+}
+
+interface CurrentUserUpdateInput extends UserEndpointInput {
+    params?: UserRecord;
+}
+
+interface CurrentUserBadgeInput extends UserEndpointInput {
+    badgeId?: unknown;
+    hidden?: boolean;
+    showcased?: boolean;
+}
+
+interface CurrentUserTagsInput extends UserEndpointInput {
+    tags?: unknown;
+}
+
+function normalizeUserProfile(user: unknown): UserProfileRecord {
+    const source = isRecord(user) ? user : {};
+    const base = createDefaultUserRef(source);
     const trust = computeTrustLevel(
         Array.isArray(base.tags) ? base.tags : [],
-        base.developerType || ''
+        typeof base.developerType === 'string' ? base.developerType : ''
     );
 
     return {
@@ -30,12 +100,18 @@ function normalizeUserProfile(user) {
         $isModerator: trust.isModerator,
         $isTroll: trust.isTroll,
         $isProbableTroll: trust.isProbableTroll,
-        $platform: computeUserPlatform(base.platform, base.last_platform)
-    };
+        $platform: computeUserPlatform(
+            typeof base.platform === 'string' ? base.platform : '',
+            typeof base.last_platform === 'string' ? base.last_platform : ''
+        )
+    } as UserProfileRecord;
 }
 
-async function collectPages(fetchPage, { pageSize = 100, maxPages = 50 } = {}) {
-    const rows = [];
+async function collectPages<T>(
+    fetchPage: (page: PageRequest) => Promise<T[]>,
+    { pageSize = 100, maxPages = 50 }: CollectPagesOptions = {}
+): Promise<T[]> {
+    const rows: T[] = [];
 
     for (let page = 0; page < maxPages; page += 1) {
         const nextRows = await fetchPage({
@@ -52,11 +128,11 @@ async function collectPages(fetchPage, { pageSize = 100, maxPages = 50 } = {}) {
     return rows;
 }
 
-function normalize(user) {
+function normalize(user: unknown): UserProfileRecord {
     return normalizeUserProfile(user);
 }
 
-function hasOwnField(source, field) {
+function hasOwnField(source: unknown, field: PropertyKey) {
     return (
         source &&
         typeof source === 'object' &&
@@ -64,24 +140,59 @@ function hasOwnField(source, field) {
     );
 }
 
-function mergeCurrentUserUpdateResponse(responseJson, cachedUser, params) {
-    const responseUser =
-        responseJson && typeof responseJson === 'object' ? responseJson : {};
-    let nextUser = responseUser;
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatUserResponse<TJson = unknown>(
+    response: VrchatApiResult,
+    path: string,
+    fallbackMessage = 'VRChat user request failed'
+) {
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
+
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
+}
+
+function mergeCurrentUserUpdateResponse(
+    responseJson: unknown,
+    cachedUser: unknown,
+    params: UserRecord = {}
+): UserRecord {
+    const responseUser: UserRecord = isRecord(responseJson) ? responseJson : {};
+    const cachedUserRecord = isRecord(cachedUser) ? cachedUser : {};
+    const paramsRecord = isRecord(params) ? params : {};
+    let nextUser: UserRecord = responseUser;
 
     if (
-        Array.isArray(cachedUser?.badges) &&
-        cachedUser.badges.length > 0 &&
+        Array.isArray(cachedUserRecord.badges) &&
+        cachedUserRecord.badges.length > 0 &&
         !hasOwnField(responseUser, 'badges') &&
-        !hasOwnField(params, 'badges')
+        !hasOwnField(paramsRecord, 'badges')
     ) {
         nextUser = {
             ...nextUser,
-            badges: cachedUser.badges
+            badges: cachedUserRecord.badges
         };
     }
 
-    for (const [field, value] of Object.entries(params || {})) {
+    for (const [field, value] of Object.entries(paramsRecord)) {
         if (!hasOwnField(nextUser, field)) {
             if (nextUser === responseUser) {
                 nextUser = { ...nextUser };
@@ -98,7 +209,7 @@ async function getUserProfile({
     endpoint = '',
     force = false,
     dialog = false
-}) {
+}: UserProfileInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -116,11 +227,14 @@ async function getUserProfile({
             : entityQueryPolicies.user,
         force,
         queryFn: async () => {
-            const response = await vrchatFriendRepository.getUser({
+            const response = await tauriClient.app.VrchatUserGet({
                 userId: normalizedUserId,
                 endpoint
             });
-            return response.json;
+            return unwrapVrchatUserResponse(
+                response,
+                `users/${encodeURIComponent(normalizedUserId)}`
+            ).json;
         }
     });
     const profile = normalize(json);
@@ -128,7 +242,7 @@ async function getUserProfile({
     return profile;
 }
 
-async function getMutualCounts({ userId, endpoint = '' }) {
+async function getMutualCounts({ userId, endpoint = '' }: UserEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -143,19 +257,20 @@ async function getMutualCounts({ userId, endpoint = '' }) {
         queryKey: queryKeys.mutualCounts(normalizedUserId, endpoint),
         policy: entityQueryPolicies.mutualCounts,
         queryFn: async () => {
-            const response = await vrchatFriendRepository.executeGet(
-                `users/${encodeURIComponent(normalizedUserId)}/mutuals`,
-                {},
-                { endpoint }
-            );
-            return response.json && typeof response.json === 'object'
-                ? response.json
-                : {};
+            const response = await tauriClient.app.VrchatUserMutualCountsGet({
+                userId: normalizedUserId,
+                endpoint
+            });
+            const json = unwrapVrchatUserResponse(
+                response,
+                `users/${encodeURIComponent(normalizedUserId)}/mutuals`
+            ).json;
+            return json && typeof json === 'object' ? json : {};
         }
     });
 }
 
-async function getUserGroups({ userId, endpoint = '' }) {
+async function getUserGroups({ userId, endpoint = '' }: UserEndpointInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -170,17 +285,24 @@ async function getUserGroups({ userId, endpoint = '' }) {
         queryKey: queryKeys.userGroups(normalizedUserId, endpoint),
         policy: entityQueryPolicies.groupCollection,
         queryFn: async () => {
-            const response = await vrchatFriendRepository.executeGet(
-                `users/${encodeURIComponent(normalizedUserId)}/groups`,
-                {},
-                { endpoint }
-            );
-            return Array.isArray(response.json) ? response.json : [];
+            const response = await tauriClient.app.VrchatUserGroupsGet({
+                userId: normalizedUserId,
+                endpoint
+            });
+            const json = unwrapVrchatUserResponse(
+                response,
+                `users/${encodeURIComponent(normalizedUserId)}/groups`
+            ).json;
+            return Array.isArray(json) ? json : [];
         }
     });
 }
 
-async function getRepresentedGroup({ userId, endpoint = '', force = false }) {
+async function getRepresentedGroup({
+    userId,
+    endpoint = '',
+    force = false
+}: UserGroupsInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -196,14 +318,15 @@ async function getRepresentedGroup({ userId, endpoint = '', force = false }) {
         policy: entityQueryPolicies.representedGroup,
         force,
         queryFn: async () => {
-            const response = await vrchatFriendRepository.executeGet(
-                `users/${encodeURIComponent(normalizedUserId)}/groups/represented`,
-                {},
-                { endpoint }
-            );
-            return response.json && typeof response.json === 'object'
-                ? response.json
-                : null;
+            const response = await tauriClient.app.VrchatUserRepresentedGroupGet({
+                userId: normalizedUserId,
+                endpoint
+            });
+            const json = unwrapVrchatUserResponse(
+                response,
+                `users/${encodeURIComponent(normalizedUserId)}/groups/represented`
+            ).json;
+            return json && typeof json === 'object' ? json : null;
         }
     });
 }
@@ -213,7 +336,7 @@ async function getMutualFriends({
     endpoint = '',
     n = 100,
     offset = 0
-}) {
+}: MutualFriendsInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -224,21 +347,30 @@ async function getMutualFriends({
         );
     }
 
-    const response = await vrchatFriendRepository.executeGet(
-        `users/${encodeURIComponent(normalizedUserId)}/mutuals/friends`,
-        { n, offset },
-        { endpoint }
-    );
-    return Array.isArray(response.json) ? response.json : [];
+    const response = await tauriClient.app.VrchatUserMutualFriendsGet({
+        userId: normalizedUserId,
+        endpoint,
+        n,
+        offset
+    });
+    const json = unwrapVrchatUserResponse(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}/mutuals/friends`
+    ).json;
+    return Array.isArray(json) ? json : [];
 }
 
-async function getAllMutualFriends({ userId, endpoint = '' }) {
+async function getAllMutualFriends({ userId, endpoint = '' }: UserEndpointInput) {
     return collectPages(({ n, offset }) =>
         getMutualFriends({ userId, endpoint, n, offset })
     );
 }
 
-async function updateCurrentUser({ userId, endpoint = '', params = {} }) {
+async function updateCurrentUser({
+    userId,
+    endpoint = '',
+    params = {}
+}: CurrentUserUpdateInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -251,16 +383,17 @@ async function updateCurrentUser({ userId, endpoint = '', params = {} }) {
 
     const queryKey = queryKeys.user(normalizedUserId, endpoint);
     const cachedUser = getCachedQueryData(queryKey);
-    const response = await vrchatAuthRepository.execute(
-        `users/${encodeURIComponent(normalizedUserId)}`,
-        {
-            endpoint,
-            method: 'PUT',
-            params
-        }
-    );
+    const response = await tauriClient.app.VrchatCurrentUserUpdate({
+        userId: normalizedUserId,
+        endpoint,
+        params
+    });
+    const json = unwrapVrchatUserResponse(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}`
+    ).json;
     const mergedJson = mergeCurrentUserUpdateResponse(
-        response.json,
+        json,
         cachedUser,
         params
     );
@@ -280,7 +413,7 @@ async function updateCurrentUserBadge({
     badgeId = '',
     hidden = false,
     showcased = false
-}) {
+}: CurrentUserBadgeInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -295,24 +428,26 @@ async function updateCurrentUserBadge({
         );
     }
 
-    await vrchatAuthRepository.execute(
-        `users/${encodeURIComponent(normalizedUserId)}/badges/${encodeURIComponent(normalizedBadgeId)}`,
-        {
-            endpoint,
-            method: 'PUT',
-            params: {
-                userId: normalizedUserId,
-                badgeId: normalizedBadgeId,
-                hidden: Boolean(hidden),
-                showcased: Boolean(showcased)
-            }
-        }
+    const response = await tauriClient.app.VrchatCurrentUserBadgeUpdate({
+        userId: normalizedUserId,
+        badgeId: normalizedBadgeId,
+        endpoint,
+        hidden: Boolean(hidden),
+        showcased: Boolean(showcased)
+    });
+    unwrapVrchatUserResponse(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}/badges/${encodeURIComponent(normalizedBadgeId)}`
     );
 
     return getUserProfile({ userId: normalizedUserId, endpoint, force: true });
 }
 
-async function addCurrentUserTags({ userId, endpoint = '', tags = [] }) {
+async function addCurrentUserTags({
+    userId,
+    endpoint = '',
+    tags = []
+}: CurrentUserTagsInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -323,18 +458,19 @@ async function addCurrentUserTags({ userId, endpoint = '', tags = [] }) {
         );
     }
 
-    const response = await vrchatAuthRepository.execute(
-        `users/${encodeURIComponent(normalizedUserId)}/addTags`,
-        {
-            endpoint,
-            method: 'POST',
-            params: { tags }
-        }
-    );
-    const nextUser = normalize(response.json);
+    const response = await tauriClient.app.VrchatCurrentUserTagsAdd({
+        userId: normalizedUserId,
+        endpoint,
+        tags: Array.isArray(tags) ? tags.map(String) : []
+    });
+    const json = unwrapVrchatUserResponse(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}/addTags`
+    ).json;
+    const nextUser = normalize(json);
     setCachedQueryData(
         queryKeys.user(normalizedUserId, endpoint),
-        response.json
+        json
     );
     recordUserProfile(nextUser, {
         endpoint,
@@ -344,7 +480,11 @@ async function addCurrentUserTags({ userId, endpoint = '', tags = [] }) {
     return nextUser;
 }
 
-async function removeCurrentUserTags({ userId, endpoint = '', tags = [] }) {
+async function removeCurrentUserTags({
+    userId,
+    endpoint = '',
+    tags = []
+}: CurrentUserTagsInput) {
     const normalizedUserId =
         typeof userId === 'string'
             ? userId.trim()
@@ -355,18 +495,19 @@ async function removeCurrentUserTags({ userId, endpoint = '', tags = [] }) {
         );
     }
 
-    const response = await vrchatAuthRepository.execute(
-        `users/${encodeURIComponent(normalizedUserId)}/removeTags`,
-        {
-            endpoint,
-            method: 'POST',
-            params: { tags }
-        }
-    );
-    const nextUser = normalize(response.json);
+    const response = await tauriClient.app.VrchatCurrentUserTagsRemove({
+        userId: normalizedUserId,
+        endpoint,
+        tags: Array.isArray(tags) ? tags.map(String) : []
+    });
+    const json = unwrapVrchatUserResponse(
+        response,
+        `users/${encodeURIComponent(normalizedUserId)}/removeTags`
+    ).json;
+    const nextUser = normalize(json);
     setCachedQueryData(
         queryKeys.user(normalizedUserId, endpoint),
-        response.json
+        json
     );
     recordUserProfile(nextUser, {
         endpoint,

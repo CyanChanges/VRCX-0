@@ -1,14 +1,18 @@
-import { backend } from '@/platform/index.js';
+import { tauriClient } from '@/platform/tauri/client';
 import type {
     HostCapabilities,
     HostCapabilityStatus
-} from '@/platform/tauri/backend.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+} from '@/platform/tauri/client';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
 const HOST_CAPABILITY_KEYS = Object.freeze([
     'localDatabase',
     'websocketRuntime',
     'gameLogWatcher',
+    'runtimeGameLogIngest',
+    'runtimeGameLogSideEffects',
+    'runtimeGameClientLifecycle',
+    'runtimeRealtimeTransport',
     'gameProcessMonitor',
     'vrchatPathDiscovery',
     'steamLibraryDiscovery',
@@ -114,7 +118,7 @@ export async function initializeHostCapabilities(): Promise<HostCapabilities> {
 
     try {
         const capabilities = normalizeHostCapabilities(
-            await backend.app.GetHostCapabilities()
+            await tauriClient.app.GetHostCapabilities()
         );
         useRuntimeStore
             .getState()
@@ -146,7 +150,7 @@ export async function initializeHostCapabilities(): Promise<HostCapabilities> {
 
 export async function refreshHostCapabilities(): Promise<HostCapabilities> {
     const capabilities = normalizeHostCapabilities(
-        await backend.app.GetHostCapabilities()
+        await tauriClient.app.GetHostCapabilities()
     );
     useRuntimeStore
         .getState()

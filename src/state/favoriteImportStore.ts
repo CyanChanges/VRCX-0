@@ -37,7 +37,7 @@ type FavoriteImportStore = {
     resetImportState(): void;
 };
 
-const initialState = {
+const initialState: any = {
     open: false,
     type: 'avatar' as FavoriteImportType,
     input: '',
@@ -59,10 +59,10 @@ function normalizeType(value: unknown): FavoriteImportType {
         : 'avatar';
 }
 
-export const useFavoriteImportStore = create<FavoriteImportStore>((set) => ({
+export const useFavoriteImportStore = create<FavoriteImportStore>((set: any) => ({
     ...initialState,
-    openDialog({ type, input = '' } = {}) {
-        set((state) => ({
+    openDialog({ type, input = '' }: any = {}) {
+        set((state: any) => ({
             ...initialState,
             open: true,
             type: normalizeType(type),
@@ -71,14 +71,14 @@ export const useFavoriteImportStore = create<FavoriteImportStore>((set) => ({
         }));
     },
     closeDialog() {
-        set((state) => ({
+        set((state: any) => ({
             ...state,
             open: false,
             loading: false
         }));
     },
     cancelActiveWork() {
-        set((state) => ({
+        set((state: any) => ({
             ...state,
             loading: false,
             progress: 0,
@@ -88,68 +88,68 @@ export const useFavoriteImportStore = create<FavoriteImportStore>((set) => ({
             sessionId: state.sessionId + 1
         }));
     },
-    setInput(input) {
+    setInput(input: any) {
         set({ input: typeof input === 'string' ? input : String(input ?? '') });
     },
-    setLoading(loading) {
+    setLoading(loading: any) {
         set({ loading: Boolean(loading) });
     },
-    setProgress(progress, progressTotal) {
+    setProgress(progress: any, progressTotal: any) {
         set({ progress, progressTotal });
     },
-    setImportProgress(importProgress, importProgressTotal) {
+    setImportProgress(importProgress: any, importProgressTotal: any) {
         set({ importProgress, importProgressTotal });
     },
-    setErrors(errors) {
+    setErrors(errors: any) {
         set({
             errors: typeof errors === 'string' ? errors : String(errors ?? '')
         });
     },
-    appendError(error) {
+    appendError(error: any) {
         const text = typeof error === 'string' ? error : String(error ?? '');
         if (!text) {
             return;
         }
-        set((state) => ({
+        set((state: any) => ({
             errors: `${state.errors || ''}${text}${text.endsWith('\n') ? '' : '\n'}`
         }));
     },
-    setRows(rows) {
+    setRows(rows: any) {
         set({ rows: Array.isArray(rows) ? rows : [] });
     },
-    addRow(row) {
+    addRow(row: any) {
         if (!row?.id) {
             return;
         }
-        set((state) => {
-            if (state.rows.some((entry) => entry.id === row.id)) {
+        set((state: any) => {
+            if (state.rows.some((entry: any) => entry.id === row.id)) {
                 return state;
             }
             return { rows: [...state.rows, row] };
         });
     },
-    removeRow(id) {
-        set((state) => ({
-            rows: state.rows.filter((row) => row.id !== id)
+    removeRow(id: any) {
+        set((state: any) => ({
+            rows: state.rows.filter((row: any) => row.id !== id)
         }));
     },
     clearRows() {
         set({ rows: [] });
     },
-    setRemoteGroupName(remoteGroupName) {
+    setRemoteGroupName(remoteGroupName: any) {
         set({
             remoteGroupName,
             localGroupName: remoteGroupName ? '' : ''
         });
     },
-    setLocalGroupName(localGroupName) {
+    setLocalGroupName(localGroupName: any) {
         set({
             localGroupName,
             remoteGroupName: localGroupName ? '' : ''
         });
     },
     resetImportState() {
-        set((state) => ({
+        set((state: any) => ({
             ...initialState,
             open: state.open,
             type: state.type

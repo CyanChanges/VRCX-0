@@ -1,0 +1,66 @@
+use serde::Serialize;
+use serde_json::{Map, Value};
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendProjectionPatch {
+    pub user_id: String,
+    pub patch: Value,
+    pub state_bucket: String,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendProjection {
+    pub generation: u64,
+    pub baseline_revision: u64,
+    #[serde(default)]
+    pub patches: Vec<FriendProjectionPatch>,
+    #[serde(default)]
+    pub removals: Vec<String>,
+    #[serde(default)]
+    pub feed_entries: Vec<Value>,
+    pub friend_log_changed: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeNotificationUpsert {
+    pub notification: Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub insert_defaults: Option<Value>,
+    pub notify_menu: bool,
+    pub deliver_runtime: bool,
+    pub run_automation: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeNotificationProjection {
+    pub generation: u64,
+    #[serde(default)]
+    pub upserts: Vec<RealtimeNotificationUpsert>,
+    #[serde(default)]
+    pub expired_ids: Vec<String>,
+    #[serde(default)]
+    pub seen_ids: Vec<String>,
+    pub clear_menu_if_no_unseen: bool,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeCurrentUserProjection {
+    pub generation: u64,
+    pub patch: Map<String, Value>,
+    pub snapshot: Map<String, Value>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub game_state_patch: Option<Map<String, Value>>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeInstanceClosedProjection {
+    pub generation: u64,
+    pub notification: Value,
+    pub feed_entry: Value,
+}

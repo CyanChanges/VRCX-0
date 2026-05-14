@@ -1,6 +1,6 @@
-import { configRepository } from '@/repositories/index.js';
+import configRepository from '@/repositories/configRepository';
 
-function safeArray(value) {
+function safeArray(value: any) {
     if (Array.isArray(value)) {
         return value;
     }
@@ -15,13 +15,13 @@ function safeArray(value) {
     }
 }
 
-function buildInstanceConditions(selectedInstanceTypes) {
+function buildInstanceConditions(selectedInstanceTypes: any) {
     return Array.isArray(selectedInstanceTypes) && selectedInstanceTypes.length
         ? [{ type: 'instanceTypeIn', values: selectedInstanceTypes }]
         : [];
 }
 
-function buildCompanyConditions({ noFriends, selectedGroups }) {
+function buildCompanyConditions({ noFriends, selectedGroups }: any) {
     if (!noFriends) {
         return [{ type: 'withCompany' }];
     }
@@ -64,8 +64,12 @@ async function loadLegacyRules() {
     const selectedGroups = safeArray(selectedGroupsRaw);
     const selectedInstanceTypes = safeArray(selectedInstanceTypesRaw);
     const instanceConditions = buildInstanceConditions(selectedInstanceTypes);
-    const companyActions = { status: companyStatus || 'busy' };
-    const aloneActions = { status: aloneStatus || 'join me' };
+    const companyActions: Record<string, unknown> = {
+        status: companyStatus || 'busy'
+    };
+    const aloneActions: Record<string, unknown> = {
+        status: aloneStatus || 'join me'
+    };
     if (companyDescEnabled) {
         companyActions.statusDescription = companyDesc || '';
     }
@@ -107,16 +111,16 @@ async function loadLegacyRules() {
     ];
 }
 
-async function loadStoredRules(key) {
+async function loadStoredRules(key: any) {
     return safeArray(await configRepository.getString(key, '[]')).filter(
-        (rule) => rule && typeof rule === 'object'
+        (rule: any) => rule && typeof rule === 'object'
     );
 }
 
-function forceGameRunningCondition(rule) {
+function forceGameRunningCondition(rule: any) {
     const conditions = Array.isArray(rule.conditions)
         ? rule.conditions.filter(
-              (condition) => condition?.type !== 'isGameRunning'
+              (condition: any) => condition?.type !== 'isGameRunning'
           )
         : [];
     return {
@@ -125,7 +129,7 @@ function forceGameRunningCondition(rule) {
     };
 }
 
-function hasPresenceAction(rule) {
+function hasPresenceAction(rule: any) {
     const actions = rule?.actions;
     if (!actions || typeof actions !== 'object') {
         return false;
@@ -162,7 +166,7 @@ export async function loadPresenceAutomationConfig() {
     const contextRules = storedContextRules.map(forceGameRunningCondition);
     const rules = [...timeRules, ...contextRules, ...legacyRules];
     const enabledRules = rules.filter(
-        (rule) => rule?.enabled !== false && hasPresenceAction(rule)
+        (rule: any) => rule?.enabled !== false && hasPresenceAction(rule)
     );
 
     return {

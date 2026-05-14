@@ -47,7 +47,7 @@ function isLocationLike(value: unknown): value is LocationLike {
 function displayLocation(
     location: string,
     worldName: string,
-    groupName = ''
+    groupName: any = ''
 ): string {
     let text = worldName;
     const L = parseLocation(location);
@@ -153,7 +153,7 @@ function parseLocation(tag: unknown): ParsedLocation {
         if (sep >= 0) {
             ctx.worldId = _tag.substr(0, sep);
             ctx.instanceId = _tag.substr(sep + 1);
-            ctx.instanceId.split('~').forEach((s, i) => {
+            ctx.instanceId.split('~').forEach((s: any, i: any) => {
                 if (i) {
                     const A = s.indexOf('(');
                     const Z = A >= 0 ? s.lastIndexOf(')') : -1;

@@ -1,4 +1,4 @@
-const links = {
+const links: any = {
     wiki: 'https://github.com/Map1en/VRCX-0/wiki',
     github: 'https://github.com/Map1en/VRCX-0',
     issues: 'https://github.com/Map1en/VRCX-0/issues',

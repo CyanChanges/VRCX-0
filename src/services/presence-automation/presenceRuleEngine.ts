@@ -6,7 +6,7 @@ const STATUS_VALUES = new Set([
     'offline'
 ]);
 
-function compareNumbers(left, op, right) {
+function compareNumbers(left: number, op: string, right: number) {
     if (op === '>') {
         return left > right;
     }
@@ -25,7 +25,7 @@ function compareNumbers(left, op, right) {
     return left === right;
 }
 
-function parseClockMinutes(value) {
+function parseClockMinutes(value: any) {
     const match = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
     if (!match) {
         return null;
@@ -38,7 +38,7 @@ function parseClockMinutes(value) {
     return hours * 60 + minutes;
 }
 
-function getLocalDayValue(date, offsetDays = 0) {
+function getLocalDayValue(date: any, offsetDays: any = 0) {
     if (!offsetDays) {
         const day = date.getDay();
         return day === 0 ? 7 : day;
@@ -49,14 +49,14 @@ function getLocalDayValue(date, offsetDays = 0) {
     return day === 0 ? 7 : day;
 }
 
-function matchesDayFilter(days, now, activeDayOffset = 0) {
+function matchesDayFilter(days: any, now: any, activeDayOffset: any = 0) {
     if (!days.length) {
         return true;
     }
     return days.includes(getLocalDayValue(now, activeDayOffset));
 }
 
-function matchesTimeWindow(condition, facts) {
+function matchesTimeWindow(condition: Record<string, any>, facts: Record<string, any>) {
     const start = parseClockMinutes(condition.start);
     const end = parseClockMinutes(condition.end);
     if (start === null || end === null) {
@@ -84,11 +84,11 @@ function matchesTimeWindow(condition, facts) {
     return false;
 }
 
-function hasPlayerFacts(facts) {
+function hasPlayerFacts(facts: Record<string, any>) {
     return facts?.playerFactsKnown === true;
 }
 
-function matchesCondition(condition, facts) {
+function matchesCondition(condition: Record<string, any>, facts: Record<string, any>) {
     const type = condition?.type;
     if (!type) {
         return false;
@@ -135,7 +135,7 @@ function matchesCondition(condition, facts) {
             return false;
         }
         const values = Array.isArray(condition.values) ? condition.values : [];
-        return values.some((groupKey) =>
+        return values.some((groupKey: any) =>
             facts.presentFavoriteGroupKeys.includes(groupKey)
         );
     }
@@ -144,7 +144,7 @@ function matchesCondition(condition, facts) {
             return false;
         }
         const values = Array.isArray(condition.values) ? condition.values : [];
-        return values.some((userId) => facts.presentFriendIds.includes(userId));
+        return values.some((userId: any) => facts.presentFriendIds.includes(userId));
     }
     if (type === 'isAlone') {
         if (!hasPlayerFacts(facts)) {
@@ -174,8 +174,8 @@ function matchesCondition(condition, facts) {
     return false;
 }
 
-function validateActionPatch(actions = {}) {
-    const patch = {};
+function validateActionPatch(actions: Record<string, any> = {}) {
+    const patch: Record<string, any> = {};
     if (actions.status && STATUS_VALUES.has(actions.status)) {
         patch.status = actions.status;
     }
@@ -189,7 +189,7 @@ function validateActionPatch(actions = {}) {
     return patch;
 }
 
-function evaluateRule(rule, facts) {
+function evaluateRule(rule: Record<string, any>, facts: Record<string, any>) {
     const conditions = Array.isArray(rule.conditions) ? rule.conditions : [];
     for (const condition of conditions) {
         if (!matchesCondition(condition, facts)) {
@@ -202,10 +202,10 @@ function evaluateRule(rule, facts) {
     return { matched: true, reason: 'matched' };
 }
 
-export function evaluatePresenceRules({ facts, rules }) {
+export function evaluatePresenceRules({ facts, rules }: any) {
     const sortedRules = [...(Array.isArray(rules) ? rules : [])]
-        .filter((rule) => rule?.enabled !== false)
-        .sort((left, right) => {
+        .filter((rule: any) => rule?.enabled !== false)
+        .sort((left: any, right: any) => {
             const priorityDelta =
                 Number(right.priority || 0) - Number(left.priority || 0);
             if (priorityDelta) {
@@ -213,8 +213,8 @@ export function evaluatePresenceRules({ facts, rules }) {
             }
             return String(left.id || '').localeCompare(String(right.id || ''));
         });
-    const patch = {};
-    const fieldOwners = {};
+    const patch: Record<string, any> = {};
+    const fieldOwners: Record<string, string> = {};
     const stoppedDomains = new Set();
     const matchedRules = [];
     const skippedRules = [];

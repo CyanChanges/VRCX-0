@@ -1,4 +1,4 @@
-import { sortStatus } from './friendStatus.js';
+import { sortStatus } from './friendStatus';
 
 type ComparableRecord = Record<string, any>;
 type Comparator = (a: ComparableRecord, b: ComparableRecord) => number;

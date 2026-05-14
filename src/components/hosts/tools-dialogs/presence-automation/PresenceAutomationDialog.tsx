@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-import { userFacingErrorMessage } from '@/lib/errorDisplay.js';
-import { configRepository } from '@/repositories/index.js';
-import { useFavoriteStore } from '@/state/favoriteStore.js';
+import { userFacingErrorMessage } from '@/lib/errorDisplay';
+import configRepository from '@/repositories/configRepository';
+import { useFavoriteStore } from '@/state/favoriteStore';
 import {
     Dialog,
     DialogContent,
@@ -18,17 +18,17 @@ import {
     instanceTypes,
     normalizeAutoAcceptValue,
     parseJsonArray
-} from '../toolsDialogUtils.js';
-import { ContextRulesTab } from './ContextRulesTab.js';
-import { InviteRulesTab } from './InviteRulesTab.js';
-import { TimeRulesTab } from './TimeRulesTab.js';
+} from '../toolsDialogUtils';
+import { ContextRulesTab } from './ContextRulesTab';
+import { InviteRulesTab } from './InviteRulesTab';
 import {
     createGroupOptions,
     createInstanceOptions,
     normalizeContextRule
-} from './presenceAutomationDialogUtils.js';
+} from './presenceAutomationDialogUtils';
+import { TimeRulesTab } from './TimeRulesTab';
 
-const DEFAULT_CONTEXT_VALUES = {
+const DEFAULT_CONTEXT_VALUES: any = {
     autoStateChangeEnabled: false,
     autoStateChangeNoFriends: false,
     autoStateChangeGroups: [],
@@ -41,14 +41,14 @@ const DEFAULT_CONTEXT_VALUES = {
     autoStateChangeCompanyDesc: ''
 };
 
-const DEFAULT_INVITE_VALUES = {
+const DEFAULT_INVITE_VALUES: any = {
     autoAcceptInviteRequests: 'Off',
     autoAcceptInviteGroups: []
 };
 
 const I18N_ROOT = 'view.tools.social_automation';
 
-async function saveConfigValue(key, value, type = 'string') {
+async function saveConfigValue(key: any, value: any, type: any = 'string') {
     if (type === 'bool') {
         await configRepository.setBool(key, value);
     } else if (type === 'array') {
@@ -58,7 +58,7 @@ async function saveConfigValue(key, value, type = 'string') {
     }
 }
 
-function enqueueConfigWrite(queueRef, key, write, onError) {
+function enqueueConfigWrite(queueRef: any, key: any, write: any, onError: any) {
     const queues = queueRef.current;
     const previousWrite = queues.get(key) || Promise.resolve();
     const nextWrite = previousWrite
@@ -77,10 +77,10 @@ function enqueueConfigWrite(queueRef, key, write, onError) {
 function usePresenceOptions() {
     const { t } = useTranslation();
     const favoriteFriendGroups = useFavoriteStore(
-        (state) => state.favoriteFriendGroups
+        (state: any) => state.favoriteFriendGroups
     );
     const localFriendFavoriteGroups = useFavoriteStore(
-        (state) => state.localFriendFavoriteGroups
+        (state: any) => state.localFriendFavoriteGroups
     );
 
     const groupOptions = useMemo(
@@ -99,10 +99,10 @@ function usePresenceOptions() {
     return { groupOptions, instanceOptions };
 }
 
-export function PresenceScheduleDialog({ open, onOpenChange }) {
+export function PresenceScheduleDialog({ open, onOpenChange }: any) {
     const { t } = useTranslation();
     const writeQueuesRef = useRef(new Map());
-    const [timeRules, setTimeRules] = useState([]);
+    const [timeRules, setTimeRules] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -114,13 +114,13 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
         setLoading(true);
         configRepository
             .getString('presenceAutomationTimeRules', '[]')
-            .then((result) => {
+            .then((result: any) => {
                 if (!active) {
                     return;
                 }
                 setTimeRules(parseJsonArray(result));
             })
-            .catch((error) =>
+            .catch((error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -139,7 +139,7 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
         };
     }, [open]);
 
-    async function saveTimeRules(nextRules) {
+    async function saveTimeRules(nextRules: any) {
         setTimeRules(nextRules);
         await enqueueConfigWrite(
             writeQueuesRef,
@@ -149,7 +149,7 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
                     'presenceAutomationTimeRules',
                     JSON.stringify(nextRules)
                 ),
-            (error) =>
+            (error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -163,7 +163,9 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="flex h-130 max-h-[calc(100vh-4rem)] min-h-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-4xl">
                 <DialogHeader className="px-4 pt-4 pr-12 pb-3">
-                    <DialogTitle>{t(`${I18N_ROOT}.status_schedule`)}</DialogTitle>
+                    <DialogTitle>
+                        {t(`${I18N_ROOT}.status_schedule`)}
+                    </DialogTitle>
                     <DialogDescription>
                         {t(`${I18N_ROOT}.status_schedule_description`)}
                     </DialogDescription>
@@ -173,9 +175,9 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
                         <TimeRulesTab
                             rules={timeRules}
                             disabled={loading}
-                            onRulesChange={(nextRules) =>
-                                void saveTimeRules(nextRules)
-                            }
+                            onRulesChange={(nextRules: any) => {
+                                saveTimeRules(nextRules);
+                            }}
                         />
                     </div>
                 </ScrollArea>
@@ -184,12 +186,12 @@ export function PresenceScheduleDialog({ open, onOpenChange }) {
     );
 }
 
-export function PresenceRoomRulesDialog({ open, onOpenChange }) {
+export function PresenceRoomRulesDialog({ open, onOpenChange }: any) {
     const { t } = useTranslation();
     const writeQueuesRef = useRef(new Map());
     const { groupOptions, instanceOptions } = usePresenceOptions();
     const [values, setValues] = useState(DEFAULT_CONTEXT_VALUES);
-    const [contextRules, setContextRules] = useState([]);
+    const [contextRules, setContextRules] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -215,27 +217,29 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
             configRepository.getString('autoStateChangeCompanyDesc', ''),
             configRepository.getString('presenceAutomationContextRules', '[]')
         ])
-            .then((result) => {
+            .then((result: any) => {
                 if (!active) {
                     return;
                 }
                 setValues({
-                    autoStateChangeEnabled: result[0],
-                    autoStateChangeNoFriends: result[1],
+                    autoStateChangeEnabled: Boolean(result[0]),
+                    autoStateChangeNoFriends: Boolean(result[1]),
                     autoStateChangeGroups: parseJsonArray(result[2]),
                     autoStateChangeInstanceTypes: parseJsonArray(result[3]),
-                    autoStateChangeAloneStatus: result[4] || 'join me',
-                    autoStateChangeCompanyStatus: result[5] || 'busy',
-                    autoStateChangeAloneDescEnabled: result[6],
-                    autoStateChangeAloneDesc: result[7] || '',
-                    autoStateChangeCompanyDescEnabled: result[8],
-                    autoStateChangeCompanyDesc: result[9] || ''
+                    autoStateChangeAloneStatus:
+                        String(result[4] || '') || 'join me',
+                    autoStateChangeCompanyStatus:
+                        String(result[5] || '') || 'busy',
+                    autoStateChangeAloneDescEnabled: Boolean(result[6]),
+                    autoStateChangeAloneDesc: String(result[7] || ''),
+                    autoStateChangeCompanyDescEnabled: Boolean(result[8]),
+                    autoStateChangeCompanyDesc: String(result[9] || '')
                 });
                 setContextRules(
                     parseJsonArray(result[10]).map(normalizeContextRule)
                 );
             })
-            .catch((error) =>
+            .catch((error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -254,13 +258,13 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
         };
     }, [open]);
 
-    async function saveValue(key, value, type = 'string') {
-        setValues((current) => ({ ...current, [key]: value }));
+    async function saveValue(key: any, value: any, type: any = 'string') {
+        setValues((current: any) => ({ ...current, [key]: value }));
         await enqueueConfigWrite(
             writeQueuesRef,
             key,
             () => saveConfigValue(key, value, type),
-            (error) =>
+            (error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -270,7 +274,7 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
         );
     }
 
-    async function saveContextRules(nextRules) {
+    async function saveContextRules(nextRules: any) {
         const normalizedRules = nextRules.map(normalizeContextRule);
         setContextRules(normalizedRules);
         await enqueueConfigWrite(
@@ -281,7 +285,7 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
                     'presenceAutomationContextRules',
                     JSON.stringify(normalizedRules)
                 ),
-            (error) =>
+            (error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -295,7 +299,9 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="flex h-[86vh] max-h-[calc(100vh-4rem)] min-h-0 flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
                 <DialogHeader className="px-4 pt-4 pr-12 pb-3">
-                    <DialogTitle>{t(`${I18N_ROOT}.room_status_rules`)}</DialogTitle>
+                    <DialogTitle>
+                        {t(`${I18N_ROOT}.room_status_rules`)}
+                    </DialogTitle>
                     <DialogDescription>
                         {t(`${I18N_ROOT}.room_status_rules_description`)}
                     </DialogDescription>
@@ -309,9 +315,9 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
                             instanceOptions={instanceOptions}
                             contextRules={contextRules}
                             onSaveValue={saveValue}
-                            onRulesChange={(nextRules) =>
-                                void saveContextRules(nextRules)
-                            }
+                            onRulesChange={(nextRules: any) => {
+                                saveContextRules(nextRules);
+                            }}
                         />
                     </div>
                 </ScrollArea>
@@ -320,7 +326,7 @@ export function PresenceRoomRulesDialog({ open, onOpenChange }) {
     );
 }
 
-export function PresenceInviteRequestsDialog({ open, onOpenChange }) {
+export function PresenceInviteRequestsDialog({ open, onOpenChange }: any) {
     const { t } = useTranslation();
     const writeQueuesRef = useRef(new Map());
     const { groupOptions } = usePresenceOptions();
@@ -338,7 +344,7 @@ export function PresenceInviteRequestsDialog({ open, onOpenChange }) {
             configRepository.getString('autoAcceptInviteRequests', 'Off'),
             configRepository.getString('autoAcceptInviteGroups', '[]')
         ])
-            .then((result) => {
+            .then((result: any) => {
                 if (!active) {
                     return;
                 }
@@ -349,7 +355,7 @@ export function PresenceInviteRequestsDialog({ open, onOpenChange }) {
                     autoAcceptInviteGroups: parseJsonArray(result[1])
                 });
             })
-            .catch((error) =>
+            .catch((error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -368,13 +374,13 @@ export function PresenceInviteRequestsDialog({ open, onOpenChange }) {
         };
     }, [open]);
 
-    async function saveValue(key, value, type = 'string') {
-        setValues((current) => ({ ...current, [key]: value }));
+    async function saveValue(key: any, value: any, type: any = 'string') {
+        setValues((current: any) => ({ ...current, [key]: value }));
         await enqueueConfigWrite(
             writeQueuesRef,
             key,
             () => saveConfigValue(key, value, type),
-            (error) =>
+            (error: any) =>
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -392,7 +398,9 @@ export function PresenceInviteRequestsDialog({ open, onOpenChange }) {
                         {t(`${I18N_ROOT}.invite_request_auto_reply`)}
                     </DialogTitle>
                     <DialogDescription>
-                        {t(`${I18N_ROOT}.invite_request_auto_reply_description`)}
+                        {t(
+                            `${I18N_ROOT}.invite_request_auto_reply_description`
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="min-h-0 flex-1">

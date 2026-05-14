@@ -1,0 +1,28 @@
+[package]
+name = "vrcx-0-application"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+test-utils = []
+
+[dependencies]
+chrono = "0.4"
+futures-util = "0.3"
+percent-encoding = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net", "io-util"] }
+tracing = "0.1"
+url = "2"
+walkdir = "2"
+vrcx-0-core = { path = "../core" }
+vrcx-0-integrations = { path = "../integrations" }
+vrcx-0-media = { path = "../media" }
+vrcx-0-persistence = { path = "../persistence" }
+vrcx-0-vrchat-client = { path = "../vrchat-client" }
+
+[dev-dependencies]
+image = "0.25"
+rusqlite = { version = "0.39", features = ["bundled"] }

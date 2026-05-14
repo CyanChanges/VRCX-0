@@ -333,12 +333,12 @@ const toolDefinitions: ToolDefinition[] = [
 ];
 
 const toolDefinitionMap = new Map<string, ToolDefinition>(
-    toolDefinitions.map((tool) => [tool.key, tool])
+    toolDefinitions.map((tool: any) => [tool.key, tool])
 );
 
 const generatedToolNavDefinitions: ToolNavDefinition[] = toolDefinitions
-    .filter((tool) => tool.navEligible)
-    .map((tool) => ({
+    .filter((tool: any) => tool.navEligible)
+    .map((tool: any) => ({
         key: `tool-${tool.key}`,
         icon: tool.navIcon,
         tooltip: tool.titleKey,
@@ -371,12 +371,12 @@ const toolNavDefinitions: ToolNavDefinition[] = [
     ...legacyToolNavDefinitions
 ];
 
-const defaultHiddenToolNavKeys = toolNavDefinitions.map((tool) => tool.key);
+const defaultHiddenToolNavKeys = toolNavDefinitions.map((tool: any) => tool.key);
 const isToolNavKey = (key: unknown): key is string =>
     typeof key === 'string' && key.startsWith('tool-');
 
 function getToolsByCategory(categoryKey: ToolCategoryKey): ToolDefinition[] {
-    return toolDefinitions.filter((tool) => tool.category === categoryKey);
+    return toolDefinitions.filter((tool: any) => tool.category === categoryKey);
 }
 
 export {

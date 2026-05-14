@@ -1,14 +1,14 @@
+import { tauriClient } from '@/platform/tauri/client';
 import {
     ConfigKeys,
     type ConfigDefaultValue
-} from '@/repositories/configKeys.js';
+} from '@/repositories/configKeys';
 
 import {
     asString,
     safeJsonParse,
     safeJsonStringify
-} from './baseRepository.js';
-import sqliteRepository from './sqliteRepository.js';
+} from './baseRepository';
 
 type ConfigEntries = Array<[string, unknown]>;
 type ConfigObject = Record<string, unknown> | unknown[] | null;
@@ -43,13 +43,9 @@ class ConfigRepository {
             return;
         }
 
-        await sqliteRepository.executeNonQuery(
-            'CREATE TABLE IF NOT EXISTS configs (`key` TEXT PRIMARY KEY, `value` TEXT)'
-        );
+        await tauriClient.app.ConfigSetValues({ entries: [] });
 
-        const rows = await sqliteRepository.query<ConfigRow>(
-            'SELECT key, value FROM configs'
-        );
+        const rows = (await tauriClient.app.ConfigListValues()) as ConfigRow[];
         if (Array.isArray(rows)) {
             for (const row of rows) {
                 if (Array.isArray(row) && row[0] != null && row[1] != null) {
@@ -92,13 +88,13 @@ class ConfigRepository {
     async getString(
         key: string,
         defaultValue: ConfigDefaultValue = null
-    ): Promise<ConfigDefaultValue> {
+    ): Promise<string> {
         const value = await this.getRawValue(key);
         if (value === null) {
             if (defaultValue !== null) {
-                return defaultValue;
+                return String(defaultValue);
             }
-            return this.#getSchemaDefault(key);
+            return String(this.#getSchemaDefault(key) ?? '');
         }
         return asString(value, String(defaultValue ?? ''));
     }
@@ -106,20 +102,23 @@ class ConfigRepository {
     async get(
         key: string,
         defaultValue: ConfigDefaultValue = null
-    ): Promise<ConfigDefaultValue> {
+    ): Promise<string> {
         return this.getString(key, defaultValue);
     }
 
     async getBool(
         key: string,
         defaultValue: boolean | undefined = undefined
-    ): Promise<ConfigDefaultValue> {
+    ): Promise<boolean> {
         const value = await this.getRawValue(key);
         if (value === null) {
             if (defaultValue !== undefined) {
                 return defaultValue;
             }
-            return this.#getSchemaDefault(key);
+            const schemaDefault = this.#getSchemaDefault(key);
+            return typeof schemaDefault === 'boolean'
+                ? schemaDefault
+                : String(schemaDefault ?? '').toLowerCase() === 'true';
         }
         return value === 'true';
     }
@@ -127,13 +126,13 @@ class ConfigRepository {
     async getInt(
         key: string,
         defaultValue: number | undefined = undefined
-    ): Promise<ConfigDefaultValue> {
+    ): Promise<number> {
         const value = await this.getRawValue(key);
         if (value === null) {
             if (defaultValue !== undefined) {
                 return defaultValue;
             }
-            return this.#getSchemaDefault(key);
+            return Number(this.#getSchemaDefault(key) ?? 0);
         }
 
         const parsed = Number.parseInt(value, 10);
@@ -145,19 +144,19 @@ class ConfigRepository {
             return defaultValue;
         }
 
-        return this.#getSchemaDefault(key);
+        return Number(this.#getSchemaDefault(key) ?? 0);
     }
 
     async getFloat(
         key: string,
         defaultValue: number | undefined = undefined
-    ): Promise<ConfigDefaultValue> {
+    ): Promise<number> {
         const value = await this.getRawValue(key);
         if (value === null) {
             if (defaultValue !== undefined) {
                 return defaultValue;
             }
-            return this.#getSchemaDefault(key);
+            return Number(this.#getSchemaDefault(key) ?? 0);
         }
 
         const parsed = Number.parseFloat(value);
@@ -169,15 +168,15 @@ class ConfigRepository {
             return defaultValue;
         }
 
-        return this.#getSchemaDefault(key);
+        return Number(this.#getSchemaDefault(key) ?? 0);
     }
 
     async getObject<T extends ConfigObject = ConfigObject>(
         key: string,
         defaultValue: T | null = null
-    ): Promise<T | null | unknown> {
+    ): Promise<T | null> {
         const value = await this.getString(key, null);
-        return safeJsonParse(value, defaultValue);
+        return safeJsonParse(value, defaultValue) as T | null;
     }
 
     async getArray<T = unknown>(
@@ -192,10 +191,9 @@ class ConfigRepository {
         await this.#ensureReady();
         const dbKey = this.#resolveKey(key);
         const stringValue = String(value);
-        const result = await sqliteRepository.executeNonQuery(
-            'INSERT OR REPLACE INTO configs (key, value) VALUES (@key, @value)',
-            { '@key': dbKey, '@value': stringValue }
-        );
+        const result = await tauriClient.app.ConfigSetValues({
+            entries: [{ key: dbKey, value: stringValue }]
+        });
         this.#cache.set(dbKey, stringValue);
         return result;
     }
@@ -225,15 +223,13 @@ class ConfigRepository {
         const normalizedEntries = entries.map(([key, value]) => [
             this.#resolveKey(key),
             String(value)
-        ]);
+        ] satisfies [string, string]);
 
-        await sqliteRepository.transaction(async (tx) => {
-            for (const [dbKey, stringValue] of normalizedEntries) {
-                await tx.executeNonQuery(
-                    'INSERT OR REPLACE INTO configs (key, value) VALUES (@key, @value)',
-                    { '@key': dbKey, '@value': stringValue }
-                );
-            }
+        await tauriClient.app.ConfigSetValues({
+            entries: normalizedEntries.map(([key, value]) => ({
+                key,
+                value
+            }))
         });
 
         for (const [dbKey, stringValue] of normalizedEntries) {
@@ -248,12 +244,7 @@ class ConfigRepository {
     async remove(key: string): Promise<unknown> {
         await this.#ensureReady();
         const dbKey = this.#resolveKey(key);
-        const result = await sqliteRepository.executeNonQuery(
-            'DELETE FROM configs WHERE key = @key',
-            {
-                '@key': dbKey
-            }
-        );
+        const result = await tauriClient.app.ConfigRemoveValue({ key: dbKey });
         this.#cache.delete(dbKey);
         return result;
     }

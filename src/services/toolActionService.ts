@@ -1,17 +1,17 @@
 import { toast } from 'sonner';
 
-import { backend } from '@/platform/index.js';
+import { tauriClient } from '@/platform/tauri/client';
 import {
     getHostCapabilityUnavailableReason,
     isHostCapabilityAvailable,
     isHostCapabilitySupported
-} from '@/services/hostCapabilityService.js';
-import i18n from '@/services/i18nService.js';
+} from '@/services/hostCapabilityService';
+import i18n from '@/services/i18nService';
 import {
     toolDefinitionMap,
     type ToolDefinition
-} from '@/shared/constants/tools.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+} from '@/shared/constants/tools';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
 type Navigate = (to: string) => unknown;
 type Translate = (key: string) => string;
@@ -102,7 +102,7 @@ export async function triggerToolByKey(
 
     if (action.type === 'app-api') {
         try {
-            const result = await backend.app[action.method]();
+            const result = await tauriClient.app[action.method]();
             toast[result ? 'success' : 'error'](
                 t(result ? action.successMessageKey : action.errorMessageKey)
             );

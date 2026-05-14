@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '@/lib/utils.js';
-import { userStatusLabel } from '@/lib/userStatus.js';
+import { userStatusLabel } from '@/shared/utils/userStatus';
+import { cn } from '@/lib/utils';
 import {
     Empty,
     EmptyDescription,
@@ -28,7 +28,7 @@ import {
 } from '@/ui/shadcn/select';
 import { Switch } from '@/ui/shadcn/switch';
 
-import { statusOptions } from '../toolsDialogUtils.js';
+import { statusOptions } from '../toolsDialogUtils';
 import {
     AutomationSplitLayout,
     CompactCheckList,
@@ -36,8 +36,7 @@ import {
     RuleList,
     RuleListItem,
     RuleSummaryBadge
-} from './AutomationRuleLayout.js';
-import { PresenceRuleActionFields } from './PresenceRuleActionFields.js';
+} from './AutomationRuleLayout';
 import {
     contextPresetLabelKeyFromValue,
     contextPresetOptions,
@@ -48,15 +47,16 @@ import {
     priorityOptions,
     priorityValueFromNumber,
     updateRule
-} from './presenceAutomationDialogUtils.js';
+} from './presenceAutomationDialogUtils';
+import { PresenceRuleActionFields } from './PresenceRuleActionFields';
 
 const I18N_ROOT = 'view.tools.social_automation';
 
-function hasAction(rule, key) {
+function hasAction(rule: any, key: any) {
     return Object.prototype.hasOwnProperty.call(rule.actions || {}, key);
 }
 
-function updateAction(rule, patch) {
+function updateAction(rule: any, patch: any) {
     return {
         ...rule,
         actions: {
@@ -66,8 +66,8 @@ function updateAction(rule, patch) {
     };
 }
 
-function removeAction(rule, key) {
-    const actions = { ...(rule.actions || {}) };
+function removeAction(rule: any, key: any) {
+    const actions: any = { ...(rule.actions || {}) };
     delete actions[key];
     return {
         ...rule,
@@ -75,18 +75,18 @@ function removeAction(rule, key) {
     };
 }
 
-function parseUserIds(value) {
+function parseUserIds(value: any) {
     return String(value || '')
         .split(',')
-        .map((entry) => entry.trim())
+        .map((entry: any) => entry.trim())
         .filter(Boolean);
 }
 
-function ruleTitle(rule, t) {
+function ruleTitle(rule: any, t: any) {
     return rule?.label || t(`${I18N_ROOT}.room_rule_default`);
 }
 
-function actionSummary(rule, t) {
+function actionSummary(rule: any, t: any) {
     const parts = [];
     if (rule.actions?.status) {
         parts.push(userStatusLabel(rule.actions.status, t));
@@ -107,7 +107,7 @@ function LegacyStatusEditor({
     onStatusChange,
     onDescEnabledChange,
     onDescChange
-}) {
+}: any) {
     const { t } = useTranslation();
     const descEnabledId = `${id}-description-enabled`;
 
@@ -130,7 +130,7 @@ function LegacyStatusEditor({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                {statusOptions.map((statusOption) => (
+                                {statusOptions.map((statusOption: any) => (
                                     <SelectItem
                                         key={statusOption}
                                         value={statusOption}
@@ -162,7 +162,7 @@ function LegacyStatusEditor({
                             placeholder={t(
                                 'view.settings.general.automation.status_description_placeholder'
                             )}
-                            onChange={(event) =>
+                            onChange={(event: any) =>
                                 onDescChange(event.target.value)
                             }
                         />
@@ -181,7 +181,7 @@ export function ContextRulesTab({
     contextRules,
     onSaveValue,
     onRulesChange
-}) {
+}: any) {
     const { t } = useTranslation();
     const legacyDisabled = loading || !values.autoStateChangeEnabled;
     const rules = Array.isArray(contextRules) ? contextRules : [];
@@ -192,19 +192,19 @@ export function ContextRulesTab({
             setSelectedRuleId(null);
             return;
         }
-        if (!rules.some((rule) => rule.id === selectedRuleId)) {
+        if (!rules.some((rule: any) => rule.id === selectedRuleId)) {
             setSelectedRuleId(rules[0].id);
         }
     }, [rules, selectedRuleId]);
 
     const selectedRule = useMemo(
-        () => rules.find((rule) => rule.id === selectedRuleId) || null,
+        () => rules.find((rule: any) => rule.id === selectedRuleId) || null,
         [rules, selectedRuleId]
     );
 
-    function update(ruleId, updater) {
+    function update(ruleId: any, updater: any) {
         onRulesChange(
-            updateRule(rules, ruleId, (rule) =>
+            updateRule(rules, ruleId, (rule: any) =>
                 normalizeContextRule(updater(rule))
             )
         );
@@ -216,9 +216,9 @@ export function ContextRulesTab({
         onRulesChange([...rules, nextRule]);
     }
 
-    function removeRule(ruleId) {
-        const ruleIndex = rules.findIndex((rule) => rule.id === ruleId);
-        const nextRules = rules.filter((rule) => rule.id !== ruleId);
+    function removeRule(ruleId: any) {
+        const ruleIndex = rules.findIndex((rule: any) => rule.id === ruleId);
+        const nextRules = rules.filter((rule: any) => rule.id !== ruleId);
         if (selectedRuleId === ruleId) {
             setSelectedRuleId(
                 nextRules[Math.min(ruleIndex, nextRules.length - 1)]?.id ?? null
@@ -238,7 +238,7 @@ export function ContextRulesTab({
             emptyDescription={t(`${I18N_ROOT}.room_social_rules_description`)}
             onAdd={addRule}
         >
-            {rules.map((rule) => (
+            {rules.map((rule: any) => (
                 <RuleListItem
                     key={rule.id}
                     selected={rule.id === selectedRuleId}
@@ -258,8 +258,8 @@ export function ContextRulesTab({
                         </>
                     }
                     onSelect={() => setSelectedRuleId(rule.id)}
-                    onEnabledChange={(checked) =>
-                        update(rule.id, (current) => ({
+                    onEnabledChange={(checked: any) =>
+                        update(rule.id, (current: any) => ({
                             ...current,
                             enabled: checked
                         }))
@@ -287,12 +287,14 @@ export function ContextRulesTab({
                 <FieldGroup>
                     <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_10rem]">
                         <Field>
-                            <FieldLabel>{t(`${I18N_ROOT}.rule_name`)}</FieldLabel>
+                            <FieldLabel>
+                                {t(`${I18N_ROOT}.rule_name`)}
+                            </FieldLabel>
                             <Input
                                 value={selectedRule.label || ''}
                                 disabled={loading}
-                                onChange={(event) =>
-                                    update(selectedRule.id, (current) => ({
+                                onChange={(event: any) =>
+                                    update(selectedRule.id, (current: any) => ({
                                         ...current,
                                         label: event.target.value
                                     }))
@@ -300,17 +302,18 @@ export function ContextRulesTab({
                             />
                         </Field>
                         <Field>
-                            <FieldLabel>{t(`${I18N_ROOT}.priority`)}</FieldLabel>
+                            <FieldLabel>
+                                {t(`${I18N_ROOT}.priority`)}
+                            </FieldLabel>
                             <Select
                                 value={priorityValueFromNumber(
                                     selectedRule.priority
                                 )}
                                 disabled={loading}
-                                onValueChange={(value) =>
-                                    update(selectedRule.id, (current) => ({
+                                onValueChange={(value: any) =>
+                                    update(selectedRule.id, (current: any) => ({
                                         ...current,
-                                        priority:
-                                            priorityNumberFromValue(value)
+                                        priority: priorityNumberFromValue(value)
                                     }))
                                 }
                             >
@@ -319,7 +322,7 @@ export function ContextRulesTab({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {priorityOptions.map((option) => (
+                                        {priorityOptions.map((option: any) => (
                                             <SelectItem
                                                 key={option.value}
                                                 value={option.value}
@@ -338,15 +341,20 @@ export function ContextRulesTab({
                         </FieldLegend>
                         <FieldGroup>
                             <Field>
-                                <FieldLabel>{t(`${I18N_ROOT}.when`)}</FieldLabel>
+                                <FieldLabel>
+                                    {t(`${I18N_ROOT}.when`)}
+                                </FieldLabel>
                                 <Select
                                     value={selectedRule.preset || 'alone'}
                                     disabled={loading}
-                                    onValueChange={(value) =>
-                                        update(selectedRule.id, (current) => ({
-                                            ...current,
-                                            preset: value
-                                        }))
+                                    onValueChange={(value: any) =>
+                                        update(
+                                            selectedRule.id,
+                                            (current: any) => ({
+                                                ...current,
+                                                preset: value
+                                            })
+                                        )
                                     }
                                 >
                                     <SelectTrigger>
@@ -355,7 +363,7 @@ export function ContextRulesTab({
                                     <SelectContent>
                                         <SelectGroup>
                                             {contextPresetOptions.map(
-                                                (preset) => (
+                                                (preset: any) => (
                                                     <SelectItem
                                                         key={preset.value}
                                                         value={preset.value}
@@ -375,14 +383,16 @@ export function ContextRulesTab({
                                     </FieldLabel>
                                     <CompactCheckList
                                         idPrefix={`${selectedRule.id}-groups`}
-                                        values={selectedRule.selectedGroups || []}
+                                        values={
+                                            selectedRule.selectedGroups || []
+                                        }
                                         options={groupOptions}
                                         disabled={loading}
                                         columns="two"
-                                        onChange={(next) =>
+                                        onChange={(next: any) =>
                                             update(
                                                 selectedRule.id,
-                                                (current) => ({
+                                                (current: any) => ({
                                                     ...current,
                                                     selectedGroups: next
                                                 })
@@ -399,12 +409,14 @@ export function ContextRulesTab({
                                     <Input
                                         type="number"
                                         min="1"
-                                        value={selectedRule.friendCountValue || 1}
+                                        value={
+                                            selectedRule.friendCountValue || 1
+                                        }
                                         disabled={loading}
-                                        onChange={(event) =>
+                                        onChange={(event: any) =>
                                             update(
                                                 selectedRule.id,
-                                                (current) => ({
+                                                (current: any) => ({
                                                     ...current,
                                                     friendCountValue:
                                                         Number.parseInt(
@@ -425,12 +437,14 @@ export function ContextRulesTab({
                                     <Input
                                         type="number"
                                         min="1"
-                                        value={selectedRule.playerCountValue || 1}
+                                        value={
+                                            selectedRule.playerCountValue || 1
+                                        }
                                         disabled={loading}
-                                        onChange={(event) =>
+                                        onChange={(event: any) =>
                                             update(
                                                 selectedRule.id,
-                                                (current) => ({
+                                                (current: any) => ({
                                                     ...current,
                                                     playerCountValue:
                                                         Number.parseInt(
@@ -454,10 +468,10 @@ export function ContextRulesTab({
                                         ).join(', ')}
                                         disabled={loading}
                                         placeholder="usr_..., usr_..."
-                                        onChange={(event) =>
+                                        onChange={(event: any) =>
                                             update(
                                                 selectedRule.id,
-                                                (current) => ({
+                                                (current: any) => ({
                                                     ...current,
                                                     specificFriendIds:
                                                         parseUserIds(
@@ -484,11 +498,14 @@ export function ContextRulesTab({
                                     options={instanceOptions}
                                     disabled={loading}
                                     columns="two"
-                                    onChange={(next) =>
-                                        update(selectedRule.id, (current) => ({
-                                            ...current,
-                                            selectedInstanceTypes: next
-                                        }))
+                                    onChange={(next: any) =>
+                                        update(
+                                            selectedRule.id,
+                                            (current: any) => ({
+                                                ...current,
+                                                selectedInstanceTypes: next
+                                            })
+                                        )
                                     }
                                 />
                             </Field>
@@ -505,15 +522,15 @@ export function ContextRulesTab({
                         statusDescription={
                             selectedRule.actions?.statusDescription || ''
                         }
-                        onStatusChange={(value) =>
-                            update(selectedRule.id, (current) =>
+                        onStatusChange={(value: any) =>
+                            update(selectedRule.id, (current: any) =>
                                 value === 'no-change'
                                     ? removeAction(current, 'status')
                                     : updateAction(current, { status: value })
                             )
                         }
-                        onStatusDescriptionEnabledChange={(checked) =>
-                            update(selectedRule.id, (current) =>
+                        onStatusDescriptionEnabledChange={(checked: any) =>
+                            update(selectedRule.id, (current: any) =>
                                 checked
                                     ? updateAction(current, {
                                           statusDescription: ''
@@ -521,8 +538,8 @@ export function ContextRulesTab({
                                     : removeAction(current, 'statusDescription')
                             )
                         }
-                        onStatusDescriptionChange={(value) =>
-                            update(selectedRule.id, (current) =>
+                        onStatusDescriptionChange={(value: any) =>
+                            update(selectedRule.id, (current: any) =>
                                 updateAction(current, {
                                     statusDescription: value
                                 })
@@ -560,16 +577,14 @@ export function ContextRulesTab({
                     <Switch
                         checked={values.autoStateChangeEnabled}
                         disabled={loading}
-                        aria-label={t(
-                            `${I18N_ROOT}.enable_legacy_auto_status`
-                        )}
-                        onCheckedChange={(checked) =>
-                            void onSaveValue(
+                        aria-label={t(`${I18N_ROOT}.enable_legacy_auto_status`)}
+                        onCheckedChange={(checked: any) => {
+                            onSaveValue(
                                 'autoStateChangeEnabled',
                                 checked,
                                 'bool'
-                            )
-                        }
+                            );
+                        }}
                     />
                 </div>
                 <FieldGroup
@@ -588,13 +603,13 @@ export function ContextRulesTab({
                                             : 'alone'
                                     }
                                     disabled={legacyDisabled}
-                                    onValueChange={(value) =>
-                                        void onSaveValue(
+                                    onValueChange={(value: any) => {
+                                        onSaveValue(
                                             'autoStateChangeNoFriends',
                                             value === 'noFriends',
                                             'bool'
-                                        )
-                                    }
+                                        );
+                                    }}
                                 >
                                     <SelectTrigger>
                                         <SelectValue />
@@ -635,13 +650,13 @@ export function ContextRulesTab({
                                         !values.autoStateChangeNoFriends
                                     }
                                     columns="two"
-                                    onChange={(next) =>
-                                        void onSaveValue(
+                                    onChange={(next: any) => {
+                                        onSaveValue(
                                             'autoStateChangeGroups',
                                             next,
                                             'array'
-                                        )
-                                    }
+                                        );
+                                    }}
                                 />
                             </Field>
                         </FieldGroup>
@@ -655,13 +670,13 @@ export function ContextRulesTab({
                                 options={instanceOptions}
                                 disabled={legacyDisabled}
                                 columns="two"
-                                onChange={(next) =>
-                                    void onSaveValue(
+                                onChange={(next: any) => {
+                                    onSaveValue(
                                         'autoStateChangeInstanceTypes',
                                         next,
                                         'array'
-                                    )
-                                }
+                                    );
+                                }}
                             />
                         </Field>
                     </div>
@@ -673,25 +688,22 @@ export function ContextRulesTab({
                             status={values.autoStateChangeAloneStatus}
                             descEnabled={values.autoStateChangeAloneDescEnabled}
                             desc={values.autoStateChangeAloneDesc}
-                            onStatusChange={(value) =>
-                                void onSaveValue(
+                            onStatusChange={(value: any) => {
+                                onSaveValue(
                                     'autoStateChangeAloneStatus',
                                     value
-                                )
-                            }
-                            onDescEnabledChange={(value) =>
-                                void onSaveValue(
+                                );
+                            }}
+                            onDescEnabledChange={(value: any) => {
+                                onSaveValue(
                                     'autoStateChangeAloneDescEnabled',
                                     value,
                                     'bool'
-                                )
-                            }
-                            onDescChange={(value) =>
-                                void onSaveValue(
-                                    'autoStateChangeAloneDesc',
-                                    value
-                                )
-                            }
+                                );
+                            }}
+                            onDescChange={(value: any) => {
+                                onSaveValue('autoStateChangeAloneDesc', value);
+                            }}
                         />
                         <LegacyStatusEditor
                             id="auto-state-change-company-status"
@@ -702,25 +714,25 @@ export function ContextRulesTab({
                                 values.autoStateChangeCompanyDescEnabled
                             }
                             desc={values.autoStateChangeCompanyDesc}
-                            onStatusChange={(value) =>
-                                void onSaveValue(
+                            onStatusChange={(value: any) => {
+                                onSaveValue(
                                     'autoStateChangeCompanyStatus',
                                     value
-                                )
-                            }
-                            onDescEnabledChange={(value) =>
-                                void onSaveValue(
+                                );
+                            }}
+                            onDescEnabledChange={(value: any) => {
+                                onSaveValue(
                                     'autoStateChangeCompanyDescEnabled',
                                     value,
                                     'bool'
-                                )
-                            }
-                            onDescChange={(value) =>
-                                void onSaveValue(
+                                );
+                            }}
+                            onDescChange={(value: any) => {
+                                onSaveValue(
                                     'autoStateChangeCompanyDesc',
                                     value
-                                )
-                            }
+                                );
+                            }}
                         />
                     </div>
                 </FieldGroup>

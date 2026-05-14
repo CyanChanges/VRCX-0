@@ -1,7 +1,7 @@
-import { buildGameLogSessions } from '@/shared/utils/gameLog.js';
+import { buildGameLogSessions, type GameLogRow } from '@/shared/utils/gameLog';
 
-import configRepository from './configRepository.js';
-import gameLogLocalRepository from './gameLogLocalRepository.js';
+import configRepository from './configRepository';
+import gameLogPersistenceRepository from './gameLogPersistenceRepository';
 
 export const GAME_LOG_FILTER_TYPES = Object.freeze([
     'Location',
@@ -13,22 +13,100 @@ export const GAME_LOG_FILTER_TYPES = Object.freeze([
     'External',
     'StringLoad',
     'ImageLoad'
-]);
+] as const);
 
 const SESSION_EVENT_FILTER_TYPES = Object.freeze([
     'OnPlayerJoined',
     'OnPlayerLeft',
     'VideoPlay'
-]);
+] as const);
 const SESSION_GLOBAL_SEARCH_INITIAL_LOCATIONS = 500;
 
-function normalizeId(value) {
+type GameLogFilterType = (typeof GAME_LOG_FILTER_TYPES)[number];
+type SessionEventFilterType = (typeof SESSION_EVENT_FILTER_TYPES)[number];
+type UnknownRecord = Record<string, unknown>;
+
+interface GameLogMember extends UnknownRecord {
+    displayName?: string;
+    userId?: string;
+}
+
+interface GameLogEvent extends GameLogRow {
+    type?: string;
+    displayName?: string;
+    userId?: string;
+    videoName?: string;
+    videoUrl?: string;
+    videoId?: string;
+    members?: GameLogMember[];
+    count?: number;
+    isFavorite?: boolean;
+}
+
+interface GameLogSession extends GameLogRow {
+    created_at?: string;
+    location?: string;
+    worldId?: string;
+    worldName?: string;
+    groupName?: string;
+    events?: GameLogEvent[];
+}
+
+interface GameLogLocationSegment extends GameLogRow {
+    id?: string | number;
+    created_at?: string;
+    location?: string;
+}
+
+interface QueryGameLogInput {
+    currentUserId?: unknown;
+    search?: unknown;
+    filters?: unknown;
+    favoriteUserIds?: unknown;
+}
+
+interface QueryLatestSessionsInput extends QueryGameLogInput {
+    dateFrom?: unknown;
+    dateTo?: unknown;
+    limit?: unknown;
+}
+
+interface SessionFilters {
+    filters: GameLogFilterType[];
+    favoriteUserIds: Set<string>;
+    search?: unknown;
+}
+
+interface FilterSessionEventsOptions {
+    eventFilters: SessionEventFilterType[];
+    favoriteUserIds: Set<string>;
+    searchQuery: string;
+}
+
+interface ResolveSessionFetchLimitInput {
+    normalizedLimit: number;
+    normalizedFilters: GameLogFilterType[];
+    normalizedSearch: string;
+    favoriteUserIds: Set<string>;
+    maxTableSize: number;
+    searchLimit: number;
+}
+
+function isRecord(value: unknown): value is UnknownRecord {
+    return Boolean(value && typeof value === 'object');
+}
+
+function toGameLogRow(value: unknown): GameLogRow {
+    return isRecord(value) ? value : {};
+}
+
+function normalizeId(value: unknown) {
     return typeof value === 'string'
         ? value.trim()
         : String(value ?? '').trim();
 }
 
-function normalizeFavoriteSet(favoriteUserIds = []) {
+function normalizeFavoriteSet(favoriteUserIds: unknown = []) {
     return new Set(
         (Array.isArray(favoriteUserIds) ? favoriteUserIds : [])
             .map((value) => normalizeId(value))
@@ -36,17 +114,17 @@ function normalizeFavoriteSet(favoriteUserIds = []) {
     );
 }
 
-function normalizeFilterList(filters = []) {
+function normalizeFilterList(filters: unknown = []): GameLogFilterType[] {
     if (!Array.isArray(filters)) {
         return [];
     }
 
-    return filters.filter((filter, index, source) => {
+    return filters.filter((filter, index, source): filter is GameLogFilterType => {
         if (typeof filter !== 'string') {
             return false;
         }
 
-        if (!GAME_LOG_FILTER_TYPES.includes(filter)) {
+        if (!GAME_LOG_FILTER_TYPES.includes(filter as GameLogFilterType)) {
             return false;
         }
 
@@ -54,15 +132,15 @@ function normalizeFilterList(filters = []) {
     });
 }
 
-function normalizeSessionLimit(value, fallback = 25) {
-    const parsed = Number.parseInt(value, 10);
+function normalizeSessionLimit(value: unknown, fallback = 25) {
+    const parsed = Number.parseInt(String(value ?? ''), 10);
     if (!Number.isFinite(parsed) || parsed <= 0) {
         return fallback;
     }
     return Math.min(parsed, 1000);
 }
 
-function normalizeConfigInt(value, fallback) {
+function normalizeConfigInt(value: unknown, fallback: number) {
     const parsed = Number.parseInt(String(value ?? ''), 10);
     if (!Number.isFinite(parsed)) {
         return fallback;
@@ -70,12 +148,12 @@ function normalizeConfigInt(value, fallback) {
     return parsed;
 }
 
-function dateToEpoch(value) {
-    const epoch = Date.parse(value);
+function dateToEpoch(value: unknown) {
+    const epoch = Date.parse(String(value ?? ''));
     return Number.isFinite(epoch) ? epoch : 0;
 }
 
-function normalizeDateBoundary(value, boundary) {
+function normalizeDateBoundary(value: unknown, boundary: 'start' | 'end') {
     const normalized = normalizeId(value);
     if (!normalized) {
         return '';
@@ -95,7 +173,7 @@ function normalizeDateBoundary(value, boundary) {
     return date.toISOString();
 }
 
-function getSessionEventFilterType(event) {
+function getSessionEventFilterType(event: GameLogEvent): string {
     if (event?.type === 'JoinGroup') {
         return 'OnPlayerJoined';
     }
@@ -105,15 +183,23 @@ function getSessionEventFilterType(event) {
     return event?.type || '';
 }
 
-function sessionEventMatchesType(event, filters) {
+function sessionEventMatchesType(
+    event: GameLogEvent,
+    filters: SessionEventFilterType[]
+) {
     if (filters.length === 0) {
         return true;
     }
 
-    return filters.includes(getSessionEventFilterType(event));
+    return filters.includes(
+        getSessionEventFilterType(event) as SessionEventFilterType
+    );
 }
 
-function filterSessionEventByFavorite(event, favoriteUserIds) {
+function filterSessionEventByFavorite(
+    event: GameLogEvent,
+    favoriteUserIds: Set<string>
+): GameLogEvent | null {
     if (favoriteUserIds.size === 0) {
         return event;
     }
@@ -143,7 +229,7 @@ function filterSessionEventByFavorite(event, favoriteUserIds) {
     return null;
 }
 
-function sessionHeaderMatchesSearch(session, query) {
+function sessionHeaderMatchesSearch(session: GameLogSession, query: string) {
     if (!query) {
         return true;
     }
@@ -161,7 +247,7 @@ function sessionHeaderMatchesSearch(session, query) {
     );
 }
 
-function sessionEventValueMatchesSearch(event, query) {
+function sessionEventValueMatchesSearch(event: GameLogEvent, query: string) {
     if (!query) {
         return true;
     }
@@ -180,7 +266,7 @@ function sessionEventValueMatchesSearch(event, query) {
     );
 }
 
-function sessionMemberMatchesSearch(member, query) {
+function sessionMemberMatchesSearch(member: GameLogMember, query: string) {
     if (!query) {
         return true;
     }
@@ -192,7 +278,10 @@ function sessionMemberMatchesSearch(member, query) {
     );
 }
 
-function filterSessionEventBySearch(event, query) {
+function filterSessionEventBySearch(
+    event: GameLogEvent,
+    query: string
+): GameLogEvent | null {
     if (!query) {
         return event;
     }
@@ -218,10 +307,10 @@ function filterSessionEventBySearch(event, query) {
 }
 
 function filterSessionEvents(
-    session,
-    { eventFilters, favoriteUserIds, searchQuery }
+    session: GameLogSession,
+    { eventFilters, favoriteUserIds, searchQuery }: FilterSessionEventsOptions
 ) {
-    const filteredEvents = [];
+    const filteredEvents: GameLogEvent[] = [];
 
     for (const event of session?.events ?? []) {
         if (!sessionEventMatchesType(event, eventFilters)) {
@@ -250,10 +339,11 @@ function filterSessionEvents(
     return filteredEvents;
 }
 
-function normalizeSessionFilters(filters) {
+function normalizeSessionFilters(filters: GameLogFilterType[]) {
     const hasLocationFilter = filters.includes('Location');
-    const eventFilters = filters.filter((filter) =>
-        SESSION_EVENT_FILTER_TYPES.includes(filter)
+    const eventFilters = filters.filter(
+        (filter): filter is SessionEventFilterType =>
+            SESSION_EVENT_FILTER_TYPES.includes(filter as SessionEventFilterType)
     );
 
     return {
@@ -266,7 +356,10 @@ function normalizeSessionFilters(filters) {
     };
 }
 
-function filterSessions(sessions, { filters, favoriteUserIds, search }) {
+function filterSessions(
+    sessions: unknown,
+    { filters, favoriteUserIds, search }: SessionFilters
+) {
     const searchQuery = String(search || '')
         .trim()
         .toLowerCase();
@@ -277,12 +370,15 @@ function filterSessions(sessions, { filters, favoriteUserIds, search }) {
         return [];
     }
 
-    return sessions.reduce((result, session) => {
+    const sourceSessions = Array.isArray(sessions) ? sessions : [];
+
+    return sourceSessions.reduce<GameLogSession[]>((result, session) => {
+        const currentSession = toGameLogRow(session) as GameLogSession;
         const headerMatchesSearch = sessionHeaderMatchesSearch(
-            session,
+            currentSession,
             searchQuery
         );
-        const nextEvents = filterSessionEvents(session, {
+        const nextEvents = filterSessionEvents(currentSession, {
             eventFilters,
             favoriteUserIds,
             searchQuery: headerMatchesSearch ? '' : searchQuery
@@ -296,7 +392,7 @@ function filterSessions(sessions, { filters, favoriteUserIds, search }) {
 
         if (matchesFilter && matchesFavorites && matchesSearch) {
             result.push({
-                ...session,
+                ...currentSession,
                 events: nextEvents
             });
         }
@@ -312,7 +408,7 @@ function resolveSessionFetchLimit({
     favoriteUserIds,
     maxTableSize,
     searchLimit
-}) {
+}: ResolveSessionFetchLimitInput) {
     const hasFiltering =
         Boolean(normalizedSearch) ||
         normalizedFilters.length > 0 ||
@@ -332,15 +428,19 @@ function resolveSessionFetchLimit({
 }
 
 async function loadSessionEvents(
-    locationSegments,
-    favoriteUserIds,
-    currentUserId = ''
+    locationSegments: unknown,
+    favoriteUserIds: Set<string>,
+    currentUserId: unknown = ''
 ) {
     if (!Array.isArray(locationSegments) || locationSegments.length === 0) {
         return [];
     }
 
-    const epochs = locationSegments
+    const segments: GameLogLocationSegment[] = locationSegments
+        .filter(isRecord)
+        .map((segment) => segment as GameLogLocationSegment);
+
+    const epochs = segments
         .map((segment) => dateToEpoch(segment?.created_at))
         .filter((epoch) => epoch > 0);
     const minEpoch = epochs.length ? Math.min(...epochs) : Date.now();
@@ -348,22 +448,23 @@ async function loadSessionEvents(
     const dateWindowMs = 24 * 60 * 60 * 1000;
     const locationTags = Array.from(
         new Set(
-            locationSegments
+            segments
                 .map((segment) => normalizeId(segment?.location))
                 .filter(Boolean)
         )
     );
-    const events = await gameLogLocalRepository.getSessionsEventsForSegments(
+    const events = await gameLogPersistenceRepository.getSessionsEventsForSegments(
         locationTags,
         new Date(minEpoch - dateWindowMs).toISOString(),
         new Date(maxEpoch + dateWindowMs).toISOString(),
         normalizeId(currentUserId)
     );
 
-    return events.map((event) => {
-        const userId = normalizeId(event?.userId);
+    return events.map((event: unknown) => {
+        const currentEvent = toGameLogRow(event) as GameLogEvent;
+        const userId = normalizeId(currentEvent.userId);
         return {
-            ...event,
+            ...currentEvent,
             isFavorite: userId ? favoriteUserIds.has(userId) : false
         };
     });
@@ -374,7 +475,7 @@ async function queryGameLog({
     search = '',
     filters = [],
     favoriteUserIds = []
-}) {
+}: QueryGameLogInput) {
     const [maxTableSizeValue, searchLimitValue] = await Promise.all([
         configRepository.getInt('maxTableSize_v2', 500),
         configRepository.getInt('searchLimit', 50000)
@@ -393,7 +494,7 @@ async function queryGameLog({
     const normalizedSearch = String(search || '').trim();
 
     if (normalizedSearch) {
-        return gameLogLocalRepository.searchGameLogDatabase(
+        return gameLogPersistenceRepository.searchGameLogDatabase(
             normalizedSearch,
             normalizedFilters,
             normalizedFavorites,
@@ -402,7 +503,7 @@ async function queryGameLog({
         );
     }
 
-    return gameLogLocalRepository.lookupGameLogDatabase(
+    return gameLogPersistenceRepository.lookupGameLogDatabase(
         normalizedFilters,
         normalizedFavorites,
         maxTableSize
@@ -417,7 +518,7 @@ async function queryLatestSessions({
     dateFrom = '',
     dateTo = '',
     limit = 25
-} = {}) {
+}: QueryLatestSessionsInput = {}) {
     const [maxTableSizeValue, searchLimitValue] = await Promise.all([
         configRepository.getInt('maxTableSize_v2', 500),
         configRepository.getInt('searchLimit', 50000)
@@ -440,11 +541,11 @@ async function queryLatestSessions({
     });
     if (normalizedSearch && !normalizedDateFrom && !normalizedDateTo) {
         const fetchCount = SESSION_GLOBAL_SEARCH_INITIAL_LOCATIONS + 1;
-        const allLocationSegments = [];
-        const allEvents = [];
-        let beforeId = null;
+        const allLocationSegments: GameLogRow[] = [];
+        const allEvents: GameLogRow[] = [];
+        let beforeId: unknown = null;
         let hasMore = true;
-        let latestFiltered = [];
+        let latestFiltered: GameLogSession[] = [];
 
         while (
             hasMore &&
@@ -452,7 +553,7 @@ async function queryLatestSessions({
             allLocationSegments.length < searchLimit
         ) {
             const batch =
-                await gameLogLocalRepository.getSessionsLocationSegments(
+                await gameLogPersistenceRepository.getSessionsLocationSegments(
                     beforeId,
                     fetchCount
                 );
@@ -473,9 +574,10 @@ async function queryLatestSessions({
                 normalizedFavoriteSet,
                 normalizeId(currentUserId)
             );
-            allLocationSegments.push(...batch);
+            const batchRows = batch.map(toGameLogRow);
+            allLocationSegments.push(...batchRows);
             allEvents.push(...batchEvents);
-            beforeId = batch[batch.length - 1].id;
+            beforeId = toGameLogRow(batch[batch.length - 1]).id;
             hasMore = hasExtraTail && allLocationSegments.length < searchLimit;
 
             const result = buildGameLogSessions(allLocationSegments, allEvents);
@@ -491,12 +593,12 @@ async function queryLatestSessions({
 
     const locationSegments =
         normalizedDateFrom || normalizedDateTo
-            ? await gameLogLocalRepository.getSessionsLocationSegmentsByDateRange(
+            ? await gameLogPersistenceRepository.getSessionsLocationSegmentsByDateRange(
                   normalizedDateFrom || '1970-01-01T00:00:00.000Z',
                   normalizedDateTo || new Date().toISOString(),
                   fetchLimit
               )
-            : await gameLogLocalRepository.getSessionsLocationSegments(
+            : await gameLogPersistenceRepository.getSessionsLocationSegments(
                   null,
                   fetchLimit
               );
@@ -510,7 +612,10 @@ async function queryLatestSessions({
         normalizedFavoriteSet,
         normalizeId(currentUserId)
     );
-    const result = buildGameLogSessions(locationSegments, annotatedEvents);
+    const result = buildGameLogSessions(
+        locationSegments.map(toGameLogRow),
+        annotatedEvents
+    );
 
     return filterSessions(result.segments ?? [], {
         filters: normalizedFilters,
@@ -519,16 +624,20 @@ async function queryLatestSessions({
     }).slice(0, normalizedLimit);
 }
 
-async function deleteGameLogEntry(row) {
-    await gameLogLocalRepository.deleteGameLogEntry(row);
+async function deleteGameLogEntry(row: Record<string, unknown>) {
+    await gameLogPersistenceRepository.deleteGameLogEntry(row);
 }
 
-async function getUserIdFromDisplayName(displayName) {
-    return gameLogLocalRepository.getUserIdFromDisplayName(displayName);
+async function getUserIdFromDisplayName(displayName: unknown) {
+    return gameLogPersistenceRepository.getUserIdFromDisplayName(displayName);
 }
 
-async function getPreviousInstancesByWorldId({ worldId }) {
-    const rows = await gameLogLocalRepository.getPreviousInstancesByWorldId({
+async function getPreviousInstancesByWorldId({
+    worldId
+}: {
+    worldId?: unknown;
+}) {
+    const rows = await gameLogPersistenceRepository.getPreviousInstancesByWorldId({
         id: worldId
     });
     if (rows instanceof Map) {
@@ -537,18 +646,24 @@ async function getPreviousInstancesByWorldId({ worldId }) {
     return Array.isArray(rows) ? rows : [];
 }
 
-async function getWorldNameByWorldId(worldId) {
+async function getWorldNameByWorldId(worldId: unknown) {
     const normalizedWorldId = normalizeId(worldId);
     if (!normalizedWorldId) {
         return '';
     }
-    return gameLogLocalRepository
+    return gameLogPersistenceRepository
         .getGameLogWorldNameByWorldId(normalizedWorldId)
         .catch(() => '');
 }
 
-async function getAllUserStats({ userIds = [], displayNames = [] } = {}) {
-    return gameLogLocalRepository.getAllUserStats(
+async function getAllUserStats({
+    userIds = [],
+    displayNames = []
+}: {
+    userIds?: unknown;
+    displayNames?: unknown;
+} = {}) {
+    return gameLogPersistenceRepository.getAllUserStats(
         (Array.isArray(userIds) ? userIds : [])
             .map((value) => normalizeId(value))
             .filter(Boolean),
@@ -559,7 +674,7 @@ async function getAllUserStats({ userIds = [], displayNames = [] } = {}) {
 }
 
 const gameLogRepository = Object.freeze({
-    ...gameLogLocalRepository,
+    ...gameLogPersistenceRepository,
     queryGameLog,
     queryLatestSessions,
     deleteGameLogEntry,

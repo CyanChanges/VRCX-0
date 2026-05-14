@@ -1,58 +1,3 @@
-import {
-    ActivityIcon,
-    ArchiveIcon,
-    BellIcon,
-    BookOpenIcon,
-    BotIcon,
-    BoxIcon,
-    BoxesIcon,
-    CalendarDaysIcon,
-    CameraIcon,
-    ChartBarIcon,
-    CircleIcon,
-    CompassIcon,
-    ContactIcon,
-    CuboidIcon,
-    DatabaseIcon,
-    DownloadIcon,
-    FileTextIcon,
-    FolderIcon,
-    Gamepad2Icon,
-    GaugeIcon,
-    GlobeIcon,
-    HeartIcon,
-    HistoryIcon,
-    HouseIcon,
-    ImageIcon,
-    ImagesIcon,
-    LayoutDashboardIcon,
-    ListIcon,
-    MapPinnedIcon,
-    MapPinIcon,
-    MessageSquareTextIcon,
-    PanelLeftIcon,
-    PackageIcon,
-    RocketIcon,
-    RssIcon,
-    SearchIcon,
-    ServerCogIcon,
-    SettingsIcon,
-    ShieldAlertIcon,
-    ShieldUserIcon,
-    ShirtIcon,
-    SlidersHorizontalIcon,
-    SmileIcon,
-    SquareTerminalIcon,
-    StarIcon,
-    TagsIcon,
-    UserRoundIcon,
-    UserStarIcon,
-    UsersRoundIcon,
-    UsersIcon,
-    WrenchIcon
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-
 const LUCIDE_ICON_PREFIX = 'lucide:';
 
 export const DEFAULT_NAV_ICON_KEY = 'lucide:Circle';
@@ -65,66 +10,63 @@ export interface NavIconOption {
     label: string;
 }
 
-const navIconEntries: Array<readonly [NavIconKey, string, LucideIcon]> = [
-    ['lucide:Circle', 'Circle', CircleIcon],
-    ['lucide:Rss', 'RSS', RssIcon],
-    ['lucide:MapPin', 'Map Pin', MapPinIcon],
-    ['lucide:History', 'History', HistoryIcon],
-    ['lucide:Gamepad2', 'Gamepad', Gamepad2Icon],
-    ['lucide:UsersRound', 'Room Players', UsersRoundIcon],
-    ['lucide:Search', 'Search', SearchIcon],
-    ['lucide:Heart', 'Heart', HeartIcon],
-    ['lucide:UserStar', 'Favorite User', UserStarIcon],
-    ['lucide:Globe', 'Globe', GlobeIcon],
-    ['lucide:MapPinned', 'Map', MapPinnedIcon],
-    ['lucide:Smile', 'Smile', SmileIcon],
-    ['lucide:Box', 'Model', BoxIcon],
-    ['lucide:Cuboid', '3D Model', CuboidIcon],
-    ['lucide:Boxes', 'Model Library', BoxesIcon],
-    ['lucide:Contact', 'Contact', ContactIcon],
-    ['lucide:BookOpen', 'Book', BookOpenIcon],
-    ['lucide:ShieldAlert', 'Shield', ShieldAlertIcon],
-    ['lucide:ShieldUser', 'Moderation', ShieldUserIcon],
-    ['lucide:Bell', 'Bell', BellIcon],
-    ['lucide:Image', 'Image', ImageIcon],
-    ['lucide:ChartBar', 'Chart', ChartBarIcon],
-    ['lucide:Users', 'Users', UsersIcon],
-    ['lucide:Wrench', 'Tools', WrenchIcon],
-    ['lucide:Star', 'Star', StarIcon],
-    ['lucide:Folder', 'Folder', FolderIcon],
-    ['lucide:LayoutDashboard', 'Dashboard', LayoutDashboardIcon],
-    ['lucide:Camera', 'Camera', CameraIcon],
-    ['lucide:Images', 'Images', ImagesIcon],
-    ['lucide:Database', 'Database', DatabaseIcon],
-    ['lucide:ServerCog', 'Server', ServerCogIcon],
-    ['lucide:Archive', 'Archive', ArchiveIcon],
-    ['lucide:Package', 'Package', PackageIcon],
-    ['lucide:SlidersHorizontal', 'Sliders', SlidersHorizontalIcon],
-    ['lucide:SquareTerminal', 'Terminal', SquareTerminalIcon],
-    ['lucide:Bot', 'Bot', BotIcon],
-    ['lucide:CalendarDays', 'Calendar', CalendarDaysIcon],
-    ['lucide:FileText', 'File Text', FileTextIcon],
-    ['lucide:Download', 'Download', DownloadIcon],
-    ['lucide:MessageSquareText', 'Message', MessageSquareTextIcon],
-    ['lucide:Settings', 'Settings', SettingsIcon],
-    ['lucide:House', 'Home', HouseIcon],
-    ['lucide:Compass', 'Compass', CompassIcon],
-    ['lucide:Tags', 'Tags', TagsIcon],
-    ['lucide:Shirt', 'Avatar Outfit', ShirtIcon],
-    ['lucide:UserRound', 'User', UserRoundIcon],
-    ['lucide:Activity', 'Activity', ActivityIcon],
-    ['lucide:Rocket', 'Rocket', RocketIcon],
-    ['lucide:Gauge', 'Gauge', GaugeIcon],
-    ['lucide:List', 'List', ListIcon],
-    ['lucide:PanelLeft', 'Panel', PanelLeftIcon]
+const navIconEntries: Array<readonly [NavIconKey, string]> = [
+    ['lucide:Circle', 'Circle'],
+    ['lucide:Rss', 'RSS'],
+    ['lucide:MapPin', 'Map Pin'],
+    ['lucide:History', 'History'],
+    ['lucide:Gamepad2', 'Gamepad'],
+    ['lucide:UsersRound', 'Room Players'],
+    ['lucide:Search', 'Search'],
+    ['lucide:Heart', 'Heart'],
+    ['lucide:UserStar', 'Favorite User'],
+    ['lucide:Globe', 'Globe'],
+    ['lucide:MapPinned', 'Map'],
+    ['lucide:Smile', 'Smile'],
+    ['lucide:Box', 'Model'],
+    ['lucide:Cuboid', '3D Model'],
+    ['lucide:Boxes', 'Model Library'],
+    ['lucide:Contact', 'Contact'],
+    ['lucide:BookOpen', 'Book'],
+    ['lucide:ShieldAlert', 'Shield'],
+    ['lucide:ShieldUser', 'Moderation'],
+    ['lucide:Bell', 'Bell'],
+    ['lucide:Image', 'Image'],
+    ['lucide:ChartBar', 'Chart'],
+    ['lucide:Users', 'Users'],
+    ['lucide:Wrench', 'Tools'],
+    ['lucide:Star', 'Star'],
+    ['lucide:Folder', 'Folder'],
+    ['lucide:LayoutDashboard', 'Dashboard'],
+    ['lucide:Camera', 'Camera'],
+    ['lucide:Images', 'Images'],
+    ['lucide:Database', 'Database'],
+    ['lucide:ServerCog', 'Server'],
+    ['lucide:Archive', 'Archive'],
+    ['lucide:Package', 'Package'],
+    ['lucide:SlidersHorizontal', 'Sliders'],
+    ['lucide:SquareTerminal', 'Terminal'],
+    ['lucide:Bot', 'Bot'],
+    ['lucide:CalendarDays', 'Calendar'],
+    ['lucide:FileText', 'File Text'],
+    ['lucide:Download', 'Download'],
+    ['lucide:MessageSquareText', 'Message'],
+    ['lucide:Settings', 'Settings'],
+    ['lucide:House', 'Home'],
+    ['lucide:Compass', 'Compass'],
+    ['lucide:Tags', 'Tags'],
+    ['lucide:Shirt', 'Avatar Outfit'],
+    ['lucide:UserRound', 'User'],
+    ['lucide:Activity', 'Activity'],
+    ['lucide:Rocket', 'Rocket'],
+    ['lucide:Gauge', 'Gauge'],
+    ['lucide:List', 'List'],
+    ['lucide:PanelLeft', 'Panel']
 ];
 
-const navIconComponentByName = Object.fromEntries(
-    navIconEntries.map(([key, , icon]) => [
-        key.slice(LUCIDE_ICON_PREFIX.length),
-        icon
-    ])
-) as Record<string, LucideIcon>;
+const navIconNames = new Set(
+    navIconEntries.map(([key]) => key.slice(LUCIDE_ICON_PREFIX.length))
+);
 
 export const NAV_ICON_OPTIONS: NavIconOption[] = navIconEntries.map(([key, label]) => ({
     key,
@@ -150,23 +92,14 @@ export function normalizeNavIconKey(
     fallback: unknown = DEFAULT_NAV_ICON_KEY
 ): string {
     const name = extractLucideIconName(value);
-    if (name && navIconComponentByName[name]) {
+    if (name && navIconNames.has(name)) {
         return `${LUCIDE_ICON_PREFIX}${name}`;
     }
 
     const fallbackName = extractLucideIconName(fallback);
-    if (fallbackName && navIconComponentByName[fallbackName]) {
+    if (fallbackName && navIconNames.has(fallbackName)) {
         return `${LUCIDE_ICON_PREFIX}${fallbackName}`;
     }
 
     return '';
-}
-
-export function getNavIconComponent(
-    value: unknown,
-    fallback: unknown = DEFAULT_NAV_ICON_KEY
-): LucideIcon {
-    const normalized = normalizeNavIconKey(value, fallback);
-    const name = extractLucideIconName(normalized);
-    return navIconComponentByName[name] || CircleIcon;
 }

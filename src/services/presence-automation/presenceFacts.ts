@@ -1,11 +1,11 @@
-import { playerListRepository } from '@/repositories/index.js';
-import { checkCanInvite } from '@/shared/utils/invite.js';
-import { parseLocation } from '@/shared/utils/locationParser.js';
-import { useFavoriteStore } from '@/state/favoriteStore.js';
-import { useFriendRosterStore } from '@/state/friendRosterStore.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+import playerListPersistenceRepository from '@/repositories/playerListPersistenceRepository';
+import { checkCanInvite } from '@/shared/utils/invite';
+import { parseLocation } from '@/shared/utils/locationParser';
+import { useFavoriteStore } from '@/state/favoriteStore';
+import { useFriendRosterStore } from '@/state/friendRosterStore';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
-function normalizeInstanceType(location) {
+function normalizeInstanceType(location: Record<string, any>) {
     if (!location?.accessType) {
         return '';
     }
@@ -21,7 +21,7 @@ function normalizeInstanceType(location) {
     return 'groupPublic';
 }
 
-function getCachedInstanceLocation(instance) {
+function getCachedInstanceLocation(instance: Record<string, any>) {
     return String(
         instance?.location ||
             instance?.$location ||
@@ -31,7 +31,7 @@ function getCachedInstanceLocation(instance) {
     ).trim();
 }
 
-function buildCachedInstanceMap(instances) {
+function buildCachedInstanceMap(instances: unknown) {
     const map = new Map();
     for (const instance of Array.isArray(instances) ? instances : []) {
         const location = getCachedInstanceLocation(instance);
@@ -42,10 +42,10 @@ function buildCachedInstanceMap(instances) {
     return map;
 }
 
-function collectPresentFavoriteGroupKeys(players) {
+function collectPresentFavoriteGroupKeys(players: Record<string, any>[]) {
     const favoriteState = useFavoriteStore.getState();
     const presentUserIds = new Set(
-        (players || []).map((player) => player.userId).filter(Boolean)
+        (players || []).map((player: any) => player.userId).filter(Boolean)
     );
     const keys = new Set();
 
@@ -54,7 +54,7 @@ function collectPresentFavoriteGroupKeys(players) {
     )) {
         if (
             Array.isArray(userIds) &&
-            userIds.some((userId) => presentUserIds.has(userId))
+            userIds.some((userId: any) => presentUserIds.has(userId))
         ) {
             keys.add(groupKey);
         }
@@ -65,7 +65,7 @@ function collectPresentFavoriteGroupKeys(players) {
     )) {
         if (
             Array.isArray(userIds) &&
-            userIds.some((userId) => presentUserIds.has(userId))
+            userIds.some((userId: any) => presentUserIds.has(userId))
         ) {
             keys.add(`local:${groupName}`);
         }
@@ -74,7 +74,10 @@ function collectPresentFavoriteGroupKeys(players) {
     return Array.from(keys);
 }
 
-function resolveCurrentLocation(gameState, currentUser) {
+function resolveCurrentLocation(
+    gameState: Record<string, any>,
+    currentUser: Record<string, any> | null
+) {
     return (
         gameState.currentLocation ||
         gameState.currentDestination ||
@@ -84,14 +87,14 @@ function resolveCurrentLocation(gameState, currentUser) {
     );
 }
 
-function getVerifiedCurrentLocation(gameState) {
+function getVerifiedCurrentLocation(gameState: Record<string, any>) {
     const currentLocation = String(gameState?.currentLocation || '').trim();
     return currentLocation && currentLocation !== 'traveling'
         ? currentLocation
         : '';
 }
 
-function normalizePlayer(player, index = 0) {
+function normalizePlayer(player: unknown, index: any = 0) {
     const source =
         player && typeof player === 'object'
             ? player
@@ -99,25 +102,26 @@ function normalizePlayer(player, index = 0) {
                   id: player,
                   userId: player
               };
-    const userId = String(source.userId || source.id || '').trim();
+    const record = source as Record<string, any>;
+    const userId = String(record.userId || record.id || '').trim();
     const displayName = String(
-        source.displayName || source.name || userId || ''
+        record.displayName || record.name || userId || ''
     ).trim();
-    const id = String(source.id || userId || `runtime:${index}`).trim();
+    const id = String(record.id || userId || `runtime:${index}`).trim();
     return {
-        ...source,
+        ...record,
         id,
         userId,
         displayName
     };
 }
 
-function getRuntimePlayers(gameState) {
+function getRuntimePlayers(gameState: Record<string, any>) {
     const players = Array.isArray(gameState?.currentLocationPlayers)
         ? gameState.currentLocationPlayers
-              .map((player, index) => normalizePlayer(player, index))
+              .map((player: any, index: any) => normalizePlayer(player, index))
               .filter(
-                  (player) => player.id && (player.userId || player.displayName)
+                  (player: any) => player.id && (player.userId || player.displayName)
               )
         : [];
     if (players.length) {
@@ -126,14 +130,14 @@ function getRuntimePlayers(gameState) {
 
     return Array.isArray(gameState?.currentLocationPlayerIds)
         ? gameState.currentLocationPlayerIds
-              .map((userId, index) =>
+              .map((userId: any, index: any) =>
                   normalizePlayer({ id: userId, userId }, index)
               )
-              .filter((player) => player.userId)
+              .filter((player: any) => player.userId)
         : [];
 }
 
-function isLiveCurrentLocation(location) {
+function isLiveCurrentLocation(location: unknown) {
     const normalizedLocation = String(location || '').trim();
     return Boolean(
         normalizedLocation &&
@@ -143,10 +147,10 @@ function isLiveCurrentLocation(location) {
     );
 }
 
-export async function buildPresenceFacts({ now = new Date() } = {}) {
+export async function buildPresenceFacts({ now = new Date() }: any = {}) {
     const runtimeState = useRuntimeStore.getState();
-    const auth = runtimeState.auth || {};
-    const gameState = runtimeState.gameState || {};
+    const auth = runtimeState.auth;
+    const gameState = runtimeState.gameState;
     const currentUser = auth.currentUserSnapshot || null;
     const currentUserId = auth.currentUserId || currentUser?.id || '';
     const endpoint = auth.currentUserEndpoint || '';
@@ -156,7 +160,7 @@ export async function buildPresenceFacts({ now = new Date() } = {}) {
     const hasLiveCurrentLocation = isLiveCurrentLocation(currentLocation);
 
     const snapshot = hasLiveCurrentLocation
-        ? await playerListRepository.getCurrentInstanceSnapshot({
+        ? await playerListPersistenceRepository.getCurrentInstanceSnapshot({
               currentUserId,
               currentLocation,
               currentLocationStartedAt: gameState.currentLocationStartedAt || ''
@@ -183,8 +187,8 @@ export async function buildPresenceFacts({ now = new Date() } = {}) {
     );
     const friendsById = useFriendRosterStore.getState().friendsById || {};
     const presentFriendIds = players
-        .map((player) => player.userId)
-        .filter((userId) => userId && friendsById[userId]);
+        .map((player: any) => player.userId)
+        .filter((userId: any) => userId && friendsById[userId]);
     const groupInstances =
         runtimeState.groupInstances.endpoint === endpoint
             ? runtimeState.groupInstances.instances

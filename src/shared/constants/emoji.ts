@@ -1,7 +1,7 @@
 const emojiAnimationStyleUrl =
     'https://assets.vrchat.com/www/images/emoji-previews/';
 
-const emojiAnimationStyleList = {
+const emojiAnimationStyleList: any = {
     Aura: 'Preview_B2-Aura.gif',
     Bats: 'Preview_B2-Fall_Bats.gif',
     Bees: 'Preview_B2-Bees.gif',

@@ -1,10 +1,12 @@
-import { webRepository } from '@/repositories/index.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
+import externalApiRepository from '@/repositories/externalApiRepository';
+import { tauriClient } from '@/platform/tauri/client';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
-const STATUS_API_URL = 'https://status.vrchat.com/api/v2';
 const OK_POLL_MS = 15 * 60 * 1000;
 const ISSUE_POLL_MS = 2 * 60 * 1000;
 const FOCUS_REFRESH_MS = 60 * 1000;
+const POLL_EXECUTOR_TICK_MS = FOCUS_REFRESH_MS;
+const VRC_STATUS_REFRESH_JOB = 'vrcStatusRefresh';
 
 type VrcStatusStatus = Record<string, unknown> & {
     description?: unknown;
@@ -27,6 +29,11 @@ let pollingTimer: ReturnType<typeof window.setTimeout> | null = null;
 let pollingActive = false;
 let pollingGeneration = 0;
 
+function pollingCadenceSeconds(intervalMs: unknown): number {
+    const interval = Number(intervalMs) || OK_POLL_MS;
+    return Math.max(60, Math.ceil(interval / 1000));
+}
+
 function parseResponse(data: unknown): unknown {
     if (!data) {
         return null;
@@ -38,13 +45,7 @@ function parseResponse(data: unknown): unknown {
 }
 
 async function getJson(path: string): Promise<VrcStatusResponse | null> {
-    const response = await webRepository.execute({
-        url: `${STATUS_API_URL}/${path}`,
-        method: 'GET',
-        headers: {
-            Referer: 'https://vrcx.app'
-        }
-    });
+    const response = await externalApiRepository.fetchVrcStatusJson(path);
 
     if (response.status !== 200) {
         throw new Error(`VRChat status request failed (${response.status})`);
@@ -60,10 +61,10 @@ async function fetchSummary(): Promise<string> {
         : [];
     return components
         .filter(
-            (component) =>
+            (component: any) =>
                 component?.status && component.status !== 'operational'
         )
-        .map((component) => component.name)
+        .map((component: any) => component.name)
         .filter(Boolean)
         .join(', ');
 }
@@ -112,6 +113,32 @@ export async function refreshVrcStatus(): Promise<void> {
     }
 }
 
+async function deferNextVrcStatusRefresh(): Promise<void> {
+    const interval = useRuntimeStore.getState().vrcStatus.pollingIntervalMs;
+    await tauriClient.app
+        .RuntimeFrontendScheduleJobDefer({
+            name: VRC_STATUS_REFRESH_JOB,
+            delaySeconds: pollingCadenceSeconds(interval)
+        })
+        .catch((error: any) => {
+            console.warn('Failed to defer VRC status refresh:', error);
+        });
+}
+
+async function claimVrcStatusRefreshDue(): Promise<boolean> {
+    const interval = useRuntimeStore.getState().vrcStatus.pollingIntervalMs;
+    return tauriClient.app
+        .RuntimeFrontendScheduleJobDueClaim({
+            name: VRC_STATUS_REFRESH_JOB,
+            cadenceSeconds: pollingCadenceSeconds(interval),
+            initialDelaySeconds: 0
+        })
+        .catch((error: any) => {
+            console.warn('Failed to claim VRC status refresh schedule:', error);
+            return true;
+        });
+}
+
 export function handleBrowserFocus(): Promise<void> {
     const { vrcStatus } = useRuntimeStore.getState();
     const lastFetchedAt = Date.parse((vrcStatus.lastFetchedAt || '') as string);
@@ -122,7 +149,7 @@ export function handleBrowserFocus(): Promise<void> {
         return Promise.resolve();
     }
 
-    return refreshVrcStatus();
+    return refreshVrcStatus().finally(() => deferNextVrcStatusRefresh());
 }
 
 export function startVrcStatusPolling(): () => void {
@@ -135,23 +162,25 @@ export function startVrcStatusPolling(): () => void {
     const generation = pollingGeneration;
 
     const tick = async (): Promise<void> => {
+        let due = false;
         try {
-            await refreshVrcStatus();
+            due = await claimVrcStatusRefreshDue();
+            if (due) {
+                await refreshVrcStatus();
+            }
         } catch (error) {
             console.warn('VRChat status refresh failed:', error);
+        } finally {
+            if (due) {
+                await deferNextVrcStatusRefresh();
+            }
         }
 
         if (!pollingActive || generation !== pollingGeneration) {
             return;
         }
 
-        const interval =
-            (useRuntimeStore.getState().vrcStatus.pollingIntervalMs ||
-                OK_POLL_MS) as number;
-        pollingTimer = window.setTimeout(
-            tick,
-            Math.max(FOCUS_REFRESH_MS, interval)
-        );
+        pollingTimer = window.setTimeout(tick, POLL_EXECUTOR_TICK_MS);
     };
 
     tick();

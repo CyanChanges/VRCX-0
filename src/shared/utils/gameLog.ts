@@ -216,7 +216,7 @@ export function createJoinLeaveEntry(
     displayName: string,
     location: string,
     userId: string,
-    time = 0
+    time: any = 0
 ): GameLogRow {
     return {
         created_at: dt,
@@ -428,7 +428,7 @@ function aggregateGameLogSessionTailEvents(
         return;
     }
 
-    const batch = indices.map((index) => events[index]);
+    const batch = indices.map((index: any) => events[index]);
     const group = makeGameLogSessionGroup(groupType, batch);
     for (let index = indices.length - 1; index >= 0; index -= 1) {
         events.splice(indices[index], 1);
@@ -472,7 +472,7 @@ function aggregateGameLogSessionHeadEvents(
         return;
     }
 
-    const batch = indices.map((index) => events[index]);
+    const batch = indices.map((index: any) => events[index]);
     const group = makeGameLogSessionGroup(groupType, batch);
     for (let index = indices.length - 1; index >= 0; index -= 1) {
         events.splice(indices[index], 1);
@@ -533,7 +533,7 @@ export function buildGameLogSessions(
     }
 
     const segmentsAsc = locationSegments
-        .map((location) => ({
+        .map((location: any) => ({
             id: location.id,
             created_at: location.created_at,
             epoch: toGameLogSessionEpoch(location.created_at),
@@ -544,12 +544,12 @@ export function buildGameLogSessions(
             duration: location.time || null,
             events: []
         }))
-        .sort((left, right) => left.epoch - right.epoch);
+        .sort((left: any, right: any) => left.epoch - right.epoch);
 
     let dedupedEvents = flatEvents;
     if (flatEvents && flatEvents.length > 0) {
         const seen = new Set();
-        dedupedEvents = flatEvents.filter((event) => {
+        dedupedEvents = flatEvents.filter((event: any) => {
             const key = `${event.type}\0${event.created_at}\0${event.userId || ''}\0${event.location || ''}\0${event.videoUrl || ''}`;
             if (seen.has(key)) {
                 return false;
@@ -584,7 +584,7 @@ export function buildGameLogSessions(
 
     for (const segment of segmentsAsc) {
         segment.events.sort(
-            (left, right) =>
+            (left: any, right: any) =>
                 toGameLogSessionEpoch(left.created_at) -
                 toGameLogSessionEpoch(right.created_at)
         );
@@ -593,7 +593,7 @@ export function buildGameLogSessions(
     for (const segment of segmentsAsc) {
         const cutoff = segment.epoch - SESSION_TOLERANCE_MS;
         segment.events = segment.events.filter(
-            (event) => toGameLogSessionEpoch(event.created_at) >= cutoff
+            (event: any) => toGameLogSessionEpoch(event.created_at) >= cutoff
         );
     }
 
@@ -640,6 +640,6 @@ export function buildGameLogSessions(
 
     const segments = segmentsAsc
         .reverse()
-        .map(({ epoch: _epoch, ...rest }) => rest);
+        .map(({ epoch: _epoch, ...rest }: any) => rest);
     return { segments };
 }

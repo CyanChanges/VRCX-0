@@ -2,20 +2,80 @@ import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
-} from '@/lib/entityQueryCache.js';
+} from '@/lib/entityQueryCache';
+import { tauriClient } from '@/platform/tauri/client';
 
-import avatarLocalRepository from './avatarLocalRepository.js';
-import sqliteRepository from './sqliteRepository.js';
-import userSessionRepository from './userSessionRepository.js';
-import { executeVrchatRequest } from './vrchatRequest.js';
+import avatarCacheRepository from './avatarCacheRepository';
+import userSessionRepository from './userSessionRepository';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
 
 const PAGE_SIZE = 50;
 const MAX_OFFSET = 5000;
 
-type AvatarRecord = Record<string, any>;
+type AvatarRecord = Record<string, unknown>;
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function normalizeAvatarTagEntry(entry: unknown): AvatarTagEntry | null {
+    if (!isRecord(entry) || typeof entry.tag !== 'string') {
+        return null;
+    }
+
+    const tag = entry.tag.trim();
+    if (!tag) {
+        return null;
+    }
+
+    return {
+        tag,
+        color: typeof entry.color === 'string' ? entry.color : null
+    };
+}
+
+function unwrapVrchatAvatarResponse<TJson = unknown>(
+    response: VrchatApiResult,
+    path: string
+) {
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage: 'VRChat avatar request failed'
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
+
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
+}
 
 interface AvatarRequestOptions {
     endpoint?: string;
+}
+
+interface AvatarPageOptions extends AvatarRequestOptions {
+    offset?: number;
+    n?: number;
 }
 
 interface MyAvatarsOptions extends AvatarRequestOptions {
@@ -28,6 +88,11 @@ interface AvatarTagEntry {
     tag: string;
     color?: string | null;
 }
+
+type MyAvatarRecord = AvatarRecord & {
+    $tags: AvatarTagEntry[];
+    $timeSpent: number;
+};
 
 interface UpdateAvatarTagsInput {
     avatarId?: unknown;
@@ -48,52 +113,22 @@ interface AvatarStylesInput extends AvatarRequestOptions {
     force?: boolean;
 }
 
-async function execute(
-    path: string,
-    { endpoint = '', method = 'GET', params = null } = {}
-) {
-    return executeVrchatRequest(path, {
-        endpoint,
-        method,
-        params,
-        body: params,
-        jsonBody: params !== null,
-        fallbackMessage: 'VRChat avatar request failed'
-    });
-}
-
-async function executeGet(
-    path: string,
-    params: Record<string, unknown> = {},
-    { endpoint = '' }: AvatarRequestOptions = {}
-) {
-    return execute(path, { endpoint, method: 'GET', params });
-}
-
-async function executePut(
-    path: string,
-    params: Record<string, unknown> = {},
-    { endpoint = '' }: AvatarRequestOptions = {}
-) {
-    return execute(path, { endpoint, method: 'PUT', params });
-}
-
 async function getAvatarsPage({
     endpoint = '',
     offset = 0,
     n = PAGE_SIZE
-} = {}) {
-    return executeGet(
-        'avatars',
-        {
+}: AvatarPageOptions = {}) {
+    return unwrapVrchatAvatarResponse<AvatarRecord[]>(
+        await tauriClient.app.VrchatAvatarListByUserGet({
+            endpoint,
+            user: 'me',
             n,
             offset,
             sort: 'updated',
             order: 'descending',
-            releaseStatus: 'all',
-            user: 'me'
-        },
-        { endpoint }
+            releaseStatus: 'all'
+        }),
+        'avatars'
     );
 }
 
@@ -124,16 +159,18 @@ async function getMyAvatars({
     }
 
     const [tagsMap, avatarTimeSpentMap] = await Promise.all([
-        avatarLocalRepository.getAllAvatarTags(),
+        avatarCacheRepository.getAllAvatarTags(),
         currentUserId
-            ? avatarLocalRepository.getAllAvatarTimeSpent(currentUserId)
+            ? avatarCacheRepository.getAllAvatarTimeSpent(currentUserId)
             : Promise.resolve(new Map())
     ]);
 
     return avatars.map((avatar: AvatarRecord) => {
-        const nextAvatar = {
+        const nextAvatar: MyAvatarRecord = {
             ...avatar,
-            $tags: tagsMap.get(avatar.id) || [],
+            $tags: (tagsMap.get(avatar.id) || [])
+                .map(normalizeAvatarTagEntry)
+                .filter((entry): entry is AvatarTagEntry => Boolean(entry)),
             $timeSpent: avatarTimeSpentMap.get(avatar.id) || 0
         };
 
@@ -166,7 +203,8 @@ async function updateAvatarTags({
     const previousMap = new Map(
         (Array.isArray(previousTags) ? previousTags : [])
             .filter(
-                (entry) => typeof entry?.tag === 'string' && entry.tag.trim()
+                (entry): entry is AvatarTagEntry =>
+                    typeof entry?.tag === 'string' && Boolean(entry.tag.trim())
             )
             .map((entry) => [
                 entry.tag.trim(),
@@ -176,7 +214,8 @@ async function updateAvatarTags({
     const nextMap = new Map(
         (Array.isArray(nextTags) ? nextTags : [])
             .filter(
-                (entry) => typeof entry?.tag === 'string' && entry.tag.trim()
+                (entry): entry is AvatarTagEntry =>
+                    typeof entry?.tag === 'string' && Boolean(entry.tag.trim())
             )
             .map((entry) => [
                 entry.tag.trim(),
@@ -184,35 +223,17 @@ async function updateAvatarTags({
             ])
     );
 
-    await sqliteRepository.transaction(async () => {
-        for (const [tag] of previousMap) {
-            if (!nextMap.has(tag)) {
-                await avatarLocalRepository.removeAvatarTag(
-                    normalizedAvatarId,
-                    tag
-                );
-            }
-        }
+    const nextEntries = Array.from(nextMap.values());
+    const previousEntries = Array.from(previousMap.values());
+    if (JSON.stringify(previousEntries) !== JSON.stringify(nextEntries)) {
+        await avatarCacheRepository.patchAvatarTags(
+            normalizedAvatarId,
+            previousEntries,
+            nextEntries
+        );
+    }
 
-        for (const [tag, entry] of nextMap) {
-            const previous = previousMap.get(tag);
-            if (!previous) {
-                await avatarLocalRepository.addAvatarTag(
-                    normalizedAvatarId,
-                    tag,
-                    entry.color
-                );
-            } else if ((previous.color || null) !== (entry.color || null)) {
-                await avatarLocalRepository.updateAvatarTagColor(
-                    normalizedAvatarId,
-                    tag,
-                    entry.color
-                );
-            }
-        }
-    });
-
-    return Array.from(nextMap.values());
+    return nextEntries;
 }
 
 async function saveAvatar({
@@ -226,13 +247,16 @@ async function saveAvatar({
         throw new Error('MyAvatarRepository.saveAvatar requires an avatar id.');
     }
 
-    const response = await executePut(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}`,
-        {
-            id: normalizedAvatarId,
-            ...params
-        },
-        { endpoint }
+    const response = unwrapVrchatAvatarResponse<AvatarRecord>(
+        await tauriClient.app.VrchatAvatarSave({
+            avatarId: normalizedAvatarId,
+            endpoint,
+            params: {
+                id: normalizedAvatarId,
+                ...params
+            }
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}`
     );
 
     return response.json;
@@ -247,12 +271,13 @@ async function createImpostor({ avatarId, endpoint = '' }: AvatarIdInput = {}) {
         );
     }
 
-    const response = await execute(
-        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor/enqueue`,
-        {
+    const response = unwrapVrchatAvatarResponse(
+        await tauriClient.app.VrchatAvatarImpostorCreate({
+            avatarId: normalizedAvatarId,
             endpoint,
-            method: 'POST'
-        }
+            emptyBody: false
+        }),
+        `avatars/${encodeURIComponent(normalizedAvatarId)}/impostor/enqueue`
     );
 
     return response.json;
@@ -267,16 +292,16 @@ async function getAvailableAvatarStyles({
         policy: entityQueryPolicies.avatarStyles,
         force,
         queryFn: async () => {
-            const response = await executeGet('avatarStyles', {}, { endpoint });
+            const response = unwrapVrchatAvatarResponse(
+                await tauriClient.app.VrchatAvatarStylesGet({ endpoint }),
+                'avatarStyles'
+            );
             return Array.isArray(response.json) ? response.json : [];
         }
     });
 }
 
 const myAvatarRepository = Object.freeze({
-    execute,
-    executeGet,
-    executePut,
     getAvatarsPage,
     getMyAvatars,
     updateAvatarTags,
@@ -286,9 +311,6 @@ const myAvatarRepository = Object.freeze({
 });
 
 export {
-    execute,
-    executeGet,
-    executePut,
     getAvatarsPage,
     getMyAvatars,
     updateAvatarTags,

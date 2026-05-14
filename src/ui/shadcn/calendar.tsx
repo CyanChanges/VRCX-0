@@ -43,11 +43,12 @@ function Calendar({
             captionLayout={captionLayout}
             locale={locale}
             formatters={{
-                formatMonthDropdown: (date) =>
+                formatMonthDropdown: (date: any) =>
                     date.toLocaleString(locale?.code, { month: 'short' }),
                 ...formatters
             }}
-            classNames={{
+            classNames={
+                {
                 root: cn('w-fit', defaultClassNames.root),
                 months: cn(
                     'relative flex flex-col gap-4 md:flex-row',
@@ -141,10 +142,11 @@ function Calendar({
                     defaultClassNames.disabled
                 ),
                 hidden: cn('invisible', defaultClassNames.hidden),
-                ...classNames
-            }}
+                    ...classNames
+                } as any
+            }
             components={{
-                Root: ({ className, rootRef, ...props }) => {
+                Root: ({ className, rootRef, ...props }: any) => {
                     return (
                         <div
                             data-slot="calendar"
@@ -154,7 +156,7 @@ function Calendar({
                         />
                     );
                 },
-                Chevron: ({ className, orientation, ...props }) => {
+                Chevron: ({ className, orientation, ...props }: any) => {
                     if (orientation === 'left') {
                         return (
                             <ChevronLeftIcon
@@ -180,10 +182,10 @@ function Calendar({
                         />
                     );
                 },
-                DayButton: ({ ...props }) => (
+                DayButton: ({ ...props }: any) => (
                     <CalendarDayButton locale={locale} {...props} />
                 ),
-                WeekNumber: ({ children, ...props }) => {
+                WeekNumber: ({ children, ...props }: any) => {
                     return (
                         <td {...props}>
                             <div className="flex size-(--cell-size) items-center justify-center text-center">

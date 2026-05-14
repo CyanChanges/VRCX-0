@@ -21,13 +21,13 @@ const initialState: Pick<FeedLiveStoreState, 'version' | 'entries'> = {
     entries: []
 };
 
-export const useFeedLiveStore = create<FeedLiveStoreState>((set) => ({
+export const useFeedLiveStore = create<FeedLiveStoreState>((set: any) => ({
     ...initialState,
-    pushEntry(entry, { ownerUserId = '' } = {}) {
+    pushEntry(entry: any, { ownerUserId = '' }: any = {}) {
         if (!entry || typeof entry !== 'object') {
             return;
         }
-        set((state) => ({
+        set((state: any) => ({
             version: state.version + 1,
             entries: [
                 ...state.entries,

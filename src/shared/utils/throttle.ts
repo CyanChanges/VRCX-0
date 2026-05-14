@@ -16,7 +16,7 @@ export function createRateLimiter({
         }
         if (stamps.length >= limitPerInterval) {
             const wait = intervalMs - (now - stamps[0]);
-            await new Promise((resolve) => setTimeout(resolve, wait));
+            await new Promise((resolve: any) => setTimeout(resolve, wait));
             now = Date.now();
             while (stamps.length && now - stamps[0] >= intervalMs) {
                 stamps.shift();

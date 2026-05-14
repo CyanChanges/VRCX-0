@@ -48,30 +48,30 @@ const initialState: SessionSnapshot = {
     transportStatus: 'disconnected'
 };
 
-export const useSessionStore = create<SessionState>((set) => ({
+export const useSessionStore = create<SessionState>((set: any) => ({
     ...initialState,
-    setSessionState(patch) {
-        set((state) => ({ ...state, ...patch }));
+    setSessionState(patch: any) {
+        set((state: any) => ({ ...state, ...patch }));
     },
     resetSessionState() {
         set(initialState);
     },
-    setLoggedIn(value) {
+    setLoggedIn(value: any) {
         set({ isLoggedIn: Boolean(value) });
     },
-    setFriendsLoaded(value) {
+    setFriendsLoaded(value: any) {
         set({ isFriendsLoaded: Boolean(value) });
     },
-    setFavoritesLoaded(value) {
+    setFavoritesLoaded(value: any) {
         set({ isFavoritesLoaded: Boolean(value) });
     },
-    setSessionPhase(sessionPhase) {
+    setSessionPhase(sessionPhase: any) {
         set({ sessionPhase });
     },
-    setBootStatus(bootStatus) {
+    setBootStatus(bootStatus: any) {
         set({ bootStatus });
     },
-    setTransportStatus(transportStatus) {
+    setTransportStatus(transportStatus: any) {
         set({ transportStatus });
     }
 }));

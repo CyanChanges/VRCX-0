@@ -1,4 +1,4 @@
-export function asString(value: unknown, fallback = ''): string {
+export function asString(value: unknown, fallback: string = ''): string {
     if (value === null || value === undefined) {
         return fallback;
     }
@@ -8,19 +8,22 @@ export function asString(value: unknown, fallback = ''): string {
 export function safeJsonParse<T = unknown>(
     value: unknown,
     fallback: T | null = null
-): T | null | unknown {
+): T | null {
     if (value === null || value === undefined || value === '') {
         return fallback;
     }
 
     try {
-        return JSON.parse(String(value));
+        return JSON.parse(String(value)) as T;
     } catch {
         return fallback;
     }
 }
 
-export function safeJsonStringify(value: unknown, fallback = 'null'): string {
+export function safeJsonStringify(
+    value: unknown,
+    fallback: string = 'null'
+): string {
     try {
         return JSON.stringify(value);
     } catch {

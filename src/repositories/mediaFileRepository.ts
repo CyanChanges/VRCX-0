@@ -1,8 +1,15 @@
-import { normalizePlatformError } from '@/platform/tauri/errors.js';
-import { backend } from '@/platform/tauri/index.js';
-import { safeJsonParse } from '@/repositories/baseRepository.js';
+import { normalizePlatformError } from '@/platform/tauri/errors';
+import { tauriClient } from '@/platform/tauri/client';
+import { safeJsonParse } from '@/repositories/baseRepository';
 
 type AppCommandName = string;
+
+export interface ScreenshotLibraryStatus {
+    running?: boolean;
+    ready?: boolean;
+    error?: string;
+    [key: string]: unknown;
+}
 
 function parseResponseValue(data: unknown): unknown {
     if (data === null || data === undefined || data === '') {
@@ -16,9 +23,12 @@ function parseResponseValue(data: unknown): unknown {
     return safeJsonParse(data, data);
 }
 
-async function invokeApp(methodName: AppCommandName, ...args: unknown[]) {
+async function invokeApp<TReturn = unknown>(
+    methodName: AppCommandName,
+    ...args: unknown[]
+): Promise<TReturn> {
     try {
-        return await backend.app[methodName](...args);
+        return (await tauriClient.app[methodName](...args)) as TReturn;
     } catch (error) {
         throw normalizePlatformError(
             error,
@@ -27,12 +37,12 @@ async function invokeApp(methodName: AppCommandName, ...args: unknown[]) {
     }
 }
 
-async function resizeImageToFitLimits(base64Body: string) {
-    return invokeApp('ResizeImageToFitLimits', base64Body);
+async function resizeImageToFitLimits(base64Body: string): Promise<string> {
+    return invokeApp<string>('ResizeImageToFitLimits', base64Body);
 }
 
-async function getFileBase64(path: string) {
-    return invokeApp('GetFileBase64', path);
+async function getFileBase64(path: string): Promise<string> {
+    return invokeApp<string>('GetFileBase64', path);
 }
 
 async function getScreenshotMetadata(path: string) {
@@ -73,12 +83,14 @@ async function findScreenshotsBySearch(
     );
 }
 
-async function startScreenshotLibraryScan(force = false) {
-    return invokeApp('StartScreenshotLibraryScan', force);
+async function startScreenshotLibraryScan(
+    force = false
+): Promise<ScreenshotLibraryStatus> {
+    return invokeApp<ScreenshotLibraryStatus>('StartScreenshotLibraryScan', force);
 }
 
-async function getScreenshotLibraryStatus() {
-    return invokeApp('GetScreenshotLibraryStatus');
+async function getScreenshotLibraryStatus(): Promise<ScreenshotLibraryStatus> {
+    return invokeApp<ScreenshotLibraryStatus>('GetScreenshotLibraryStatus');
 }
 
 async function getScreenshotFolderTree() {
@@ -101,12 +113,12 @@ async function getLastScreenshot() {
     return invokeApp('GetLastScreenshot');
 }
 
-async function getVrchatPhotosLocation() {
-    return invokeApp('GetVrchatPhotosLocation');
+async function getVrchatPhotosLocation(): Promise<string> {
+    return invokeApp<string>('GetVrchatPhotosLocation');
 }
 
 async function getUgcPhotoLocation(path = '') {
-    return invokeApp('GetUGCPhotoLocation', path);
+    return invokeApp<string>('GetUGCPhotoLocation', path);
 }
 
 async function openFileSelectorDialog(
@@ -114,7 +126,7 @@ async function openFileSelectorDialog(
     defaultExt = '',
     defaultFilter = ''
 ) {
-    return invokeApp(
+    return invokeApp<string | null>(
         'OpenFileSelectorDialog',
         defaultPath,
         defaultExt,
@@ -130,8 +142,11 @@ async function copyImageToClipboard(path: string) {
     return invokeApp('CopyImageToClipboard', path);
 }
 
-async function saveImageFile(defaultName: string, base64Data: string) {
-    return invokeApp('SaveImageFile', defaultName, base64Data);
+async function saveImageFile(
+    defaultName: string,
+    base64Data: string
+): Promise<string> {
+    return invokeApp<string>('SaveImageFile', defaultName, base64Data);
 }
 
 async function savePrintToFile(

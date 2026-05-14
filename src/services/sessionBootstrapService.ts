@@ -1,14 +1,12 @@
-import { backend } from '@/platform/index.js';
-import {
-    configRepository,
-    userSessionRepository
-} from '@/repositories/index.js';
-import { useRuntimeStore } from '@/state/runtimeStore.js';
-import { useSessionStore } from '@/state/sessionStore.js';
+import { tauriClient } from '@/platform/tauri/client';
+import configRepository from '@/repositories/configRepository';
+import userSessionRepository from '@/repositories/userSessionRepository';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useSessionStore } from '@/state/sessionStore';
 
-import { isHostCapabilityAvailable } from './hostCapabilityService.js';
-import { showSQLiteErrorDialog } from './sqliteErrorDialogService.js';
-import { syncStartupServicesTask } from './startupServicesStatus.js';
+import { isHostCapabilityAvailable } from './hostCapabilityService';
+import { showSQLiteErrorDialog } from './sqliteErrorDialogService';
+import { syncStartupServicesTask } from './startupServicesStatus';
 
 type AuthenticatedUser = Record<string, unknown> & {
     id?: unknown;
@@ -66,7 +64,7 @@ async function requestGameRunningStateRefresh(): Promise<boolean> {
     }
 
     try {
-        await backend.app.CheckGameRunning();
+        await tauriClient.app.CheckGameRunning();
         return true;
     } catch (error) {
         console.warn(

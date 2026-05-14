@@ -1554,7 +1554,9 @@
                     "header": "诊断",
                     "refresh_online_users": "刷新在线人数",
                     "refresh_config_json": "读取 Config JSON",
-                    "clear_config_json": "清除显示结果"
+                    "clear_config_json": "清除显示结果",
+                    "runtime_lifecycle": "后端运行态",
+                    "refresh_runtime_lifecycle": "刷新后端运行态"
                 },
                 "diagnostics_maintenance": {
                     "header": "维护",
@@ -2866,7 +2868,7 @@
                 "publish": "发布",
                 "publish_to_labs": "发布到社区实验室",
                 "unpublish": "取消公开",
-                "local_data": "本地数据",
+                "local_records": "本地数据",
                 "open_cache": "打开缓存",
                 "delete_persistent_data": "删除在此世界保存的持久化数据",
                 "delete": "删除"
@@ -4194,7 +4196,7 @@
             "notice_location_prefix": "应用目录中的完整声明文件位置：",
             "open_project": "打开项目",
             "open_license_url": "打开许可证 URL",
-            "notice_unavailable": "未为此项生成本地许可证文本。请打开完整的声明文件并在发布前审查此组件。",
+            "notice_unavailable": "此条目没有可用的本地许可证文本。你可以在完整声明文件中查看该依赖的声明信息。",
             "select_package": "选择软件包以查看详细信息。",
             "review_required": "需要审查",
             "no_results": "未找到匹配的软件包。",
@@ -4248,7 +4250,7 @@
                 "prompt_value": "提示值",
                 "notifications": "通知",
                 "unread": "未读",
-                "backend_events_and_system_messages_land_here": "后端事件和系统消息会显示在这里",
+                "runtime_events_and_system_messages_land_here": "运行时事件和系统消息会显示在这里",
                 "notifications_are_surfaced_from_the_top_level_status_bar": "通知会显示在顶层状态栏中",
                 "follow_event": "关注活动",
                 "unfollow_event": "取消关注活动"

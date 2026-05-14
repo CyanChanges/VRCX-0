@@ -1,18 +1,13 @@
-import { recordErrorLog } from '../../services/errorLogService.js';
-import { PlatformUnavailableError, normalizePlatformError } from './errors.js';
+import { recordErrorLog } from '../../services/errorLogService';
+import { normalizePlatformError } from './errors';
+import { invokeTauri } from './invoke';
 
-type InvokeArgs = Record<string, unknown> | number[] | ArrayBuffer | Uint8Array;
-type InvokeFn = <TReturn = unknown>(
-    command: string,
-    args?: InvokeArgs
-) => Promise<TReturn>;
-
-export type BackendCommand<TReturn = unknown> = (
+export type TauriCommand<TReturn = unknown> = (
     ...args: unknown[]
 ) => Promise<TReturn>;
 
-export interface BackendNamespace {
-    [methodName: string]: BackendCommand;
+export interface TauriCommandNamespace {
+    [methodName: string]: TauriCommand;
 }
 
 const serviceMap: Record<string, string> = {
@@ -29,16 +24,12 @@ const commandArgs: Record<string, string[]> = {
     storage__get: ['key'],
     storage__set: ['key', 'value'],
     storage__remove: ['key'],
-    sqlite__execute: ['sql', 'args'],
-    sqlite__execute_on_writer: ['sql', 'args'],
-    sqlite__execute_non_query: ['sql', 'args'],
     sqlite__begin_upgrade: ['fromVersion', 'toVersion'],
     sqlite__commit_upgrade: [],
     sqlite__fail_upgrade: ['reason'],
     sqlite__get_failed_upgrade: [],
     log_watcher__set_date_till: ['date'],
     web__set_cookies: ['cookies'],
-    web__execute: ['options'],
     app__open_link: ['url'],
     app__open_discord_profile: ['discordId'],
     discord__set_active: ['active'],
@@ -47,8 +38,213 @@ const commandArgs: Record<string, string[]> = {
     app__current_culture: [],
     app__current_language: [],
     app__get_host_capabilities: [],
+    app__runtime_app_snapshot_get: [],
+    app__runtime_auth_scope_get: [],
+    app__runtime_auth_scope_set: ['input'],
+    app__vrchat_auth_config_get: ['input'],
+    app__vrchat_auth_cookie_session_restore: ['input'],
+    app__vrchat_auth_current_user_get: ['input'],
+    app__vrchat_auth_email_otp_verify: ['input'],
+    app__vrchat_auth_file_analysis_get: ['input'],
+    app__vrchat_auth_login_basic: ['input'],
+    app__vrchat_auth_login_basic_start: ['input'],
+    app__vrchat_auth_login_success_record: ['input'],
+    app__vrchat_auth_logout_record: ['input'],
+    app__vrchat_auth_otp_verify: ['input'],
+    app__vrchat_auth_saved_credential_delete: ['input'],
+    app__vrchat_auth_saved_credential_login_start: ['input'],
+    app__vrchat_auth_saved_snapshot_get: [],
+    app__vrchat_auth_session_get: ['input'],
+    app__vrchat_auth_totp_verify: ['input'],
+    app__vrchat_auth_visits_get: ['input'],
+    app__vrchat_avatar_delete: ['input'],
+    app__vrchat_avatar_file_get: ['input'],
+    app__vrchat_avatar_gallery_get: ['input'],
+    app__vrchat_avatar_get: ['input'],
+    app__vrchat_avatar_impostor_create: ['input'],
+    app__vrchat_avatar_impostor_delete: ['input'],
+    app__vrchat_avatar_list_by_user_get: ['input'],
+    app__vrchat_avatar_moderation_delete: ['input'],
+    app__vrchat_avatar_moderations_get: ['input'],
+    app__vrchat_avatar_moderation_send: ['input'],
+    app__vrchat_avatar_save: ['input'],
+    app__vrchat_avatar_select: ['input'],
+    app__vrchat_avatar_select_fallback: ['input'],
+    app__vrchat_avatar_styles_get: ['input'],
+    app__vrchat_favorite_add: ['input'],
+    app__vrchat_favorite_avatars_get: ['input'],
+    app__vrchat_favorite_delete: ['input'],
+    app__vrchat_favorite_groups_get: ['input'],
+    app__vrchat_favorite_group_clear: ['input'],
+    app__vrchat_favorite_group_save: ['input'],
+    app__vrchat_favorite_limits_get: ['input'],
+    app__vrchat_favorite_worlds_get: ['input'],
+    app__vrchat_favorites_get: ['input'],
+    app__local_favorite_add: ['input'],
+    app__local_favorite_remove: ['input'],
+    app__local_favorite_group_create: ['input'],
+    app__local_favorite_group_rename: ['input'],
+    app__local_favorite_group_delete: ['input'],
+    app__vrchat_friend_delete: ['input'],
+    app__vrchat_friend_status_get: ['input'],
+    app__vrchat_friend_request_send: ['input'],
+    app__vrchat_friend_request_cancel: ['input'],
+    app__vrchat_friends_get: ['input'],
+    app__vrchat_group_audit_log_types_get: ['input'],
+    app__vrchat_group_bans_get: ['input'],
+    app__vrchat_group_block: ['input'],
+    app__vrchat_group_gallery_get: ['input'],
+    app__vrchat_group_get: ['input'],
+    app__vrchat_group_instances_get: ['input'],
+    app__vrchat_group_invite_delete: ['input'],
+    app__vrchat_group_invite_send: ['input'],
+    app__vrchat_group_invites_get: ['input'],
+    app__vrchat_group_join: ['input'],
+    app__vrchat_group_join_requests_get: ['input'],
+    app__vrchat_group_join_request_respond: ['input'],
+    app__vrchat_group_leave: ['input'],
+    app__vrchat_group_logs_get: ['input'],
+    app__vrchat_group_member_ban: ['input'],
+    app__vrchat_group_member_kick: ['input'],
+    app__vrchat_group_member_props_set: ['input'],
+    app__vrchat_group_member_unban: ['input'],
+    app__vrchat_group_members_get: ['input'],
+    app__vrchat_group_members_search: ['input'],
+    app__vrchat_group_post_create: ['input'],
+    app__vrchat_group_post_delete: ['input'],
+    app__vrchat_group_post_edit: ['input'],
+    app__vrchat_group_posts_get: ['input'],
+    app__vrchat_group_representation_set: ['input'],
+    app__vrchat_group_request_cancel: ['input'],
+    app__vrchat_group_unblock: ['input'],
+    app__vrchat_group_user_groups_get: ['input'],
+    app__vrchat_group_user_instances_get: ['input'],
+    app__vrchat_instance_close: ['input'],
+    app__vrchat_instance_create: ['input'],
+    app__vrchat_instance_get: ['input'],
+    app__vrchat_instance_self_invite: ['input'],
+    app__vrchat_instance_short_name_get: ['input'],
+    app__vrchat_media_avatar_gallery_image_upload: ['input'],
+    app__vrchat_media_avatar_image_set: ['input'],
+    app__vrchat_media_avatar_image_upload_legacy: ['input'],
+    app__vrchat_media_asset_upload: ['input'],
+    app__vrchat_media_emoji_upload: ['input'],
+    app__vrchat_media_file_delete: ['input'],
+    app__vrchat_media_file_put: ['input'],
+    app__vrchat_media_file_upload_finish: ['input'],
+    app__vrchat_media_file_upload_start: ['input'],
+    app__vrchat_media_file_version_create: ['input'],
+    app__vrchat_media_files_get: ['input'],
+    app__vrchat_media_gallery_image_upload: ['input'],
+    app__vrchat_media_inventory_bundle_consume: ['input'],
+    app__vrchat_media_inventory_item_update: ['input'],
+    app__vrchat_media_inventory_items_get: ['input'],
+    app__vrchat_media_print_delete: ['input'],
+    app__vrchat_media_print_get: ['input'],
+    app__vrchat_media_print_upload: ['input'],
+    app__vrchat_media_prints_get: ['input'],
+    app__vrchat_media_reward_redeem: ['input'],
+    app__vrchat_media_sticker_upload: ['input'],
+    app__vrchat_media_user_inventory_item_get: ['input'],
+    app__vrchat_media_vrc_plus_icon_upload: ['input'],
+    app__vrchat_media_world_image_set: ['input'],
+    app__vrchat_media_world_image_upload_legacy: ['input'],
+    app__runtime_background_job_record: ['input'],
+    app__runtime_frontend_schedule_due_jobs_get: [],
+    app__runtime_frontend_schedule_job_due_claim: ['input'],
+    app__runtime_frontend_schedule_job_defer: ['input'],
+    app__runtime_frontend_schedule_schedules_reset: [],
+    app__runtime_background_jobs_snapshot_get: [],
+    app__runtime_diagnostics_get: [],
+    app__external_api_avatar_search_get: ['input'],
+    app__external_api_github_releases_get: ['input'],
+    app__external_api_image_data_url_get: ['input'],
+    app__external_api_translation_request: ['input'],
+    app__external_api_vrc_status_json_get: ['input'],
+    app__external_api_youtube_video_metadata_get: ['input'],
+    app__moderation_sync_refresh: ['input'],
+    app__moderation_sync_update: ['input'],
+    app__vrchat_notification_mark_seen: ['input'],
+    app__vrchat_notification_accept_friend_request: ['input'],
+    app__vrchat_notification_hide_remote: ['input'],
+    app__vrchat_notification_respond: ['input'],
+    app__vrchat_invite_response_photo_send: ['input'],
+    app__vrchat_invite_response_send: ['input'],
+    app__vrchat_invite_send: ['input'],
+    app__vrchat_request_invite_send: ['input'],
+    app__vrchat_boop_send: ['input'],
+    app__vrchat_search_config_get: ['input'],
+    app__vrchat_search_groups_get: ['input'],
+    app__vrchat_search_groups_strict_get: ['input'],
+    app__vrchat_search_instance_short_name_get: ['input'],
+    app__vrchat_search_users_get: ['input'],
+    app__vrchat_search_worlds_get: ['input'],
+    app__social_favorites_baseline_get: ['input'],
+    app__social_friend_roster_baseline_get: ['input'],
+    app__vrchat_tools_calendars_get: ['input'],
+    app__vrchat_tools_featured_calendars_get: ['input'],
+    app__vrchat_tools_following_calendars_get: ['input'],
+    app__vrchat_tools_group_calendar_get: ['input'],
+    app__vrchat_tools_group_calendar_ics_get: ['input'],
+    app__vrchat_tools_group_event_follow: ['input'],
+    app__vrchat_tools_invite_message_edit: ['input'],
+    app__vrchat_tools_invite_messages_get: ['input'],
+    app__vrchat_tools_user_note_save: ['input'],
+    app__vrchat_tools_user_report: ['input'],
+    app__vrchat_current_user_badge_update: ['input'],
+    app__vrchat_current_user_tags_add: ['input'],
+    app__vrchat_current_user_tags_remove: ['input'],
+    app__vrchat_current_user_update: ['input'],
+    app__vrchat_user_get: ['input'],
+    app__vrchat_user_groups_get: ['input'],
+    app__vrchat_user_mutual_counts_get: ['input'],
+    app__vrchat_user_mutual_friends_get: ['input'],
+    app__vrchat_user_represented_group_get: ['input'],
+    app__vrchat_world_delete: ['input'],
+    app__vrchat_world_get: ['input'],
+    app__vrchat_world_list_by_user_get: ['input'],
+    app__vrchat_world_persistent_data_delete: ['input'],
+    app__vrchat_world_persistent_data_exists: ['input'],
+    app__vrchat_world_publish: ['input'],
+    app__vrchat_world_save: ['input'],
+    app__vrchat_world_unpublish: ['input'],
+    app__runtime_lifecycle_snapshot_get: [],
+    app__runtime_sync_snapshot_get: [],
+    app__activity_self_sessions_refresh: ['input'],
     app__set_user_agent: [],
     app__check_game_running: [],
+    app__set_game_client_runtime_state: ['sessionActive', 'currentLocation'],
+    app__start_realtime_transport: [
+        'userId',
+        'endpoint',
+        'websocket',
+        'clientRunId',
+        'currentUserSnapshot',
+        'friendsById'
+    ],
+    app__sync_realtime_friend_snapshot: [
+        'userId',
+        'endpoint',
+        'websocket',
+        'generation',
+        'friendsById'
+    ],
+    app__sync_realtime_current_user_snapshot: [
+        'userId',
+        'endpoint',
+        'websocket',
+        'generation',
+        'snapshot',
+        'overlayPatch'
+    ],
+    app__expire_realtime_notification: ['userId', 'notificationId'],
+    app__stop_realtime_transport: [
+        'userId',
+        'endpoint',
+        'websocket',
+        'clientRunId',
+        'generation'
+    ],
     app__get_file_base64: ['path'],
     app__sign_file: ['blob'],
     app__resize_image_to_fit_limits: ['base64data'],
@@ -162,22 +358,6 @@ const commandArgs: Record<string, string[]> = {
     ]
 };
 
-let invokeFn: InvokeFn | null = null;
-
-async function loadInvoke(): Promise<InvokeFn> {
-    if (invokeFn) {
-        return invokeFn;
-    }
-
-    try {
-        const core = await import('@tauri-apps/api/core');
-        invokeFn = core.invoke as InvokeFn;
-        return invokeFn;
-    } catch {
-        throw new PlatformUnavailableError('Unable to load Tauri invoke API');
-    }
-}
-
 const toSnake = (value: string): string =>
     value
         .replace(/VRChat/g, 'Vrchat')
@@ -228,27 +408,26 @@ export function toNamedArgs(
     return payload;
 }
 
-export async function callBackendCommand<TReturn = unknown>(
+export async function callTauriCommand<TReturn = unknown>(
     namespace: string,
     methodName: string,
     args: unknown[] = []
 ): Promise<TReturn> {
-    const invoke = await loadInvoke();
     const commandName = toCommandName(namespace, methodName);
 
     try {
-        return await invoke<TReturn>(
+        return await invokeTauri<TReturn>(
             commandName,
             toNamedArgs(commandName, args)
         );
     } catch (error) {
         const normalizedError = normalizePlatformError(
             error,
-            `Backend command failed: ${commandName}`
+            `Tauri command failed: ${commandName}`
         );
 
         if (commandName !== 'app__append_error_log') {
-            void recordErrorLog('rust:command', [
+            recordErrorLog('rust:command', [
                 `command: ${commandName}`,
                 normalizedError
             ]);
@@ -258,11 +437,13 @@ export async function callBackendCommand<TReturn = unknown>(
     }
 }
 
-export function createBackendNamespace(namespace: string): BackendNamespace {
+export function createTauriCommandNamespace(
+    namespace: string
+): TauriCommandNamespace {
     return new Proxy(
         {},
         {
-            get(_, methodName) {
+            get(_: TauriCommandNamespace, methodName: PropertyKey) {
                 if (typeof methodName !== 'string') {
                     return undefined;
                 }
@@ -271,8 +452,8 @@ export function createBackendNamespace(namespace: string): BackendNamespace {
                     return undefined;
                 }
 
-                return (...args) =>
-                    callBackendCommand(namespace, methodName, args);
+                return (...args: unknown[]) =>
+                    callTauriCommand(namespace, methodName, args);
             }
         }
     );

@@ -1,4 +1,4 @@
-import { removeEmojis, replaceBioSymbols } from './base/string';
+import { removeEmojis, replaceBioSymbols } from './string';
 
 export type UserRecord = Record<string, unknown>;
 

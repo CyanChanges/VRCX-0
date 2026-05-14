@@ -1,4 +1,4 @@
-import { useUserFactsStore } from '@/state/userFactsStore.js';
+import { useUserFactsStore } from '@/state/userFactsStore';
 
 import {
     normalizeEndpoint,
@@ -6,7 +6,7 @@ import {
     userFactKey,
     type UserFact,
     type UserFactMergeOptions
-} from './userFacts.js';
+} from './userFacts';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
     return value && typeof value === 'object'

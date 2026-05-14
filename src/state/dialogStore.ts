@@ -76,20 +76,20 @@ function isSameEntity(
     );
 }
 
-export const useDialogStore = create<DialogStoreState>((set) => ({
+export const useDialogStore = create<DialogStoreState>((set: any) => ({
     ...initialState,
-    openDialog(dialog) {
-        set((state) => ({
+    openDialog(dialog: any) {
+        set((state: any) => ({
             activeDialog: dialog,
             breadcrumbs: dialog?.crumb
                 ? [...state.breadcrumbs, dialog.crumb]
                 : state.breadcrumbs
         }));
     },
-    setDialog(dialog) {
+    setDialog(dialog: any) {
         set({ activeDialog: dialog });
     },
-    setDialogTrail(dialog, breadcrumbs) {
+    setDialogTrail(dialog: any, breadcrumbs: any) {
         set({
             activeDialog: dialog,
             breadcrumbs: Array.isArray(breadcrumbs) ? breadcrumbs : []
@@ -100,7 +100,7 @@ export const useDialogStore = create<DialogStoreState>((set) => ({
         entityId,
         title = '',
         description = ''
-    } = {}) {
+    }: any = {}) {
         const normalizedKind = String(kind || '').trim();
         const normalizedEntityId = String(entityId ?? '').trim();
         const normalizedTitle = String(title || '').trim();
@@ -112,7 +112,7 @@ export const useDialogStore = create<DialogStoreState>((set) => ({
         ) {
             return;
         }
-        set((state) => ({
+        set((state: any) => ({
             activeDialog: isSameEntity(
                 state.activeDialog,
                 normalizedKind,
@@ -126,7 +126,7 @@ export const useDialogStore = create<DialogStoreState>((set) => ({
                           : {})
                   }
                 : state.activeDialog,
-            breadcrumbs: state.breadcrumbs.map((crumb) =>
+            breadcrumbs: state.breadcrumbs.map((crumb: any) =>
                 isSameEntity(crumb, normalizedKind, normalizedEntityId)
                     ? {
                           ...crumb,
@@ -147,16 +147,16 @@ export const useDialogStore = create<DialogStoreState>((set) => ({
     closeDialog() {
         set({ activeDialog: null, breadcrumbs: [] });
     },
-    setBreadcrumbs(breadcrumbs) {
+    setBreadcrumbs(breadcrumbs: any) {
         set({ breadcrumbs });
     },
-    pushBreadcrumb(crumb) {
-        set((state) => ({
+    pushBreadcrumb(crumb: any) {
+        set((state: any) => ({
             breadcrumbs: [...state.breadcrumbs, crumb]
         }));
     },
-    popToBreadcrumb(index) {
-        set((state) => ({
+    popToBreadcrumb(index: any) {
+        set((state: any) => ({
             activeDialog:
                 dialogFromBreadcrumb(state.breadcrumbs[index]) ??
                 state.activeDialog,

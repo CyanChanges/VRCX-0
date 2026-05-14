@@ -1,12 +1,21 @@
 import {
-    executeVrchatRequest,
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
     type QueryParams,
-    type VrchatRequestResponse
-} from './vrchatRequest.js';
+    type VrchatRequestResponse,
+    unwrapErrorMessage
+} from './vrchatRequest';
+import { tauriClient } from '@/platform/tauri/client';
+import { normalizeVrchatEndpoint } from '@/shared/vrchatEndpoint';
 
 interface SearchRequestOptions {
     endpoint?: string;
 }
+
+type SearchWorldJson = Record<string, unknown> & {
+    name?: string;
+};
 
 function normalizeParams(params: QueryParams = {}): QueryParams {
     if (!params || typeof params !== 'object') {
@@ -15,27 +24,53 @@ function normalizeParams(params: QueryParams = {}): QueryParams {
     return { ...params };
 }
 
-async function executeGet<TJson = unknown>(
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatSearchResponse<TJson = unknown>(
+    response: VrchatApiResult,
     path: string,
-    params: QueryParams = {},
+    params: QueryParams,
     extra: Record<string, unknown> = {},
-    options: SearchRequestOptions = {}
+    fallbackMessage: string = 'VRChat request failed'
 ): Promise<VrchatRequestResponse<TJson>> {
-    const normalizedParams = normalizeParams(params);
-    return executeVrchatRequest(path, {
-        endpoint: options.endpoint,
-        method: 'GET',
-        params: normalizedParams,
-        allowDebugEndpoint: true,
-        fallbackMessage: 'VRChat request failed',
-        decorateError: false,
-        includeParams: true,
-        extra
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw new Error(requestError.message);
+    }
+
+    return Promise.resolve({
+        json: json as TJson,
+        params,
+        ...extra,
+        status: response.status,
+        raw: response.raw
     });
 }
 
 async function getConfig(params: QueryParams = {}) {
-    return executeGet('config', params);
+    const normalizedParams = normalizeParams(params);
+    const response = await tauriClient.app.VrchatSearchConfigGet({
+        endpoint: normalizeVrchatEndpoint('', { allowDebugEndpoint: true }),
+        params: normalizedParams,
+    });
+    return unwrapVrchatSearchResponse(response, 'config', normalizedParams);
 }
 
 async function getWorlds(
@@ -43,45 +78,91 @@ async function getWorlds(
     option?: unknown,
     options: SearchRequestOptions = {}
 ) {
-    const path =
+    const normalizedParams = normalizeParams(params);
+    const normalizedOption =
         typeof option === 'undefined' || option === null
-            ? 'worlds'
-            : `worlds/${encodeURIComponent(String(option))}`;
-    return executeGet(path, params, { option }, options);
+            ? ''
+            : String(option);
+    const response = await tauriClient.app.VrchatSearchWorldsGet({
+        endpoint: normalizeVrchatEndpoint(options.endpoint, {
+            allowDebugEndpoint: true
+        }),
+        params: normalizedParams,
+        option: normalizedOption
+    });
+    const path = normalizedOption
+        ? `worlds/${encodeURIComponent(normalizedOption)}`
+        : 'worlds';
+    return unwrapVrchatSearchResponse<SearchWorldJson>(
+        response,
+        path,
+        normalizedParams,
+        {
+            option
+        }
+    );
 }
 
 async function getUsers(
     params: QueryParams = {},
     options: SearchRequestOptions = {}
 ) {
-    return executeGet('users', params, {}, options);
+    const normalizedParams = normalizeParams(params);
+    const response = await tauriClient.app.VrchatSearchUsersGet({
+        endpoint: normalizeVrchatEndpoint(options.endpoint, {
+            allowDebugEndpoint: true
+        }),
+        params: normalizedParams
+    });
+    return unwrapVrchatSearchResponse(response, 'users', normalizedParams);
 }
 
 async function getGroups(params: QueryParams = {}) {
-    return executeGet('groups', params);
+    const normalizedParams = normalizeParams(params);
+    const response = await tauriClient.app.VrchatSearchGroupsGet({
+        endpoint: normalizeVrchatEndpoint('', { allowDebugEndpoint: true }),
+        params: normalizedParams
+    });
+    return unwrapVrchatSearchResponse(response, 'groups', normalizedParams);
 }
 
 async function getGroupsStrictSearch(
     params: QueryParams = {},
     options: SearchRequestOptions = {}
 ) {
-    return executeGet('groups/strictsearch', params, {}, options);
+    const normalizedParams = normalizeParams(params);
+    const response = await tauriClient.app.VrchatSearchGroupsStrictGet({
+        endpoint: normalizeVrchatEndpoint(options.endpoint, {
+            allowDebugEndpoint: true
+        }),
+        params: normalizedParams
+    });
+    return unwrapVrchatSearchResponse(
+        response,
+        'groups/strictsearch',
+        normalizedParams
+    );
 }
 
 async function getInstanceFromShortName(
     shortName: unknown,
     options: SearchRequestOptions = {}
 ) {
-    return executeGet(
-        `instances/s/${encodeURIComponent(String(shortName || '').trim())}`,
-        {},
-        {},
-        options
+    const normalizedShortName = String(shortName || '').trim();
+    const response = await tauriClient.app.VrchatSearchInstanceShortNameGet({
+        endpoint: normalizeVrchatEndpoint(options.endpoint, {
+            allowDebugEndpoint: true
+        }),
+        shortName: normalizedShortName
+    });
+    return unwrapVrchatSearchResponse(
+        response,
+        `instances/s/${encodeURIComponent(normalizedShortName)}`,
+        {}
     );
 }
 
 const vrchatSearchRepository = Object.freeze({
-    executeGet,
     getConfig,
     getWorlds,
     getUsers,
@@ -91,7 +172,6 @@ const vrchatSearchRepository = Object.freeze({
 });
 
 export {
-    executeGet,
     getConfig,
     getWorlds,
     getUsers,

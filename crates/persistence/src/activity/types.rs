@@ -1,0 +1,173 @@
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySelfSourceSliceInput {
+    pub from_date_iso: String,
+    #[serde(default)]
+    pub to_date_iso: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySelfSourceAfterInput {
+    pub after_created_at: String,
+    #[serde(default)]
+    pub inclusive: bool,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityFriendPresenceSliceInput {
+    pub owner_user_id: String,
+    pub user_id: String,
+    pub from_date_iso: String,
+    #[serde(default)]
+    pub to_date_iso: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityFriendPresenceAfterInput {
+    pub owner_user_id: String,
+    pub user_id: String,
+    pub after_created_at: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySourceLocationOutput {
+    #[serde(rename = "created_at")]
+    pub created_at: String,
+    pub time: i64,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityPresenceOutput {
+    #[serde(rename = "created_at")]
+    pub created_at: String,
+    pub r#type: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySyncStateOutput {
+    pub user_id: String,
+    pub updated_at: String,
+    pub is_self: bool,
+    pub source_last_created_at: String,
+    pub pending_session_start_at: Value,
+    pub cached_range_days: i64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySessionOutput {
+    pub start: i64,
+    pub end: i64,
+    pub is_open_tail: bool,
+    pub source_revision: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySelfSessionsRefreshInput {
+    pub user_id: String,
+    pub mode: String,
+    #[serde(default)]
+    pub range_days: Value,
+    #[serde(default)]
+    pub now_ms: Option<i64>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySelfSessionsRefreshOutput {
+    pub sync: ActivitySyncStateOutput,
+    pub sessions: Vec<ActivitySessionOutput>,
+    pub source_count: usize,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityBucketCacheQueryInput {
+    pub owner_user_id: String,
+    #[serde(default)]
+    pub target_user_id: String,
+    pub range_days: Value,
+    pub view_kind: String,
+    #[serde(default)]
+    pub exclude_key: String,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityBucketCacheOutput {
+    pub owner_user_id: String,
+    pub target_user_id: String,
+    pub range_days: i64,
+    pub view_kind: String,
+    pub exclude_key: String,
+    pub bucket_version: i64,
+    pub built_from_cursor: String,
+    pub raw_buckets: Value,
+    pub normalized_buckets: Value,
+    pub summary: Value,
+    pub built_at: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySyncStateInput {
+    #[serde(default)]
+    pub user_id: String,
+    #[serde(default)]
+    pub updated_at: String,
+    #[serde(default)]
+    pub is_self: bool,
+    #[serde(default)]
+    pub source_last_created_at: String,
+    #[serde(default)]
+    pub pending_session_start_at: Option<Value>,
+    #[serde(default)]
+    pub cached_range_days: Value,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivitySessionInput {
+    #[serde(default)]
+    pub start: Value,
+    #[serde(default)]
+    pub end: Value,
+    #[serde(default)]
+    pub is_open_tail: bool,
+    #[serde(default)]
+    pub source_revision: String,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ActivityBucketCacheInput {
+    pub owner_user_id: String,
+    #[serde(default)]
+    pub target_user_id: String,
+    pub range_days: Value,
+    pub view_kind: String,
+    #[serde(default)]
+    pub exclude_key: String,
+    #[serde(default)]
+    pub bucket_version: Value,
+    #[serde(default)]
+    pub built_from_cursor: String,
+    #[serde(default)]
+    pub raw_buckets: Value,
+    #[serde(default)]
+    pub normalized_buckets: Value,
+    #[serde(default)]
+    pub summary: Value,
+    #[serde(default)]
+    pub built_at: String,
+}

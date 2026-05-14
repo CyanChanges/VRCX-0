@@ -1,7 +1,7 @@
 import { PlusIcon, Trash2Icon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { cn } from '@/lib/utils.js';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
 import { Checkbox } from '@/ui/shadcn/checkbox';
@@ -16,7 +16,7 @@ import { Field, FieldContent, FieldGroup, FieldLabel } from '@/ui/shadcn/field';
 import { ScrollArea } from '@/ui/shadcn/scroll-area';
 import { Switch } from '@/ui/shadcn/switch';
 
-import { updateArrayValue } from '../toolsDialogUtils.js';
+import { updateArrayValue } from '../toolsDialogUtils';
 
 export function AutomationSplitLayout({
     list,
@@ -240,7 +240,7 @@ export function CompactCheckList({
                     : 'sm:grid-cols-2 xl:grid-cols-3'
             )}
         >
-            {options.map((option) => {
+            {options.map((option: any) => {
                 const id = `${idPrefix}-${option.value}`;
                 return (
                     <Field
@@ -253,7 +253,7 @@ export function CompactCheckList({
                             id={id}
                             checked={values.includes(option.value)}
                             disabled={disabled}
-                            onCheckedChange={(checked) =>
+                            onCheckedChange={(checked: any) =>
                                 onChange(
                                     updateArrayValue(
                                         values,

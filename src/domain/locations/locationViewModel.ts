@@ -2,7 +2,7 @@ import {
     normalizeLocationValue,
     parseLocation,
     resolveRegion
-} from '@/shared/utils/location.js';
+} from '@/shared/utils/location';
 
 interface LocationMetadataModelInput {
     worldId?: unknown;
@@ -114,7 +114,7 @@ function resolveLocationMetadataModel({
     };
 }
 
-function buildLocationActionTarget(location: string, worldName = '') {
+function buildLocationActionTarget(location: string, worldName: any = '') {
     const parsed = parseLocation(location);
     const shortName = parsed.shortName || '';
     const isRealLocation = Boolean(

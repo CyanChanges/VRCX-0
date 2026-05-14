@@ -1,6 +1,6 @@
-import i18n from '@/services/i18nService.js';
-import { subscribeSQLiteError } from '@/shared/sqliteErrorEvents.js';
-import { useModalStore } from '@/state/modalStore.js';
+import i18n from '@/services/i18nService';
+import { subscribeSQLiteError } from '@/shared/sqliteErrorEvents';
+import { useModalStore } from '@/state/modalStore';
 
 type SQLiteErrorCategory = 'malformed' | 'disk_full' | 'locked' | 'io_error';
 type SQLiteDialogDefinition = {
@@ -30,15 +30,13 @@ const SQLITE_ERROR_DIALOGS = {
         method: 'alert',
         descriptionKey:
             'repository.sqlite_repository.modal.database_locked_description',
-        titleKey:
-            'repository.sqlite_repository.modal.database_locked_title'
+        titleKey: 'repository.sqlite_repository.modal.database_locked_title'
     },
     io_error: {
         method: 'alert',
         descriptionKey:
             'repository.sqlite_repository.modal.disk_io_error_description',
-        titleKey:
-            'repository.sqlite_repository.modal.disk_io_error_title'
+        titleKey: 'repository.sqlite_repository.modal.disk_io_error_title'
     }
 } satisfies Record<SQLiteErrorCategory, SQLiteDialogDefinition>;
 
@@ -94,8 +92,8 @@ export function bindSQLiteErrorDialogService(): () => void {
         return unsubscribeSQLiteErrorListener;
     }
 
-    unsubscribeSQLiteErrorListener = subscribeSQLiteError((error) => {
-        void showSQLiteErrorDialog(error);
+    unsubscribeSQLiteErrorListener = subscribeSQLiteError((error: any) => {
+        showSQLiteErrorDialog(error);
     });
 
     return () => {

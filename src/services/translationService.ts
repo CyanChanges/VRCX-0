@@ -1,4 +1,5 @@
-import { configRepository, webRepository } from '@/repositories/index.js';
+import configRepository from '@/repositories/configRepository';
+import externalApiRepository from '@/repositories/externalApiRepository';
 
 const DEFAULT_TRANSLATION_ENDPOINT =
     'https://api.openai.com/v1/chat/completions';
@@ -64,11 +65,11 @@ export async function getTranslationConfig(): Promise<TranslationConfig> {
 
 export async function translateText(
     text: string,
-    targetLanguage = '',
+    targetLanguage: any = '',
     overrides: TranslationOverrides = {}
 ): Promise<string> {
     const storedConfig = await getTranslationConfig();
-    const config = {
+    const config: any = {
         ...storedConfig,
         ...overrides
     };
@@ -82,7 +83,7 @@ export async function translateText(
         if (!config.key) {
             throw new Error('No Translation API key configured.');
         }
-        const response = await webRepository.execute({
+        const response = await externalApiRepository.executeTranslationRequest({
             url: `https://translation.googleapis.com/language/translate/v2?key=${encodeURIComponent(config.key)}`,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -116,12 +117,14 @@ export async function translateText(
         throw new Error('Translation endpoint/model missing.');
     }
 
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+    };
     if (config.key) {
         headers.Authorization = `Bearer ${config.key}`;
     }
 
-    const response = await webRepository.execute({
+    const response = await externalApiRepository.executeTranslationRequest({
         url: endpoint,
         method: 'POST',
         headers,

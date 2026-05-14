@@ -1,4 +1,4 @@
-const userDialogWorldSortingOptions = {
+const userDialogWorldSortingOptions: any = {
     name: {
         name: 'dialog.user.worlds.sorting.name',
         value: 'name'
@@ -21,7 +21,7 @@ const userDialogWorldSortingOptions = {
     }
 };
 
-const userDialogWorldOrderOptions = {
+const userDialogWorldOrderOptions: any = {
     descending: {
         name: 'dialog.user.worlds.order.descending',
         value: 'descending'
@@ -32,7 +32,7 @@ const userDialogWorldOrderOptions = {
     }
 };
 
-const userDialogGroupSortingOptions = {
+const userDialogGroupSortingOptions: any = {
     alphabetical: {
         name: 'dialog.user.groups.sorting.alphabetical',
         value: 'alphabetical'
@@ -47,7 +47,7 @@ const userDialogGroupSortingOptions = {
     }
 };
 
-const userDialogMutualFriendSortingOptions = {
+const userDialogMutualFriendSortingOptions: any = {
     alphabetical: {
         name: 'dialog.user.mutual_friends.sorting.alphabetical',
         value: 'alphabetical'

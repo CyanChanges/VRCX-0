@@ -20,3 +20,63 @@ impl Serialize for AppError {
         serializer.serialize_str(&self.to_string())
     }
 }
+
+impl From<vrcx_0_persistence::Error> for AppError {
+    fn from(value: vrcx_0_persistence::Error) -> Self {
+        match value {
+            vrcx_0_persistence::Error::Database(message) => AppError::Database(message),
+            vrcx_0_persistence::Error::Io(error) => AppError::Io(error),
+            vrcx_0_persistence::Error::Json(error) => AppError::Json(error),
+            vrcx_0_persistence::Error::InvalidData(message) => AppError::Custom(message),
+            vrcx_0_persistence::Error::Custom(message) => AppError::Custom(message),
+        }
+    }
+}
+
+impl From<vrcx_0_media::Error> for AppError {
+    fn from(value: vrcx_0_media::Error) -> Self {
+        match value {
+            vrcx_0_media::Error::Io(error) => AppError::Io(error),
+            vrcx_0_media::Error::Custom(message) => AppError::Custom(message),
+        }
+    }
+}
+
+impl From<vrcx_0_host::Error> for AppError {
+    fn from(value: vrcx_0_host::Error) -> Self {
+        match value {
+            vrcx_0_host::Error::Io(error) => AppError::Io(error),
+            vrcx_0_host::Error::Json(error) => AppError::Json(error),
+            vrcx_0_host::Error::Custom(message) => AppError::Custom(message),
+        }
+    }
+}
+
+impl From<vrcx_0_application::Error> for AppError {
+    fn from(value: vrcx_0_application::Error) -> Self {
+        match value {
+            vrcx_0_application::Error::Database(message) => AppError::Database(message),
+            vrcx_0_application::Error::Io(error) => AppError::Io(error),
+            vrcx_0_application::Error::Json(error) => AppError::Json(error),
+            vrcx_0_application::Error::Custom(message) => AppError::Custom(message),
+        }
+    }
+}
+
+impl From<vrcx_0_integrations::external_api::ExternalApiError> for AppError {
+    fn from(value: vrcx_0_integrations::external_api::ExternalApiError) -> Self {
+        match value {
+            vrcx_0_integrations::external_api::ExternalApiError::Custom(message) => {
+                AppError::Custom(message)
+            }
+        }
+    }
+}
+
+impl From<vrcx_0_vrchat_client::HttpApiError> for AppError {
+    fn from(value: vrcx_0_vrchat_client::HttpApiError) -> Self {
+        match value {
+            vrcx_0_vrchat_client::HttpApiError::Custom(message) => AppError::Custom(message),
+        }
+    }
+}

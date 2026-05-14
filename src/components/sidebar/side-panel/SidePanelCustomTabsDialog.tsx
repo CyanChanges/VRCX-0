@@ -25,12 +25,12 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { cn } from '@/lib/utils.js';
+import { getNavIconComponent } from '@/components/layout/navIconRegistry';
+import { cn } from '@/lib/utils';
 import {
     NAV_ICON_OPTIONS,
-    getNavIconComponent,
     normalizeNavIconKey
-} from '@/shared/constants/navIcons.js';
+} from '@/shared/constants/navIcons';
 import { Button } from '@/ui/shadcn/button';
 import { Checkbox } from '@/ui/shadcn/checkbox';
 import {
@@ -71,7 +71,7 @@ import {
     normalizeSidebarTabDisplayMode,
     normalizeSidebarTabLayout,
     sidebarTabFallbackIcon
-} from './sidebarTabLayout.js';
+} from './sidebarTabLayout';
 
 function tabActionLabel(
     t: (key: string, params?: Record<string, string>) => string,
@@ -112,7 +112,7 @@ function NavIconSelect({
             </SelectTrigger>
             <SelectContent align="start">
                 <SelectGroup>
-                    {NAV_ICON_OPTIONS.map((option) => {
+                    {NAV_ICON_OPTIONS.map((option: any) => {
                         const OptionIcon = getNavIconComponent(option.key);
                         return (
                             <SelectItem key={option.key} value={option.key}>
@@ -152,11 +152,11 @@ function SortableTabRow({
         transition,
         isDragging
     } = useSortable({ id });
-    const rowStyle = {
+    const rowStyle: any = {
         transform: CSS.Transform.toString(transform),
         transition
     };
-    const dragHandleProps = {
+    const dragHandleProps: any = {
         ...attributes,
         ...listeners,
         ref: setActivatorNodeRef,
@@ -182,15 +182,15 @@ function FavoriteSourceChecklist({
 }) {
     const { t } = useTranslation();
     const remoteGroups = favoriteGroupItems.filter(
-        (group) => group.source === 'remote'
+        (group: any) => group.source === 'remote'
     );
     const localGroups = favoriteGroupItems.filter(
-        (group) => group.source === 'local'
+        (group: any) => group.source === 'local'
     );
     const selected = new Set(item.sourceGroupKeys);
 
     function renderGroups(groups: FavoriteGroupItem[]) {
-        return groups.map((group) => (
+        return groups.map((group: any) => (
             <Field
                 key={group.key}
                 orientation="horizontal"
@@ -199,7 +199,7 @@ function FavoriteSourceChecklist({
                 <Checkbox
                     id={`${item.id}-${group.key}`}
                     checked={selected.has(group.key)}
-                    onCheckedChange={(checked) =>
+                    onCheckedChange={(checked: any) =>
                         onToggleSource(group.key, Boolean(checked))
                     }
                 />
@@ -281,7 +281,7 @@ export function SidePanelCustomTabsDialog({
         })
     );
     const sortableIds = useMemo(
-        () => draftLayout.map((item) => item.id),
+        () => draftLayout.map((item: any) => item.id),
         [draftLayout]
     );
 
@@ -297,9 +297,9 @@ export function SidePanelCustomTabsDialog({
         id: string,
         updater: (item: SidebarTabLayoutItem) => SidebarTabLayoutItem
     ) {
-        setDraftLayout((current) =>
+        setDraftLayout((current: any) =>
             normalizeSidebarTabLayout(
-                current.map((item) => (item.id === id ? updater(item) : item))
+                current.map((item: any) => (item.id === id ? updater(item) : item))
             )
         );
     }
@@ -309,9 +309,9 @@ export function SidePanelCustomTabsDialog({
         if (!over || active.id === over.id) {
             return;
         }
-        setDraftLayout((current) => {
-            const oldIndex = current.findIndex((item) => item.id === active.id);
-            const newIndex = current.findIndex((item) => item.id === over.id);
+        setDraftLayout((current: any) => {
+            const oldIndex = current.findIndex((item: any) => item.id === active.id);
+            const newIndex = current.findIndex((item: any) => item.id === over.id);
             if (oldIndex < 0 || newIndex < 0) {
                 return current;
             }
@@ -322,7 +322,7 @@ export function SidePanelCustomTabsDialog({
     }
 
     function moveItem(index: number, delta: number) {
-        setDraftLayout((current) =>
+        setDraftLayout((current: any) =>
             normalizeSidebarTabLayout(
                 moveSidebarTab(current, index, index + delta)
             )
@@ -330,7 +330,7 @@ export function SidePanelCustomTabsDialog({
     }
 
     function addFavoriteCollection() {
-        setDraftLayout((current) =>
+        setDraftLayout((current: any) =>
             normalizeSidebarTabLayout([
                 ...current,
                 createFavoriteCollectionTab(
@@ -344,10 +344,10 @@ export function SidePanelCustomTabsDialog({
     }
 
     function removeFavoriteCollection(id: string) {
-        setDraftLayout((current) =>
+        setDraftLayout((current: any) =>
             normalizeSidebarTabLayout(
                 current.filter(
-                    (item) =>
+                    (item: any) =>
                         item.id !== id || item.type !== 'favoriteCollection'
                 )
             )
@@ -379,7 +379,7 @@ export function SidePanelCustomTabsDialog({
                             </FieldContent>
                             <Select
                                 value={draftDisplayMode}
-                                onValueChange={(value) =>
+                                onValueChange={(value: any) =>
                                     setDraftDisplayMode(
                                         normalizeSidebarTabDisplayMode(value)
                                     )
@@ -429,7 +429,7 @@ export function SidePanelCustomTabsDialog({
                                 strategy={verticalListSortingStrategy}
                             >
                                 <div className="flex flex-col gap-2">
-                                    {draftLayout.map((item, index) => {
+                                    {draftLayout.map((item: any, index: any) => {
                                         const label = getTabLabel(item, t);
                                         const Icon = getNavIconComponent(
                                             item.icon,
@@ -449,7 +449,7 @@ export function SidePanelCustomTabsDialog({
                                                     isDragging,
                                                     rowRef,
                                                     rowStyle
-                                                }) => (
+                                                }: any) => (
                                                     <div
                                                         ref={rowRef}
                                                         style={rowStyle}
@@ -487,12 +487,12 @@ export function SidePanelCustomTabsDialog({
                                                                     label
                                                                 )}
                                                                 onValueChange={(
-                                                                    icon
+                                                                    icon: any
                                                                 ) =>
                                                                     updateItem(
                                                                         item.id,
                                                                         (
-                                                                            current
+                                                                            current: any
                                                                         ) => ({
                                                                             ...current,
                                                                             icon
@@ -512,12 +512,12 @@ export function SidePanelCustomTabsDialog({
                                                                         'side_panel.settings.custom_tabs.tab_name'
                                                                     )}
                                                                     onChange={(
-                                                                        event
+                                                                        event: any
                                                                     ) =>
                                                                         updateItem(
                                                                             item.id,
                                                                             (
-                                                                                current
+                                                                                current: any
                                                                             ) =>
                                                                                 current.type ===
                                                                                 'favoriteCollection'
@@ -556,12 +556,12 @@ export function SidePanelCustomTabsDialog({
                                                                     label
                                                                 )}
                                                                 onCheckedChange={(
-                                                                    checked
+                                                                    checked: any
                                                                 ) =>
                                                                     updateItem(
                                                                         item.id,
                                                                         (
-                                                                            current
+                                                                            current: any
                                                                         ) => ({
                                                                             ...current,
                                                                             visible:
@@ -650,13 +650,13 @@ export function SidePanelCustomTabsDialog({
                                                                     favoriteGroupItems
                                                                 }
                                                                 onToggleSource={(
-                                                                    key,
-                                                                    checked
+                                                                    key: any,
+                                                                    checked: any
                                                                 ) =>
                                                                     updateItem(
                                                                         item.id,
                                                                         (
-                                                                            current
+                                                                            current: any
                                                                         ) => {
                                                                             if (
                                                                                 current.type !==

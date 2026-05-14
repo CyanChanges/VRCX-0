@@ -31,7 +31,7 @@ export function bytesToBase64(bytes: Uint8Array): string {
 
 export function bytesToObjectUrl(
     bytes: Uint8Array,
-    mimeType = 'application/octet-stream'
+    mimeType: any = 'application/octet-stream'
 ): string {
     return URL.createObjectURL(
         new Blob([bytes as BlobPart], { type: mimeType })

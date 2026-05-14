@@ -10,9 +10,6 @@ serde_json = "1"
 thiserror = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-dirs = "6"
-rusqlite = { version = "0.39", features = ["bundled", "backup"] }
-sysinfo = "0.39"
 chrono = "0.4"
 reqwest = { version = "0.13", features = [
     "cookies",
@@ -22,8 +19,8 @@ reqwest = { version = "0.13", features = [
     "multipart",
     "socks"
 ] }
-reqwest_cookie_store = "0.10"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "macros", "time", "net", "io-util"] }
+rustls = { version = "0.23", default-features = false, features = ["aws_lc_rs", "std"] }
 base64 = "0.22"
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
@@ -31,33 +28,23 @@ tauri-plugin-notification = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-autostart = "2"
 sys-locale = "0.3"
-open = "5"
-arboard = "3"
-image = "0.25"
-webp = "0.3.1"
-fast_image_resize = { version = "6.0.0", features = ["image", "only_u8x4", "rayon"] }
-fast_rsync = "0.2"
-sha2 = "0.11"
-hex = "0.4"
-quick-xml = "0.40"
-walkdir = "2"
 tauri-plugin-window-state = "2"
 percent-encoding = "2"
 tauri-plugin-updater = "2.10.1"
+vrcx-0-core = { path = "../crates/core" }
+vrcx-0-persistence = { path = "../crates/persistence" }
+vrcx-0-integrations = { path = "../crates/integrations" }
+vrcx-0-host = { path = "../crates/host" }
+vrcx-0-media = { path = "../crates/media" }
+vrcx-0-application = { path = "../crates/application" }
+vrcx-0-vrchat-client = { path = "../crates/vrchat-client" }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [
     "Win32_Foundation",
     "Win32_Storage_FileSystem",
-    "Win32_System_IO",
-    "Win32_System_DataExchange",
-    "Win32_System_Memory",
-    "Win32_System_Ole",
-    "Win32_System_Pipes",
-    "Win32_Security",
-    "Win32_System_Threading"
+    "Win32_System_Pipes"
 ] }
-winreg = "0.56"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 webkit2gtk-nvidia-quirk = "1"
@@ -67,3 +54,7 @@ devtools = ["tauri/devtools"]
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
+
+[dev-dependencies]
+image = "0.25"
+vrcx-0-application = { path = "../crates/application", features = ["test-utils"] }

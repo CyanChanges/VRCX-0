@@ -25,11 +25,11 @@ interface NotificationStoreState {
     resetNotificationState: () => void;
 }
 
-export const useNotificationStore = create<NotificationStoreState>((set) => ({
+export const useNotificationStore = create<NotificationStoreState>((set: any) => ({
     items: [],
     isPanelOpen: false,
-    pushNotification(notification) {
-        const entry = {
+    pushNotification(notification: any) {
+        const entry: any = {
             id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
             createdAt: new Date().toISOString(),
             level: 'info',
@@ -39,34 +39,34 @@ export const useNotificationStore = create<NotificationStoreState>((set) => ({
             ...notification
         };
 
-        set((state) => ({
+        set((state: any) => ({
             items: [entry, ...state.items].slice(0, 50)
         }));
     },
     markAllRead() {
-        set((state) => ({
-            items: state.items.map((item) => ({ ...item, read: true }))
+        set((state: any) => ({
+            items: state.items.map((item: any) => ({ ...item, read: true }))
         }));
     },
-    markNotificationRead(id) {
-        set((state) => ({
-            items: state.items.map((item) =>
+    markNotificationRead(id: any) {
+        set((state: any) => ({
+            items: state.items.map((item: any) =>
                 item.id === id ? { ...item, read: true } : item
             )
         }));
     },
-    dismissNotification(id) {
-        set((state) => ({
-            items: state.items.filter((item) => item.id !== id)
+    dismissNotification(id: any) {
+        set((state: any) => ({
+            items: state.items.filter((item: any) => item.id !== id)
         }));
     },
-    setPanelOpen(isPanelOpen) {
+    setPanelOpen(isPanelOpen: any) {
         const nextOpen = Boolean(isPanelOpen);
-        set((state) => ({
+        set((state: any) => ({
             isPanelOpen: nextOpen,
             items:
                 !nextOpen && state.isPanelOpen
-                    ? state.items.map((item) => ({ ...item, read: true }))
+                    ? state.items.map((item: any) => ({ ...item, read: true }))
                     : state.items
         }));
     },

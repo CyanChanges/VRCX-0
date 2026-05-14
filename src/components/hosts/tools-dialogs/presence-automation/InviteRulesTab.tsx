@@ -20,8 +20,8 @@ import {
 } from '@/ui/shadcn/select';
 import { Switch } from '@/ui/shadcn/switch';
 
-import { normalizeAutoAcceptMode } from '../toolsDialogUtils.js';
-import { CompactCheckList } from './AutomationRuleLayout.js';
+import { normalizeAutoAcceptMode } from '../toolsDialogUtils';
+import { CompactCheckList } from './AutomationRuleLayout';
 
 const I18N_ROOT = 'view.tools.social_automation';
 
@@ -30,7 +30,7 @@ export function InviteRulesTab({
     loading,
     groupOptions,
     onSaveValue
-}) {
+}: any) {
     const { t } = useTranslation();
     const autoAcceptEnabled = values.autoAcceptInviteRequests !== 'Off';
     const selectedFavoritesOnly =
@@ -56,16 +56,16 @@ export function InviteRulesTab({
                         aria-label={t(
                             `${I18N_ROOT}.auto_send_invites_for_request_invite`
                         )}
-                        onCheckedChange={(checked) =>
-                            void onSaveValue(
+                        onCheckedChange={(checked: any) => {
+                            onSaveValue(
                                 'autoAcceptInviteRequests',
                                 checked
                                     ? normalizeAutoAcceptMode(
                                           values.autoAcceptInviteRequests
                                       )
                                     : 'Off'
-                            )
-                        }
+                            );
+                        }}
                     />
                 </div>
             </FieldSet>
@@ -90,12 +90,9 @@ export function InviteRulesTab({
                                 values.autoAcceptInviteRequests
                             )}
                             disabled={loading || !autoAcceptEnabled}
-                            onValueChange={(value) =>
-                                void onSaveValue(
-                                    'autoAcceptInviteRequests',
-                                    value
-                                )
-                            }
+                            onValueChange={(value: any) => {
+                                onSaveValue('autoAcceptInviteRequests', value);
+                            }}
                         >
                             <SelectTrigger>
                                 <SelectValue />
@@ -133,13 +130,13 @@ export function InviteRulesTab({
                                 !autoAcceptEnabled ||
                                 !selectedFavoritesOnly
                             }
-                            onChange={(next) =>
-                                void onSaveValue(
+                            onChange={(next: any) => {
+                                onSaveValue(
                                     'autoAcceptInviteGroups',
                                     next,
                                     'array'
-                                )
-                            }
+                                );
+                            }}
                         />
                     </Field>
                 </FieldGroup>

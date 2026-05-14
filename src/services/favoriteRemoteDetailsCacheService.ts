@@ -9,7 +9,7 @@ const detailPromises = new Map<unknown, unknown>();
 let detailCacheGeneration = 0;
 
 export function clearFavoriteRemoteDetailsCache(): FavoriteRemoteDetailsCacheStats {
-    const result = {
+    const result: any = {
         detailCacheCount: detailCache.size,
         detailPromiseCount: detailPromises.size
     };

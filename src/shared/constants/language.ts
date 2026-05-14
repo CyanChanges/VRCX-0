@@ -1,5 +1,5 @@
 // vrchat to famfamfam language mappings
-const languageMappings = {
+const languageMappings: any = {
     eng: 'us',
     kor: 'kr',
     rus: 'ru',

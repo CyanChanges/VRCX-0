@@ -1,4 +1,4 @@
-import { normalizePlatformError } from './errors.js';
+import { normalizePlatformError } from './errors';
 
 type WebviewWindowLike = {
     setZoom?: (zoom: number) => Promise<unknown> | unknown;

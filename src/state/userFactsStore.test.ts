@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useUserFactsStore } from './userFactsStore.js';
+import { useUserFactsStore } from './userFactsStore';
 
 describe('userFactsStore', () => {
     beforeEach(() => {
@@ -20,7 +20,7 @@ describe('userFactsStore', () => {
 
         const firstState = useUserFactsStore.getState();
         const firstIds = firstState.userIdsByEndpoint.api;
-        const firstFact = firstState.usersByKey['api::usr_test'];
+        const firstFact = firstState.usersByKey['commands::usr_test'];
 
         store.upsertUserFact(
             {
@@ -33,8 +33,8 @@ describe('userFactsStore', () => {
         const secondState = useUserFactsStore.getState();
 
         expect(secondState.userIdsByEndpoint.api).toBe(firstIds);
-        expect(secondState.usersByKey['api::usr_test']).toBe(firstFact);
-        expect(secondState.usersByKey['api::usr_test'].displayName).toBe(
+        expect(secondState.usersByKey['commands::usr_test']).toBe(firstFact);
+        expect(secondState.usersByKey['commands::usr_test'].displayName).toBe(
             'Profile User'
         );
     });

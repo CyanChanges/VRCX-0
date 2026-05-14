@@ -1,9 +1,9 @@
-import { isRealInstance } from './instance.js';
+import { isRealInstance } from './instance';
 import {
     normalizeLocationValue,
     parseLocation,
     resolveFriendPresenceLocation
-} from './location.js';
+} from './location';
 
 export type CurrentUserPresenceRecord = Record<string, unknown>;
 
@@ -166,7 +166,7 @@ function buildPresencePatch({
     };
 }
 
-export function buildCurrentUserGameStatePresencePatch(gameState, currentUser) {
+export function buildCurrentUserGameStatePresencePatch(gameState: any, currentUser: any) {
     if (!gameState?.isGameRunning) {
         return null;
     }

@@ -4,16 +4,16 @@ import {
     buildInstanceRosterModel,
     buildInstancePresenceFact,
     instancePresenceKey
-} from './instancePresence.js';
+} from './instancePresence';
 
 describe('instancePresence domain model', () => {
     it('keys only real instances by endpoint and normalized location', () => {
         expect(
             instancePresenceKey('api', 'wrld_test:12345~hidden(usr_owner)')
-        ).toBe('api::wrld_test:12345~hidden(usr_owner)');
+        ).toBe('commands::wrld_test:12345~hidden(usr_owner)');
         expect(
             instancePresenceKey('api', 'wrld_test:12345~group(grp_owner)')
-        ).toBe('api::wrld_test:12345~group(grp_owner)');
+        ).toBe('commands::wrld_test:12345~group(grp_owner)');
         expect(instancePresenceKey('api', 'private')).toBe('');
     });
 
@@ -88,7 +88,7 @@ describe('instancePresence domain model', () => {
             instanceCreatorLabel: 'Creator'
         });
 
-        expect(roster.rows.map((row) => row.id)).toEqual([
+        expect(roster.rows.map((row: any) => row.id)).toEqual([
             'usr_owner',
             'usr_self',
             'usr_ask',
@@ -96,7 +96,7 @@ describe('instancePresence domain model', () => {
         ]);
         expect(roster.rows[0].$subtitle).toBe('Creator');
         expect(
-            roster.rows.some((row) => row.id === 'usr_busy_private')
+            roster.rows.some((row: any) => row.id === 'usr_busy_private')
         ).toBe(false);
         expect(roster.friendCount).toBe(1);
         expect(roster.playerCount).toBe(4);
@@ -119,6 +119,6 @@ describe('instancePresence domain model', () => {
 
         expect(roster.ownerId).toBe('grp_owner');
         expect(roster.ownerIsGroup).toBe(true);
-        expect(roster.rows.map((row) => row.id)).toEqual(['usr_friend']);
+        expect(roster.rows.map((row: any) => row.id)).toEqual(['usr_friend']);
     });
 });

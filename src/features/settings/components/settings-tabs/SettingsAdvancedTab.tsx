@@ -1,0 +1,244 @@
+import { useTranslation } from 'react-i18next';
+
+import { Button } from '@/ui/shadcn/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/ui/shadcn/card';
+import { Switch } from '@/ui/shadcn/switch';
+
+import { Field } from '../SettingsField';
+import { SettingsTabContent } from '../SettingsViewParts';
+import { SettingsAdvancedDataCards } from './SettingsAdvancedDataCards';
+
+export function SettingsAdvancedTab({ advanced }: any) {
+    const {
+        prefs,
+        cacheStats,
+        cacheStatsVisible,
+        avatarAutoCleanupOptions,
+        sqliteTableSizes,
+        sqliteTableSizeRows,
+        onlineVisitCount,
+        configTreeData,
+        tauriAppSnapshot,
+        gameLogDisabledLabel,
+        onRelaunchVRChatAfterCrashChange,
+        onVrcQuitFixChange,
+        onAutoSweepVRChatCacheChange,
+        onUdonExceptionLoggingChange,
+        onLogResourceLoadChange,
+        onOpenShortcutFolder,
+        onEnableAppLauncherChange,
+        onEnableAppLauncherAutoCloseChange,
+        onEnableAppLauncherRunProcessOnceChange,
+        onShowConfirmationOnSwitchAvatarChange,
+        onClearVrcxCache,
+        onPromptAutoClearVrcxCacheFrequency,
+        onRefreshCacheSize,
+        onGameLogDisabledChange,
+        onAvatarAutoCleanupChange,
+        onOpenPurgeDialog,
+        onMigrateLegacyVrcxData,
+        onRefreshSqliteTableSizes,
+        onRefreshOnlineVisits,
+        onRefreshConfigTreeData,
+        onRefreshRuntimeAppSnapshot,
+        onClearConfigTreeData
+    } = advanced;
+    const { t } = useTranslation();
+    const gameLogDisabledDescription = t(
+        'view.settings.advanced.advanced.cache_debug.disable_gamelog_notice'
+    );
+
+    return (
+        <SettingsTabContent value="advanced">
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        {t(
+                            'view.settings.advanced.advanced.vrchat_settings.header'
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.relaunch_vrchat.header'
+                        )}
+                        description={t(
+                            'view.settings.advanced.advanced.relaunch_vrchat.description'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.relaunchVRChatAfterCrash}
+                            onCheckedChange={onRelaunchVRChatAfterCrashChange}
+                        />
+                    </Field>
+
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.vrchat_quit_fix.header'
+                        )}
+                        description={t(
+                            'view.settings.advanced.advanced.vrchat_quit_fix.description'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.vrcQuitFix}
+                            onCheckedChange={onVrcQuitFixChange}
+                        />
+                    </Field>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        {t('view.settings.general.logging.header')}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.cache_debug.udon_exception_logging'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.udonExceptionLogging}
+                            onCheckedChange={onUdonExceptionLoggingChange}
+                        />
+                    </Field>
+                    <Field
+                        label={t('view.settings.general.logging.resource_load')}
+                    >
+                        <Switch
+                            checked={prefs.logResourceLoad}
+                            onCheckedChange={onLogResourceLoadChange}
+                        />
+                    </Field>
+                    <Field
+                        label={gameLogDisabledLabel}
+                        description={gameLogDisabledDescription}
+                    >
+                        <Switch
+                            checked={prefs.gameLogDisabled}
+                            onCheckedChange={onGameLogDisabledChange}
+                        />
+                    </Field>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        {t(
+                            'view.settings.advanced.advanced.app_launcher.header'
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.app_launcher.folder'
+                        )}
+                        description={t(
+                            'view.settings.advanced.advanced.app_launcher.folder_tooltip'
+                        )}
+                    >
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={onOpenShortcutFolder}
+                        >
+                            {t(
+                                'view.settings.advanced.advanced.app_launcher.folder'
+                            )}
+                        </Button>
+                    </Field>
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.app_launcher.enable'
+                        )}
+                        description={t(
+                            'view.settings.advanced.advanced.app_launcher.folder_tooltip'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.enableAppLauncher}
+                            onCheckedChange={onEnableAppLauncherChange}
+                        />
+                    </Field>
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.app_launcher.auto_close'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.enableAppLauncherAutoClose}
+                            onCheckedChange={onEnableAppLauncherAutoCloseChange}
+                        />
+                    </Field>
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.app_launcher.run_process_once'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.enableAppLauncherRunProcessOnce}
+                            onCheckedChange={
+                                onEnableAppLauncherRunProcessOnceChange
+                            }
+                        />
+                    </Field>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader>
+                    <CardTitle>
+                        {t(
+                            'view.settings.advanced.advanced.launch_commands.header'
+                        )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col">
+                    <Field
+                        label={t(
+                            'view.settings.advanced.advanced.launch_commands.show_confirmation_on_switch_avatar_enable'
+                        )}
+                        description={t(
+                            'view.settings.advanced.advanced.launch_commands.show_confirmation_on_switch_avatar_tooltip'
+                        )}
+                    >
+                        <Switch
+                            checked={prefs.showConfirmationOnSwitchAvatar}
+                            onCheckedChange={
+                                onShowConfirmationOnSwitchAvatarChange
+                            }
+                        />
+                    </Field>
+                </CardContent>
+            </Card>
+            <SettingsAdvancedDataCards
+                prefs={prefs}
+                cacheStats={cacheStats}
+                cacheStatsVisible={cacheStatsVisible}
+                avatarAutoCleanupOptions={avatarAutoCleanupOptions}
+                sqliteTableSizes={sqliteTableSizes}
+                sqliteTableSizeRows={sqliteTableSizeRows}
+                onlineVisitCount={onlineVisitCount}
+                configTreeData={configTreeData}
+                tauriAppSnapshot={tauriAppSnapshot}
+                onAutoSweepVRChatCacheChange={onAutoSweepVRChatCacheChange}
+                onClearVrcxCache={onClearVrcxCache}
+                onPromptAutoClearVrcxCacheFrequency={
+                    onPromptAutoClearVrcxCacheFrequency
+                }
+                onRefreshCacheSize={onRefreshCacheSize}
+                onAvatarAutoCleanupChange={onAvatarAutoCleanupChange}
+                onOpenPurgeDialog={onOpenPurgeDialog}
+                onMigrateLegacyVrcxData={onMigrateLegacyVrcxData}
+                onRefreshSqliteTableSizes={onRefreshSqliteTableSizes}
+                onRefreshOnlineVisits={onRefreshOnlineVisits}
+                onRefreshConfigTreeData={onRefreshConfigTreeData}
+                onRefreshRuntimeAppSnapshot={onRefreshRuntimeAppSnapshot}
+                onClearConfigTreeData={onClearConfigTreeData}
+            />
+        </SettingsTabContent>
+    );
+}

@@ -2,13 +2,150 @@ import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
-} from '@/lib/entityQueryCache.js';
-import { replaceBioSymbols } from '@/shared/utils/base/string.js';
-import { createDefaultGroupRef } from '@/shared/utils/groupTransforms.js';
+} from '@/lib/entityQueryCache';
+import { tauriClient } from '@/platform/tauri/client';
+import { replaceBioSymbols } from '@/shared/utils/string';
+import { createDefaultGroupRef } from '@/shared/utils/groupTransforms';
 
-import { executeVrchatRequest, type QueryParams } from './vrchatRequest.js';
+import {
+    createRequestError,
+    notifyVrchatAuthFailure,
+    parseJsonResponse,
+    unwrapErrorMessage,
+    type QueryParams
+} from './vrchatRequest';
 
-type GroupRecord = Record<string, any>;
+type GroupRecord = Record<string, unknown>;
+type GroupProfileRecord = GroupRecord & {
+    id: string;
+    name: string;
+    displayName: string;
+    description: string;
+    rules: string;
+    shortCode: string;
+    discriminator: string;
+    bannerUrl: string;
+    iconUrl: string;
+    memberCount: number;
+    onlineMemberCount: number;
+    ownerId: string;
+    ownerDisplayName: string;
+    privacy: string;
+    membershipStatus: string;
+    languages: string[];
+    links: string[];
+    tags: string[];
+    roles: GroupRecord[];
+    url: string;
+    userInterest?: unknown;
+};
+type VrchatApiResult = {
+    status: number;
+    data: unknown;
+    raw: unknown;
+};
+
+interface PageRequest {
+    n: number;
+    offset: number;
+}
+
+interface CollectPagesOptions {
+    pageSize?: number;
+    maxPages?: number;
+}
+
+interface GroupProfileInput {
+    groupId?: unknown;
+    endpoint?: string;
+    includeRoles?: boolean;
+    force?: boolean;
+    dialog?: boolean;
+}
+
+interface GroupIdInput {
+    groupId?: unknown;
+    endpoint?: string;
+}
+
+interface GroupUserInput extends GroupIdInput {
+    userId?: unknown;
+}
+
+interface GroupPostInput extends GroupIdInput {
+    postId?: unknown;
+    params?: Record<string, unknown>;
+}
+
+interface GroupPageInput extends GroupIdInput {
+    n?: number;
+    offset?: number;
+}
+
+interface GroupMembersInput extends GroupPageInput {
+    sort?: string;
+    roleId?: string;
+    force?: boolean;
+}
+
+interface GroupMembersSearchInput extends GroupPageInput {
+    query?: unknown;
+}
+
+interface GroupGalleryInput extends GroupPageInput {
+    galleryId?: unknown;
+    force?: boolean;
+}
+
+interface GroupJoinRequestInput extends GroupPageInput {
+    blocked?: boolean;
+}
+
+interface GroupJoinRequestResponseInput extends GroupUserInput {
+    action?: unknown;
+    block?: boolean;
+}
+
+interface GroupLogsInput extends GroupPageInput {
+    eventTypes?: unknown;
+}
+
+interface GroupRepresentationInput extends GroupIdInput {
+    isRepresenting?: unknown;
+}
+
+interface GroupMemberPropsInput extends GroupUserInput {
+    params?: Record<string, unknown>;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function unwrapVrchatGroupResponse<TJson = GroupRecord>(
+    response: VrchatApiResult,
+    path: string
+) {
+    const json = parseJsonResponse(response.data);
+    if (response.status >= 400 || (isRecord(json) && 'error' in json)) {
+        const requestError = createRequestError(
+            unwrapErrorMessage(json, response.status, {
+                fallbackMessage: 'VRChat group request failed'
+            }),
+            response.status,
+            path,
+            json
+        );
+        notifyVrchatAuthFailure(requestError);
+        throw requestError;
+    }
+
+    return {
+        json: json as TJson,
+        status: response.status,
+        raw: response.raw
+    };
+}
 
 function normalizeEntityId(value: unknown): string {
     const normalize = (text: string) => {
@@ -64,7 +201,9 @@ function normalizeGroupRoles(values: unknown): GroupRecord[] {
     }
 
     return values
-        .filter((role) => role && typeof role === 'object')
+        .filter((role): role is GroupRecord =>
+            Boolean(role && typeof role === 'object')
+        )
         .map((role) => ({
             ...role,
             id: normalizeEntityId(role.id),
@@ -74,21 +213,24 @@ function normalizeGroupRoles(values: unknown): GroupRecord[] {
         }));
 }
 
-function normalizeGroupProfile(group: GroupRecord | null | undefined) {
-    const base = createDefaultGroupRef(group ?? {});
+function normalizeGroupProfile(
+    group: GroupRecord | null | undefined
+): GroupProfileRecord {
+    const base = createDefaultGroupRef(group ?? {}) as GroupRecord;
+    const owner = isRecord(base.owner) ? base.owner : {};
     const shortCode = normalizeString(base.shortCode);
     const discriminator = normalizeString(base.discriminator);
     const ownerId =
         normalizeEntityId(base.ownerId) ||
-        normalizeEntityId(base.owner?.id) ||
-        normalizeEntityId(base.owner?.userId) ||
-        normalizeEntityId(base.owner?.user_id);
+        normalizeEntityId(owner.id) ||
+        normalizeEntityId(owner.userId) ||
+        normalizeEntityId(owner.user_id);
     const ownerDisplayName =
         normalizeText(base.ownerDisplayName) ||
         normalizeText(base.ownerName) ||
-        normalizeText(base.owner?.displayName) ||
-        normalizeText(base.owner?.username) ||
-        normalizeText(base.owner?.name);
+        normalizeText(owner.displayName) ||
+        normalizeText(owner.username) ||
+        normalizeText(owner.name);
     const groupUrl =
         shortCode && discriminator
             ? `https://vrc.group/${shortCode}.${discriminator}`
@@ -98,6 +240,7 @@ function normalizeGroupProfile(group: GroupRecord | null | undefined) {
         ...base,
         id: normalizeEntityId(base.id || base.groupId),
         name: normalizeText(base.name),
+        displayName: normalizeText(base.displayName || base.name),
         description: normalizeText(base.description),
         rules: normalizeText(base.rules),
         shortCode,
@@ -118,15 +261,15 @@ function normalizeGroupProfile(group: GroupRecord | null | undefined) {
         tags: normalizeArray(base.tags),
         roles: normalizeGroupRoles(base.roles),
         url: groupUrl
-    };
+    } as GroupProfileRecord;
 }
 
-function responseRows(json: any, key = '') {
+function responseRows(json: unknown, key = ''): unknown[] {
     if (Array.isArray(json)) {
         return json;
     }
 
-    if (key && Array.isArray(json?.[key])) {
+    if (key && isRecord(json) && Array.isArray(json[key])) {
         return json[key];
     }
 
@@ -134,10 +277,10 @@ function responseRows(json: any, key = '') {
 }
 
 async function collectPages(
-    fetchPage,
-    { pageSize = 100, maxPages = Number.POSITIVE_INFINITY } = {}
+    fetchPage: (page: PageRequest) => Promise<unknown[]>,
+    { pageSize = 100, maxPages = Number.POSITIVE_INFINITY }: CollectPagesOptions = {}
 ) {
-    const rows: any[] = [];
+    const rows: unknown[] = [];
 
     for (let page = 0; page < maxPages; page += 1) {
         const nextRows = await fetchPage({
@@ -154,62 +297,8 @@ async function collectPages(
     return rows;
 }
 
-function normalize(group: GroupRecord) {
+function normalize(group: GroupRecord): GroupProfileRecord {
     return normalizeGroupProfile(group);
-}
-
-async function executeGet(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<any>(path, {
-        endpoint,
-        method: 'GET',
-        params,
-        fallbackMessage: 'VRChat group request failed'
-    });
-}
-
-async function executePost(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<any>(path, {
-        endpoint,
-        method: 'POST',
-        body: params,
-        fallbackMessage: 'VRChat group request failed'
-    });
-}
-
-async function executePut(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<any>(path, {
-        endpoint,
-        method: 'PUT',
-        body: params,
-        fallbackMessage: 'VRChat group request failed'
-    });
-}
-
-async function executeDelete(
-    path: string,
-    params: QueryParams = {},
-    { endpoint = '' } = {}
-) {
-    return executeVrchatRequest<any>(path, {
-        endpoint,
-        method: 'DELETE',
-        params,
-        queryParams: params,
-        jsonBody: false,
-        fallbackMessage: 'VRChat group request failed'
-    });
 }
 
 async function getGroupProfile({
@@ -218,7 +307,7 @@ async function getGroupProfile({
     includeRoles = true,
     force = false,
     dialog = false
-}) {
+}: GroupProfileInput): Promise<GroupProfileRecord> {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -247,7 +336,7 @@ async function fetchGroupProfile({
     groupId,
     endpoint = '',
     includeRoles = true
-}) {
+}: GroupProfileInput): Promise<GroupProfileRecord> {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -255,17 +344,21 @@ async function fetchGroupProfile({
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}`,
-        {
-            includeRoles: includeRoles ? 'true' : 'false'
-        },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupGet({
+            groupId: normalizedGroupId,
+            includeRoles: Boolean(includeRoles),
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}`
     );
-    return normalize(response.json);
+    return normalize(isRecord(response.json) ? response.json : {});
 }
 
-async function getUserGroups({ userId, endpoint = '' }) {
+async function getUserGroups({
+    userId,
+    endpoint = ''
+}: Pick<GroupUserInput, 'userId' | 'endpoint'>) {
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedUserId) {
         throw new Error(
@@ -277,18 +370,25 @@ async function getUserGroups({ userId, endpoint = '' }) {
         queryKey: queryKeys.userGroups(normalizedUserId, endpoint),
         policy: entityQueryPolicies.groupCollection,
         queryFn: async () => {
-            const response = await executeGet(
-                `users/${encodeURIComponent(normalizedUserId)}/groups`,
-                {},
-                { endpoint }
+            const response = unwrapVrchatGroupResponse(
+                await tauriClient.app.VrchatGroupUserGroupsGet({
+                    userId: normalizedUserId,
+                    endpoint
+                }),
+                `users/${encodeURIComponent(normalizedUserId)}/groups`
             );
             return Array.isArray(response.json) ? response.json : [];
         }
     });
-    return rows.map((group) => normalize(group));
+    return rows.map((group) => normalize(isRecord(group) ? group : {}));
 }
 
-async function getGroupPosts({ groupId, endpoint = '', n = 100, offset = 0 }) {
+async function getGroupPosts({
+    groupId,
+    endpoint = '',
+    n = 100,
+    offset = 0
+}: GroupPageInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -296,21 +396,29 @@ async function getGroupPosts({ groupId, endpoint = '', n = 100, offset = 0 }) {
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/posts`,
-        { n, offset },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupPostsGet({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/posts`
     );
     return responseRows(response.json, 'posts');
 }
 
-async function getAllGroupPosts({ groupId, endpoint = '' }) {
+async function getAllGroupPosts({ groupId, endpoint = '' }: GroupIdInput) {
     return collectPages(({ n, offset }) =>
         getGroupPosts({ groupId, endpoint, n, offset })
     );
 }
 
-async function createGroupPost({ groupId, params = {}, endpoint = '' }) {
+async function createGroupPost({
+    groupId,
+    params = {},
+    endpoint = ''
+}: Pick<GroupPostInput, 'groupId' | 'params' | 'endpoint'>) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -318,14 +426,22 @@ async function createGroupPost({ groupId, params = {}, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/posts`,
-        params,
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupPostCreate({
+            groupId: normalizedGroupId,
+            params,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/posts`
     );
 }
 
-async function editGroupPost({ groupId, postId, params = {}, endpoint = '' }) {
+async function editGroupPost({
+    groupId,
+    postId,
+    params = {},
+    endpoint = ''
+}: GroupPostInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedPostId = normalizeEntityId(postId);
     if (!normalizedGroupId || !normalizedPostId) {
@@ -334,14 +450,22 @@ async function editGroupPost({ groupId, postId, params = {}, endpoint = '' }) {
         );
     }
 
-    return executePut(
-        `groups/${encodeURIComponent(normalizedGroupId)}/posts/${encodeURIComponent(normalizedPostId)}`,
-        params,
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupPostEdit({
+            groupId: normalizedGroupId,
+            postId: normalizedPostId,
+            params,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/posts/${encodeURIComponent(normalizedPostId)}`
     );
 }
 
-async function deleteGroupPost({ groupId, postId, endpoint = '' }) {
+async function deleteGroupPost({
+    groupId,
+    postId,
+    endpoint = ''
+}: GroupPostInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedPostId = normalizeEntityId(postId);
     if (!normalizedGroupId || !normalizedPostId) {
@@ -350,10 +474,13 @@ async function deleteGroupPost({ groupId, postId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/posts/${encodeURIComponent(normalizedPostId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupPostDelete({
+            groupId: normalizedGroupId,
+            postId: normalizedPostId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/posts/${encodeURIComponent(normalizedPostId)}`
     );
 }
 
@@ -365,7 +492,7 @@ async function getGroupMembers({
     sort = 'joinedAt:desc',
     roleId = '',
     force = false
-}) {
+}: GroupMembersInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -386,10 +513,16 @@ async function getGroupMembers({
         policy: entityQueryPolicies.groupCollection,
         force,
         queryFn: async () => {
-            const response = await executeGet(
-                `groups/${encodeURIComponent(normalizedGroupId)}/members`,
-                params,
-                { endpoint }
+            const response = unwrapVrchatGroupResponse(
+                await tauriClient.app.VrchatGroupMembersGet({
+                    groupId: normalizedGroupId,
+                    n,
+                    offset,
+                    sort,
+                    roleId,
+                    endpoint
+                }),
+                `groups/${encodeURIComponent(normalizedGroupId)}/members`
             );
             return responseRows(response.json, 'members');
         }
@@ -402,7 +535,7 @@ async function getGroupMembersSearch({
     endpoint = '',
     n = 100,
     offset = 0
-}) {
+}: GroupMembersSearchInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedQuery = normalizeText(query);
     if (!normalizedGroupId) {
@@ -411,10 +544,15 @@ async function getGroupMembersSearch({
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/members/search`,
-        { n, offset, query: normalizedQuery },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupMembersSearch({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            query: normalizedQuery,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/members/search`
     );
     return responseRows(response.json, 'results');
 }
@@ -425,7 +563,7 @@ async function getAllGroupMembers({
     sort = 'joinedAt:desc',
     roleId = '',
     force = false
-}) {
+}: Omit<GroupMembersInput, 'n' | 'offset'>) {
     return collectPages(({ n, offset }) =>
         getGroupMembers({ groupId, endpoint, n, offset, sort, roleId, force })
     );
@@ -438,7 +576,7 @@ async function getGroupGallery({
     n = 100,
     offset = 0,
     force = false
-}) {
+}: GroupGalleryInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedGalleryId = normalizeEntityId(galleryId);
     if (!normalizedGroupId || !normalizedGalleryId) {
@@ -460,10 +598,15 @@ async function getGroupGallery({
         policy: entityQueryPolicies.groupCollection,
         force,
         queryFn: async () => {
-            const response = await executeGet(
-                `groups/${encodeURIComponent(normalizedGroupId)}/galleries/${encodeURIComponent(normalizedGalleryId)}`,
-                params,
-                { endpoint }
+            const response = unwrapVrchatGroupResponse(
+                await tauriClient.app.VrchatGroupGalleryGet({
+                    groupId: normalizedGroupId,
+                    galleryId: normalizedGalleryId,
+                    n,
+                    offset,
+                    endpoint
+                }),
+                `groups/${encodeURIComponent(normalizedGroupId)}/galleries/${encodeURIComponent(normalizedGalleryId)}`
             );
             return responseRows(response.json, 'files');
         }
@@ -475,13 +618,13 @@ async function getAllGroupGallery({
     galleryId,
     endpoint = '',
     force = false
-}) {
+}: Omit<GroupGalleryInput, 'n' | 'offset'>) {
     return collectPages(({ n, offset }) =>
         getGroupGallery({ groupId, galleryId, endpoint, n, offset, force })
     );
 }
 
-async function joinGroup({ groupId, endpoint = '' }) {
+async function joinGroup({ groupId, endpoint = '' }: GroupIdInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -489,14 +632,16 @@ async function joinGroup({ groupId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/join`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupJoin({
+            groupId: normalizedGroupId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/join`
     );
 }
 
-async function leaveGroup({ groupId, endpoint = '' }) {
+async function leaveGroup({ groupId, endpoint = '' }: GroupIdInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -504,14 +649,16 @@ async function leaveGroup({ groupId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/leave`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupLeave({
+            groupId: normalizedGroupId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/leave`
     );
 }
 
-async function cancelGroupRequest({ groupId, endpoint = '' }) {
+async function cancelGroupRequest({ groupId, endpoint = '' }: GroupIdInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -519,14 +666,20 @@ async function cancelGroupRequest({ groupId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/requests`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupRequestCancel({
+            groupId: normalizedGroupId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/requests`
     );
 }
 
-async function sendGroupInvite({ groupId, userId, endpoint = '' }) {
+async function sendGroupInvite({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -535,14 +688,21 @@ async function sendGroupInvite({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/invites`,
-        { userId: normalizedUserId },
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupInviteSend({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/invites`
     );
 }
 
-async function kickGroupMember({ groupId, userId, endpoint = '' }) {
+async function kickGroupMember({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -551,14 +711,21 @@ async function kickGroupMember({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupMemberKick({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function banGroupMember({ groupId, userId, endpoint = '' }) {
+async function banGroupMember({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -567,14 +734,21 @@ async function banGroupMember({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/bans`,
-        { userId: normalizedUserId },
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupMemberBan({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/bans`
     );
 }
 
-async function unbanGroupMember({ groupId, userId, endpoint = '' }) {
+async function unbanGroupMember({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -583,14 +757,21 @@ async function unbanGroupMember({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupMemberUnban({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function deleteSentGroupInvite({ groupId, userId, endpoint = '' }) {
+async function deleteSentGroupInvite({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -599,10 +780,13 @@ async function deleteSentGroupInvite({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/invites/${encodeURIComponent(normalizedUserId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupInviteDelete({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/invites/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
@@ -612,27 +796,41 @@ async function respondGroupJoinRequest({
     action,
     block = false,
     endpoint = ''
-}) {
+}: GroupJoinRequestResponseInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
-    if (!normalizedGroupId || !normalizedUserId || !action) {
+    const normalizedAction = normalizeString(action);
+    if (!normalizedGroupId || !normalizedUserId || !normalizedAction) {
         throw new Error(
             'GroupProfileRepository.respondGroupJoinRequest requires group id, user id, and action.'
         );
     }
 
-    return executePut(
-        `groups/${encodeURIComponent(normalizedGroupId)}/requests/${encodeURIComponent(normalizedUserId)}`,
-        { action, ...(block ? { block: true } : {}) },
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupJoinRequestRespond({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            action: normalizedAction,
+            block: Boolean(block),
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/requests/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function deleteBlockedGroupRequest({ groupId, userId, endpoint = '' }) {
+async function deleteBlockedGroupRequest({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     return kickGroupMember({ groupId, userId, endpoint });
 }
 
-async function getGroupInstances({ groupId, userId, endpoint = '' }) {
+async function getGroupInstances({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -641,14 +839,22 @@ async function getGroupInstances({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executeGet(
-        `users/${encodeURIComponent(normalizedUserId)}/instances/groups/${encodeURIComponent(normalizedGroupId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupInstancesGet({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `users/${encodeURIComponent(normalizedUserId)}/instances/groups/${encodeURIComponent(normalizedGroupId)}`
     );
 }
 
-async function getGroupBans({ groupId, endpoint = '', n = 100, offset = 0 }) {
+async function getGroupBans({
+    groupId,
+    endpoint = '',
+    n = 100,
+    offset = 0
+}: GroupPageInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -656,15 +862,19 @@ async function getGroupBans({ groupId, endpoint = '', n = 100, offset = 0 }) {
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/bans`,
-        { n, offset },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupBansGet({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/bans`
     );
     return responseRows(response.json, 'bans');
 }
 
-async function getAllGroupBans({ groupId, endpoint = '' }) {
+async function getAllGroupBans({ groupId, endpoint = '' }: GroupIdInput) {
     return collectPages(({ n, offset }) =>
         getGroupBans({ groupId, endpoint, n, offset })
     );
@@ -675,7 +885,7 @@ async function getGroupInvites({
     endpoint = '',
     n = 100,
     offset = 0
-}) {
+}: GroupPageInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -683,15 +893,19 @@ async function getGroupInvites({
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/invites`,
-        { n, offset },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupInvitesGet({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/invites`
     );
     return responseRows(response.json, 'invites');
 }
 
-async function getAllGroupInvites({ groupId, endpoint = '' }) {
+async function getAllGroupInvites({ groupId, endpoint = '' }: GroupIdInput) {
     return collectPages(({ n, offset }) =>
         getGroupInvites({ groupId, endpoint, n, offset })
     );
@@ -703,7 +917,7 @@ async function getGroupJoinRequests({
     n = 100,
     offset = 0,
     blocked = false
-}) {
+}: GroupJoinRequestInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -711,10 +925,15 @@ async function getGroupJoinRequests({
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/requests`,
-        { n, offset, blocked },
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupJoinRequestsGet({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            blocked: Boolean(blocked),
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/requests`
     );
     return responseRows(response.json, 'requests');
 }
@@ -723,13 +942,13 @@ async function getAllGroupJoinRequests({
     groupId,
     endpoint = '',
     blocked = false
-}) {
+}: Omit<GroupJoinRequestInput, 'n' | 'offset'>) {
     return collectPages(({ n, offset }) =>
         getGroupJoinRequests({ groupId, endpoint, n, offset, blocked })
     );
 }
 
-async function getGroupAuditLogTypes({ groupId, endpoint = '' }) {
+async function getGroupAuditLogTypes({ groupId, endpoint = '' }: GroupIdInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -737,10 +956,12 @@ async function getGroupAuditLogTypes({ groupId, endpoint = '' }) {
         );
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/auditLogTypes`,
-        {},
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupAuditLogTypesGet({
+            groupId: normalizedGroupId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/auditLogTypes`
     );
     return Array.isArray(response.json) ? response.json : [];
 }
@@ -751,7 +972,7 @@ async function getGroupLogs({
     n = 100,
     offset = 0,
     eventTypes = []
-}) {
+}: GroupLogsInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -764,15 +985,27 @@ async function getGroupLogs({
         params.eventTypes = eventTypes.join(',');
     }
 
-    const response = await executeGet(
-        `groups/${encodeURIComponent(normalizedGroupId)}/auditLogs`,
-        params,
-        { endpoint }
+    const response = unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupLogsGet({
+            groupId: normalizedGroupId,
+            n,
+            offset,
+            eventTypes:
+                typeof params.eventTypes === 'string'
+                    ? params.eventTypes
+                    : '',
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/auditLogs`
     );
     return responseRows(response.json, 'results');
 }
 
-async function getAllGroupLogs({ groupId, endpoint = '', eventTypes = [] }) {
+async function getAllGroupLogs({
+    groupId,
+    endpoint = '',
+    eventTypes = []
+}: Omit<GroupLogsInput, 'n' | 'offset'>) {
     return collectPages(({ n, offset }) =>
         getGroupLogs({ groupId, endpoint, n, offset, eventTypes })
     );
@@ -782,7 +1015,7 @@ async function setGroupRepresentation({
     groupId,
     isRepresenting,
     endpoint = ''
-}) {
+}: GroupRepresentationInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -790,10 +1023,13 @@ async function setGroupRepresentation({
         );
     }
 
-    return executePut(
-        `groups/${encodeURIComponent(normalizedGroupId)}/representation`,
-        { isRepresenting: Boolean(isRepresenting) },
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupRepresentationSet({
+            groupId: normalizedGroupId,
+            isRepresenting: Boolean(isRepresenting),
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/representation`
     );
 }
 
@@ -802,7 +1038,7 @@ async function setGroupMemberProps({
     userId,
     params = {},
     endpoint = ''
-}) {
+}: GroupMemberPropsInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -811,14 +1047,18 @@ async function setGroupMemberProps({
         );
     }
 
-    return executePut(
-        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`,
-        params,
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupMemberPropsSet({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            params,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/members/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function blockGroup({ groupId, endpoint = '' }) {
+async function blockGroup({ groupId, endpoint = '' }: GroupIdInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     if (!normalizedGroupId) {
         throw new Error(
@@ -826,14 +1066,20 @@ async function blockGroup({ groupId, endpoint = '' }) {
         );
     }
 
-    return executePost(
-        `groups/${encodeURIComponent(normalizedGroupId)}/block`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupBlock({
+            groupId: normalizedGroupId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/block`
     );
 }
 
-async function unblockGroup({ groupId, userId, endpoint = '' }) {
+async function unblockGroup({
+    groupId,
+    userId,
+    endpoint = ''
+}: GroupUserInput) {
     const normalizedGroupId = normalizeEntityId(groupId);
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedGroupId || !normalizedUserId) {
@@ -842,14 +1088,20 @@ async function unblockGroup({ groupId, userId, endpoint = '' }) {
         );
     }
 
-    return executeDelete(
-        `groups/${encodeURIComponent(normalizedGroupId)}/bans/${encodeURIComponent(normalizedUserId)}`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse(
+        await tauriClient.app.VrchatGroupUnblock({
+            groupId: normalizedGroupId,
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `groups/${encodeURIComponent(normalizedGroupId)}/bans/${encodeURIComponent(normalizedUserId)}`
     );
 }
 
-async function getUsersGroupInstances({ userId, endpoint = '' }) {
+async function getUsersGroupInstances({
+    userId,
+    endpoint = ''
+}: Pick<GroupUserInput, 'userId' | 'endpoint'>) {
     const normalizedUserId = normalizeEntityId(userId);
     if (!normalizedUserId) {
         throw new Error(
@@ -857,19 +1109,21 @@ async function getUsersGroupInstances({ userId, endpoint = '' }) {
         );
     }
 
-    return executeGet(
-        `users/${encodeURIComponent(normalizedUserId)}/instances/groups`,
-        {},
-        { endpoint }
+    return unwrapVrchatGroupResponse<{
+        instances?: unknown[];
+        fetchedAt?: unknown;
+        [key: string]: unknown;
+    }>(
+        await tauriClient.app.VrchatGroupUserInstancesGet({
+            userId: normalizedUserId,
+            endpoint
+        }),
+        `users/${encodeURIComponent(normalizedUserId)}/instances/groups`
     );
 }
 
 const groupProfileRepository = Object.freeze({
     normalize,
-    executeGet,
-    executePost,
-    executePut,
-    executeDelete,
     fetchGroupProfile,
     getGroupProfile,
     getUserGroups,
@@ -912,10 +1166,6 @@ const groupProfileRepository = Object.freeze({
 
 export {
     normalize,
-    executeGet,
-    executePost,
-    executePut,
-    executeDelete,
     getGroupProfile,
     getUserGroups,
     getGroupPosts,

@@ -1,9 +1,9 @@
-import { publishPreferenceChanged } from '@/lib/preferenceEvents.js';
+import { publishPreferenceChanged } from '@/shared/events/preferenceEvents';
 
-import avatarProfileRepository from './avatarProfileRepository.js';
-import { safeJsonParse } from './baseRepository.js';
-import configRepository from './configRepository.js';
-import webRepository from './webRepository.js';
+import avatarProfileRepository from './avatarProfileRepository';
+import { safeJsonParse } from './baseRepository';
+import configRepository from './configRepository';
+import externalApiRepository from './externalApiRepository';
 
 type ProviderConfig = {
     enabled: boolean;
@@ -105,7 +105,7 @@ function publishAvatarSearchProviderConfig(config: ProviderConfig): void {
 
 function normalizeAvatarProviderItem(
     avatar: ProviderItem
-): Record<string, any> {
+): Record<string, unknown> {
     const normalized = avatarProfileRepository.normalize({
         ...avatar,
         id: pick(avatar, 'id', 'Id', '_id', 'avatarId', 'AvatarId'),
@@ -220,7 +220,7 @@ async function saveConfig({
             : configRepository.remove('VRCX_avatarRemoteDatabaseProvider')
     ]);
 
-    const savedConfig = {
+    const savedConfig: ProviderConfig = {
         enabled: Boolean(enabled) && normalizedProviderList.length > 0,
         providerList: normalizedProviderList,
         selectedProvider: resolvedSelectedProvider
@@ -273,13 +273,9 @@ async function search({ provider, query }: SearchInput) {
         getVrcxId()
     ]);
 
-    const response = await webRepository.execute({
+    const response = await externalApiRepository.searchAvatarProvider({
         url,
-        method: 'GET',
-        headers: {
-            Referer: 'https://vrcx.app',
-            'VRCX-ID': vrcxId
-        }
+        vrcxId
     });
     const json = parseResponse(response.data);
 
