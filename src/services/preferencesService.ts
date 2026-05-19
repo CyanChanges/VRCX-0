@@ -173,6 +173,7 @@ export async function loadPreferenceSnapshot() {
         logResourceLoad,
         autoLoginDelayEnabled,
         autoLoginDelaySeconds,
+        backgroundModeEnabled,
         isStartAtWindowsStartup,
         isStartAsMinimizedState,
         isCloseToTray,
@@ -252,6 +253,7 @@ export async function loadPreferenceSnapshot() {
         configRepository.getBool('logResourceLoad', false),
         configRepository.getBool('autoLoginDelayEnabled', false),
         configRepository.getInt('autoLoginDelaySeconds', 0),
+        configRepository.getBool('backgroundModeEnabled', false),
         configRepository.getBool('StartAtWindowsStartup', false),
         storageRepository.getString('VRCX_StartAsMinimizedState', 'false'),
         storageRepository.getString('VRCX_CloseToTray', 'false'),
@@ -397,6 +399,7 @@ export async function loadPreferenceSnapshot() {
         autoLoginDelaySeconds: Number.isFinite(autoLoginDelaySeconds)
             ? autoLoginDelaySeconds
             : 0,
+        backgroundModeEnabled: Boolean(backgroundModeEnabled),
         isStartAtWindowsStartup: Boolean(isStartAtWindowsStartup),
         isStartAsMinimizedState: isStartAsMinimizedState === 'true',
         isCloseToTray: isCloseToTray === 'true',

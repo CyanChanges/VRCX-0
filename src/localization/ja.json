@@ -1602,6 +1602,8 @@
                     "startup_system_description": "--autostart 付きで VRCX-0 を起動するデスクトップ自動起動エントリを作成します。",
                     "minimized": "タスクバーに最小化した状態で起動",
                     "tray": "タスクトレイに格納した状態で起動",
+                    "background_mode": "トレイ格納時にバックグラウンドモードを開始",
+                    "background_mode_description": "VRCX-0 をタスクトレイに閉じるとき、バックエンドのログ記録を開始してメイン WebView を削除します。",
                     "disable_vr_overlay_gpu_acceleration": "VRオーバーレイのGPUアクセラレーション無効化",
                     "proxy": "プロキシ設定",
                     "proxy_description": "VRCX-0 で使用するプロキシサーバーを設定します。変更したプロキシを適用するには再起動が必要です。",
@@ -5132,7 +5134,9 @@
         "instance_queue_waiting": "待機中",
         "instance_queue_position": "#{position}",
         "instance_queue_position_label": "キュー位置",
-        "instance_queue_ready_to_join": "{location} に参加できるようになりました"
+        "instance_queue_ready_to_join": "{location} に参加できるようになりました",
+        "start_background_mode": "バックグラウンドモードを開始",
+        "start_background_mode_tooltip": "バックグラウンドのログ記録を開始してメイン WebView を閉じます"
     },
     "component": {
         "favorite_action_menu": {
@@ -5213,7 +5217,8 @@
                 "failed_to_save_status_bar_clocks": "ステータスバーの時計を保存できませんでした",
                 "failed_to_open_vrchat_status": "VRChat ステータスを開けませんでした",
                 "failed_to_open_media_link": "メディアリンクを開けませんでした",
-                "failed_to_update_proxy_settings": "プロキシ設定の更新に失敗しました"
+                "failed_to_update_proxy_settings": "プロキシ設定の更新に失敗しました",
+                "failed_to_start_background_mode": "バックグラウンドモードの開始に失敗しました"
             },
             "modal": {
                 "proxy_settings": "プロキシ設定",

@@ -20,11 +20,13 @@ export function SettingsSystemTab({
     isCloseToTray,
     autoLoginDelayEnabled,
     autoLoginDelaySeconds,
+    backgroundModeEnabled,
     onStartAtWindowsStartupChange,
     onStartAsMinimizedChange,
     onCloseToTrayChange,
     onAutoLoginDelayEnabledChange,
     onPromptAutoLoginDelaySeconds,
+    onBackgroundModeEnabledChange,
     onProxySettings
 }: any) {
     const { t } = useTranslation();
@@ -111,6 +113,27 @@ export function SettingsSystemTab({
                             </div>
                         </Field>
                     ) : null}
+                    <Field
+                        label={t(
+                            'view.settings.general.application.background_mode',
+                            {
+                                defaultValue:
+                                    'Start Background Mode When Minimized to Tray'
+                            }
+                        )}
+                        description={t(
+                            'view.settings.general.application.background_mode_description',
+                            {
+                                defaultValue:
+                                    'When closing VRCX-0 to the system tray, start backend logging and remove the main WebView.'
+                            }
+                        )}
+                    >
+                        <Switch
+                            checked={backgroundModeEnabled}
+                            onCheckedChange={onBackgroundModeEnabledChange}
+                        />
+                    </Field>
                     <Field label={t('view.settings.general.application.proxy')}>
                         <Button
                             type="button"

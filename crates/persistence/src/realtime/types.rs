@@ -65,6 +65,23 @@ impl RealtimePersistenceBatch {
     }
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct RealtimeWriteCounts {
+    pub affected_count: u64,
+    pub game_log_affected_count: u64,
+}
+
+impl RealtimeWriteCounts {
+    pub fn add_realtime_rows(&mut self, count: u64) {
+        self.affected_count = self.affected_count.saturating_add(count);
+    }
+
+    pub fn add_game_log_rows(&mut self, count: u64) {
+        self.affected_count = self.affected_count.saturating_add(count);
+        self.game_log_affected_count = self.game_log_affected_count.saturating_add(count);
+    }
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationExpiration {

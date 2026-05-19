@@ -1,0 +1,292 @@
+use std::process::ExitCode;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
+};
+use std::time::Duration;
+
+use serde_json::Value;
+use tokio::sync::mpsc;
+use vrcx_0_application::{
+    BackendRuntimeMode, RuntimeEventSink, RuntimeTask, RuntimeTaskExecutor, RuntimeTaskHandle,
+};
+use vrcx_0_runtime_host::{RuntimeHostOptions, RuntimeHostState};
+
+#[tokio::main]
+async fn main() -> ExitCode {
+    init_tls_crypto_provider();
+    init_tracing();
+
+    let state = match RuntimeHostState::new(RuntimeHostOptions {
+        realtime_origin: "http://localhost:9000".into(),
+        launched_from_autostart: false,
+    }) {
+        Ok(state) => state,
+        Err(error) => {
+            eprintln!("headless startup failed: {error}");
+            return ExitCode::from(1);
+        }
+    };
+
+    let (fatal_tx, mut fatal_rx) = mpsc::unbounded_channel();
+    let console_sink = ConsoleRuntimeEventSink::new(fatal_tx);
+    state.set_event_sink(console_sink.clone());
+    state
+        .runtime_context
+        .tasks
+        .set_executor(TokioRuntimeTaskExecutor);
+
+    match state
+        .start_backend_runtime(BackendRuntimeMode::Headless)
+        .await
+    {
+        Ok(_) => {}
+        Err(error) => {
+            eprintln!("headless login failed: {error}");
+            return ExitCode::from(1);
+        }
+    }
+
+    println!("headless runtime is running. Press Ctrl+C to stop.");
+    tokio::select! {
+        signal = tokio::signal::ctrl_c() => {
+            if let Err(error) = signal {
+                eprintln!("failed to wait for Ctrl+C: {error}");
+                console_sink.begin_shutdown();
+                state.stop_backend_runtime("signal-error");
+                state.runtime_context.tasks.stop_all();
+                return ExitCode::from(1);
+            }
+            console_sink.begin_shutdown();
+            state.stop_backend_runtime("ctrl-c");
+            state.runtime_context.tasks.stop_all();
+            ExitCode::SUCCESS
+        }
+        fatal = fatal_rx.recv() => {
+            let reason = fatal.unwrap_or_else(|| "fatal runtime error".into());
+            eprintln!("headless runtime fatal error: {reason}");
+            console_sink.begin_shutdown();
+            state.stop_backend_runtime("fatal-error");
+            state.runtime_context.tasks.stop_all();
+            ExitCode::from(1)
+        }
+    }
+}
+
+fn init_tls_crypto_provider() {
+    let _ = rustls::crypto::aws_lc_rs::default_provider().install_default();
+}
+
+fn init_tracing() {
+    let filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| "vrcx_0=info".into());
+    tracing_subscriber::fmt()
+        .with_env_filter(filter)
+        .with_target(false)
+        .init();
+}
+
+#[derive(Clone)]
+struct ConsoleRuntimeEventSink {
+    fatal_tx: mpsc::UnboundedSender<String>,
+    shutdown_started: Arc<AtomicBool>,
+    output_lock: Arc<Mutex<()>>,
+}
+
+impl ConsoleRuntimeEventSink {
+    fn new(fatal_tx: mpsc::UnboundedSender<String>) -> Self {
+        Self {
+            fatal_tx,
+            shutdown_started: Arc::new(AtomicBool::new(false)),
+            output_lock: Arc::new(Mutex::new(())),
+        }
+    }
+
+    fn begin_shutdown(&self) {
+        self.shutdown_started.store(true, Ordering::Release);
+        let _guard = self
+            .output_lock
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+    }
+}
+
+impl RuntimeEventSink for ConsoleRuntimeEventSink {
+    fn emit(&self, event: &str, payload: Value) {
+        let allow_during_shutdown = is_runtime_stopped_event(event, &payload);
+        let _guard = self
+            .output_lock
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
+        if self.shutdown_started.load(Ordering::Acquire) && !allow_during_shutdown {
+            return;
+        }
+
+        if event == "realtimeWsStatus" {
+            let status = string_field(&payload, "status");
+            let reason = string_field(&payload, "reason");
+            if reason.is_empty() {
+                self.print_line(false, format!("ws status: {status}"));
+            } else {
+                self.print_line(false, format!("ws status: {status} ({reason})"));
+            }
+            if status == "authFailure" {
+                let detail = if reason.is_empty() {
+                    "websocket auth failure".into()
+                } else {
+                    reason
+                };
+                let _ = self.fatal_tx.send(detail);
+            }
+            return;
+        }
+
+        if event != "backendRuntimeTelemetry" {
+            return;
+        }
+
+        let kind = string_field(&payload, "kind");
+        let detail = string_field(&payload, "detail");
+        let snapshot = payload.get("snapshot").unwrap_or(&Value::Null);
+        match kind.as_str() {
+            "authSuccess" => {
+                let name = string_field(snapshot, "authDisplayName");
+                let user_id = string_field(snapshot, "authUserId");
+                self.print_line(
+                    false,
+                    format!(
+                        "login success: {} ({})",
+                        empty_fallback(&name, "unknown user"),
+                        empty_fallback(&user_id, "unknown id")
+                    ),
+                );
+            }
+            "wsStatus" => {}
+            "wsMessage" => {
+                let total = snapshot
+                    .get("wsMessageCounts")
+                    .and_then(|counts| counts.get(&detail))
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                self.print_line(false, format!("ws message: type={detail}, count={total}"));
+            }
+            "wsPersisted" => {
+                let total = snapshot
+                    .get("wsPersistedCount")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                self.print_line(
+                    false,
+                    format!("ws persisted to db: count={detail}, total={total}"),
+                );
+            }
+            "processStatus" => match detail.as_str() {
+                "vrchatRunning" => self.print_line(false, "vrchat started"),
+                "vrchatStopped" => self.print_line(false, "vrchat stopped"),
+                _ => self.print_line(false, format!("vrchat process status: {detail}")),
+            },
+            "gameLogPersisted" => {
+                let total = snapshot
+                    .get("gameLogPersistedCount")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0);
+                self.print_line(
+                    false,
+                    format!("gamelog persisted to db: count={detail}, total={total}"),
+                );
+            }
+            "gameLogWatcher" => self.print_line(false, format!("gamelog watcher: {detail}")),
+            "runtimeStopped" => self.print_line(
+                allow_during_shutdown,
+                format!("headless runtime exited: {detail}"),
+            ),
+            _ => {}
+        }
+    }
+}
+
+impl ConsoleRuntimeEventSink {
+    fn print_line(&self, allow_during_shutdown: bool, line: impl AsRef<str>) {
+        if self.shutdown_started.load(Ordering::Acquire) && !allow_during_shutdown {
+            return;
+        }
+        println!("{}", line.as_ref());
+    }
+}
+
+#[derive(Clone)]
+struct TokioRuntimeTaskExecutor;
+
+struct TokioRuntimeTaskHandle(tokio::task::JoinHandle<()>);
+
+impl RuntimeTaskExecutor for TokioRuntimeTaskExecutor {
+    fn spawn(&self, task: RuntimeTask) -> Box<dyn RuntimeTaskHandle> {
+        Box::new(TokioRuntimeTaskHandle(tokio::spawn(task)))
+    }
+}
+
+impl RuntimeTaskHandle for TokioRuntimeTaskHandle {
+    fn abort(&self) {
+        self.0.abort();
+    }
+
+    fn is_finished(&self) -> bool {
+        self.0.is_finished()
+    }
+
+    fn join_or_abort(&mut self, timeout: Duration) {
+        if self.is_finished() {
+            let _ = block_on_runtime_task(&mut self.0);
+            return;
+        }
+
+        let Some(joined) =
+            block_on_runtime_task(async { tokio::time::timeout(timeout, &mut self.0).await })
+        else {
+            self.0.abort();
+            return;
+        };
+        if joined.is_ok() {
+            return;
+        }
+
+        self.0.abort();
+        let _ = block_on_runtime_task(async {
+            tokio::time::timeout(Duration::from_millis(50), &mut self.0).await
+        });
+    }
+}
+
+fn block_on_runtime_task<F>(future: F) -> Option<F::Output>
+where
+    F: std::future::Future,
+{
+    match tokio::runtime::Handle::try_current() {
+        Ok(handle) if handle.runtime_flavor() == tokio::runtime::RuntimeFlavor::MultiThread => {
+            Some(tokio::task::block_in_place(|| handle.block_on(future)))
+        }
+        Ok(_) => None,
+        Err(_) => None,
+    }
+}
+
+fn string_field(value: &Value, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string()
+}
+
+fn empty_fallback<'a>(value: &'a str, fallback: &'a str) -> &'a str {
+    if value.trim().is_empty() {
+        fallback
+    } else {
+        value
+    }
+}
+
+fn is_runtime_stopped_event(event: &str, payload: &Value) -> bool {
+    event == "backendRuntimeTelemetry" && string_field(payload, "kind") == "runtimeStopped"
+}

@@ -1,7 +1,7 @@
 use crate::adapters::ipc::{IpcEventDisposition, IpcEventSink};
 use crate::error::AppError;
 
-use super::service::GameClientHostRuntime;
+use super::GameClientHostRuntime;
 
 impl IpcEventSink for GameClientHostRuntime {
     fn on_ipc_event(&self, packet: &str) -> Result<IpcEventDisposition, AppError> {
@@ -20,7 +20,6 @@ mod tests {
     use std::path::PathBuf;
     use std::sync::Arc;
 
-    use crate::adapters::application::context::RuntimeHostContext;
     use crate::adapters::application::game_client::GameClientHostRuntime;
     use crate::adapters::ipc::{IpcEventDisposition, IpcEventSink};
     use crate::adapters::log_watcher::LogWatcher;
@@ -34,6 +33,7 @@ mod tests {
     };
     use vrcx_0_persistence::storage::StorageService;
     use vrcx_0_persistence::DatabaseService;
+    use vrcx_0_runtime_host::RuntimeHostContext;
 
     struct TestDir {
         path: PathBuf,

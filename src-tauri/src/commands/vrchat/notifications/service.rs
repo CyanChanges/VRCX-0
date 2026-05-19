@@ -17,8 +17,7 @@ use vrcx_0_application::vrchat_api::{VrchatApiRequest, VrchatApiResponse};
 use super::types::{
     VrchatBoopInput, VrchatInviteResponseInput, VrchatInviteResponsePhotoInput,
     VrchatNotificationHideInput, VrchatNotificationIdInput, VrchatNotificationMarkSeenInput,
-    VrchatNotificationPhotoSendInput, VrchatNotificationRespondInput,
-    VrchatNotificationSendInput,
+    VrchatNotificationPhotoSendInput, VrchatNotificationRespondInput, VrchatNotificationSendInput,
 };
 
 fn response_has_error(response: &VrchatApiResponse) -> bool {

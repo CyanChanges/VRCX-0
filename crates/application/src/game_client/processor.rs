@@ -168,7 +168,7 @@ impl GameClientProcessor {
         }
 
         let created_at = now_iso();
-        write_batch(
+        let affected_count = write_batch(
             &self.deps.db,
             &GameLogWriteBatch {
                 events: vec![GameLogEventEntry {
@@ -178,6 +178,7 @@ impl GameClientProcessor {
                 ..Default::default()
             },
         )?;
+        self.deps.event_bus.emit_game_log_persisted(affected_count);
         self.deps.event_bus.emit_runtime_game_log_event(vec![
             "runtime-ipc".into(),
             created_at,
@@ -204,7 +205,7 @@ impl GameClientProcessor {
     ) -> Result<()> {
         let created_at = now_iso();
         let location = self.current_location();
-        write_batch(
+        let affected_count = write_batch(
             &self.deps.db,
             &GameLogWriteBatch {
                 externals: vec![GameLogExternalEntry {
@@ -217,6 +218,7 @@ impl GameClientProcessor {
                 ..Default::default()
             },
         )?;
+        self.deps.event_bus.emit_game_log_persisted(affected_count);
         self.deps.event_bus.emit_runtime_game_log_event(vec![
             "runtime-ipc".into(),
             created_at,
@@ -394,7 +396,7 @@ impl GameClientProcessor {
 
     fn persist_crash_relaunch_event(&self) -> Result<()> {
         let created_at = now_iso();
-        write_batch(
+        let affected_count = write_batch(
             &self.deps.db,
             &GameLogWriteBatch {
                 events: vec![GameLogEventEntry {
@@ -404,6 +406,7 @@ impl GameClientProcessor {
                 ..Default::default()
             },
         )?;
+        self.deps.event_bus.emit_game_log_persisted(affected_count);
         self.deps.event_bus.emit_runtime_game_log_event(vec![
             "runtime-game-client".into(),
             created_at,

@@ -31,9 +31,9 @@ pub fn write_realtime_batch(
     db: &DatabaseService,
     owner_user_id: &str,
     batch: &RealtimePersistenceBatch,
-) -> Result<(), Error> {
+) -> Result<RealtimeWriteCounts, Error> {
     if batch.is_empty() {
-        return Ok(());
+        return Ok(RealtimeWriteCounts::default());
     }
 
     let owner_user_id = normalize_user_id(owner_user_id);
@@ -48,40 +48,41 @@ pub fn write_realtime_batch(
         ensure_game_log_tables(db)?;
     }
     db.write_transaction(|tx| {
+        let mut counts = RealtimeWriteCounts::default();
         for entry in &batch.friend_log_upserts {
-            upsert_friend_log_current(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(upsert_friend_log_current(tx, &user_prefix, entry)?);
         }
         for entry in &batch.friend_log_deletes {
-            delete_friend_log_current(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(delete_friend_log_current(tx, &user_prefix, entry)?);
         }
         for entry in &batch.feed_entries {
-            insert_feed_entry(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(insert_feed_entry(tx, &user_prefix, entry)?);
         }
         for entry in &batch.notification_v1_upserts {
-            upsert_notification_v1(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(upsert_notification_v1(tx, &user_prefix, entry)?);
         }
         for entry in &batch.notification_v2_upserts {
-            upsert_notification_v2(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(upsert_notification_v2(tx, &user_prefix, entry)?);
         }
         for entry in &batch.notification_v2_updates {
-            update_notification_v2(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(update_notification_v2(tx, &user_prefix, entry)?);
         }
         for entry in &batch.notification_expirations {
-            expire_notification(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(expire_notification(tx, &user_prefix, entry)?);
         }
         for id in &batch.notification_seen {
-            mark_notification_seen(tx, &user_prefix, id)?;
+            counts.add_realtime_rows(mark_notification_seen(tx, &user_prefix, id)?);
         }
         for entry in &batch.avatar_history_upserts {
-            upsert_avatar_history(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(upsert_avatar_history(tx, &user_prefix, entry)?);
         }
         for entry in &batch.avatar_time_spent_upserts {
-            upsert_avatar_time_spent(tx, &user_prefix, entry)?;
+            counts.add_realtime_rows(upsert_avatar_time_spent(tx, &user_prefix, entry)?);
         }
         for entry in &batch.game_log_locations {
-            insert_game_log_location_if_changed(tx, entry)?;
+            counts.add_game_log_rows(insert_game_log_location_if_changed(tx, entry)?);
         }
-        Ok(())
+        Ok(counts)
     })
 }
 
@@ -89,10 +90,10 @@ fn upsert_friend_log_current(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &FriendLogUpsert,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let target_user_id = normalize_user_id(&entry.target_user_id);
     if target_user_id.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let existing_rows = tx.execute(
         &format!(
@@ -123,8 +124,9 @@ fn upsert_friend_log_current(
             .set("friend_number", friend_number)
             .build(),
     )?;
+    let mut affected = affected_count(insert_count);
     if insert_count <= 0 {
-        tx.execute_non_query(
+        affected = affected.saturating_add(affected_count(tx.execute_non_query(
             &format!(
                 "UPDATE {user_prefix}_friend_log_current SET display_name = @display_name, trust_level = @trust_level, friend_number = CASE WHEN @friend_number > 0 THEN @friend_number ELSE friend_number END WHERE user_id = @user_id"
             ),
@@ -134,9 +136,9 @@ fn upsert_friend_log_current(
                 .set("trust_level", trust_level)
                 .set("friend_number", friend_number)
                 .build(),
-        )?;
+        )?));
         if entry.force_history {
-            add_friend_log_history(
+            affected = affected.saturating_add(add_friend_log_history(
                 tx,
                 user_prefix,
                 &FriendLogHistoryEntry {
@@ -149,10 +151,10 @@ fn upsert_friend_log_current(
                     previous_trust_level: "",
                     friend_number,
                 },
-            )?;
+            )?);
         }
     } else {
-        add_friend_log_history(
+        affected = affected.saturating_add(add_friend_log_history(
             tx,
             user_prefix,
             &FriendLogHistoryEntry {
@@ -165,19 +167,19 @@ fn upsert_friend_log_current(
                 previous_trust_level: "",
                 friend_number,
             },
-        )?;
+        )?);
     }
-    Ok(())
+    Ok(affected)
 }
 
 fn delete_friend_log_current(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &FriendLogDelete,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let target_user_id = normalize_user_id(&entry.target_user_id);
     if target_user_id.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let existing_rows = tx.execute(
         &format!(
@@ -189,14 +191,15 @@ fn delete_friend_log_current(
         .first()
         .map(|row| existing_friend_log_row(row))
     else {
-        return Ok(());
+        return Ok(0);
     };
     let deleted = tx.execute_non_query(
         &format!("DELETE FROM {user_prefix}_friend_log_current WHERE user_id = @user_id"),
         &ParamsBuilder::new().set("user_id", target_user_id).build(),
     )?;
+    let mut affected = affected_count(deleted);
     if deleted > 0 {
-        add_friend_log_history(
+        affected = affected.saturating_add(add_friend_log_history(
             tx,
             user_prefix,
             &FriendLogHistoryEntry {
@@ -209,16 +212,16 @@ fn delete_friend_log_current(
                 previous_trust_level: "",
                 friend_number: existing.friend_number,
             },
-        )?;
+        )?);
     }
-    Ok(())
+    Ok(affected)
 }
 
 fn add_friend_log_history(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &FriendLogHistoryEntry<'_>,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     tx.execute_non_query(
         &format!(
             "INSERT INTO {user_prefix}_friend_log_history (created_at, type, user_id, display_name, previous_display_name, trust_level, previous_trust_level, friend_number) VALUES (@created_at, @type, @user_id, @display_name, @previous_display_name, @trust_level, @previous_trust_level, @friend_number)"
@@ -233,17 +236,17 @@ fn add_friend_log_history(
             .set("previous_trust_level", entry.previous_trust_level)
             .set("friend_number", entry.friend_number)
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn insert_feed_entry(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &Value,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let entry_type = entry_string(entry, "type");
-    match entry_type.as_str() {
+    let affected = match entry_type.as_str() {
         "GPS" => tx.execute_non_query(
             &format!("INSERT OR IGNORE INTO {user_prefix}_feed_gps (created_at, user_id, display_name, location, world_name, previous_location, time, group_name) VALUES (@created_at, @user_id, @display_name, @location, @world_name, @previous_location, @time, @group_name)"),
             &ParamsBuilder::new()
@@ -312,14 +315,14 @@ fn insert_feed_entry(
             )));
         }
     };
-    Ok(())
+    Ok(affected_count(affected))
 }
 
 fn upsert_notification_v1(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     notification: &Value,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let id = entry_string(notification, "id");
     let created_at_snake = entry_string(notification, "created_at");
     let created_at_camel = entry_string(notification, "createdAt");
@@ -364,15 +367,15 @@ fn upsert_notification_v1(
                 },
             )
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn upsert_notification_v2(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     notification: &Value,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let id = entry_string(notification, "id");
     let created_at = entry_string(notification, "createdAt");
     let notification_type = entry_string(notification, "type");
@@ -401,44 +404,44 @@ fn upsert_notification_v2(
             .set("responses", json_string(notification.get("responses"), "[]"))
             .set("details", json_string(notification.get("details"), "{}"))
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn expire_notification(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &NotificationExpiration,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let id = normalize_user_id(&entry.id);
     if id.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
-    tx.execute_non_query(
+    let mut affected = affected_count(tx.execute_non_query(
         &format!("UPDATE {user_prefix}_notifications_v2 SET expires_at = @expires_at, seen = 1 WHERE id = @id"),
         &ParamsBuilder::new()
             .set("id", id.clone())
             .set("expires_at", entry.expired_at.clone())
             .build(),
-    )?;
-    tx.execute_non_query(
+    )?);
+    affected = affected.saturating_add(affected_count(tx.execute_non_query(
         &format!("UPDATE {user_prefix}_notifications SET expired = 1 WHERE id = @id"),
         &ParamsBuilder::new().set("id", id).build(),
-    )?;
-    Ok(())
+    )?));
+    Ok(affected)
 }
 
 fn update_notification_v2(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &NotificationV2Update,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let id = normalize_user_id(&entry.id);
     let Some(updates) = entry.updates.as_object() else {
-        return Ok(());
+        return Ok(0);
     };
     if id.is_empty() || updates.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
 
     let mut assignments = Vec::new();
@@ -477,7 +480,7 @@ fn update_notification_v2(
     }
 
     if assignments.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let updated = tx.execute_non_query(
         &format!(
@@ -495,35 +498,35 @@ fn update_notification_v2(
         notification
             .entry("created_at")
             .or_insert_with(|| Value::String(entry.received_at.clone()));
-        upsert_notification_v2(tx, user_prefix, &Value::Object(notification))?;
+        return upsert_notification_v2(tx, user_prefix, &Value::Object(notification));
     }
-    Ok(())
+    Ok(affected_count(updated))
 }
 
 fn mark_notification_seen(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     id: &str,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let id = normalize_user_id(id);
     if id.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     tx.execute_non_query(
         &format!("UPDATE {user_prefix}_notifications_v2 SET seen = 1 WHERE id = @id"),
         &ParamsBuilder::new().set("id", id).build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn upsert_avatar_history(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &AvatarHistoryUpsert,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let avatar_id = normalize_user_id(&entry.avatar_id);
     if avatar_id.is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     tx.execute_non_query(
         &format!(
@@ -535,18 +538,18 @@ fn upsert_avatar_history(
             .set("avatar_id", avatar_id)
             .set("created_at", entry.created_at.clone())
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn upsert_avatar_time_spent(
     tx: &mut DatabaseWriteTransaction<'_>,
     user_prefix: &str,
     entry: &AvatarTimeSpentUpsert,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let avatar_id = normalize_user_id(&entry.avatar_id);
     if avatar_id.is_empty() || entry.time_spent <= 0 {
-        return Ok(());
+        return Ok(0);
     }
     tx.execute_non_query(
         &format!(
@@ -559,16 +562,16 @@ fn upsert_avatar_time_spent(
             .set("created_at", entry.created_at.clone())
             .set("time_spent", entry.time_spent)
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
 }
 
 fn insert_game_log_location_if_changed(
     tx: &mut DatabaseWriteTransaction<'_>,
     entry: &GameLogLocationEntry,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     if entry.location.trim().is_empty() {
-        return Ok(());
+        return Ok(0);
     }
     let rows = tx.execute(
         "SELECT location FROM gamelog_location ORDER BY created_at DESC, id DESC LIMIT 1",
@@ -580,7 +583,7 @@ fn insert_game_log_location_if_changed(
         .and_then(Value::as_str)
         .unwrap_or("");
     if latest == entry.location {
-        return Ok(());
+        return Ok(0);
     }
     tx.execute_non_query(
         "INSERT OR IGNORE INTO gamelog_location (created_at, location, world_id, world_name, time, group_name) VALUES (@created_at, @location, @world_id, @world_name, @time, @group_name)",
@@ -592,8 +595,12 @@ fn insert_game_log_location_if_changed(
             .set("time", entry.time)
             .set("group_name", entry.group_name.clone())
             .build(),
-    )?;
-    Ok(())
+    )
+    .map(affected_count)
+}
+
+fn affected_count(count: i64) -> u64 {
+    count.max(0) as u64
 }
 
 fn next_friend_number(
@@ -698,6 +705,7 @@ mod tests {
 
     use crate::common::ParamsBuilder;
     use crate::database::DatabaseService;
+    use crate::game_log::GameLogLocationEntry;
 
     use super::{
         normalize_user_table_prefix, write_realtime_batch, FriendLogUpsert,
@@ -740,7 +748,7 @@ mod tests {
     fn writes_friend_log_and_feed_rows() -> Result<(), crate::Error> {
         let dir = TestDir::new("realtime-persistence");
         let db = DatabaseService::new(&dir.path.join("VRCX-0.sqlite3"))?;
-        write_realtime_batch(
+        let counts = write_realtime_batch(
             &db,
             "usr_self",
             &RealtimePersistenceBatch {
@@ -765,6 +773,8 @@ mod tests {
                 ..RealtimePersistenceBatch::default()
             },
         )?;
+        assert_eq!(counts.affected_count, 3);
+        assert_eq!(counts.game_log_affected_count, 0);
 
         let current = db.execute(
             "SELECT user_id, display_name, trust_level, friend_number FROM usrself_friend_log_current WHERE user_id = @user_id",
@@ -778,6 +788,24 @@ mod tests {
         )?;
         assert_eq!(feed[0][1], json!("Online"));
         assert_eq!(feed[0][2], json!("wrld_1:123"));
+
+        let location_counts = write_realtime_batch(
+            &db,
+            "usr_self",
+            &RealtimePersistenceBatch {
+                game_log_locations: vec![GameLogLocationEntry {
+                    created_at: "2026-05-15T00:00:05Z".into(),
+                    location: "wrld_1:123".into(),
+                    world_id: "wrld_1".into(),
+                    world_name: "World".into(),
+                    time: 0,
+                    group_name: "".into(),
+                }],
+                ..RealtimePersistenceBatch::default()
+            },
+        )?;
+        assert_eq!(location_counts.affected_count, 1);
+        assert_eq!(location_counts.game_log_affected_count, 1);
         Ok(())
     }
 

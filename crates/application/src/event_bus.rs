@@ -101,6 +101,20 @@ impl RuntimeEventBus {
         );
     }
 
+    pub fn emit_game_log_persisted(&self, count: u64) {
+        self.emit_backend_runtime_telemetry(serde_json::json!({
+            "kind": "gameLogPersisted",
+            "count": count,
+        }));
+    }
+
+    pub fn emit_ws_persisted(&self, count: u64) {
+        self.emit_backend_runtime_telemetry(serde_json::json!({
+            "kind": "wsPersisted",
+            "count": count,
+        }));
+    }
+
     pub fn emit_game_log_projection(&self, projection: GameLogProjection) {
         self.emit("gameLogProjection", projection);
     }
@@ -143,6 +157,10 @@ impl RuntimeEventBus {
 
     pub fn emit_realtime_ws_status(&self, payload: RealtimeWsStatusPayload) {
         self.emit("realtimeWsStatus", payload);
+    }
+
+    pub fn emit_backend_runtime_telemetry(&self, payload: Value) {
+        self.emit("backendRuntimeTelemetry", payload);
     }
 
     pub fn emit_realtime_friend_projection(&self, payload: FriendProjection) {

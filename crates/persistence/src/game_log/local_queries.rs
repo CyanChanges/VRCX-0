@@ -194,10 +194,9 @@ pub fn game_log_entries_add(
     db: &DatabaseService,
     kind: String,
     entries: Vec<Value>,
-) -> Result<(), Error> {
+) -> Result<u64, Error> {
     let batch = game_log_batch_for_kind(&kind, entries)?;
-    write_game_log_batch(db, &batch)?;
-    Ok(())
+    write_game_log_batch(db, &batch)
 }
 
 pub fn game_log_instance_delete_by_location(

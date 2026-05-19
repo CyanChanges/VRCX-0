@@ -21,6 +21,7 @@ import { handleBrowserFocus } from './vrcStatusService';
 
 type RuntimeEventName =
     | 'addGameLogEvent'
+    | 'backendRuntimeTelemetry'
     | 'gameLogProjection'
     | 'gameLogPersistenceFallback'
     | 'gameLogSideEffect'
@@ -46,6 +47,14 @@ let gameLogIngestQueue: Promise<unknown> = Promise.resolve();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
     return Boolean(value && typeof value === 'object');
+}
+
+function applyBackendRuntimeSnapshot(snapshot: Record<string, unknown> | null) {
+    const runtimeStore = useRuntimeStore.getState();
+    runtimeStore.setBackendRuntimeSnapshot(snapshot);
+    runtimeStore.setShellState({
+        backendRuntimeSnapshotHydrated: true
+    });
 }
 
 function normalizeString(value: unknown): string {
@@ -175,6 +184,13 @@ function handleRuntimeEvent(name: RuntimeEventName, payload: unknown): void {
 
     runtimeStore.recordRuntimeEvent(name, payload);
 
+    if (name === 'backendRuntimeTelemetry') {
+        const record = isRecord(payload) ? payload : {};
+        const snapshot = isRecord(record.snapshot) ? record.snapshot : null;
+        applyBackendRuntimeSnapshot(snapshot);
+        return;
+    }
+
     if (name === 'gameLogProjection') {
         if (!isHostCapabilityAvailable('runtimeGameLogIngest')) {
             return;
@@ -270,6 +286,7 @@ export async function bindRuntimeEvents(): Promise<() => void> {
     const unsubscribers: RuntimeEventUnsubscribe[] = [];
     const events: RuntimeEventName[] = [
         'addGameLogEvent',
+        'backendRuntimeTelemetry',
         'gameLogProjection',
         'gameLogPersistenceFallback',
         'gameLogSideEffect',
@@ -298,11 +315,23 @@ export async function bindRuntimeEvents(): Promise<() => void> {
                 unsubscribe();
             }
         }
+        useRuntimeStore.getState().setShellState({
+            backendRuntimeSnapshotHydrated: true
+        });
         useSessionStore.getState().setTransportStatus('disconnected');
         throw error;
     }
 
     useSessionStore.getState().setTransportStatus('runtime-subscribed');
+    try {
+        const snapshot: any = await tauriClient.app.GetBackendRuntimeSnapshot();
+        applyBackendRuntimeSnapshot(snapshot);
+    } catch (error) {
+        useRuntimeStore.getState().setShellState({
+            backendRuntimeSnapshotHydrated: true
+        });
+        console.warn('Failed to hydrate backend runtime snapshot:', error);
+    }
 
     return () => {
         for (const unsubscribe of unsubscribers) {

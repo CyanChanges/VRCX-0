@@ -98,6 +98,10 @@ type RuntimeStore = {
         legacyMigrationAvailable: boolean;
     };
     runtimeEvents: Record<string, RuntimeEventState>;
+    backendRuntime: Record<string, unknown>;
+    shell: Record<string, unknown> & {
+        backendRuntimeSnapshotHydrated: boolean;
+    };
     setStartupTask(task: string, status: string, detail?: string): void;
     setAuthBootstrap(payload: Partial<RuntimeStore['auth']>): void;
     setHostCapabilities(payload?: Record<string, unknown> | null): void;
@@ -107,6 +111,8 @@ type RuntimeStore = {
     setTransportState(patch: Partial<TransportState>): void;
     incrementTransportReconnect(): void;
     recordRuntimeEvent(name: string, payload: unknown): void;
+    setBackendRuntimeSnapshot(snapshot: Record<string, unknown> | null): void;
+    setShellState(patch: Record<string, unknown>): void;
     setGameState(patch: Partial<RuntimeStore['gameState']>): void;
     setNowPlayingState(patch: Record<string, unknown>): void;
     setInstanceQueueState(patch: Partial<InstanceQueueState>): void;
@@ -320,8 +326,13 @@ const initialState = {
         detail: '',
         legacyMigrationAvailable: false
     },
+    backendRuntime: {},
+    shell: {
+        backendRuntimeSnapshotHydrated: false
+    },
     runtimeEvents: {
         addGameLogEvent: createRuntimeEventState(),
+        backendRuntimeTelemetry: createRuntimeEventState(),
         gameLogPersistenceFallback: createRuntimeEventState(),
         gameLogSideEffect: createRuntimeEventState(),
         realtimeWsStatus: createRuntimeEventState(),
@@ -346,6 +357,8 @@ const initialState = {
     | 'incrementTransportReconnect'
     | 'recordRuntimeEvent'
     | 'setGameState'
+    | 'setBackendRuntimeSnapshot'
+    | 'setShellState'
     | 'setNowPlayingState'
     | 'setInstanceQueueState'
     | 'clearInstanceQueueState'
@@ -446,6 +459,20 @@ export const useRuntimeStore = create<RuntimeStore>((set: any) => ({
         set((state: any) => ({
             gameState: {
                 ...state.gameState,
+                ...patch
+            }
+        }));
+    },
+    setBackendRuntimeSnapshot(snapshot: any) {
+        set({
+            backendRuntime:
+                snapshot && typeof snapshot === 'object' ? snapshot : {}
+        });
+    },
+    setShellState(patch: any) {
+        set((state: any) => ({
+            shell: {
+                ...state.shell,
                 ...patch
             }
         }));

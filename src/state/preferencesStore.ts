@@ -216,6 +216,7 @@ export const DEFAULT_PREFERENCES: PreferenceInputSnapshot = Object.freeze({
     logResourceLoad: false,
     autoLoginDelayEnabled: false,
     autoLoginDelaySeconds: 0,
+    backgroundModeEnabled: false,
     isStartAtWindowsStartup: false,
     isStartAsMinimizedState: false,
     isCloseToTray: false,
@@ -335,6 +336,7 @@ export function normalizePreferenceSnapshot(
             max: 10,
             fallback: 0
         }),
+        backgroundModeEnabled: normalizeBool(next.backgroundModeEnabled),
         isStartAtWindowsStartup: normalizeBool(next.isStartAtWindowsStartup),
         isStartAsMinimizedState: normalizeBool(next.isStartAsMinimizedState),
         isCloseToTray: normalizeBool(next.isCloseToTray),

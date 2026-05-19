@@ -1,15 +1,14 @@
 use std::sync::Arc;
 
-use crate::adapters::application::context::RuntimeHostContext;
-use crate::adapters::host_file_access::HostFileAccess;
-use crate::adapters::log_watcher::{GameLogEvent, GameLogEventSink, LogWatcher};
-use crate::error::AppError;
-use vrcx_0_host::app_paths::AppPaths;
-
+use crate::context::RuntimeHostContext;
+use crate::host_file_access::HostFileAccess;
+use crate::log_watcher::{GameLogEvent, GameLogEventSink, LogWatcher};
+use crate::Result;
 use vrcx_0_application::Error as RuntimeError;
 use vrcx_0_application::Result as RuntimeResult;
 use vrcx_0_application::{GameLogHostActions, GameLogRuntime, GameLogRuntimeDeps};
 use vrcx_0_application::{GameProcessEvent, GameProcessEventSink};
+use vrcx_0_host::app_paths::AppPaths;
 use vrcx_0_host::{clipboard, game_launch, vrchat_paths};
 
 fn host_error(error: vrcx_0_host::Error) -> RuntimeError {
@@ -56,7 +55,7 @@ impl GameLogHostActions for HostGameLogActions {
 }
 
 pub struct GameLogHostRuntime {
-    pub(super) context: Arc<RuntimeHostContext>,
+    context: Arc<RuntimeHostContext>,
     inner: GameLogRuntime,
 }
 
@@ -84,7 +83,7 @@ impl GameLogHostRuntime {
         Self { context, inner }
     }
 
-    pub fn prime_log_watcher(&self, log_watcher: &LogWatcher) -> Result<(), AppError> {
+    pub fn prime_log_watcher(&self, log_watcher: &LogWatcher) -> Result<()> {
         let date_till = vrcx_0_persistence::game_log::get_last_game_log_date(&self.context.db)?;
         log_watcher.set_date_till(&date_till);
         Ok(())

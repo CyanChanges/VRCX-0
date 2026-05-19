@@ -1,0 +1,18 @@
+[package]
+name = "vrcx-0-runtime-host"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+test-utils = ["vrcx-0-application/test-utils"]
+
+[dependencies]
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+vrcx-0-application = { path = "../application" }
+vrcx-0-core = { path = "../core" }
+vrcx-0-host = { path = "../host" }
+vrcx-0-media = { path = "../media" }
+vrcx-0-persistence = { path = "../persistence" }
+vrcx-0-vrchat-client = { path = "../vrchat-client" }

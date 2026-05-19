@@ -1,6 +1,7 @@
 use std::path::Path;
 
-use vrcx_0_application::{LogLocationSnapshot, LogLocationSnapshotScanner};
+use vrcx_0_application::LogLocationSnapshotScanner;
+pub use vrcx_0_application::{GameLogEvent, GameLogEventSink, LogLocationSnapshot, LogWatcher};
 
 #[derive(Default)]
 pub struct HostLogLocationSnapshotScanner;

@@ -148,6 +148,31 @@ export interface RuntimeAuthScopeSnapshot {
     active: boolean;
 }
 
+export type BackendRuntimeMode = 'foreground' | 'background' | 'headless';
+export type BackendRuntimePhase =
+    | 'idle'
+    | 'starting'
+    | 'authenticating'
+    | 'running'
+    | 'stopping'
+    | 'error';
+
+export interface BackendRuntimeSnapshot {
+    mode: BackendRuntimeMode;
+    phase: BackendRuntimePhase;
+    authStatus: string;
+    authUserId: string;
+    authDisplayName: string;
+    wsStatus: string;
+    gameLogStatus: string;
+    processStatus: string;
+    wsMessageCounts: Record<string, number>;
+    wsPersistedCount: number;
+    gameLogPersistedCount: number;
+    lastError?: string | null;
+    updatedAt: string;
+}
+
 export interface ModerationSyncRefreshResult {
     accepted: boolean;
     userId: string;
@@ -486,6 +511,10 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
         userId?: string;
         endpoint?: string;
     }): Promise<RuntimeAuthScopeSnapshot>;
+    StartBackgroundMode(): Promise<BackendRuntimeSnapshot>;
+    StopBackgroundMode(reason?: string | null): Promise<BackendRuntimeSnapshot>;
+    GetBackendRuntimeSnapshot(): Promise<BackendRuntimeSnapshot>;
+    EnsureMainWindow(): Promise<void>;
     VrchatAuthConfigGet(input: {
         endpoint?: string;
     }): Promise<VrchatHttpApiResult>;

@@ -29,7 +29,7 @@ const GAME_LOG_WRITE_RETRY_DELAYS_MS: &[u64] = &[25, 100, 250];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum GameLogWriteOutcome {
-    RuntimePersisted,
+    RuntimePersisted { affected_count: u64 },
     PersistenceFailed,
 }
 
@@ -176,7 +176,8 @@ impl GameLogProcessor {
     ) -> Result<()> {
         let write_outcome =
             self.write_batch_or_emit_failure_telemetry(&output.batch, output.raw_rows)?;
-        if write_outcome == GameLogWriteOutcome::RuntimePersisted {
+        if let GameLogWriteOutcome::RuntimePersisted { affected_count } = write_outcome {
+            self.deps.event_bus.emit_game_log_persisted(affected_count);
             if let Some(projection) = output.projection {
                 self.deps.event_bus.emit_game_log_projection(projection);
             }
@@ -196,14 +197,14 @@ impl GameLogProcessor {
         raw_rows: Vec<Vec<String>>,
     ) -> Result<GameLogWriteOutcome> {
         match write_batch_with_retry(&self.deps.db, batch) {
-            Ok(()) => {
+            Ok(affected_count) => {
                 self.deps.sync.record(
                     "gameLog",
                     "persisted",
                     "GameLog batch persisted by Rust.",
                     0,
                 );
-                Ok(GameLogWriteOutcome::RuntimePersisted)
+                Ok(GameLogWriteOutcome::RuntimePersisted { affected_count })
             }
             Err(error) => {
                 let message = error.to_string();
@@ -236,11 +237,11 @@ fn remember_error(first_error: &mut Option<Error>, error: Error) {
     }
 }
 
-fn write_batch_with_retry(db: &DatabaseService, batch: &GameLogWriteBatch) -> Result<()> {
+fn write_batch_with_retry(db: &DatabaseService, batch: &GameLogWriteBatch) -> Result<u64> {
     let mut delays = GAME_LOG_WRITE_RETRY_DELAYS_MS.iter();
     loop {
         match write_batch(db, batch) {
-            Ok(()) => return Ok(()),
+            Ok(affected_count) => return Ok(affected_count),
             Err(error) => {
                 let Some(delay_ms) = delays.next() else {
                     return Err(error.into());

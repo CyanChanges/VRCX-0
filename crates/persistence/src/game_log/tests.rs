@@ -229,7 +229,8 @@ fn writes_core_rows_in_one_batch_and_keeps_deduplication() -> Result<(), Error> 
         data: "event data".into(),
     });
 
-    write_batch(db, &batch)?;
+    let affected_count = write_batch(db, &batch)?;
+    assert_eq!(affected_count, 3);
 
     let rows = db.execute("SELECT COUNT(*) FROM gamelog_location", &Default::default())?;
     assert_eq!(rows[0][0], serde_json::json!(1));

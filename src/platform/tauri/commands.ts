@@ -247,6 +247,10 @@ const commandArgs: Record<string, string[]> = {
         'clientRunId',
         'generation'
     ],
+    app__start_background_mode: [],
+    app__stop_background_mode: ['reason'],
+    app__get_backend_runtime_snapshot: [],
+    app__ensure_main_window: [],
     app__get_file_base64: ['path'],
     app__sign_file: ['blob'],
     app__resize_image_to_fit_limits: ['base64data'],

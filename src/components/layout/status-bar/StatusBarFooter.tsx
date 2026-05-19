@@ -1,4 +1,10 @@
-import { ClockIcon, MinusIcon, NetworkIcon, PlusIcon } from 'lucide-react';
+import {
+    ClockIcon,
+    Minimize2Icon,
+    MinusIcon,
+    NetworkIcon,
+    PlusIcon
+} from 'lucide-react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -158,6 +164,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
         formatStatusDate,
         onOpenMediaLink,
         onOpenStatusPage,
+        onStartBackgroundMode,
         onPromptProxySettings,
         onSetClockPopoverValue,
         onSetZoomLevel,
@@ -604,6 +611,28 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                             </TooltipContent>
                         </Tooltip>
                     ) : null}
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={t(
+                                    'status_bar.start_background_mode'
+                                )}
+                                className={cn(
+                                    '-ml-px size-6 shrink-0 rounded-none border-l',
+                                    'text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50'
+                                )}
+                                onClick={onStartBackgroundMode}
+                            >
+                                <Minimize2Icon data-icon="icon" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            {t('status_bar.start_background_mode_tooltip')}
+                        </TooltipContent>
+                    </Tooltip>
                 </div>
             </div>
         </footer>

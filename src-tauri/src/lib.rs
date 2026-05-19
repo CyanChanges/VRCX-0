@@ -7,8 +7,88 @@ mod state;
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
 use tauri::Manager;
 use tauri::WindowEvent;
+use vrcx_0_application::{BackendRuntimeMode, BackendRuntimePhase};
 
 use state::AppState;
+
+fn destroy_main_window_for_background_mode(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        if let Err(error) = window.destroy() {
+            tracing::warn!(error = %error, "failed to destroy main window for background mode");
+            let _ = window.hide();
+            let _ = window.set_skip_taskbar(true);
+        }
+    }
+}
+
+fn refresh_tray_menu(app: &tauri::AppHandle, state: &AppState) {
+    if let Err(error) = bootstrap::refresh_tray_menu(app, state) {
+        tracing::warn!(error = %error, "failed to refresh tray background mode item");
+    }
+}
+
+fn stop_background_mode_and_show_window(app: &tauri::AppHandle, state: &AppState) {
+    state.log_watcher_compat_bridge.stop();
+    state.stop_backend_runtime("tray-toggle-background-mode");
+    refresh_tray_menu(app, state);
+    if let Err(error) = bootstrap::ensure_main_window(app) {
+        tracing::warn!(
+            error = %error,
+            "failed to show main window after stopping background mode"
+        );
+    }
+}
+
+fn hide_window_to_tray(window: &tauri::Window) {
+    let _ = window.hide();
+    let _ = window.set_skip_taskbar(true);
+}
+
+fn auto_background_mode_on_tray_enabled(state: &AppState) -> bool {
+    state
+        .runtime_context
+        .config()
+        .get_bool("backgroundModeEnabled", false)
+        .unwrap_or(false)
+}
+
+fn is_background_mode_hidden(app: &tauri::AppHandle, state: &AppState) -> bool {
+    let snapshot = state.snapshot_backend_runtime();
+    if snapshot.mode != BackendRuntimeMode::Background
+        || snapshot.phase != BackendRuntimePhase::Running
+    {
+        return false;
+    }
+    match app.get_webview_window("main") {
+        Some(window) => !window.is_visible().unwrap_or(true),
+        None => true,
+    }
+}
+
+fn start_background_mode_and_hide_window(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+        let Some(state) = app.try_state::<AppState>() else {
+            return;
+        };
+        match state
+            .start_backend_runtime(BackendRuntimeMode::Background)
+            .await
+        {
+            Ok(snapshot) => {
+                if snapshot.mode == BackendRuntimeMode::Background
+                    && snapshot.phase == BackendRuntimePhase::Running
+                {
+                    destroy_main_window_for_background_mode(&app);
+                }
+                refresh_tray_menu(&app, &state);
+            }
+            Err(error) => {
+                tracing::warn!(error = %error, "failed to start background mode from tray");
+                refresh_tray_menu(&app, &state);
+            }
+        }
+    });
+}
 
 pub fn run() {
     bootstrap::init_error_logging();
@@ -17,7 +97,9 @@ pub fn run() {
 
     let builder = tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            bootstrap::show_main_window(app);
+            if let Err(error) = bootstrap::ensure_main_window(app) {
+                tracing::warn!(error = %error, "failed to show main window from single instance");
+            }
         }))
         .register_asynchronous_uri_scheme_protocol("vrcx-0-img", |_ctx, request, responder| {
             tauri::async_runtime::spawn_blocking(move || {
@@ -68,10 +150,19 @@ pub fn run() {
 
             if let WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<AppState>();
+                let snapshot = state.snapshot_backend_runtime();
+                if snapshot.mode == BackendRuntimeMode::Background
+                    && snapshot.phase == BackendRuntimePhase::Running
+                {
+                    return;
+                }
+
                 if state.storage.get("VRCX_CloseToTray").as_deref() == Some("true") {
                     api.prevent_close();
-                    let _ = window.hide();
-                    let _ = window.set_skip_taskbar(true);
+                    hide_window_to_tray(window);
+                    if auto_background_mode_on_tray_enabled(&state) {
+                        start_background_mode_and_hide_window(window.app_handle().clone());
+                    }
                 } else {
                     commands::host::window::stop_runtime_services(window.app_handle());
                 }
@@ -87,15 +178,34 @@ pub fn run() {
                 button: MouseButton::Left,
                 ..
             } => {
-                bootstrap::show_main_window(app);
+                if let Err(error) = bootstrap::ensure_main_window(app) {
+                    tracing::warn!(error = %error, "failed to show main window from tray");
+                }
             }
             _ => {}
         })
         .setup(bootstrap::setup_app)
         .on_menu_event(|app, event| {
-            if event.id().0 == "tray-exit" {
-                commands::host::window::stop_runtime_services(app);
-                app.exit(0);
+            match event.id().0.as_str() {
+                "tray-open" => {
+                    if let Err(error) = bootstrap::ensure_main_window(app) {
+                        tracing::warn!(error = %error, "failed to open main window from tray menu");
+                    }
+                }
+                "tray-toggle-background-mode" | "tray-stop-background-mode" => {
+                    if let Some(state) = app.try_state::<AppState>() {
+                        if is_background_mode_hidden(app, &state) {
+                            stop_background_mode_and_show_window(app, &state);
+                        } else {
+                            start_background_mode_and_hide_window(app.clone());
+                        }
+                    }
+                }
+                "tray-exit" => {
+                    commands::host::window::stop_runtime_services(app);
+                    app.exit(0);
+                }
+                _ => {}
             }
         })
         .invoke_handler(tauri::generate_handler![
@@ -135,6 +245,10 @@ pub fn run() {
             commands::application::realtime::app__sync_realtime_current_user_snapshot,
             commands::application::realtime::app__expire_realtime_notification,
             commands::application::realtime::app__stop_realtime_transport,
+            commands::application::background_mode::app__start_background_mode,
+            commands::application::background_mode::app__stop_background_mode,
+            commands::application::background_mode::app__get_backend_runtime_snapshot,
+            commands::application::background_mode::app__ensure_main_window,
             commands::local::config::app__config_set_values,
             commands::local::config::app__config_list_values,
             commands::local::config::app__config_remove_value,
@@ -495,6 +609,22 @@ pub fn run() {
             commands::host::media::app__save_sticker_to_file,
             commands::host::media::app__save_emoji_to_file,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if code.is_some() {
+                    return;
+                }
+                let Some(state) = app.try_state::<AppState>() else {
+                    return;
+                };
+                let snapshot = state.snapshot_backend_runtime();
+                if snapshot.mode == BackendRuntimeMode::Background
+                    && snapshot.phase == BackendRuntimePhase::Running
+                {
+                    api.prevent_exit();
+                }
+            }
+        });
 }

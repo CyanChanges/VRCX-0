@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import configRepository from '@/repositories/configRepository';
+import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
 import {
     loadPreferenceSnapshot,
     setProxyServerPreference
@@ -472,6 +473,19 @@ export function AppStatusBar() {
         );
     }
 
+    function startBackgroundMode() {
+        startBackgroundModeForCurrentSession().catch((error: any) => {
+            console.warn('Failed to start background mode:', error);
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : t(
+                          'component.app_status_bar.toast.failed_to_start_background_mode'
+                      )
+            );
+        });
+    }
+
     function setQueuedZoomLevel(nextZoom: any) {
         queueZoomLevelPreference(nextZoom, { onError: showZoomError });
     }
@@ -515,6 +529,7 @@ export function AppStatusBar() {
             });
         },
         onOpenStatusPage: openStatusPage,
+        onStartBackgroundMode: startBackgroundMode,
         onPromptProxySettings: () => {
             promptProxySettings().catch((error: any) => {
                 toast.error(

@@ -1,5 +1,6 @@
 mod auth_credentials;
 mod auth_scope;
+mod backend_runtime;
 mod background;
 mod diagnostics;
 mod error;
@@ -39,6 +40,10 @@ pub use auth_credentials::{
     saved_snapshot, LoginSuccessRecordInput, LogoutRecordInput, SavedCredentialLoginStartInput,
 };
 pub use auth_scope::{RuntimeAuthScope, RuntimeAuthScopeSnapshot};
+pub use backend_runtime::{
+    BackendRuntime, BackendRuntimeMode, BackendRuntimePhase, BackendRuntimeSnapshot,
+    BackendRuntimeTelemetry,
+};
 pub use background::{RuntimeBackgroundJobSnapshot, RuntimeBackgroundJobs};
 pub use diagnostics::{RuntimeDiagnostics, RuntimeDiagnosticsSnapshot};
 pub use error::Error;

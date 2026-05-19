@@ -1,4 +1,4 @@
-use sysinfo::{ProcessesToUpdate, System};
+use sysinfo::{Pid, ProcessesToUpdate, System};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct VrcProcessStatus {
@@ -42,6 +42,12 @@ pub fn detect_game_running() -> bool {
 
 pub fn detect_steamvr_running() -> bool {
     detect_process_status().is_steamvr_running
+}
+
+pub fn is_process_running(pid: u32) -> bool {
+    let mut sys = System::new();
+    sys.refresh_processes(ProcessesToUpdate::All, true);
+    sys.process(Pid::from_u32(pid)).is_some()
 }
 
 fn detect_process_status_from_names<I, S>(names: I) -> VrcProcessStatus

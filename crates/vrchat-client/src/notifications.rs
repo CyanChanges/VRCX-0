@@ -186,7 +186,11 @@ pub fn invite_photo_input(
         "VrchatInvitePhotoSend requires receiverUserId.",
     )?;
     let image_data = require_text(image_data, "VrchatInvitePhotoSend requires imageData.")?;
-    let params = if params.is_object() { params } else { json!({}) };
+    let params = if params.is_object() {
+        params
+    } else {
+        json!({})
+    };
     Ok((
         receiver_user_id.clone(),
         HttpApiRequestInput {
@@ -238,7 +242,11 @@ pub fn request_invite_photo_input(
         image_data,
         "VrchatRequestInvitePhotoSend requires imageData.",
     )?;
-    let params = if params.is_object() { params } else { json!({}) };
+    let params = if params.is_object() {
+        params
+    } else {
+        json!({})
+    };
     Ok((
         receiver_user_id.clone(),
         HttpApiRequestInput {

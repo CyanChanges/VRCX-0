@@ -1,4 +1,3 @@
 mod ipc;
-mod service;
 
-pub use service::GameClientHostRuntime;
+pub use vrcx_0_runtime_host::GameClientHostRuntime;

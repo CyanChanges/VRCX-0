@@ -10,15 +10,12 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::Layer;
 
-use crate::adapters::application::host_actions::RuntimeHostActions;
-use crate::adapters::application::process_monitor::HostGameProcessMonitorActions;
 use crate::state::AppState;
-use vrcx_0_application::GameProcessEventSink;
 use vrcx_0_application::RuntimeEventSink;
+use vrcx_0_application::{BackendRuntimeMode, BackendRuntimePhase};
 use vrcx_0_application::{RuntimeTask, RuntimeTaskExecutor, RuntimeTaskHandle};
-use vrcx_0_host::host_capabilities::{
-    current_host_capabilities, is_host_capability_available, HostCapability,
-};
+use vrcx_0_host::host_capabilities::{is_host_capability_available, HostCapability};
+use vrcx_0_runtime_host::RuntimeHostActions;
 
 #[derive(Clone)]
 struct TauriRuntimeEventSink {
@@ -33,12 +30,140 @@ impl TauriRuntimeEventSink {
 
 impl RuntimeEventSink for TauriRuntimeEventSink {
     fn emit(&self, event: &str, payload: serde_json::Value) {
+        log_gui_background_runtime_info(&self.app_handle, event, &payload);
         let frontend_event = match event {
             "runtimeGameLogEvent" => "addGameLogEvent",
             event => event,
         };
         let _ = self.app_handle.emit(frontend_event, payload);
     }
+}
+
+fn log_gui_background_runtime_info(
+    app_handle: &tauri::AppHandle,
+    event: &str,
+    payload: &serde_json::Value,
+) {
+    if event == "realtimeWsStatus" {
+        let Some(state) = app_handle.try_state::<AppState>() else {
+            return;
+        };
+        let snapshot = state.snapshot_backend_runtime();
+        if snapshot.mode != BackendRuntimeMode::Background
+            || snapshot.phase != BackendRuntimePhase::Running
+        {
+            return;
+        }
+        let status = json_string_field(payload, "status");
+        let reason = json_string_field(payload, "reason");
+        if reason.is_empty() {
+            tracing::info!("background mode ws status: {status}");
+        } else {
+            tracing::info!("background mode ws status: {status} ({reason})");
+        }
+        return;
+    }
+
+    if event != "backendRuntimeTelemetry" {
+        return;
+    }
+
+    let snapshot = payload.get("snapshot").unwrap_or(&serde_json::Value::Null);
+    let kind = json_string_field(payload, "kind");
+    let detail = json_string_field(payload, "detail");
+    if kind == "runtimeStopped" {
+        if json_string_field(snapshot, "mode") == "background" {
+            tracing::info!("background mode exited: {detail}");
+        }
+        return;
+    }
+    let Some(state) = app_handle.try_state::<AppState>() else {
+        return;
+    };
+    let current_snapshot = state.snapshot_backend_runtime();
+    if current_snapshot.mode != BackendRuntimeMode::Background
+        || !matches!(
+            current_snapshot.phase,
+            BackendRuntimePhase::Starting
+                | BackendRuntimePhase::Authenticating
+                | BackendRuntimePhase::Running
+        )
+    {
+        return;
+    }
+    if json_string_field(snapshot, "mode") != "background"
+        || !is_background_runtime_info_phase(snapshot)
+    {
+        return;
+    }
+
+    match kind.as_str() {
+        "authSuccess" => {
+            let name = json_string_field(snapshot, "authDisplayName");
+            let user_id = json_string_field(snapshot, "authUserId");
+            tracing::info!(
+                "background mode login success: {} ({})",
+                empty_log_fallback(&name, "unknown user"),
+                empty_log_fallback(&user_id, "unknown id")
+            );
+        }
+        "wsStatus" => {}
+        "wsMessage" => {
+            let total = snapshot
+                .get("wsMessageCounts")
+                .and_then(|counts| counts.get(&detail))
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0);
+            tracing::info!("background mode ws message: type={detail}, count={total}");
+        }
+        "wsPersisted" => {
+            let total = snapshot
+                .get("wsPersistedCount")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0);
+            tracing::info!("background mode ws persisted to db: count={detail}, total={total}");
+        }
+        "processStatus" => match detail.as_str() {
+            "vrchatRunning" => tracing::info!("background mode vrchat started"),
+            "vrchatStopped" => tracing::info!("background mode vrchat stopped"),
+            _ => tracing::info!("background mode vrchat process status: {detail}"),
+        },
+        "gameLogPersisted" => {
+            let total = snapshot
+                .get("gameLogPersistedCount")
+                .and_then(serde_json::Value::as_u64)
+                .unwrap_or(0);
+            tracing::info!(
+                "background mode gamelog persisted to db: count={detail}, total={total}"
+            );
+        }
+        "gameLogWatcher" => tracing::info!("background mode gamelog watcher: {detail}"),
+        _ => {}
+    }
+}
+
+fn json_string_field(value: &serde_json::Value, key: &str) -> String {
+    value
+        .get(key)
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or_default()
+        .trim()
+        .to_string()
+}
+
+fn empty_log_fallback<'a>(value: &'a str, fallback: &'a str) -> &'a str {
+    if value.trim().is_empty() {
+        fallback
+    } else {
+        value
+    }
+}
+
+fn is_background_runtime_info_phase(snapshot: &serde_json::Value) -> bool {
+    matches!(
+        json_string_field(snapshot, "phase").as_str(),
+        "starting" | "authenticating" | "running"
+    )
 }
 
 #[derive(Clone)]
@@ -116,7 +241,20 @@ impl RuntimeTaskExecutor for TauriRuntimeTaskExecutor {
     }
 }
 
-pub fn show_main_window(app: &tauri::AppHandle) {
+pub fn ensure_main_window(app: &tauri::AppHandle) -> Result<(), Box<dyn std::error::Error>> {
+    if app.get_webview_window("main").is_none() {
+        let state = app.state::<AppState>();
+        create_main_window(app, state.web.proxy_url())?;
+        disable_windows_default_context_menu(app);
+    }
+    let state = app.state::<AppState>();
+    start_host_services(app, &state);
+    present_main_window(app);
+    let _ = refresh_tray_menu(app, &state);
+    Ok(())
+}
+
+fn present_main_window(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.set_skip_taskbar(false);
         let _ = window.show();
@@ -301,24 +439,24 @@ pub fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>>
         "Tauri setup is wiring runtime services.",
         0,
     );
-    create_main_window(app, state.web.proxy_url())?;
+    create_main_window(app.handle(), state.web.proxy_url())?;
     state.runtime_context.runtime.record_phase(
         "mainWindow",
         "completed",
         "Main webview window created.",
     );
 
-    disable_windows_default_context_menu(app);
+    disable_windows_default_context_menu(app.handle());
 
     let state = app.state::<AppState>();
-    configure_tray(app)?;
+    configure_tray(app, &state)?;
     state
         .runtime_context
         .runtime
         .record_phase("tray", "completed", "System tray configured.");
     sync_autostart_from_db(app, &state);
     hide_autostart_window_if_needed(app, &state);
-    start_host_services(app, &state);
+    start_host_services(app.handle(), &state);
     open_devtools_if_enabled(app);
     state
         .runtime_context
@@ -329,7 +467,7 @@ pub fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>>
 }
 
 fn create_main_window(
-    app: &tauri::App,
+    app: &tauri::AppHandle,
     proxy_url: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if app.get_webview_window("main").is_some() {
@@ -346,7 +484,7 @@ fn create_main_window(
             std::io::Error::new(std::io::ErrorKind::NotFound, "missing main window config")
         })?;
 
-    let mut builder = WebviewWindowBuilder::from_config(app.handle(), window_config)?;
+    let mut builder = WebviewWindowBuilder::from_config(app, window_config)?;
     if let Some(proxy_url) = proxy_url {
         let proxy_url = proxy_url
             .parse()
@@ -362,7 +500,7 @@ fn db_config_bool(state: &AppState, key: &str) -> Option<bool> {
     state.runtime_context.config().get_bool(key, false).ok()
 }
 
-fn disable_windows_default_context_menu(app: &tauri::App) {
+fn disable_windows_default_context_menu(app: &tauri::AppHandle) {
     #[cfg(target_os = "windows")]
     if let Some(webview) = app.get_webview_window("main") {
         if let Err(error) = webview.with_webview(|platform_webview| {
@@ -387,14 +525,82 @@ fn disable_windows_default_context_menu(app: &tauri::App) {
     let _ = app;
 }
 
-fn configure_tray(app: &tauri::App) -> Result<(), tauri::Error> {
+fn configure_tray(app: &tauri::App, state: &AppState) -> Result<(), tauri::Error> {
+    refresh_tray_menu(app.handle(), state)
+}
+
+pub fn refresh_tray_menu(app: &tauri::AppHandle, state: &AppState) -> Result<(), tauri::Error> {
     if let Some(tray) = app.tray_by_id("main") {
-        let exit_item = MenuItem::with_id(app, "tray-exit", "Exit", true, None::<&str>)?;
-        let menu = Menu::with_items(app, &[&exit_item])?;
+        let labels = tray_labels(state);
+        let open_item = MenuItem::with_id(app, "tray-open", labels.open, true, None::<&str>)?;
+        let background_item = MenuItem::with_id(
+            app,
+            "tray-toggle-background-mode",
+            if is_background_mode_hidden(app, state) {
+                labels.stop_background
+            } else {
+                labels.start_background
+            },
+            true,
+            None::<&str>,
+        )?;
+        let exit_item = MenuItem::with_id(app, "tray-exit", labels.exit, true, None::<&str>)?;
+        let menu = Menu::with_items(app, &[&open_item, &background_item, &exit_item])?;
         let _ = tray.set_menu(Some(menu));
         let _ = tray.set_show_menu_on_left_click(false);
     }
     Ok(())
+}
+
+struct TrayLabels {
+    open: &'static str,
+    start_background: &'static str,
+    stop_background: &'static str,
+    exit: &'static str,
+}
+
+fn is_background_mode_hidden(app: &tauri::AppHandle, state: &AppState) -> bool {
+    let snapshot = state.snapshot_backend_runtime();
+    if snapshot.mode != BackendRuntimeMode::Background
+        || snapshot.phase != BackendRuntimePhase::Running
+    {
+        return false;
+    }
+    match app.get_webview_window("main") {
+        Some(window) => !window.is_visible().unwrap_or(true),
+        None => true,
+    }
+}
+
+fn tray_labels(state: &AppState) -> TrayLabels {
+    let language = state
+        .runtime_context
+        .config()
+        .get_string("appLanguage", "en")
+        .unwrap_or_else(|_| "en".into())
+        .to_ascii_lowercase();
+    if language.starts_with("zh") {
+        return TrayLabels {
+            open: "打开 VRCX-0",
+            start_background: "开启后台模式",
+            stop_background: "停止后台模式",
+            exit: "退出",
+        };
+    }
+    if language.starts_with("ja") {
+        return TrayLabels {
+            open: "VRCX-0 を開く",
+            start_background: "バックグラウンドモードを開始",
+            stop_background: "バックグラウンドモードを停止",
+            exit: "終了",
+        };
+    }
+    TrayLabels {
+        open: "Open VRCX-0",
+        start_background: "Start Background Mode",
+        stop_background: "Stop Background Mode",
+        exit: "Exit",
+    }
 }
 
 fn sync_autostart_from_db(app: &tauri::App, state: &AppState) {
@@ -438,86 +644,20 @@ fn hide_autostart_window_if_needed(app: &tauri::App, state: &AppState) {
     }
 }
 
-fn start_host_services(app: &tauri::App, state: &AppState) {
-    let host_capabilities = current_host_capabilities();
-    tracing::info!(
-        platform = %host_capabilities.platform,
-        "host capabilities resolved"
-    );
-    state
-        .runtime_context
-        .event_bus
-        .set_sink(TauriRuntimeEventSink::new(app.handle().clone()));
+fn start_host_services(app: &tauri::AppHandle, state: &AppState) {
+    state.set_event_sink(TauriRuntimeEventSink::new(app.clone()));
     state
         .runtime_context
         .host
-        .set_actions(TauriRuntimeHostActions::new(app.handle().clone()));
+        .set_actions(TauriRuntimeHostActions::new(app.clone()));
     state
         .runtime_context
         .tasks
         .set_executor(TauriRuntimeTaskExecutor);
-    state
-        .runtime_context
-        .runtime
-        .set_host_services_started(true, "Tauri event sink and host action adapters installed.");
-    state
-        .runtime_context
-        .background_jobs
-        .register_frontend_job_catalog();
-    state.runtime_context.background_jobs.register_job(
-        "startupRecovery",
-        "rust-host",
-        None,
-        "checkpoint",
-        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
-    );
-    state.runtime_context.runtime.record_phase(
-        "startupRecovery",
-        "checkpoint",
-        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
-    );
-    state.runtime_context.sync.record(
-        "startupRecovery",
-        "observed",
-        "Rust runtime startup recovery checkpoint recorded; no durable recovery queue is configured.",
-        0,
-    );
-    state
-        .runtime_context
-        .background_jobs
-        .start_database_optimize_loop(
-            std::sync::Arc::clone(&state.db),
-            state.runtime_context.tasks.clone(),
-        );
-
-    if is_host_capability_available(HostCapability::GameProcessMonitor) {
-        let game_process_sinks: Vec<std::sync::Arc<dyn GameProcessEventSink>> = vec![
-            state.session_runtime.clone(),
-            state.game_log_runtime.clone(),
-            state.game_client_runtime.clone(),
-            state.realtime_runtime.clone(),
-        ];
-        state.process_monitor.start(
-            HostGameProcessMonitorActions::new(state.auto_launch.clone()),
-            state.log_watcher.clone(),
-            game_process_sinks,
-        );
-        state
-            .runtime_context
-            .background_jobs
-            .mark_running("gameProcessMonitor", "Game process monitor is active.");
-    } else {
-        state.runtime_context.background_jobs.register_job(
-            "gameProcessMonitor",
-            "rust-host",
-            None,
-            "unavailable",
-            "Game process monitor capability is unavailable.",
-        );
-    }
+    state.start_shell_neutral_services();
 
     if is_host_capability_available(HostCapability::Ipc) {
-        state.ipc.start(app.handle().clone());
+        state.ipc.start(app.clone());
         state
             .runtime_context
             .background_jobs
@@ -532,99 +672,12 @@ fn start_host_services(app: &tauri::App, state: &AppState) {
         );
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(any(target_os = "windows", target_os = "linux"))]
     if is_host_capability_available(HostCapability::GameLogWatcher) {
-        let local_low = std::env::var("LOCALAPPDATA")
-            .map(|p| std::path::PathBuf::from(p).join("..\\LocalLow\\VRChat\\VRChat"))
-            .unwrap_or_default();
-        if let Err(error) = state.game_log_runtime.prime_log_watcher(&state.log_watcher) {
-            tracing::warn!("failed to prime GameLog watcher from runtime DB: {error}");
-        }
-        state.log_watcher.start(local_low);
         state
             .log_watcher_compat_bridge
-            .start(app.handle().clone(), state.log_watcher.clone());
-        state
-            .runtime_context
-            .background_jobs
-            .mark_running("gameLogWatcher", "Windows GameLog watcher is active.");
+            .start(app.clone(), state.log_watcher.clone());
     }
-
-    #[cfg(target_os = "windows")]
-    if !is_host_capability_available(HostCapability::GameLogWatcher) {
-        state.runtime_context.background_jobs.register_job(
-            "gameLogWatcher",
-            "rust-host",
-            None,
-            "unavailable",
-            "GameLog watcher capability is unavailable.",
-        );
-    }
-
-    #[cfg(target_os = "linux")]
-    if is_host_capability_available(HostCapability::GameLogWatcher) {
-        match vrcx_0_host::vrchat_paths::discover_linux_vrchat_log_paths() {
-            Ok(paths) => {
-                let latest_log = paths
-                    .latest_log
-                    .as_ref()
-                    .map(|path| path.display().to_string())
-                    .unwrap_or_else(|| "pending".to_string());
-                tracing::info!(
-                    log_dir = %paths.app_data.display(),
-                    latest_log,
-                    "starting Linux GameLog watcher"
-                );
-                if let Err(error) = state.game_log_runtime.prime_log_watcher(&state.log_watcher) {
-                    tracing::warn!("failed to prime GameLog watcher from runtime DB: {error}");
-                }
-                state
-                    .log_watcher
-                    .start_without_process_monitor(paths.app_data);
-                state
-                    .log_watcher_compat_bridge
-                    .start(app.handle().clone(), state.log_watcher.clone());
-                state
-                    .runtime_context
-                    .background_jobs
-                    .mark_running("gameLogWatcher", "Linux GameLog watcher is active.");
-            }
-            Err(reason) => {
-                tracing::warn!(reason, "Linux GameLog watcher is unavailable");
-                state.runtime_context.background_jobs.register_job(
-                    "gameLogWatcher",
-                    "rust-host",
-                    None,
-                    "unavailable",
-                    reason,
-                );
-            }
-        }
-    }
-
-    #[cfg(target_os = "linux")]
-    if !is_host_capability_available(HostCapability::GameLogWatcher) {
-        state.runtime_context.background_jobs.register_job(
-            "gameLogWatcher",
-            "rust-host",
-            None,
-            "unavailable",
-            host_capabilities
-                .game_log_watcher
-                .reason
-                .clone()
-                .unwrap_or_else(|| "GameLog watcher capability is unavailable.".into()),
-        );
-    }
-
-    #[cfg(not(any(target_os = "windows", target_os = "linux")))]
-    state.runtime_context.background_jobs.register_job(
-        "gameLogWatcher",
-        "rust-host",
-        None,
-        "unavailable",
-        "GameLog watcher is unavailable on this platform.",
-    );
 }
 
 fn open_devtools_if_enabled(app: &tauri::App) {

@@ -8,6 +8,8 @@ members = [
     "crates/host",
     "crates/media",
     "crates/application",
+    "crates/runtime-host",
+    "crates/headless",
 ]
 default-members = [
     "src-tauri",
@@ -18,5 +20,7 @@ default-members = [
     "crates/host",
     "crates/media",
     "crates/application",
+    "crates/runtime-host",
+    "crates/headless",
 ]
 resolver = "2"

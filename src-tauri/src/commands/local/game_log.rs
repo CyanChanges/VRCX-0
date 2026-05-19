@@ -14,8 +14,14 @@ pub fn app__game_log_entries_add(
     kind: String,
     entries: Vec<Value>,
 ) -> Result<(), AppError> {
-    vrcx_0_persistence::game_log::game_log_entries_add(state.db.as_ref(), kind, entries)
-        .map_err(AppError::from)
+    let affected_count =
+        vrcx_0_persistence::game_log::game_log_entries_add(state.db.as_ref(), kind, entries)
+            .map_err(AppError::from)?;
+    state
+        .runtime_context
+        .event_bus
+        .emit_game_log_persisted(affected_count);
+    Ok(())
 }
 
 #[tauri::command]

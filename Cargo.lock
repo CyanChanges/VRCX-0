@@ -4127,6 +4127,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ef86cd5876211988985292b91c96a8f2d298df24e75989a43a3c73f2d4d8168b"
 dependencies = [
  "aws-lc-rs",
+ "log",
  "once_cell",
  "ring",
  "rustls-pki-types",
@@ -5447,6 +5448,7 @@ dependencies = [
  "libc",
  "mio",
  "pin-project-lite",
+ "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "windows-sys 0.61.2",
@@ -5989,6 +5991,7 @@ dependencies = [
  "vrcx-0-integrations",
  "vrcx-0-media",
  "vrcx-0-persistence",
+ "vrcx-0-runtime-host",
  "vrcx-0-vrchat-client",
  "webkit2gtk-nvidia-quirk",
  "windows-sys 0.61.2",
@@ -6026,6 +6029,18 @@ dependencies = [
  "serde",
  "serde_json",
  "tracing",
+]
+
+[[package]]
+name = "vrcx-0-headless"
+version = "0.1.0"
+dependencies = [
+ "rustls",
+ "serde_json",
+ "tokio",
+ "tracing-subscriber",
+ "vrcx-0-application",
+ "vrcx-0-runtime-host",
 ]
 
 [[package]]
@@ -6092,6 +6107,21 @@ dependencies = [
  "thiserror 2.0.18",
  "tracing",
  "vrcx-0-core",
+]
+
+[[package]]
+name = "vrcx-0-runtime-host"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "thiserror 2.0.18",
+ "tracing",
+ "vrcx-0-application",
+ "vrcx-0-core",
+ "vrcx-0-host",
+ "vrcx-0-media",
+ "vrcx-0-persistence",
+ "vrcx-0-vrchat-client",
 ]
 
 [[package]]

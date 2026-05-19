@@ -63,6 +63,17 @@ impl From<vrcx_0_application::Error> for AppError {
     }
 }
 
+impl From<vrcx_0_runtime_host::Error> for AppError {
+    fn from(value: vrcx_0_runtime_host::Error) -> Self {
+        match value {
+            vrcx_0_runtime_host::Error::Database(message) => AppError::Database(message),
+            vrcx_0_runtime_host::Error::Io(error) => AppError::Io(error),
+            vrcx_0_runtime_host::Error::Json(error) => AppError::Json(error),
+            vrcx_0_runtime_host::Error::Custom(message) => AppError::Custom(message),
+        }
+    }
+}
+
 impl From<vrcx_0_integrations::external_api::ExternalApiError> for AppError {
     fn from(value: vrcx_0_integrations::external_api::ExternalApiError) -> Self {
         match value {

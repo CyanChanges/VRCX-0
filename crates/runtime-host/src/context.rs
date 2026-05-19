@@ -14,7 +14,7 @@ use vrcx_0_application::WebClient;
 use vrcx_0_persistence::config::ConfigRepository;
 use vrcx_0_persistence::DatabaseService;
 
-use super::host_actions::RuntimeHost;
+use crate::host_actions::RuntimeHost;
 
 #[derive(Clone)]
 pub struct RuntimeHostContext {

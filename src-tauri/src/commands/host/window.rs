@@ -5,7 +5,6 @@ use tauri_plugin_autostart::ManagerExt as _;
 
 use crate::error::AppError;
 use crate::state::AppState;
-use vrcx_0_application::RealtimeStopRequest;
 
 const TRAY_ICON_DEFAULT: &[u8] = include_bytes!("../../../icons/icon.png");
 const TRAY_ICON_NOTIFY: &[u8] = include_bytes!("../../../icons/icon_notify.png");
@@ -13,13 +12,9 @@ const TRAY_ICON_NOTIFY: &[u8] = include_bytes!("../../../icons/icon_notify.png")
 pub(crate) fn stop_runtime_services(app_handle: &AppHandle) {
     use tauri::Manager;
     if let Some(state) = app_handle.try_state::<AppState>() {
-        state.realtime_runtime.stop(RealtimeStopRequest::default());
-        state.process_monitor.stop();
-        state.log_watcher.stop();
         state.log_watcher_compat_bridge.stop();
         state.ipc.stop();
-        state.game_log_runtime.stop();
-        state.game_client_runtime.stop();
+        state.stop_backend_runtime("application-exit");
         state.runtime_context.tasks.stop_all();
     }
 }
@@ -95,6 +90,9 @@ pub fn app__restart_application(app_handle: AppHandle) -> Result<(), AppError> {
     #[cfg(not(debug_assertions))]
     {
         stop_runtime_services(&app_handle);
+        if let Some(state) = app_handle.try_state::<AppState>() {
+            state.release_profile_lock();
+        }
         app_handle.request_restart();
         Ok(())
     }

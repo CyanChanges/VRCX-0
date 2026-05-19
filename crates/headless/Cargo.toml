@@ -1,0 +1,16 @@
+[package]
+name = "vrcx-0-headless"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "vrcx-0-headless"
+path = "src/main.rs"
+
+[dependencies]
+rustls = { version = "0.23", features = ["aws_lc_rs"] }
+serde_json = "1"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "sync", "time"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+vrcx-0-application = { path = "../application" }
+vrcx-0-runtime-host = { path = "../runtime-host" }

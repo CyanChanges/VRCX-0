@@ -25,6 +25,7 @@ export function SettingsSystemSection({ system }: any) {
             isCloseToTray={prefs.isCloseToTray}
             autoLoginDelayEnabled={prefs.autoLoginDelayEnabled}
             autoLoginDelaySeconds={prefs.autoLoginDelaySeconds}
+            backgroundModeEnabled={prefs.backgroundModeEnabled}
             onStartAtWindowsStartupChange={(checked: any) => {
                 savePreferenceValue('isStartAtWindowsStartup', checked, () =>
                     setStartAtWindowsStartupPreference(checked)
@@ -43,7 +44,14 @@ export function SettingsSystemSection({ system }: any) {
             onAutoLoginDelayEnabledChange={(checked: any) => {
                 saveBoolPreference(
                     'autoLoginDelayEnabled',
-                    'VRCX_autoLoginDelayEnabled',
+                    'autoLoginDelayEnabled',
+                    checked
+                );
+            }}
+            onBackgroundModeEnabledChange={(checked: any) => {
+                saveBoolPreference(
+                    'backgroundModeEnabled',
+                    'backgroundModeEnabled',
                     checked
                 );
             }}

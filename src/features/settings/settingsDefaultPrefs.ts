@@ -63,6 +63,7 @@ export function createDefaultSettingsPrefs() {
         logResourceLoad: false,
         autoLoginDelayEnabled: false,
         autoLoginDelaySeconds: 0,
+        backgroundModeEnabled: false,
         isStartAtWindowsStartup: false,
         isStartAsMinimizedState: false,
         isCloseToTray: false,

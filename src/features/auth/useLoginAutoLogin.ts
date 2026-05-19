@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
 import { executeReactAutoLogin } from '@/services/authAutoLoginService';
+import { useRuntimeStore } from '@/state/runtimeStore';
 
 import {
     getLoginErrorMessage as getErrorMessage,
@@ -18,6 +19,9 @@ export function useLoginAutoLogin({
     snapshot
 }: any) {
     const { t } = useTranslation();
+    const backendRuntimeSnapshotHydrated = useRuntimeStore(
+        (state: any) => state.shell.backendRuntimeSnapshotHydrated
+    );
     const [autoLoginState, setAutoLoginState] = useState<any>({
         status: 'idle',
         remainingSeconds: 0,
@@ -33,7 +37,10 @@ export function useLoginAutoLogin({
         autoLoginState.status === 'scheduled' ||
         autoLoginState.status === 'running';
     const isAutoLoginStartBlocked =
-        isDatabaseBlocked || isSubmitting || Boolean(activeSavedUserId);
+        isDatabaseBlocked ||
+        !backendRuntimeSnapshotHydrated ||
+        isSubmitting ||
+        Boolean(activeSavedUserId);
     const shouldShowAutoLogin =
         !isLoading &&
         (Boolean(snapshot?.lastUserLoggedIn) ||
@@ -326,6 +333,7 @@ export function useLoginAutoLogin({
         };
     }, [
         autoLoginRetryNonce,
+        backendRuntimeSnapshotHydrated,
         databaseReady,
         isAutoLoginStartBlocked,
         isLoading,

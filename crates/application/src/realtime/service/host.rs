@@ -9,7 +9,7 @@ use vrcx_0_core::realtime::RealtimeWsMessagePayload;
 use vrcx_0_persistence::config as config_store;
 use vrcx_0_persistence::realtime::{
     lookup_game_log_world_name, write_realtime_batch, NotificationExpiration,
-    RealtimePersistenceBatch,
+    RealtimePersistenceBatch, RealtimeWriteCounts,
 };
 use vrcx_0_persistence::DatabaseService;
 use vrcx_0_vrchat_client::auth::current_user_get_input;

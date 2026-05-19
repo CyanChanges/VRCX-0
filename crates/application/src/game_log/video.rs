@@ -101,15 +101,19 @@ pub async fn handle_video_play(
         }],
         ..Default::default()
     };
-    if let Err(error) = game_log::write_batch(db, &batch) {
-        let message = error.to_string();
-        event_bus.emit_game_log_persistence_fallback(&batch, vec![raw_row], &message);
-        tracing::warn!(
-            "GameLog video write failed; frontend fallback writes are disabled: {message}"
-        );
-        return Ok(());
-    }
+    let affected_count = match game_log::write_batch(db, &batch) {
+        Ok(affected_count) => affected_count,
+        Err(error) => {
+            let message = error.to_string();
+            event_bus.emit_game_log_persistence_fallback(&batch, vec![raw_row], &message);
+            tracing::warn!(
+                "GameLog video write failed; frontend fallback writes are disabled: {message}"
+            );
+            return Ok(());
+        }
+    };
 
+    event_bus.emit_game_log_persisted(affected_count);
     event_bus.emit_runtime_game_log_event(raw_row);
 
     event_bus.emit_game_log_side_effect(

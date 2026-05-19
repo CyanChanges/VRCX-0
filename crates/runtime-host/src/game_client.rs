@@ -1,10 +1,9 @@
 use std::sync::Arc;
 
-use crate::adapters::application::context::RuntimeHostContext;
-use crate::adapters::application::host_actions::RuntimeHost;
-use crate::adapters::host_file_access::{ensure_vrchat_launch_path_allowed, HostFileAccess};
-use crate::adapters::log_watcher::LogWatcher;
-
+use crate::context::RuntimeHostContext;
+use crate::host_actions::RuntimeHost;
+use crate::host_file_access::{ensure_vrchat_launch_path_allowed, HostFileAccess};
+use crate::log_watcher::LogWatcher;
 use vrcx_0_application::Error as RuntimeError;
 use vrcx_0_application::Result as RuntimeResult;
 use vrcx_0_application::{
@@ -136,15 +135,15 @@ impl GameClientHostRuntime {
         self.inner.stop();
     }
 
-    pub(super) fn on_ipc_packet(
+    pub fn on_ipc_packet(
         &self,
         packet: &str,
     ) -> RuntimeResult<vrcx_0_core::ipc::IpcEventDisposition> {
         self.inner.on_ipc_packet(packet)
     }
 
-    #[cfg(test)]
-    pub(super) fn wait_until_idle(&self) -> bool {
+    #[cfg(feature = "test-utils")]
+    pub fn wait_until_idle(&self) -> bool {
         self.inner.wait_until_idle()
     }
 }
@@ -155,9 +154,9 @@ impl GameProcessEventSink for GameClientHostRuntime {
     }
 }
 
-#[cfg(test)]
+#[cfg(any(test, feature = "test-utils"))]
 impl GameClientHostRuntime {
-    pub(super) fn test_with_actions(
+    pub fn test_with_actions(
         context: Arc<RuntimeHostContext>,
         log_watcher: LogWatcher,
         actions: Arc<dyn GameClientActions>,

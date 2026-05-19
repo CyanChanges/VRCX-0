@@ -5,9 +5,7 @@ use std::collections::{HashMap, HashSet};
 use serde_json::Value;
 use vrcx_0_core::json::RawJson;
 
-use crate::common::{
-    add_list_params, normalize_text, strict_row_json, value_as_string,
-};
+use crate::common::{add_list_params, normalize_text, strict_row_json, value_as_string};
 use crate::database::DatabaseService;
 use crate::realtime::{ensure_realtime_tables, normalize_user_table_prefix};
 use crate::Error;
