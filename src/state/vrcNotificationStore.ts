@@ -204,10 +204,7 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
                     })
                 );
                 set({
-                    ...createNotificationState(
-                        rows,
-                        `${rows.length} VRChat notifications loaded.`
-                    ),
+                    ...createNotificationState(rows),
                     loadStatus: 'ready'
                 });
                 syncShellUnseenCount(get().unseenCount);

@@ -66,7 +66,6 @@ export function AppToaster(props: any) {
     return (
         <Toaster
             theme={theme}
-            richColors
             position="top-center"
             offset={TITLE_BAR_TOAST_OFFSET}
             icons={{
