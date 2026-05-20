@@ -1,4 +1,5 @@
 import {
+    CheckCircle2Icon,
     CheckIcon,
     EyeIcon,
     ImageIcon,
@@ -243,14 +244,9 @@ export function MyAvatarGridCard({
                             )}
                             <div className="absolute top-1 left-1 flex max-w-[calc(100%-2rem)] flex-col items-start gap-1">
                                 {isActive ? (
-                                    <Badge
-                                        variant="secondary"
-                                        className="max-w-full truncate rounded-sm px-1.5 py-0 text-xs shadow-sm"
-                                    >
-                                        {t(
-                                            'view.my_avatars.label.current_avatar'
-                                        )}
-                                    </Badge>
+                                    <span className="bg-primary text-primary-foreground grid size-5 place-items-center rounded-full shadow-sm">
+                                        <CheckCircle2Icon className="size-3.5" />
+                                    </span>
                                 ) : null}
                                 {tags.length ? (
                                     <HoverCard openDelay={200} closeDelay={100}>

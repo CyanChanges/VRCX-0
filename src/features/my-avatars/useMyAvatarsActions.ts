@@ -55,6 +55,54 @@ function isRuntimeAuthTarget(authTarget: MyAvatarsAuthTarget) {
     );
 }
 
+function applyOptimisticCurrentAvatar(avatar: MyAvatarRow, avatarId: string) {
+    const runtimeStore = useRuntimeStore.getState();
+    const previousSnapshot = runtimeStore.auth.currentUserSnapshot;
+    if (!previousSnapshot || typeof previousSnapshot !== 'object') {
+        return null;
+    }
+
+    const nextSnapshot = {
+        ...previousSnapshot,
+        currentAvatar: avatarId,
+        currentAvatarImageUrl:
+            avatar.imageUrl ||
+            avatar.thumbnailImageUrl ||
+            previousSnapshot.currentAvatarImageUrl,
+        currentAvatarThumbnailImageUrl:
+            avatar.thumbnailImageUrl ||
+            avatar.imageUrl ||
+            previousSnapshot.currentAvatarThumbnailImageUrl,
+        $previousAvatarSwapTime: Date.now()
+    };
+
+    runtimeStore.setAuthBootstrap({
+        currentUserSnapshot: nextSnapshot
+    });
+
+    return previousSnapshot;
+}
+
+function rollbackOptimisticCurrentAvatar(
+    previousSnapshot: Record<string, any> | null,
+    optimisticAvatarId: string
+) {
+    if (!previousSnapshot) {
+        return;
+    }
+    const runtimeStore = useRuntimeStore.getState();
+    const currentSnapshot = runtimeStore.auth.currentUserSnapshot;
+    if (
+        currentSnapshot &&
+        typeof currentSnapshot === 'object' &&
+        currentSnapshot.currentAvatar === optimisticAvatarId
+    ) {
+        runtimeStore.setAuthBootstrap({
+            currentUserSnapshot: previousSnapshot
+        });
+    }
+}
+
 export function useMyAvatarsActions({
     avatars,
     imageCropRequest,
@@ -232,6 +280,7 @@ export function useMyAvatarsActions({
         if (!isRuntimeAuthTarget(authTarget)) {
             return;
         }
+        const previousSnapshot = applyOptimisticCurrentAvatar(avatar, avatarId);
         setUpdatingAvatarId(avatarId);
         try {
             await avatarProfileRepository.selectAvatar({
@@ -241,14 +290,11 @@ export function useMyAvatarsActions({
             if (!isRuntimeAuthTarget(authTarget)) {
                 return;
             }
-            setDetail(
-                t('view.my_avatars.dynamic.selected_avatar_value', {
-                    value: avatar?.name || avatarId
-                })
-            );
+            setDetail('');
             toast.success(t('view.my_avatars.success.avatar_selected'));
         } catch (error) {
             if (isRuntimeAuthTarget(authTarget)) {
+                rollbackOptimisticCurrentAvatar(previousSnapshot, avatarId);
                 const message =
                     error instanceof Error
                         ? error.message
