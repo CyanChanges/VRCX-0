@@ -140,10 +140,17 @@ export function getFavoritesPageConfig(kind: any, t: any) {
             : kind === 'world'
               ? translate('view.favorite.worlds.local_favorites')
               : translate('dialog.favorite.local_favorites');
+    const localNewGroupLabel =
+        kind === 'avatar'
+            ? translate('view.favorite.avatars.new_group')
+            : kind === 'world'
+              ? translate('view.favorite.worlds.new_group')
+              : translate('view.favorite.worlds.new_group');
 
     return {
         remoteSectionTitle,
         localSectionTitle,
+        localNewGroupLabel,
         searchPlaceholder:
             kind === 'avatar'
                 ? translate('view.favorite.avatars.search')

@@ -106,9 +106,6 @@ export function FavoriteActionMenu({
     const currentEndpoint = useRuntimeStore(
         (state: any) => state.auth.currentUserEndpoint
     );
-    const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
-    );
     const confirm = useModalStore((state: any) => state.confirm);
     const groups = useFavoriteStore((state: any) => resolveGroups(kind, state));
     const storedLocalGroups = useFavoriteStore((state: any) =>
@@ -142,14 +139,6 @@ export function FavoriteActionMenu({
     );
     const [actionStatus, setActionStatus] = useState('idle');
     const actionStatusRef = useRef('idle');
-    const isLocalUserVrcPlusSupporter = Boolean(
-        currentUserSnapshot?.$isVRCPlus ||
-        currentUserSnapshot?.tags?.includes?.('system_supporter') ||
-        currentUserSnapshot?.tags?.includes?.(
-            'system_supporter_early_adopter'
-        ) ||
-        currentUserSnapshot?.tags?.includes?.('system_supporter_legacy')
-    );
 
     async function addFavorite(group: any) {
         if (!normalizedEntityId || actionStatusRef.current !== 'idle') {
@@ -402,15 +391,10 @@ export function FavoriteActionMenu({
                                 groupName,
                                 normalizedEntityId
                             );
-                            const disabled =
-                                kind === 'avatar' &&
-                                !isLocalFavorite &&
-                                !isLocalUserVrcPlusSupporter;
                             return (
                                 <DropdownMenuCheckboxItem
                                     key={groupName}
                                     checked={isLocalFavorite}
-                                    disabled={disabled}
                                     onSelect={(event: any) =>
                                         event.preventDefault()
                                     }

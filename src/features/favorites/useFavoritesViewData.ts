@@ -17,7 +17,6 @@ const EMPTY_ITEMS = Object.freeze([]);
 
 export function useFavoritesViewData({
     avatarHistory,
-    currentUserSnapshot,
     favoriteAvatarGroups,
     favoriteFriendGroups,
     favoriteWorldGroups,
@@ -254,18 +253,12 @@ export function useFavoritesViewData({
         () => (isSearchActive ? filteredItems : selectedItems),
         [filteredItems, isSearchActive, selectedItems]
     );
-    const canCreateLocalGroup =
-        kind !== 'avatar' ||
-        Boolean(
-            currentUserSnapshot?.$isVRCPlus ||
-            currentUserSnapshot?.tags?.includes?.('system_supporter')
-        );
 
     return {
         allItems,
         avatarHistoryGroups,
         avatarHistoryItems,
-        canCreateLocalGroup,
+        canCreateLocalGroup: true,
         contentItems,
         filteredItems,
         hasSearchInput,

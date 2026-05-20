@@ -26,7 +26,6 @@ export function useFavoritesPageController({ kind }: { kind: FavoriteKind }) {
     const [newLocalGroupName, setNewLocalGroupName] = useState('');
     const viewData = useFavoritesViewData({
         avatarHistory: collections.avatarHistory,
-        currentUserSnapshot: runtime.currentUserSnapshot,
         favoriteAvatarGroups: collections.favoriteAvatarGroups,
         favoriteFriendGroups: collections.favoriteFriendGroups,
         favoriteWorldGroups: collections.favoriteWorldGroups,

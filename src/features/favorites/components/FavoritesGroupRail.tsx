@@ -174,6 +174,7 @@ const GroupRailSection = memo(function GroupRailSection({
     loading,
     creating,
     newGroupName,
+    newGroupLabel,
     showNewGroup,
     onRefresh,
     onSelect,
@@ -189,6 +190,8 @@ const GroupRailSection = memo(function GroupRailSection({
     onHistoryClear
 }: any) {
     const { t } = useTranslation();
+    const resolvedNewGroupLabel =
+        newGroupLabel || t('view.favorite.worlds.new_group');
 
     return (
         <div className="flex flex-col gap-2">
@@ -296,7 +299,7 @@ const GroupRailSection = memo(function GroupRailSection({
                         onClick={onStartCreate}
                     >
                         <PlusIcon data-icon="inline-start" />
-                        <span>{t('view.favorite.worlds.new_group')}</span>
+                        <span>{resolvedNewGroupLabel}</span>
                     </Button>
                 ) : null}
                 {showNewGroup && creating ? (
@@ -305,7 +308,7 @@ const GroupRailSection = memo(function GroupRailSection({
                         autoFocus
                         className="h-8 text-sm"
                         disabled={loading}
-                        placeholder={t('view.favorite.worlds.new_group')}
+                        placeholder={resolvedNewGroupLabel}
                         onChange={(event: any) =>
                             onNewGroupNameChange(event.target.value)
                         }

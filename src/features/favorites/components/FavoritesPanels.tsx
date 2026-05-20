@@ -88,6 +88,7 @@ export function FavoritesGroupRailPanel({
                 loading={favoriteCommands.refreshing}
                 creating={creatingLocalGroup}
                 newGroupName={newLocalGroupName}
+                newGroupLabel={viewData.pageConfig.localNewGroupLabel}
                 showNewGroup={viewData.canCreateLocalGroup}
                 onRefresh={favoriteCommands.refreshFavorites}
                 onSelect={selectGroup}
