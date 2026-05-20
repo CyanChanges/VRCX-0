@@ -207,6 +207,9 @@ const FavoriteCard = memo(function FavoriteCard({
         event.preventDefault();
         openHandler();
     };
+    const stopCardInteraction = (event: any) => {
+        event.stopPropagation();
+    };
 
     return (
         <div
@@ -310,7 +313,8 @@ const FavoriteCard = memo(function FavoriteCard({
                         t('view.favorites.empty.favorite_fallback')
                     }`}
                     checked={selected}
-                    onClick={(event: any) => event.stopPropagation()}
+                    onClick={stopCardInteraction}
+                    onKeyDown={stopCardInteraction}
                     onCheckedChange={(checked: any) =>
                         onToggleSelect?.(item.key, Boolean(checked))
                     }
@@ -325,7 +329,7 @@ const FavoriteCard = memo(function FavoriteCard({
                             className="rounded-full"
                             aria-label={t('common.actions.configure')}
                             disabled={removing}
-                            onClick={(event: any) => event.stopPropagation()}
+                            onClick={stopCardInteraction}
                         >
                             {removing ? (
                                 <Spinner data-icon="inline-start" />
@@ -334,7 +338,12 @@ const FavoriteCard = memo(function FavoriteCard({
                             )}
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent
+                        align="end"
+                        onClick={stopCardInteraction}
+                        onKeyDown={stopCardInteraction}
+                        onPointerDown={stopCardInteraction}
+                    >
                         <DropdownMenuGroup>
                             <DropdownMenuItem onSelect={() => openHandler?.()}>
                                 {t('common.actions.view_details')}

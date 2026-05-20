@@ -121,6 +121,13 @@ export function FavoriteActionMenu({
                 : Object.keys(localFavorites),
         [storedLocalGroups, localFavorites]
     );
+    const localFavoriteActive = useMemo(
+        () =>
+            localGroups.some((groupName: any) =>
+                hasLocalFavorite(localFavorites, groupName, normalizedEntityId)
+            ),
+        [localFavorites, localGroups, normalizedEntityId]
+    );
     const remoteFavorite = useFavoriteStore(
         (state: any) =>
             state.remoteFavoritesByObjectId[normalizedEntityId] || null
@@ -290,7 +297,8 @@ export function FavoriteActionMenu({
         return null;
     }
 
-    const triggerLabel = remoteFavorite
+    const favorited = Boolean(remoteFavorite) || localFavoriteActive;
+    const triggerLabel = favorited
         ? t('view.favorite.label.favorited')
         : label || t('view.favorite.label.favorite');
     const localFavoritesLabel =
@@ -320,7 +328,7 @@ export function FavoriteActionMenu({
                     ) : (
                         <HeartIcon
                             data-icon="inline-start"
-                            className={remoteFavorite ? 'fill-current' : ''}
+                            className={favorited ? 'fill-current' : ''}
                         />
                     )}
                     {iconOnly ? null : triggerLabel}

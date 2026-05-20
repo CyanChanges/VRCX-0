@@ -81,6 +81,29 @@ export function SettingsSystemTab({
                     </Field>
                     <Field
                         label={t(
+                            'view.settings.general.application.background_mode',
+                            {
+                                defaultValue:
+                                    'Switch to Background Mode When Minimized to Tray'
+                            }
+                        )}
+                        description={t(
+                            'view.settings.general.application.background_mode_description',
+                            {
+                                defaultValue:
+                                    'When closing VRCX-0 to the system tray, switch to Background Mode for ultra-low memory usage, around one-tenth. Some page state may reset after restore.'
+                            }
+                        )}
+                        disabled={!isCloseToTray}
+                    >
+                        <Switch
+                            checked={backgroundModeEnabled}
+                            disabled={!isCloseToTray}
+                            onCheckedChange={onBackgroundModeEnabledChange}
+                        />
+                    </Field>
+                    <Field
+                        label={t(
                             'view.settings.general.logging.auto_login_delay'
                         )}
                     >
@@ -113,27 +136,6 @@ export function SettingsSystemTab({
                             </div>
                         </Field>
                     ) : null}
-                    <Field
-                        label={t(
-                            'view.settings.general.application.background_mode',
-                            {
-                                defaultValue:
-                                    'Switch to Background Mode When Minimized to Tray'
-                            }
-                        )}
-                        description={t(
-                            'view.settings.general.application.background_mode_description',
-                            {
-                                defaultValue:
-                                    'When closing VRCX-0 to the system tray, switch to Background Mode for ultra-low memory usage, around one-tenth. Some page state may reset after restore.'
-                            }
-                        )}
-                    >
-                        <Switch
-                            checked={backgroundModeEnabled}
-                            onCheckedChange={onBackgroundModeEnabledChange}
-                        />
-                    </Field>
                     <Field label={t('view.settings.general.application.proxy')}>
                         <Button
                             type="button"

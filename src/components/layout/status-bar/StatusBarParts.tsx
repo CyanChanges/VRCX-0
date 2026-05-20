@@ -19,11 +19,15 @@ export function StatusSegment({
     visible = true,
     active = false,
     warn = false,
+    showDot = true,
     label,
     value,
     children,
+    className,
+    labelClassName,
     onClick,
-    tooltip
+    tooltip,
+    valueClassName
 }: any) {
     if (!visible) {
         return null;
@@ -31,10 +35,12 @@ export function StatusSegment({
 
     const content = (
         <>
-            <StatusDot active={active} warn={warn} />
-            <span className="text-muted-foreground text-xs">{label}</span>
+            {showDot ? <StatusDot active={active} warn={warn} /> : null}
+            <span className={cn('text-muted-foreground text-xs', labelClassName)}>
+                {label}
+            </span>
             {value ? (
-                <span className="text-foreground truncate text-xs">
+                <span className={cn('text-foreground truncate text-xs', valueClassName)}>
                     {value}
                 </span>
             ) : null}
@@ -48,7 +54,10 @@ export function StatusSegment({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-6 min-w-0 justify-start gap-1.5 rounded-none border-r px-2 text-left font-normal"
+                className={cn(
+                    'h-6 min-w-0 justify-start gap-1.5 rounded-none border-r px-2 text-left font-normal',
+                    className
+                )}
                 onClick={onClick}
             >
                 {content}
@@ -66,7 +75,12 @@ export function StatusSegment({
     }
 
     const segment = (
-        <div className="flex h-6 min-w-0 items-center gap-1.5 border-r px-2">
+        <div
+            className={cn(
+                'flex h-6 min-w-0 items-center gap-1.5 border-r px-2',
+                className
+            )}
+        >
             {content}
         </div>
     );

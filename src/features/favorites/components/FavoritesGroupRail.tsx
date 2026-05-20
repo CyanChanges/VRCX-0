@@ -24,7 +24,26 @@ import {
 import { Input } from '@/ui/shadcn/input';
 import { Spinner } from '@/ui/shadcn/spinner';
 
-const VISIBILITY_OPTIONS = ['public', 'friends', 'private'];
+const VISIBILITY_OPTIONS = ['public', 'friends', 'private'] as const;
+type FavoriteVisibility = (typeof VISIBILITY_OPTIONS)[number];
+
+const VISIBILITY_LABEL_KEYS: Record<FavoriteVisibility, string> = {
+    public: 'view.favorite.visibility.public',
+    friends: 'view.favorite.visibility.friends',
+    private: 'view.favorite.visibility.private'
+};
+
+function getVisibilityLabel(
+    t: ReturnType<typeof useTranslation>['t'],
+    visibility: string
+) {
+    return (
+        VISIBILITY_LABEL_KEYS[visibility as FavoriteVisibility]
+            ? t(VISIBILITY_LABEL_KEYS[visibility as FavoriteVisibility])
+            : visibility
+    );
+}
+
 function GroupMenu({
     group,
     onRemoteRename,
@@ -102,7 +121,7 @@ function GroupMenu({
                         </DropdownMenuSubTrigger>
                         <DropdownMenuSubContent className="w-40">
                             <DropdownMenuGroup>
-                                {VISIBILITY_OPTIONS.map((visibility: any) => (
+                                {VISIBILITY_OPTIONS.map((visibility) => (
                                     <DropdownMenuCheckboxItem
                                         key={visibility}
                                         checked={
@@ -115,7 +134,7 @@ function GroupMenu({
                                             )
                                         }
                                     >
-                                        {visibility}
+                                        {getVisibilityLabel(t, visibility)}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuGroup>
@@ -236,6 +255,9 @@ const GroupRailSection = memo(function GroupRailSection({
                         const isActive =
                             selectedSource === group.source &&
                             selectedGroupKey === group.key;
+                        const visibilityLabel = group.visibility
+                            ? getVisibilityLabel(t, group.visibility)
+                            : null;
                         return (
                             <div
                                 key={`${group.source}:${group.key}`}
@@ -257,8 +279,8 @@ const GroupRailSection = memo(function GroupRailSection({
                                             {group.label}
                                         </span>
                                         <span className="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs font-normal">
-                                            {group.visibility ? (
-                                                <span>{group.visibility}</span>
+                                            {visibilityLabel ? (
+                                                <span>{visibilityLabel}</span>
                                             ) : null}
                                             {group.capacity ? (
                                                 <span>

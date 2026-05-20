@@ -210,13 +210,6 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
         'cancelled',
         'error'
     ].includes(mutualGraphStatus);
-    const mutualGraphRunning =
-        mutualGraphStatus === 'running' || mutualGraphStatus === 'completed';
-    const mutualGraphWarn =
-        mutualGraphStatus === 'cancelling' ||
-        mutualGraphStatus === 'cancelled' ||
-        mutualGraphStatus === 'error' ||
-        Boolean(mutualGraph?.failedFriends);
 
     useEffect(() => {
         if (!zoomPopoverOpen) {
@@ -386,14 +379,6 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                         }
                     />
                     <StatusSegment
-                        visible={visibility.mutualGraph && mutualGraphVisible}
-                        active={mutualGraphRunning}
-                        warn={mutualGraphWarn}
-                        label={t('status_bar.mutual_graph')}
-                        value={formatMutualGraphValue(mutualGraph)}
-                        tooltip={formatMutualGraphTooltip(mutualGraph, t)}
-                    />
-                    <StatusSegment
                         visible={visibility.servers}
                         active={
                             !vrcStatus.indicator ||
@@ -454,6 +439,15 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                 </div>
 
                 <div className="flex shrink-0 items-center justify-end overflow-hidden">
+                    <StatusSegment
+                        visible={visibility.mutualGraph && mutualGraphVisible}
+                        showDot={false}
+                        label={t('status_bar.mutual_graph')}
+                        value={formatMutualGraphValue(mutualGraph)}
+                        tooltip={formatMutualGraphTooltip(mutualGraph, t)}
+                        className="-ml-px border-l bg-muted/70 text-muted-foreground"
+                        valueClassName="text-muted-foreground"
+                    />
                     {visibility.clocks
                         ? visibleClocks.map((clock: any, index: any) => (
                               <Popover
