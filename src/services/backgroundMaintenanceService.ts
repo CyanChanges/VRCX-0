@@ -641,12 +641,15 @@ export async function runBackgroundMaintenanceTick() {
 
     running = true;
     const dueJobs = await getDueRuntimeScheduledFrontendJobs();
-    recordRuntimeJobTelemetry({
-        name: 'backgroundMaintenanceTick',
-        owner: 'frontend',
-        status: 'running',
-        detail: 'Frontend executor is running Rust-scheduled maintenance.'
-    });
+    const hasDueJobs = dueJobs.size > 0;
+    if (hasDueJobs) {
+        recordRuntimeJobTelemetry({
+            name: 'backgroundMaintenanceTick',
+            owner: 'frontend',
+            status: 'running',
+            detail: 'Frontend executor is running Rust-scheduled maintenance.'
+        });
+    }
 
     try {
         if (dueJobs.has('appUpdateCheck')) {
@@ -665,12 +668,14 @@ export async function runBackgroundMaintenanceTick() {
         }
     } finally {
         running = false;
-        recordRuntimeJobTelemetry({
-            name: 'backgroundMaintenanceTick',
-            owner: 'frontend',
-            status: 'completed',
-            detail: 'Rust-scheduled frontend maintenance tick completed.'
-        });
+        if (hasDueJobs) {
+            recordRuntimeJobTelemetry({
+                name: 'backgroundMaintenanceTick',
+                owner: 'frontend',
+                status: 'completed',
+                detail: 'Rust-scheduled frontend maintenance tick completed.'
+            });
+        }
     }
 }
 
