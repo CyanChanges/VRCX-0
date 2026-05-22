@@ -1445,7 +1445,7 @@
             },
             "loading": {
                 "deleting_metadata": "Deleting metadata",
-                "uploading_screenshot": "Uploading screenshot",
+                "uploading_screenshot": "Uploading to Gallery",
                 "searching_screenshots": "Searching screenshots",
                 "resolving_file_list_and_metadata_summaries": "Resolving file list and metadata summaries",
                 "loading_screenshot": "Loading screenshot",
@@ -1453,7 +1453,7 @@
             },
             "description": {
                 "details": "Details",
-                "browse_for_a_screenshot_load_the_latest_screenshot_or_run_a_metadata_search": "Browse for a screenshot, load the latest screenshot, or run a metadata search"
+                "browse_for_a_screenshot_load_the_latest_screenshot_or_run_a_metadata_search": "Drag and drop a screenshot here, or run a metadata search"
             },
             "toast": {
                 "failed_to_load_value": "Failed to load {value}",
@@ -3897,9 +3897,9 @@
             "browse": "Browse",
             "last_screenshot": "Last Screenshot",
             "copy_image": "Copy Image",
-            "open_folder": "Open Folder",
+            "open_folder": "Show in File Explorer",
             "delete_metadata": "Delete Metadata",
-            "upload": "Upload",
+            "upload": "Upload to Gallery",
             "search_placeholder": "Search",
             "search_type_placeholder": "Search Type",
             "search_types": {

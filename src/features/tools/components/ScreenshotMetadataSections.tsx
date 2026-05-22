@@ -3,8 +3,6 @@ import {
     ArrowRightIcon,
     CopyIcon,
     FolderOpenIcon,
-    FolderSearchIcon,
-    ImageIcon,
     SearchIcon,
     Trash2Icon,
     UploadIcon,
@@ -95,8 +93,6 @@ export function ScreenshotMetadataToolbar({
     onSearchQueryChange,
     onSearchTypeChange,
     onSearch,
-    onBrowse,
-    onLoadLast,
     onOpenFolder,
     onCopyImage,
     onUpload,
@@ -107,14 +103,6 @@ export function ScreenshotMetadataToolbar({
     return (
         <div className="my-2 flex flex-col gap-3 xl:flex-row xl:items-center">
             <div className="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" onClick={onBrowse}>
-                    <FolderSearchIcon data-icon="inline-start" />
-                    {t('dialog.screenshot_metadata.browse')}
-                </Button>
-                <Button variant="outline" size="sm" onClick={onLoadLast}>
-                    <ImageIcon data-icon="inline-start" />
-                    {t('dialog.screenshot_metadata.last_screenshot')}
-                </Button>
                 <Button
                     variant="outline"
                     size="sm"

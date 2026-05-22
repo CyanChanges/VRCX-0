@@ -1445,7 +1445,7 @@
             },
             "loading": {
                 "deleting_metadata": "メタデータを削除中",
-                "uploading_screenshot": "スクリーンショットをアップロード中",
+                "uploading_screenshot": "ギャラリーにアップロード中",
                 "searching_screenshots": "スクリーンショットを検索中",
                 "resolving_file_list_and_metadata_summaries": "ファイル一覧とメタデータ概要を解決中",
                 "loading_screenshot": "スクリーンショットを読み込み中",
@@ -1453,7 +1453,7 @@
             },
             "description": {
                 "details": "詳細",
-                "browse_for_a_screenshot_load_the_latest_screenshot_or_run_a_metadata_search": "スクリーンショットを選択、最新スクリーンショットを読み込み、またはメタデータ検索を実行します"
+                "browse_for_a_screenshot_load_the_latest_screenshot_or_run_a_metadata_search": "スクリーンショットをここにドラッグ＆ドロップするか、メタデータ検索を実行します"
             },
             "toast": {
                 "failed_to_load_value": "{value}の読み込みに失敗しました",
@@ -3897,9 +3897,9 @@
             "browse": "参照",
             "last_screenshot": "最後に見た画像",
             "copy_image": "画像をコピー",
-            "open_folder": "フォルダを開く",
+            "open_folder": "エクスプローラーで表示",
             "delete_metadata": "メタデータを削除",
-            "upload": "アップロード",
+            "upload": "ギャラリーにアップロード",
             "search_placeholder": "検索...",
             "search_type_placeholder": "検索タイプ",
             "search_types": {

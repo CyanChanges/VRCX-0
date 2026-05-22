@@ -407,31 +407,6 @@ export function ScreenshotMetadataPage() {
         }
     }
 
-    async function loadLastScreenshot() {
-        try {
-            resetSearchContext({ clearQuery: true });
-            const path = await mediaRepository.getLastScreenshot();
-            if (!path) {
-                const message = t('dialog.screenshot_metadata.invalid_file');
-                setMetadata(null);
-                setImageUrl('');
-                setMetadataError(message);
-                toast.error(message);
-                return;
-            }
-            openDetailPath(path);
-        } catch (error) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to load last screenshot.';
-            setMetadata(null);
-            setImageUrl('');
-            setMetadataError(message);
-            toast.error(message);
-        }
-    }
-
     useEffect(() => {
         if (!routePath) {
             return;
@@ -689,33 +664,6 @@ export function ScreenshotMetadataPage() {
             )
             .catch(() => {});
     }, [folderTree, isGalleryFolderPreferenceLoaded]);
-
-    async function browseForScreenshot() {
-        try {
-            const defaultPath =
-                selectedGalleryFolder ||
-                storedGalleryFolder ||
-                (await mediaRepository.getVrchatPhotosLocation());
-            const filePath = await mediaRepository.openFileSelectorDialog(
-                defaultPath || '',
-                '.png',
-                'PNG Files (*.png)|*.png'
-            );
-
-            if (!filePath) {
-                return;
-            }
-
-            resetSearchContext({ clearQuery: true });
-            openDetailPath(filePath);
-        } catch (error) {
-            toast.error(
-                error instanceof Error
-                    ? error.message
-                    : t('view.tools.toast.failed_to_open_screenshot_picker')
-            );
-        }
-    }
 
     async function openFolder() {
         if (!metadata?.filePath) {
@@ -1042,12 +990,6 @@ export function ScreenshotMetadataPage() {
                         onSearchTypeChange={handleSearchTypeChange}
                         onSearch={() => {
                             runSearch();
-                        }}
-                        onBrowse={() => {
-                            browseForScreenshot();
-                        }}
-                        onLoadLast={() => {
-                            loadLastScreenshot();
                         }}
                         onOpenFolder={() => {
                             openFolder();
