@@ -114,23 +114,22 @@ pub(super) fn add_profile_diff_feed_entries(
     }
 }
 
-pub(super) fn add_gps_feed_entry(
-    output: &mut RealtimeFriendOutput,
+pub(super) fn gps_feed_entry(
     user_id: &str,
     patch: &Value,
     previous: &Value,
     created_at: &str,
-) {
+) -> Option<Value> {
     let previous_location = resolve_gps_previous_location(previous);
     let location = string_field(patch.get("location"));
     if !is_real_location(&previous_location)
         || !is_real_location(&location)
         || previous_location == location
     {
-        return;
+        return None;
     }
     let (world_name, group_name) = resolve_location_name(&location, patch, Some(previous));
-    output.persistence.feed_entries.push(json!({
+    Some(json!({
         "created_at": created_at,
         "type": "GPS",
         "userId": user_id,
@@ -140,7 +139,7 @@ pub(super) fn add_gps_feed_entry(
         "previousLocation": previous_location,
         "time": resolve_gps_duration(previous),
         "groupName": group_name,
-    }));
+    }))
 }
 
 pub(super) fn online_offline_feed_entry(

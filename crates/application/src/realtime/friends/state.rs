@@ -8,6 +8,11 @@ use super::*;
 
 pub(super) const PENDING_OFFLINE_DELAY_MS: u64 = 170_000;
 
+#[derive(Clone, Debug, Default)]
+pub(super) struct RecentGps {
+    pub(super) locations_by_tag: HashMap<String, i64>,
+}
+
 #[derive(Clone, Debug)]
 pub(super) struct PendingOffline {
     pub(super) token: u64,
@@ -21,6 +26,7 @@ pub(super) struct RealtimeFriendState {
     pub(super) timer_token: u64,
     pub(super) baseline: Option<RealtimeFriendSnapshot>,
     pub(super) pending_offline: HashMap<String, PendingOffline>,
+    pub(super) recent_gps: HashMap<String, RecentGps>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -60,8 +66,12 @@ impl RealtimeFriendsRuntime {
                     .insert("pendingOffline".into(), Value::Bool(true));
                 true
             });
+            state
+                .recent_gps
+                .retain(|user_id, _recent| baseline.friends_by_id.contains_key(user_id));
         } else {
             state.pending_offline.clear();
+            state.recent_gps.clear();
         }
         let friend_count = baseline.friends_by_id.len();
         state.baseline = Some(RealtimeFriendSnapshot {
@@ -86,6 +96,7 @@ impl RealtimeFriendsRuntime {
         state.generation = state.generation.saturating_add(1);
         state.baseline = None;
         state.pending_offline.clear();
+        state.recent_gps.clear();
         state.generation
     }
 
@@ -102,6 +113,7 @@ impl RealtimeFriendsRuntime {
             state.generation = state.generation.saturating_add(1);
             state.baseline = None;
             state.pending_offline.clear();
+            state.recent_gps.clear();
         }
         should_clear
     }
@@ -147,6 +159,7 @@ impl RealtimeFriendsRuntime {
             return None;
         }
         let pending = state.pending_offline.remove(user_id)?;
+        state.recent_gps.remove(user_id);
         let current = state.baseline.as_ref()?.friends_by_id.get(user_id)?;
         if is_online_state(current) && !bool_field(record_to_value(current).get("pendingOffline")) {
             return None;

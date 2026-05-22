@@ -1,11 +1,13 @@
 use super::persistence::{
-    add_gps_feed_entry, add_location_metadata, add_profile_diff_feed_entries, friend_log_upsert,
+    add_location_metadata, add_profile_diff_feed_entries, friend_log_upsert, gps_feed_entry,
     is_online_state, online_offline_feed_entry,
 };
 use super::projection::{has_event_state_bucket, resolve_state_bucket};
 use super::state::{PendingOffline, RealtimeFriendState, PENDING_OFFLINE_DELAY_MS};
 use super::utils::*;
 use super::*;
+
+const GPS_REPEAT_WINDOW_MS: i64 = 5 * 60 * 1000;
 
 pub fn is_friend_event_type(message_type: &str) -> bool {
     matches!(
@@ -63,6 +65,7 @@ pub(super) fn apply_friend_event(
         "friend-delete" => {
             let user_id = event_user_id(content)?;
             state.pending_offline.remove(&user_id);
+            state.recent_gps.remove(&user_id);
             if let Some(baseline) = state.baseline.as_mut() {
                 baseline.friends_by_id.remove(&user_id);
             }
@@ -125,7 +128,14 @@ pub(super) fn apply_friend_event(
                         &now.iso,
                     ));
             } else if let Some(previous) = previous.as_ref() {
-                add_gps_feed_entry(&mut output, &user_id, &patch, previous, &now.iso);
+                add_gps_feed_entry_if_not_repeated(
+                    state,
+                    &mut output,
+                    &user_id,
+                    &patch,
+                    previous,
+                    now,
+                );
             }
             apply_patch_to_state(state, &mut output, &user_id, patch, "online");
         }
@@ -169,6 +179,7 @@ pub(super) fn apply_friend_event(
                     delay_ms: PENDING_OFFLINE_DELAY_MS,
                 };
             } else {
+                state.recent_gps.remove(&user_id);
                 apply_patch_to_state(state, &mut output, &user_id, patch, next_state);
             }
         }
@@ -186,7 +197,17 @@ pub(super) fn apply_friend_event(
                 offline_like_patch(content, &user_id, &state_bucket)
             };
             if let Some(previous) = previous.as_ref() {
-                add_gps_feed_entry(&mut output, &user_id, &patch, previous, &now.iso);
+                add_gps_feed_entry_if_not_repeated(
+                    state,
+                    &mut output,
+                    &user_id,
+                    &patch,
+                    previous,
+                    now,
+                );
+            }
+            if state_bucket != "online" {
+                state.recent_gps.remove(&user_id);
             }
             apply_patch_to_state(state, &mut output, &user_id, patch, &state_bucket);
         }
@@ -201,6 +222,57 @@ pub(super) fn apply_friend_event(
         return None;
     }
     Some(output)
+}
+
+fn recent_enough(previous_ms: i64, now_ms: i64) -> bool {
+    previous_ms > 0 && now_ms.saturating_sub(previous_ms) <= GPS_REPEAT_WINDOW_MS
+}
+
+fn should_suppress_repeated_gps(
+    state: &mut RealtimeFriendState,
+    user_id: &str,
+    location: &str,
+    now_ms: i64,
+) -> bool {
+    let Some(recent) = state.recent_gps.get_mut(user_id) else {
+        return false;
+    };
+    recent
+        .locations_by_tag
+        .retain(|_, observed_at_ms| recent_enough(*observed_at_ms, now_ms));
+    if recent.locations_by_tag.contains_key(location) {
+        recent.locations_by_tag.insert(location.to_string(), now_ms);
+        return true;
+    }
+    false
+}
+
+fn remember_gps_event(state: &mut RealtimeFriendState, user_id: &str, location: &str, now_ms: i64) {
+    state
+        .recent_gps
+        .entry(user_id.to_string())
+        .or_default()
+        .locations_by_tag
+        .insert(location.to_string(), now_ms);
+}
+
+fn add_gps_feed_entry_if_not_repeated(
+    state: &mut RealtimeFriendState,
+    output: &mut RealtimeFriendOutput,
+    user_id: &str,
+    patch: &Value,
+    previous: &Value,
+    now: &EventTime,
+) {
+    let Some(entry) = gps_feed_entry(user_id, patch, previous, &now.iso) else {
+        return;
+    };
+    let location = string_field(entry.get("location"));
+    if should_suppress_repeated_gps(state, user_id, &location, now.timestamp_ms) {
+        return;
+    }
+    remember_gps_event(state, user_id, &location, now.timestamp_ms);
+    output.persistence.feed_entries.push(entry);
 }
 
 pub(super) fn apply_patch_to_state(
