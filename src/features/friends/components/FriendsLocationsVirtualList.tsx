@@ -82,7 +82,7 @@ export function FriendsLocationsVirtualList({
                                 </div>
                             ) : (
                                 <div
-                                    className="grid overflow-hidden"
+                                    className="grid overflow-hidden py-px"
                                     style={{
                                         gap: `${derived.cardGridGap}px`,
                                         height: `${derived.cardGridRowHeight}px`,
