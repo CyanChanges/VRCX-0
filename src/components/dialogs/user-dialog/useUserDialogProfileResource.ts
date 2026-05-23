@@ -213,80 +213,6 @@ function hasRefreshValue(value: any) {
     return value !== undefined && value !== null && value !== '';
 }
 
-const USER_DIALOG_AVATAR_INFO_DEBUG_KEY = 'vrcx.debug.userDialogAvatarInfo';
-
-function isUserDialogAvatarInfoDebugEnabled() {
-    try {
-        return globalThis.localStorage?.getItem(
-            USER_DIALOG_AVATAR_INFO_DEBUG_KEY
-        ) === '1';
-    } catch {
-        return false;
-    }
-}
-
-function summarizeDebugUrl(value: any) {
-    const text = normalizedAvatarName(value);
-    if (!text) {
-        return {
-            hasValue: false,
-            fileId: '',
-            host: '',
-            pathPrefix: '',
-            length: 0
-        };
-    }
-
-    const fileId = /file_[0-9A-Za-z-]+/.exec(text)?.[0] || '';
-    let host = '';
-    let pathPrefix = '';
-    try {
-        const url = new URL(text);
-        host = url.host;
-        pathPrefix = url.pathname.slice(0, 80);
-    } catch {
-        pathPrefix = text.slice(0, 80);
-    }
-
-    return {
-        hasValue: true,
-        fileId,
-        host,
-        pathPrefix,
-        length: text.length
-    };
-}
-
-function summarizeAvatarDebugFields(source: any) {
-    if (!source || typeof source !== 'object') {
-        return null;
-    }
-
-    return {
-        id: normalizeUserId(source.id),
-        currentAvatar: normalizeUserId(source.currentAvatar),
-        name: normalizedAvatarName(source.name),
-        avatarName: normalizedAvatarName(source.avatarName),
-        currentAvatarName: normalizedAvatarName(source.currentAvatarName),
-        authorId: normalizeUserId(source.authorId),
-        currentAvatarAuthorId: normalizeUserId(source.currentAvatarAuthorId),
-        releaseStatus: normalizedAvatarName(source.releaseStatus),
-        imageUrl: summarizeDebugUrl(source.imageUrl),
-        thumbnailImageUrl: summarizeDebugUrl(source.thumbnailImageUrl),
-        currentAvatarImageUrl: summarizeDebugUrl(source.currentAvatarImageUrl),
-        currentAvatarThumbnailImageUrl: summarizeDebugUrl(
-            source.currentAvatarThumbnailImageUrl
-        )
-    };
-}
-
-function debugUserDialogAvatarInfo(stage: string, payload: any = {}) {
-    if (!isUserDialogAvatarInfoDebugEnabled()) {
-        return;
-    }
-    console.info('[VRCX][UserDialogAvatarInfo]', stage, payload);
-}
-
 function normalizedAvatarName(value: any) {
     return typeof value === 'string' ? value.trim() : '';
 }
@@ -397,13 +323,6 @@ async function getCurrentAvatarDetails({
     endpoint,
     profile
 }: any) {
-    debugUserDialogAvatarInfo('hydrate:start', {
-        endpoint,
-        avatarId,
-        currentUserId,
-        profile: summarizeAvatarDebugFields(profile)
-    });
-
     let avatarProfile = null;
     try {
         avatarProfile = await avatarProfileRepository.getAvatarProfile({
@@ -416,24 +335,9 @@ async function getCurrentAvatarDetails({
         });
     } catch {
         avatarProfile = null;
-        debugUserDialogAvatarInfo('hydrate:avatar-profile-error', {
-            endpoint,
-            avatarId
-        });
     }
 
-    debugUserDialogAvatarInfo('hydrate:avatar-profile-result', {
-        endpoint,
-        avatarId,
-        avatar: summarizeAvatarDebugFields(avatarProfile),
-        hasUsefulName: hasUsefulAvatarName(avatarProfile)
-    });
-
     if (hasUsefulAvatarName(avatarProfile)) {
-        debugUserDialogAvatarInfo('hydrate:final', {
-            source: 'avatar-profile',
-            avatar: summarizeAvatarDebugFields(avatarProfile)
-        });
         return avatarProfile;
     }
 
@@ -445,23 +349,8 @@ async function getCurrentAvatarDetails({
         });
     } catch {
         myAvatar = null;
-        debugUserDialogAvatarInfo('hydrate:my-avatar-error', {
-            endpoint,
-            avatarId
-        });
     }
-    debugUserDialogAvatarInfo('hydrate:my-avatar-result', {
-        endpoint,
-        avatarId,
-        avatar: summarizeAvatarDebugFields(myAvatar),
-        hasUsefulName: hasUsefulAvatarName(myAvatar),
-        hasUsefulDetails: hasUsefulAvatarDetails(myAvatar)
-    });
     if (hasUsefulAvatarName(myAvatar)) {
-        debugUserDialogAvatarInfo('hydrate:final', {
-            source: 'my-avatar',
-            avatar: summarizeAvatarDebugFields(myAvatar)
-        });
         return myAvatar;
     }
 
@@ -480,16 +369,8 @@ async function getCurrentAvatarDetails({
         const imageAvatarName = normalizedAvatarName(
             imageAvatarInfo?.avatarName
         );
-        debugUserDialogAvatarInfo('hydrate:image-file-result', {
-            endpoint,
-            avatarId,
-            imageUrl: summarizeDebugUrl(imageUrl),
-            ownerId: normalizeUserId(imageAvatarInfo?.ownerId),
-            avatarName: imageAvatarName,
-            hasUsefulName: !isUnknownAvatarName(imageAvatarName)
-        });
         if (!isUnknownAvatarName(imageAvatarName)) {
-            const imageAvatar = {
+            return {
                 ...(avatarProfile || myAvatar || {}),
                 id: avatarId,
                 name: imageAvatarName,
@@ -506,30 +387,12 @@ async function getCurrentAvatarDetails({
                     normalizedAvatarName(myAvatar?.thumbnailImageUrl) ||
                     imageUrl
             };
-            debugUserDialogAvatarInfo('hydrate:final', {
-                source: 'image-file',
-                avatar: summarizeAvatarDebugFields(imageAvatar)
-            });
-            return imageAvatar;
         }
-    } else {
-        debugUserDialogAvatarInfo('hydrate:image-file-skipped', {
-            endpoint,
-            avatarId,
-            reason: 'missing-image-url'
-        });
     }
 
-    const fallbackAvatar = hasUsefulAvatarDetails(myAvatar)
+    return hasUsefulAvatarDetails(myAvatar)
         ? myAvatar
         : avatarProfile || myAvatar;
-    debugUserDialogAvatarInfo('hydrate:final', {
-        source: hasUsefulAvatarDetails(myAvatar)
-            ? 'my-avatar-details'
-            : 'avatar-profile-or-null',
-        avatar: summarizeAvatarDebugFields(fallbackAvatar)
-    });
-    return fallbackAvatar;
 }
 
 function hasUsefulDisplayName(snapshot: any, userId: any) {
@@ -760,12 +623,6 @@ export function useUserDialogProfileResource({
                 if (!active) {
                     return;
                 }
-                debugUserDialogAvatarInfo('remote-user-profile', {
-                    endpoint: currentEndpoint,
-                    targetUserId: normalizedUserId,
-                    isTargetCurrentUser,
-                    profile: summarizeAvatarDebugFields(nextProfile)
-                });
 
                 setBaseProfile((currentProfile: any) =>
                     preserveProfileIdentity(
@@ -835,15 +692,6 @@ export function useUserDialogProfileResource({
     }, [currentEndpoint, isTargetCurrentUser, normalizedUserId, reloadToken]);
 
     useEffect(() => {
-        if (isTargetCurrentUser) {
-            debugUserDialogAvatarInfo('profile-projection', {
-                endpoint: currentEndpoint,
-                targetUserId: normalizedUserId,
-                shouldHydrate: shouldHydrateCurrentAvatar(profile),
-                profile: summarizeAvatarDebugFields(profile)
-            });
-        }
-
         if (!isTargetCurrentUser || !shouldHydrateCurrentAvatar(profile)) {
             return undefined;
         }
@@ -867,11 +715,6 @@ export function useUserDialogProfileResource({
         })
             .then((avatar: any) => {
                 if (!active) {
-                    debugUserDialogAvatarInfo('hydrate:discarded', {
-                        endpoint: currentEndpoint,
-                        avatarId: currentAvatar,
-                        reason: 'effect-cleaned-up'
-                    });
                     return;
                 }
                 setBaseProfile((currentProfile: any) =>
@@ -898,10 +741,6 @@ export function useUserDialogProfileResource({
             active = false;
             if (avatarHydrationKeyRef.current === hydrationKey) {
                 avatarHydrationKeyRef.current = '';
-                debugUserDialogAvatarInfo('hydrate:cleanup-reset', {
-                    endpoint: currentEndpoint,
-                    avatarId: currentAvatar
-                });
             }
         };
     }, [
