@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
+import { setRightSidebarOpenPreference } from '@/services/preferencesService';
 import { useShellStore } from '@/state/shellStore';
 
 import { getDefaultHiddenSidePanelPath } from './sidePanelRoutes';
@@ -56,9 +57,6 @@ function writeSidePanelRouteOpenState(routeKey: any, open: any) {
 export function useRightSidePanelVisibility(pathname: any) {
     const routeKey = getDefaultHiddenSidePanelPath(pathname);
     const rightSidebarOpen = useShellStore((state: any) => state.rightSidebarOpen);
-    const setRightSidebarOpen = useShellStore(
-        (state: any) => state.setRightSidebarOpen
-    );
     const [routeOpenState, setRouteOpenState] = useState(
         readSidePanelRouteOpenState
     );
@@ -111,9 +109,9 @@ export function useRightSidePanelVisibility(pathname: any) {
                 writeSidePanelRouteOpenState(routeKey, open);
                 return;
             }
-            setRightSidebarOpen(open);
+            void setRightSidebarOpenPreference(open);
         },
-        [routeKey, setRightSidebarOpen]
+        [routeKey]
     );
 
     const toggleSidePanelOpen = useCallback(() => {

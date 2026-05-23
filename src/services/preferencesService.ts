@@ -130,6 +130,7 @@ export async function loadPreferenceSnapshot() {
     const [
         navIsCollapsed,
         navPanelWidth,
+        rightSidebarOpen,
         notificationLayout,
         dataTableStriped,
         tableDensity,
@@ -208,6 +209,7 @@ export async function loadPreferenceSnapshot() {
     ] = await Promise.all([
         configRepository.getBool('navIsCollapsed', false),
         configRepository.getInt('navPanelWidth', 240),
+        configRepository.getBool('rightSidebarOpen', true),
         configRepository.getString(
             'notificationLayout',
             DEFAULT_NOTIFICATION_LAYOUT
@@ -310,6 +312,7 @@ export async function loadPreferenceSnapshot() {
 
     useShellStore.getState().setSidebarOpen(!navIsCollapsed);
     useShellStore.getState().setNavWidth(navPanelWidth);
+    useShellStore.getState().setRightSidebarOpen(rightSidebarOpen);
     useShellStore
         .getState()
         .setNotificationLayout(
@@ -479,6 +482,12 @@ export async function setSidebarCollapsedPreference(collapsed: any) {
     useShellStore.getState().setSidebarOpen(!isCollapsed);
     await configRepository.setBool('navIsCollapsed', isCollapsed);
     patchPreferences({ navIsCollapsed: isCollapsed });
+}
+
+export async function setRightSidebarOpenPreference(open: any) {
+    const isOpen = Boolean(open);
+    useShellStore.getState().setRightSidebarOpen(isOpen);
+    await configRepository.setBool('rightSidebarOpen', isOpen);
 }
 
 export async function setNavWidthPreference(value: any) {

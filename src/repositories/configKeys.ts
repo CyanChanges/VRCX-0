@@ -40,6 +40,7 @@ export const ConfigKeys = {
     isHideFriendsInSameInstance: { type: 'bool', default: false },
     isSameInstanceAboveFavorites: { type: 'bool', default: false },
     isSidebarDivideByFriendGroup: { type: 'bool', default: false },
+    rightSidebarOpen: { type: 'bool', default: true },
     sidebarSortMethod1: { type: 'string', default: 'Sort by Status' },
     sidebarSortMethod2: { type: 'string', default: 'Sort Alphabetically' },
     sidebarSortMethod3: { type: 'string', default: '' },
