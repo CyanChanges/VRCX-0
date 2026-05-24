@@ -32,6 +32,7 @@ import {
 import { useFavoriteStore } from '@/state/favoriteStore';
 import {
     DEFAULT_PREFERENCES,
+    normalizeFeedTimeDisplayMode,
     usePreferencesStore
 } from '@/state/preferencesStore';
 import { useShellStore } from '@/state/shellStore';
@@ -451,6 +452,14 @@ export function useSettingsPageState() {
                         max: 6,
                         fallback: 1
                     })
+                );
+            },
+            onFeedTimeDisplayModeChange: (value: any) => {
+                const nextValue = normalizeFeedTimeDisplayMode(value);
+                saveStringPreference(
+                    'feedTimeDisplayMode',
+                    'feedTimeDisplayMode',
+                    nextValue
                 );
             },
             onHideUserNotesChange: (checked: any) => {

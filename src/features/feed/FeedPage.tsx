@@ -1,15 +1,102 @@
+import { Columns3Icon, TableIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+
 import { PreviousInstancesTableDialog } from '@/components/dialogs/PreviousInstancesTableDialog';
 import { PageBody, PageScaffold } from '@/components/layout/PageScaffold';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
+import { ToggleGroup, ToggleGroupItem } from '@/ui/shadcn/toggle-group';
+import { Spinner } from '@/ui/shadcn/spinner';
 
+import { FeedColumnsMode } from './columns/FeedColumnsMode';
 import { FeedTableShell } from './components/FeedTableShell';
 import { FeedToolbar } from './components/FeedToolbar';
+import type { FeedViewMode } from './feedColumnsState';
 import { useFeedPageController } from './useFeedPageController';
+import { useFeedViewModeState } from './useFeedViewModeState';
 
 type FeedPageProps = {
     embedded?: boolean;
 };
 
+function FeedViewModeToggle({
+    onValueChange,
+    value
+}: {
+    onValueChange(value: FeedViewMode): void;
+    value: FeedViewMode;
+}) {
+    const { t } = useTranslation();
+    const tableLabel = t('view.feed.modes.table');
+    const columnsLabel = t('view.feed.modes.columns');
+
+    return (
+        <ToggleGroup
+            type="single"
+            variant="outline"
+            size="sm"
+            value={value}
+            onValueChange={(nextValue) => {
+                if (nextValue) {
+                    onValueChange(nextValue as FeedViewMode);
+                }
+            }}
+        >
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <ToggleGroupItem value="table" aria-label={tableLabel}>
+                        <TableIcon data-icon="icon" />
+                    </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>{tableLabel}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <ToggleGroupItem value="columns" aria-label={columnsLabel}>
+                        <Columns3Icon data-icon="icon" />
+                    </ToggleGroupItem>
+                </TooltipTrigger>
+                <TooltipContent>{columnsLabel}</TooltipContent>
+            </Tooltip>
+        </ToggleGroup>
+    );
+}
+
 export function FeedPage({ embedded = false }: FeedPageProps = {}) {
+    const { columns, ready, setColumns, setViewMode, viewMode } =
+        useFeedViewModeState();
+    const modeToggle = (
+        <FeedViewModeToggle value={viewMode} onValueChange={setViewMode} />
+    );
+
+    if (!ready) {
+        return (
+            <PageScaffold embedded={embedded} className={embedded ? '' : 'feed'}>
+                <PageBody className="items-center justify-center">
+                    <Spinner />
+                </PageBody>
+            </PageScaffold>
+        );
+    }
+
+    return (
+        <PageScaffold embedded={embedded} className={embedded ? '' : 'feed'}>
+            {viewMode === 'columns' ? (
+                <PageBody className="gap-2">
+                    <FeedColumnsMode
+                        columns={columns}
+                        modeToggle={modeToggle}
+                        onColumnsChange={setColumns}
+                    />
+                </PageBody>
+            ) : (
+                <FeedTableMode modeToggle={modeToggle} />
+            )}
+        </PageScaffold>
+    );
+}
+
+function FeedTableMode({ modeToggle }: { modeToggle: ReactNode }) {
     const {
         columns,
         filters,
@@ -24,7 +111,7 @@ export function FeedPage({ embedded = false }: FeedPageProps = {}) {
     } = useFeedPageController();
 
     return (
-        <PageScaffold embedded={embedded} className={embedded ? '' : 'feed'}>
+        <>
             <FeedToolbar
                 filterModel={{
                     activeFilterCount: filters.activeFilterCount,
@@ -54,6 +141,7 @@ export function FeedPage({ embedded = false }: FeedPageProps = {}) {
                         filters.setFavoritesOnly((current) => !current),
                     onToggleFeedFilter: filters.toggleFeedFilter
                 }}
+                modeToggle={modeToggle}
                 table={table}
             />
             <PageBody>
@@ -84,6 +172,6 @@ export function FeedPage({ embedded = false }: FeedPageProps = {}) {
                 instances={previousInstancesDialog.rows}
                 onRowsChange={previousInstancesDialog.setRows}
             />
-        </PageScaffold>
+        </>
     );
 }

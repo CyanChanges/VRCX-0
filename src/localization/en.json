@@ -449,6 +449,32 @@
                 "Avatar": "Avatar",
                 "Bio": "Bio"
             },
+            "modes": {
+                "table": "Table",
+                "columns": "Columns"
+            },
+            "columns": {
+                "add": "Add Column",
+                "manage": "Manage Columns",
+                "manage_list": "Add / Remove Columns",
+                "latest": "Latest",
+                "new_column": "New Column",
+                "title": "Title",
+                "scope": "Scope",
+                "all_friends": "All friends",
+                "all_favorites": "All favorite groups",
+                "selected_favorites": "Selected favorite groups",
+                "groups_count": "{count} groups",
+                "favorite_groups": "Favorite groups",
+                "types": "Types"
+            },
+            "time": {
+                "just_now": "just now",
+                "seconds_ago": "{count} seconds ago",
+                "minutes_ago": "{count} min ago",
+                "hours_ago": "{count} hr ago",
+                "days_ago": "{count} d ago"
+            },
             "error": {
                 "avatar_author_unavailable": "Avatar author unavailable",
                 "avatar_is_private_or_not_found": "Avatar is private or not found",
@@ -1770,7 +1796,10 @@
                     "time_format_12": "12 Hour",
                     "force_iso_date_format": "Force ISO Date Format",
                     "week_starts_on": "Week Starts On",
-                    "week_starts_on_description": "Choose the first day of the week. Affects calendars, charts, and activity views."
+                    "week_starts_on_description": "Choose the first day of the week. Affects calendars, charts, and activity views.",
+                    "feed_time_display": "Feed columns time",
+                    "feed_time_display_exact": "Exact time",
+                    "feed_time_display_relative": "Relative time"
                 },
                 "theme_color": {
                     "header": "Theme Color",

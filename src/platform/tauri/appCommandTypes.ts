@@ -333,6 +333,13 @@ export interface FeedRowsQueryInput {
     maxEntries: number;
     dateFrom?: string;
     dateTo?: string;
+    cursor?: FeedCursorInput | null;
+}
+
+export interface FeedCursorInput {
+    createdAt: string;
+    sourceRank: number;
+    rowId: number;
 }
 
 export interface FeedLiveEntryInput {
@@ -364,6 +371,7 @@ export interface FeedLiveRowsMergeInput {
 
 export interface FeedRowOutput extends RawJsonRecord {
     rowId: unknown;
+    sourceRank: unknown;
     created_at: unknown;
     userId: unknown;
     displayName: unknown;

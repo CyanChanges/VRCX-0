@@ -52,7 +52,7 @@ const navDefinitions = [
     },
     {
         key: 'favorite-avatars',
-        icon: 'lucide:Box',
+        icon: 'lucide:ContactRound',
         tooltip: 'nav_tooltip.favorite_avatars',
         labelKey: 'nav_tooltip.favorite_avatars',
         routeName: 'favorite-avatars'
@@ -87,7 +87,7 @@ const navDefinitions = [
     },
     {
         key: 'my-avatars',
-        icon: 'lucide:Shirt',
+        icon: 'lucide:ContactRound',
         tooltip: 'nav_tooltip.my_avatars',
         labelKey: 'nav_tooltip.my_avatars',
         routeName: 'my-avatars'

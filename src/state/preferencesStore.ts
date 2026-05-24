@@ -26,6 +26,7 @@ const DEFAULT_TRANSLATION_MODEL = 'gpt-4o-mini';
 
 export type NotificationLayoutPreference = 'notification-center' | 'table';
 export type TableDensityPreference = 'standard' | 'compact';
+export type FeedTimeDisplayModePreference = 'exact' | 'relative';
 export type TranslationApiType = 'google' | 'openai';
 export type DefaultLaunchModePreference = 'vr' | 'desktop';
 export type TrustColorKey = keyof typeof TRUST_COLOR_DEFAULTS;
@@ -100,6 +101,12 @@ export function normalizeDefaultLaunchMode(
     value: unknown
 ): DefaultLaunchModePreference {
     return value === 'desktop' ? 'desktop' : 'vr';
+}
+
+export function normalizeFeedTimeDisplayMode(
+    value: unknown
+): FeedTimeDisplayModePreference {
+    return value === 'exact' ? 'exact' : 'relative';
 }
 
 export function normalizeTablePageSizes(value: unknown): number[] {
@@ -242,6 +249,7 @@ export const DEFAULT_PREFERENCES: PreferenceInputSnapshot = Object.freeze({
         noty: { ...sharedFeedFiltersDefaults.noty },
         wrist: { ...sharedFeedFiltersDefaults.wrist }
     },
+    feedTimeDisplayMode: 'relative',
     trustColor: { ...TRUST_COLOR_DEFAULTS },
     youtubeAPI: false,
     translationAPI: false,
@@ -363,6 +371,9 @@ export function normalizePreferenceSnapshot(
             ? next.localFavoriteFriendsGroups.filter(Boolean)
             : [],
         sharedFeedFilters: parseSharedFeedFilters(next.sharedFeedFilters),
+        feedTimeDisplayMode: normalizeFeedTimeDisplayMode(
+            next.feedTimeDisplayMode
+        ),
         trustColor: normalizeTrustColors(next.trustColor),
         youtubeAPI: normalizeBool(next.youtubeAPI),
         translationAPI: normalizeBool(next.translationAPI),

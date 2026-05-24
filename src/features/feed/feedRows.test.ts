@@ -41,6 +41,12 @@ describe('feed row helpers', () => {
         expect(
             getFeedRowId({ rowId: 1, type: 'GPS', userId: USER_ID })
         ).toBe('row:GPS:1');
+        expect(getFeedRowId({ row_id: 1, type: 'GPS', sourceRank: 60 })).toBe(
+            'row:GPS:60:1'
+        );
+        expect(getFeedRowId({ row_id: 1, type: 'Status', sourceRank: 40 })).toBe(
+            'row:Status:40:1'
+        );
     });
 
     it('resolves friend state and current invite location from visible session data', () => {

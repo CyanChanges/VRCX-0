@@ -1,3 +1,5 @@
+import { useTranslation } from 'react-i18next';
+
 import { Button } from '@/ui/shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/shadcn/card';
 import {
@@ -10,7 +12,7 @@ import {
 } from '@/ui/shadcn/select';
 import { Switch } from '@/ui/shadcn/switch';
 
-import { Field } from '../SettingsField';
+import { Field, SegmentedPreference } from '../SettingsField';
 
 const weekStartOptions = [
     ['1', 'common.days.monday'],
@@ -30,6 +32,7 @@ export function SettingsInterfaceDisplayCards({
     onHour12Change,
     onIsoFormatChange,
     onWeekStartsOnChange,
+    onFeedTimeDisplayModeChange,
     onHideUserNotesChange,
     onHideUserMemosChange,
     onHideUnfriendsChange
@@ -249,6 +252,31 @@ export function SettingsInterfaceDisplayCards({
                             </SelectContent>
                         </Select>
                     </Field>
+
+                    <Field
+                        label={t(
+                            'view.settings.appearance.timedate.feed_time_display'
+                        )}
+                    >
+                        <SegmentedPreference
+                            value={prefs.feedTimeDisplayMode || 'relative'}
+                            onChange={onFeedTimeDisplayModeChange}
+                            options={[
+                                {
+                                    value: 'exact',
+                                    label: t(
+                                        'view.settings.appearance.timedate.feed_time_display_exact'
+                                    )
+                                },
+                                {
+                                    value: 'relative',
+                                    label: t(
+                                        'view.settings.appearance.timedate.feed_time_display_relative'
+                                    )
+                                }
+                            ]}
+                        />
+                    </Field>
                 </CardContent>
             </Card>
 
@@ -311,4 +339,3 @@ export function SettingsInterfaceDisplayCards({
         </>
     );
 }
-import { useTranslation } from 'react-i18next';

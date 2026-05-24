@@ -1,5 +1,6 @@
 import type { Table as ReactTable } from '@tanstack/react-table';
 import { CalendarRangeIcon, StarIcon, XIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { TableColumnVisibilityMenu } from '@/components/data-table/TableColumnVisibilityMenu';
@@ -79,6 +80,7 @@ type FeedToolbarProps = {
         searchDraft: string;
         todayDate: Date;
     };
+    modeToggle: ReactNode;
     table: ReactTable<FeedRow>;
 };
 
@@ -166,11 +168,12 @@ function FeedFilterButtons({
     const { t } = useTranslation();
 
     return (
-        <div className="flex min-w-[420px] flex-[1_0_420px] flex-nowrap items-center gap-2 overflow-x-auto">
+        <div className="flex min-w-0 flex-[0_1_auto] flex-nowrap items-center gap-2 overflow-x-auto">
             <Button
                 type="button"
                 variant={activeFilters.length === 0 ? 'default' : 'outline'}
                 size="sm"
+                className="shrink-0"
                 onClick={onClearFeedFilters}
             >
                 {t('view.search.avatar.all')}
@@ -183,6 +186,7 @@ function FeedFilterButtons({
                         type="button"
                         variant={active ? 'default' : 'outline'}
                         size="sm"
+                        className="shrink-0"
                         onClick={() => onToggleFeedFilter(filter)}
                     >
                         {t(`view.feed.filters.${filter}`)}
@@ -261,6 +265,7 @@ function FeedSearchInput({
 export function FeedToolbar({
     filterCommands,
     filterModel,
+    modeToggle,
     table
 }: FeedToolbarProps) {
     const { t } = useTranslation();
@@ -295,8 +300,12 @@ export function FeedToolbar({
 
     return (
         <PageToolbar>
-            <PageToolbarRow>
-                <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <PageToolbarRow className="flex-nowrap">
+                <div className="flex shrink-0 items-center">
+                    {modeToggle}
+                </div>
+
+                <div className="flex shrink-0 items-center">
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Button

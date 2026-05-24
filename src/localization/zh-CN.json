@@ -449,6 +449,32 @@
                 "Avatar": "模型变动",
                 "Bio": "简介变更"
             },
+            "modes": {
+                "table": "表格",
+                "columns": "分栏"
+            },
+            "columns": {
+                "add": "添加栏",
+                "manage": "管理分栏",
+                "manage_list": "增减分栏",
+                "latest": "最新",
+                "new_column": "新分栏",
+                "title": "标题",
+                "scope": "范围",
+                "all_friends": "全部好友",
+                "all_favorites": "全部收藏组",
+                "selected_favorites": "指定收藏组",
+                "groups_count": "{count} 个收藏组",
+                "favorite_groups": "收藏组",
+                "types": "类型"
+            },
+            "time": {
+                "just_now": "刚刚",
+                "seconds_ago": "{count} 秒前",
+                "minutes_ago": "{count} 分钟前",
+                "hours_ago": "{count} 小时前",
+                "days_ago": "{count} 天前"
+            },
             "error": {
                 "avatar_author_unavailable": "模型作者不可用",
                 "avatar_is_private_or_not_found": "模型为私有或未找到",
@@ -1770,7 +1796,10 @@
                     "time_format_12": "12 小时制",
                     "force_iso_date_format": "强制使用 ISO 时间格式",
                     "week_starts_on": "一周的第一天",
-                    "week_starts_on_description": "选择一周的第一天。会影响日历、图表和活动视图的显示方式。"
+                    "week_starts_on_description": "选择一周的第一天。会影响日历、图表和活动视图的显示方式。",
+                    "feed_time_display": "动态分栏时间",
+                    "feed_time_display_exact": "精确时间",
+                    "feed_time_display_relative": "相对时间"
                 },
                 "theme_color": {
                     "header": "主题颜色",

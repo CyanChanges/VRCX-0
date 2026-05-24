@@ -208,8 +208,13 @@ export function getFeedRowId(row: any) {
     if (row?.id != null) {
         return `id:${row.id}`;
     }
-    if (row?.rowId != null) {
-        return `row:${row?.type ?? ''}:${row.rowId}`;
+    const rowId = row?.rowId ?? row?.row_id;
+    if (rowId != null) {
+        const sourceRank = row?.sourceRank ?? row?.source_rank;
+        if (sourceRank != null) {
+            return `row:${row?.type ?? ''}:${sourceRank}:${rowId}`;
+        }
+        return `row:${row?.type ?? ''}:${rowId}`;
     }
     const type = row?.type ?? '';
     const createdAt = row?.created_at ?? row?.createdAt ?? '';

@@ -156,6 +156,9 @@ export const ConfigKeys = {
 
     // ── Feed ─────────────────────────────────────────
     feedTableFilters: { type: 'string', default: '[]' },
+    feedViewMode: { type: 'string', default: 'table' },
+    feedColumnsConfig: { type: 'string', default: '[]' },
+    feedTimeDisplayMode: { type: 'string', default: 'relative' },
     hidePrivateFromFeed: { type: 'bool', default: false },
     hideDevicesFromFeed: { type: 'bool', default: false },
     hideUptimeFromFeed: { type: 'bool', default: false },

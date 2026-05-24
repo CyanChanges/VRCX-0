@@ -449,6 +449,32 @@
                 "Avatar": "アバター",
                 "Bio": "自己紹介"
             },
+            "modes": {
+                "table": "テーブル",
+                "columns": "カラム"
+            },
+            "columns": {
+                "add": "カラムを追加",
+                "manage": "カラム管理",
+                "manage_list": "カラムを追加/削除",
+                "latest": "最新",
+                "new_column": "新しいカラム",
+                "title": "タイトル",
+                "scope": "範囲",
+                "all_friends": "すべてのフレンド",
+                "all_favorites": "すべてのお気に入りグループ",
+                "selected_favorites": "選択したお気に入りグループ",
+                "groups_count": "{count} グループ",
+                "favorite_groups": "お気に入りグループ",
+                "types": "種類"
+            },
+            "time": {
+                "just_now": "たった今",
+                "seconds_ago": "{count} 秒前",
+                "minutes_ago": "{count} 分前",
+                "hours_ago": "{count} 時間前",
+                "days_ago": "{count} 日前"
+            },
             "error": {
                 "avatar_author_unavailable": "アバター作者を取得できません",
                 "avatar_is_private_or_not_found": "アバターが非公開、または見つかりません",
@@ -1770,7 +1796,10 @@
                     "time_format_12": "12時間",
                     "force_iso_date_format": "ISO 日付フォーマットを強制",
                     "week_starts_on": "週の開始日",
-                    "week_starts_on_description": "週の最初の日を選択します。カレンダー、チャート、およびアクティビティビューに影響します。"
+                    "week_starts_on_description": "週の最初の日を選択します。カレンダー、チャート、およびアクティビティビューに影響します。",
+                    "feed_time_display": "フィード列の時刻",
+                    "feed_time_display_exact": "正確な時刻",
+                    "feed_time_display_relative": "相対時刻"
                 },
                 "theme_color": {
                     "header": "アクセントカラー",

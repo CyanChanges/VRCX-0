@@ -3,6 +3,14 @@ use vrcx_0_core::json::RawJson;
 
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct FeedCursorInput {
+    pub created_at: String,
+    pub source_rank: i64,
+    pub row_id: i64,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeedRowsQueryInput {
     pub user_id: String,
     pub mode: String,
@@ -17,6 +25,8 @@ pub struct FeedRowsQueryInput {
     pub date_from: String,
     #[serde(default)]
     pub date_to: String,
+    #[serde(default)]
+    pub cursor: Option<FeedCursorInput>,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -44,6 +54,8 @@ pub struct FeedReadModelQueryInput {
     pub date_from: String,
     #[serde(default)]
     pub date_to: String,
+    #[serde(default)]
+    pub cursor: Option<FeedCursorInput>,
     #[serde(default)]
     pub live_entries: Vec<FeedLiveEntryInput>,
     #[serde(default)]
@@ -93,7 +105,10 @@ pub struct FeedReadModelOutput {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedRowOutput {
+    #[serde(rename = "rowId")]
     pub row_id: RawJson,
+    #[serde(rename = "sourceRank")]
+    pub source_rank: RawJson,
     #[serde(rename = "created_at")]
     pub created_at: RawJson,
     pub user_id: RawJson,

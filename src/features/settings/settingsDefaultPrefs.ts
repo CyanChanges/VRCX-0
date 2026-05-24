@@ -80,6 +80,7 @@ export function createDefaultSettingsPrefs() {
         sharedFeedFilters: normalizeSharedFeedFilters(
             sharedFeedFiltersDefaults
         ),
+        feedTimeDisplayMode: 'relative',
         youtubeAPI: false,
         translationAPI: false,
         bioLanguage: 'en',

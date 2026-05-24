@@ -5,6 +5,7 @@ import { normalizeUserTablePrefix } from './userSessionRepository';
 type FeedDatabaseRow = {
     [key: string]: unknown;
     rowId: unknown;
+    sourceRank?: unknown;
     created_at: unknown;
     userId: unknown;
     displayName: unknown;
@@ -36,6 +37,11 @@ type FeedLiveEntry = {
 };
 
 type FeedMode = 'search' | 'lookup' | 'instance' | string;
+export type FeedCursor = {
+    createdAt: string;
+    sourceRank: number;
+    rowId: number;
+};
 
 type FeedReadModelResult = {
     rows: FeedRowValue[];
@@ -51,6 +57,7 @@ interface FeedRowsQueryOptions {
     maxEntries?: number;
     dateFrom?: string;
     dateTo?: string;
+    cursor?: FeedCursor | null;
 }
 
 interface FeedReadModelQueryOptions extends FeedRowsQueryOptions {
@@ -145,7 +152,8 @@ async function queryFeedRows({
     vipList = [],
     maxEntries = DEFAULT_MAX_TABLE_SIZE,
     dateFrom = '',
-    dateTo = ''
+    dateTo = '',
+    cursor = null
 }: FeedRowsQueryOptions): Promise<FeedDatabaseRow[]> {
     await ensureFeedTablesForUser(userId);
     const rows = (await tauriClient.app.FeedRowsQuery({
@@ -157,7 +165,8 @@ async function queryFeedRows({
             vipList: normalizeStringList(vipList),
             maxEntries,
             dateFrom,
-            dateTo
+            dateTo,
+            cursor
         }
     })) as FeedDatabaseRow[];
     return Array.isArray(rows) ? rows : [];
@@ -287,7 +296,8 @@ const feed = {
         minLiveSequence = 0,
         favoritesOnly = false,
         favoriteUserIds = [],
-        maxRows = maxEntries
+        maxRows = maxEntries,
+        cursor = null
     }: FeedReadModelQueryOptions) {
         await ensureFeedTablesForUser(userId);
         return normalizeFeedReadModelResult(
@@ -301,6 +311,7 @@ const feed = {
                     maxEntries,
                     dateFrom,
                     dateTo,
+                    cursor,
                     liveEntries: Array.isArray(liveEntries) ? liveEntries : [],
                     minLiveSequence,
                     favoritesOnly,
@@ -351,14 +362,16 @@ const feed = {
         userId: unknown,
         filters: string[],
         vipList: string[],
-        maxEntries: number = DEFAULT_MAX_TABLE_SIZE
+        maxEntries: number = DEFAULT_MAX_TABLE_SIZE,
+        cursor: FeedCursor | null = null
     ) {
         return queryFeedRows({
             userId,
             mode: 'lookup',
             filters,
             vipList,
-            maxEntries
+            maxEntries,
+            cursor
         });
     },
 

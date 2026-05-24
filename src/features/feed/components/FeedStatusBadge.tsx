@@ -10,10 +10,15 @@ function FeedStatusBadge({
     status: unknown;
 }) {
     const meta = resolveStatusMeta(status);
+    const dotLabel = label ? undefined : meta.label;
     return (
         <span className="inline-flex min-w-0 items-center gap-1.5">
             {meta.className ? (
                 <span
+                    role={dotLabel ? 'img' : undefined}
+                    aria-hidden={dotLabel ? undefined : true}
+                    aria-label={dotLabel}
+                    title={dotLabel}
                     className={cn(
                         'size-2.5 shrink-0 rounded-full',
                         meta.className

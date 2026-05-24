@@ -14,6 +14,7 @@ import storageRepository from '@/repositories/storageRepository';
 import {
     DEFAULT_PREFERENCES,
     normalizeDefaultLaunchMode,
+    normalizeFeedTimeDisplayMode,
     parseSharedFeedFilters,
     normalizeSharedFeedFilters,
     normalizeTableLimits,
@@ -191,6 +192,7 @@ export async function loadPreferenceSnapshot() {
         searchLimit,
         localFavoriteFriendsGroups,
         sharedFeedFilters,
+        feedTimeDisplayMode,
         youtubeAPI,
         translationAPI,
         bioLanguage,
@@ -287,6 +289,7 @@ export async function loadPreferenceSnapshot() {
             'sharedFeedFilters',
             JSON.stringify(DEFAULT_PREFERENCES.sharedFeedFilters)
         ),
+        configRepository.getString('feedTimeDisplayMode', 'relative'),
         configRepository.getBool('youtubeAPI', false),
         configRepository.getBool('translationAPI', false),
         configRepository.getString('bioLanguage', 'en'),
@@ -423,6 +426,8 @@ export async function loadPreferenceSnapshot() {
             localFavoriteFriendsGroups
         ),
         sharedFeedFilters: parseSharedFeedFilters(sharedFeedFilters),
+        feedTimeDisplayMode:
+            normalizeFeedTimeDisplayMode(feedTimeDisplayMode),
         youtubeAPI: Boolean(youtubeAPI),
         translationAPI: Boolean(translationAPI),
         bioLanguage: normalizeBioLanguage(bioLanguage),

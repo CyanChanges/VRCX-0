@@ -1,5 +1,6 @@
 import configRepository from './configRepository';
 import feedPersistenceRepository from './feedPersistenceRepository';
+import type { FeedCursor } from './feedPersistenceRepository';
 import userSessionRepository from './userSessionRepository';
 
 export const FEED_FILTER_TYPES = Object.freeze([
@@ -21,6 +22,8 @@ export interface FeedQueryOptions {
     favoriteUserIds?: unknown[];
     dateFrom?: string;
     dateTo?: string;
+    maxEntries?: number;
+    cursor?: FeedCursor | null;
 }
 
 export interface FeedReadModelQueryOptions extends FeedQueryOptions {
@@ -96,7 +99,9 @@ class FeedRepository {
         filters = [],
         favoriteUserIds = [],
         dateFrom = '',
-        dateTo = ''
+        dateTo = '',
+        maxEntries,
+        cursor = null
     }: FeedQueryOptions) {
         const { normalizedUserId, maxTableSize, searchLimit } =
             await this.#ensureReady(userId);
@@ -115,7 +120,7 @@ class FeedRepository {
                 normalizedSearch,
                 normalizedFilters,
                 normalizedFavorites,
-                searchLimit,
+                maxEntries ?? searchLimit,
                 dateFrom,
                 dateTo,
                 normalizedUserId
@@ -126,8 +131,13 @@ class FeedRepository {
             normalizedUserId,
             normalizedFilters,
             normalizedFavorites,
-            maxTableSize
+            maxEntries ?? maxTableSize,
+            cursor
         );
+    }
+
+    async queryFeedPage(options: FeedQueryOptions) {
+        return this.queryFeed(options);
     }
 
     async queryFeedReadModel({
@@ -140,6 +150,7 @@ class FeedRepository {
         liveEntries = [],
         minLiveSequence = 0,
         favoritesOnly = false,
+        cursor = null,
         maxRows
     }: FeedReadModelQueryOptions) {
         const { normalizedUserId, maxTableSize, searchLimit } =
@@ -165,6 +176,7 @@ class FeedRepository {
             maxEntries,
             dateFrom,
             dateTo,
+            cursor,
             liveEntries: Array.isArray(liveEntries)
                 ? (liveEntries as never[])
                 : [],

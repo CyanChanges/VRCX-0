@@ -26,6 +26,7 @@ export function SettingsInterfaceTab({ settingsInterface }: any) {
         onHour12Change,
         onIsoFormatChange,
         onWeekStartsOnChange,
+        onFeedTimeDisplayModeChange,
         onHideUserNotesChange,
         onHideUserMemosChange,
         onHideUnfriendsChange,
@@ -69,6 +70,7 @@ export function SettingsInterfaceTab({ settingsInterface }: any) {
                 onHour12Change={onHour12Change}
                 onIsoFormatChange={onIsoFormatChange}
                 onWeekStartsOnChange={onWeekStartsOnChange}
+                onFeedTimeDisplayModeChange={onFeedTimeDisplayModeChange}
                 onHideUserNotesChange={onHideUserNotesChange}
                 onHideUserMemosChange={onHideUserMemosChange}
                 onHideUnfriendsChange={onHideUnfriendsChange}

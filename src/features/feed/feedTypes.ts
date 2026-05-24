@@ -13,6 +13,9 @@ import type {
 export type FeedRow = FeedEntry & {
     id?: unknown;
     rowId?: unknown;
+    row_id?: unknown;
+    sourceRank?: unknown;
+    source_rank?: unknown;
     type?: unknown;
     created_at?: unknown;
     createdAt?: unknown;

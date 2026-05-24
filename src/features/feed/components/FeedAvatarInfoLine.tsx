@@ -152,6 +152,7 @@ export const AvatarInfoLine = memo(function AvatarInfoLine({
     compact = false,
     imageUrl,
     ownerId,
+    showTags = true,
     userId
 }: any) {
     const { t } = useTranslation();
@@ -364,7 +365,7 @@ export const AvatarInfoLine = memo(function AvatarInfoLine({
                     />
                 ) : null}
             </Button>
-            {Array.isArray(avatarTags) && avatarTags.length ? (
+            {showTags && Array.isArray(avatarTags) && avatarTags.length ? (
                 <div className="text-muted-foreground truncate text-xs">
                     {avatarTags
                         .map((tag: any) => String(tag).replace('content_', ''))
@@ -378,6 +379,8 @@ export const AvatarInfoLine = memo(function AvatarInfoLine({
 function areAvatarInfoLinePropsEqual(previousProps: any, nextProps: any) {
     return (
         previousProps.avatarName === nextProps.avatarName &&
+        previousProps.compact === nextProps.compact &&
+        previousProps.showTags === nextProps.showTags &&
         previousProps.imageUrl === nextProps.imageUrl &&
         previousProps.ownerId === nextProps.ownerId &&
         previousProps.userId === nextProps.userId &&

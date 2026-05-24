@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 
 import { useKnownUserFact } from '@/domain/users/useKnownUser';
 import { formatDateFilter } from '@/lib/dateTime';
+import { cn } from '@/lib/utils';
 import { copyTextToClipboard } from '@/services/entityMediaService';
 import userProfileRepository from '@/repositories/userProfileRepository';
 import {
@@ -110,10 +111,12 @@ function SortButton({
 function FeedUserLink({
     actions,
     cachedDisplayName = '',
+    className = '',
     row
 }: {
     actions: FeedFriendActions;
     cachedDisplayName?: string;
+    className?: string;
     row: FeedRow;
 }) {
     const { t } = useTranslation();
@@ -186,7 +189,10 @@ function FeedUserLink({
                 <Button
                     type="button"
                     variant="ghost"
-                    className="hover:text-primary h-auto max-w-full justify-start self-start text-left font-medium"
+                    className={cn(
+                        'hover:text-primary h-auto max-w-full justify-start self-start text-left font-medium',
+                        className
+                    )}
                     disabled={!userId}
                     onClick={() =>
                         openUserDialog({

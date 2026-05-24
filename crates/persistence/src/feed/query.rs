@@ -28,6 +28,26 @@ fn query_feed_rows(
     };
     params.insert("@limit".into(), Value::from(max_entries));
     params.insert("@per_table".into(), Value::from(max_entries));
+    let has_cursor = query
+        .cursor
+        .as_ref()
+        .filter(|cursor| !cursor.created_at.trim().is_empty() && cursor.row_id > 0)
+        .is_some();
+    if let Some(cursor) = query
+        .cursor
+        .as_ref()
+        .filter(|cursor| !cursor.created_at.trim().is_empty() && cursor.row_id > 0)
+    {
+        params.insert(
+            "@cursor_created_at".into(),
+            Value::String(cursor.created_at.clone()),
+        );
+        params.insert(
+            "@cursor_source_rank".into(),
+            Value::from(cursor.source_rank),
+        );
+        params.insert("@cursor_row_id".into(), Value::from(cursor.row_id));
+    }
 
     let vip_placeholders = add_list_params(&mut params, &query.vip_list, "vip");
     let vip_query = if vip_placeholders.is_empty() {
@@ -54,8 +74,10 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_gps",
                 FEED_GPS_PROJECTION,
+                FEED_GPS_SOURCE_RANK,
                 &format!("location LIKE @instance_like {vip_query}"),
                 "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.online || flags.offline {
@@ -70,6 +92,7 @@ fn query_feed_rows(
                 "location LIKE @instance_like",
                 type_filter,
                 &vip_query,
+                has_cursor,
             );
         }
     } else if mode == "lookup" {
@@ -79,8 +102,10 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_gps",
                 FEED_GPS_PROJECTION,
+                FEED_GPS_SOURCE_RANK,
                 &format!("1=1 {vip_query}"),
-                "id DESC",
+                "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.status {
@@ -89,8 +114,10 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_status",
                 FEED_STATUS_PROJECTION,
+                FEED_STATUS_SOURCE_RANK,
                 &format!("1=1 {vip_query}"),
-                "id DESC",
+                "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.bio {
@@ -99,8 +126,10 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_bio",
                 FEED_BIO_PROJECTION,
+                FEED_BIO_SOURCE_RANK,
                 &format!("1=1 {vip_query}"),
-                "id DESC",
+                "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.avatar {
@@ -109,8 +138,10 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_avatar",
                 FEED_AVATAR_PROJECTION,
+                FEED_AVATAR_SOURCE_RANK,
                 &format!("1=1 {vip_query}"),
-                "id DESC",
+                "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.online || flags.offline {
@@ -125,6 +156,7 @@ fn query_feed_rows(
                 "1=1",
                 type_filter,
                 &vip_query,
+                has_cursor,
             );
         }
     } else {
@@ -144,10 +176,12 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_gps",
                 FEED_GPS_PROJECTION,
+                FEED_GPS_SOURCE_RANK,
                 &format!(
                     "(display_name LIKE @search_like OR world_name LIKE @search_like OR group_name LIKE @search_like) {date_query} {vip_query}"
                 ),
                 "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.status {
@@ -156,10 +190,12 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_status",
                 FEED_STATUS_PROJECTION,
+                FEED_STATUS_SOURCE_RANK,
                 &format!(
                     "(display_name LIKE @search_like OR status LIKE @search_like OR status_description LIKE @search_like) {date_query} {vip_query}"
                 ),
                 "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.bio {
@@ -168,10 +204,12 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_bio",
                 FEED_BIO_PROJECTION,
+                FEED_BIO_SOURCE_RANK,
                 &format!(
                     "(display_name LIKE @search_like OR bio LIKE @search_like) {date_query} {vip_query}"
                 ),
                 "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.avatar {
@@ -187,10 +225,12 @@ fn query_feed_rows(
                 &user_prefix,
                 "feed_avatar",
                 FEED_AVATAR_PROJECTION,
+                FEED_AVATAR_SOURCE_RANK,
                 &format!(
                     "(display_name LIKE @search_like OR avatar_name LIKE @search_like) {avatar_query} {date_query} {vip_query}"
                 ),
                 "created_at DESC, id DESC",
+                has_cursor,
             );
         }
         if flags.online || flags.offline {
@@ -207,6 +247,7 @@ fn query_feed_rows(
                 where_sql,
                 &format!("{type_filter} {date_query}"),
                 &vip_query,
+                has_cursor,
             );
         }
     }
@@ -217,7 +258,7 @@ fn query_feed_rows(
 
     db.execute(
         &format!(
-            "SELECT {} FROM ({}) ORDER BY created_at DESC, id DESC LIMIT @limit",
+            "SELECT {} FROM ({}) ORDER BY created_at DESC, source_rank DESC, id DESC LIMIT @limit",
             feed_base_columns(),
             selects.join(" UNION ALL ")
         ),
@@ -241,6 +282,7 @@ fn query_feed_read_model(
         max_entries: query.max_entries,
         date_from: query.date_from.clone(),
         date_to: query.date_to.clone(),
+        cursor: query.cursor.clone(),
     };
     let rows = query_feed_rows(db, &rows_query)?
         .into_iter()
@@ -287,49 +329,68 @@ pub fn feed_live_rows_merge(query: FeedLiveRowsMergeInput) -> FeedReadModelOutpu
 }
 
 // Feed read-model helpers.
-const FEED_GPS_PROJECTION: &str = "id, created_at, user_id, display_name, 'GPS' AS type, location, world_name, previous_location, time, group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
-const FEED_STATUS_PROJECTION: &str = "id, created_at, user_id, display_name, 'Status' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, status, status_description, previous_status, previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
-const FEED_BIO_PROJECTION: &str = "id, created_at, user_id, display_name, 'Bio' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, bio, previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
-const FEED_AVATAR_PROJECTION: &str = "id, created_at, user_id, display_name, 'Avatar' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url";
-const FEED_ONLINE_OFFLINE_PROJECTION: &str = "id, created_at, user_id, display_name, type, location, world_name, NULL AS previous_location, time, group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
+const FEED_GPS_SOURCE_RANK: i64 = 60;
+const FEED_ONLINE_OFFLINE_SOURCE_RANK: i64 = 50;
+const FEED_STATUS_SOURCE_RANK: i64 = 40;
+const FEED_AVATAR_SOURCE_RANK: i64 = 30;
+const FEED_BIO_SOURCE_RANK: i64 = 20;
+
+const FEED_GPS_PROJECTION: &str = "id, 60 AS source_rank, created_at, user_id, display_name, 'GPS' AS type, location, world_name, previous_location, time, group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
+const FEED_STATUS_PROJECTION: &str = "id, 40 AS source_rank, created_at, user_id, display_name, 'Status' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, status, status_description, previous_status, previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
+const FEED_BIO_PROJECTION: &str = "id, 20 AS source_rank, created_at, user_id, display_name, 'Bio' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, bio, previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
+const FEED_AVATAR_PROJECTION: &str = "id, 30 AS source_rank, created_at, user_id, display_name, 'Avatar' AS type, NULL AS location, NULL AS world_name, NULL AS previous_location, NULL AS time, NULL AS group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url";
+const FEED_ONLINE_OFFLINE_PROJECTION: &str = "id, 50 AS source_rank, created_at, user_id, display_name, type, location, world_name, NULL AS previous_location, time, group_name, NULL AS status, NULL AS status_description, NULL AS previous_status, NULL AS previous_status_description, NULL AS bio, NULL AS previous_bio, NULL AS owner_id, NULL AS avatar_name, NULL AS current_avatar_image_url, NULL AS current_avatar_thumbnail_image_url, NULL AS previous_current_avatar_image_url, NULL AS previous_current_avatar_thumbnail_image_url";
 
 fn push_feed_select(
     selects: &mut Vec<String>,
     user_prefix: &str,
     table_suffix: &str,
     projection: &str,
+    source_rank: i64,
     where_sql: &str,
     order_by: &str,
+    has_cursor: bool,
 ) {
+    let cursor_sql = feed_cursor_condition(source_rank, has_cursor);
     selects.push(format!(
-        "SELECT * FROM (SELECT {projection} FROM {user_prefix}_{table_suffix} WHERE {where_sql} ORDER BY {order_by} LIMIT @per_table)"
+        "SELECT * FROM (SELECT {projection} FROM {user_prefix}_{table_suffix} WHERE {where_sql} {cursor_sql} ORDER BY {order_by} LIMIT @per_table)"
     ));
+}
+
+fn feed_cursor_condition(source_rank: i64, has_cursor: bool) -> String {
+    if !has_cursor {
+        return String::new();
+    }
+    format!(
+        "AND (created_at < @cursor_created_at OR (created_at = @cursor_created_at AND {source_rank} < @cursor_source_rank) OR (created_at = @cursor_created_at AND {source_rank} = @cursor_source_rank AND id < @cursor_row_id))"
+    )
 }
 
 fn feed_row_from_unified_row(row: &[Value]) -> Result<FeedRowOutput, Error> {
     Ok(FeedRowOutput {
         row_id: strict_row_json(row, 0)?.into(),
-        created_at: strict_row_json(row, 1)?.into(),
-        user_id: strict_row_json(row, 2)?.into(),
-        display_name: strict_row_json(row, 3)?.into(),
-        r#type: strict_row_json(row, 4)?.into(),
-        location: strict_row_json(row, 5)?.into(),
-        world_name: strict_row_json(row, 6)?.into(),
-        previous_location: strict_row_json(row, 7)?.into(),
-        time: strict_row_json(row, 8)?.into(),
-        group_name: strict_row_json(row, 9)?.into(),
-        status: strict_row_json(row, 10)?.into(),
-        status_description: strict_row_json(row, 11)?.into(),
-        previous_status: strict_row_json(row, 12)?.into(),
-        previous_status_description: strict_row_json(row, 13)?.into(),
-        bio: strict_row_json(row, 14)?.into(),
-        previous_bio: strict_row_json(row, 15)?.into(),
-        owner_id: strict_row_json(row, 16)?.into(),
-        avatar_name: strict_row_json(row, 17)?.into(),
-        current_avatar_image_url: strict_row_json(row, 18)?.into(),
-        current_avatar_thumbnail_image_url: strict_row_json(row, 19)?.into(),
-        previous_current_avatar_image_url: strict_row_json(row, 20)?.into(),
-        previous_current_avatar_thumbnail_image_url: strict_row_json(row, 21)?.into(),
+        source_rank: strict_row_json(row, 1)?.into(),
+        created_at: strict_row_json(row, 2)?.into(),
+        user_id: strict_row_json(row, 3)?.into(),
+        display_name: strict_row_json(row, 4)?.into(),
+        r#type: strict_row_json(row, 5)?.into(),
+        location: strict_row_json(row, 6)?.into(),
+        world_name: strict_row_json(row, 7)?.into(),
+        previous_location: strict_row_json(row, 8)?.into(),
+        time: strict_row_json(row, 9)?.into(),
+        group_name: strict_row_json(row, 10)?.into(),
+        status: strict_row_json(row, 11)?.into(),
+        status_description: strict_row_json(row, 12)?.into(),
+        previous_status: strict_row_json(row, 13)?.into(),
+        previous_status_description: strict_row_json(row, 14)?.into(),
+        bio: strict_row_json(row, 15)?.into(),
+        previous_bio: strict_row_json(row, 16)?.into(),
+        owner_id: strict_row_json(row, 17)?.into(),
+        avatar_name: strict_row_json(row, 18)?.into(),
+        current_avatar_image_url: strict_row_json(row, 19)?.into(),
+        current_avatar_thumbnail_image_url: strict_row_json(row, 20)?.into(),
+        previous_current_avatar_image_url: strict_row_json(row, 21)?.into(),
+        previous_current_avatar_thumbnail_image_url: strict_row_json(row, 22)?.into(),
     })
 }
 
@@ -382,19 +443,22 @@ fn push_feed_online_offline_select(
     where_sql: &str,
     type_filter: &str,
     vip_query: &str,
+    has_cursor: bool,
 ) {
     push_feed_select(
         selects,
         user_prefix,
         "feed_online_offline",
         FEED_ONLINE_OFFLINE_PROJECTION,
+        FEED_ONLINE_OFFLINE_SOURCE_RANK,
         &format!("{where_sql} {type_filter} {vip_query}"),
-        "id DESC",
+        "created_at DESC, id DESC",
+        has_cursor,
     );
 }
 
 fn feed_base_columns() -> &'static str {
-    "id, created_at, user_id, display_name, type, location, world_name, previous_location, time, group_name, status, status_description, previous_status, previous_status_description, bio, previous_bio, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url"
+    "id, source_rank, created_at, user_id, display_name, type, location, world_name, previous_location, time, group_name, status, status_description, previous_status, previous_status_description, bio, previous_bio, owner_id, avatar_name, current_avatar_image_url, current_avatar_thumbnail_image_url, previous_current_avatar_image_url, previous_current_avatar_thumbnail_image_url"
 }
 
 fn feed_entry_value<'a>(entry: &'a Value, keys: &[&str]) -> Option<&'a Value> {
