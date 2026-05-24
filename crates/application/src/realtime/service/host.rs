@@ -15,6 +15,7 @@ use vrcx_0_persistence::DatabaseService;
 use vrcx_0_vrchat_client::auth::current_user_get_input;
 use vrcx_0_vrchat_client::http_api::ApiScope;
 use vrcx_0_vrchat_client::realtime::normalize_websocket_domain;
+use vrcx_0_vrchat_client::users as remote_users;
 
 use crate::event_bus::RuntimeEventBus;
 use crate::game_log::RuntimeSnapshot;

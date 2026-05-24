@@ -147,6 +147,7 @@ impl RealtimeMessageSink for RealtimeHostRuntimeMessageSink {
             state.active_context = None;
             state.friend_messages_paused = false;
             state.queued_friend_messages.clear();
+            state.friend_profile_refetches.clear();
             self.runtime.friends.clear();
             self.runtime.current_user.clear();
             final_current_user_output

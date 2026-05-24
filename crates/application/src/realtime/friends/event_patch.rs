@@ -94,6 +94,12 @@ pub(super) fn apply_friend_event(
                 previous.as_ref(),
                 &now.iso,
             );
+            request_profile_refetch_for_impossible_location(
+                &mut output,
+                &user_id,
+                &patch,
+                &state_bucket,
+            );
             apply_patch_to_state(state, &mut output, &user_id, patch, &state_bucket);
         }
         "friend-online" => {
@@ -252,6 +258,12 @@ pub(super) fn apply_friend_event(
             if state_bucket != "online" {
                 state.recent_gps.remove(&user_id);
             }
+            request_profile_refetch_for_impossible_location(
+                &mut output,
+                &user_id,
+                &patch,
+                &state_bucket,
+            );
             apply_patch_to_state(state, &mut output, &user_id, patch, &state_bucket);
         }
         _ => return None,
@@ -265,6 +277,31 @@ pub(super) fn apply_friend_event(
         return None;
     }
     Some(output)
+}
+
+fn request_profile_refetch_for_impossible_location(
+    output: &mut RealtimeFriendOutput,
+    user_id: &str,
+    patch: &Value,
+    state_bucket: &str,
+) {
+    if state_bucket == "online" || !is_real_instance_patch(patch) {
+        return;
+    }
+    if output
+        .profile_refetch_user_ids
+        .iter()
+        .any(|existing_id| existing_id == user_id)
+    {
+        return;
+    }
+    output.profile_refetch_user_ids.push(user_id.to_string());
+}
+
+fn is_real_instance_patch(patch: &Value) -> bool {
+    let location = string_field(patch.get("location"));
+    let parsed = parse_location(&location);
+    parsed.world_id.starts_with("wrld_") && !parsed.instance_id.is_empty()
 }
 
 fn recent_enough(previous_ms: i64, now_ms: i64) -> bool {

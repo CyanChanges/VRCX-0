@@ -5,6 +5,8 @@ use super::types::{
 };
 use super::*;
 
+const FRIEND_PROFILE_REFETCH_THROTTLE_MS: i64 = 10_000;
+
 impl RealtimeHostRuntime {
     pub fn new(deps: RealtimeHostRuntimeDeps) -> Self {
         let (cancel_tx, _) = watch::channel(0);
@@ -61,6 +63,7 @@ impl RealtimeHostRuntime {
             });
             state.friend_messages_paused = false;
             state.queued_friend_messages.clear();
+            state.friend_profile_refetches.clear();
             self.friends.clear();
             self.current_user.clear();
             self.friends.set_baseline(
@@ -335,6 +338,7 @@ impl RealtimeHostRuntime {
             state.active_context = None;
             state.friend_messages_paused = false;
             state.queued_friend_messages.clear();
+            state.friend_profile_refetches.clear();
             let _ = self.cancel_tx.send(state.generation);
             self.deps.session.clear_realtime_context();
             self.friends.clear();
@@ -457,7 +461,10 @@ impl RealtimeHostRuntime {
     }
 
     fn apply_friend_output(self: &Arc<Self>, output: RealtimeFriendOutput) {
+        let timer_action = output.timer_action.clone();
+        let profile_refetch_user_ids = output.profile_refetch_user_ids.clone();
         let mut projection = output.projection.clone();
+        let projection_generation = projection.generation;
         if !self.is_friend_projection_current(&projection) {
             self.friends
                 .clear_baseline_if_revision(projection.generation, projection.baseline_revision);
@@ -490,7 +497,7 @@ impl RealtimeHostRuntime {
             user_id,
             token,
             delay_ms,
-        } = output.timer_action
+        } = timer_action
         {
             let runtime = Arc::clone(self);
             self.deps.tasks.spawn(async move {
@@ -498,6 +505,159 @@ impl RealtimeHostRuntime {
                 let now = chrono::Utc::now().to_rfc3339();
                 runtime.fire_pending_offline(&user_id, token, now);
             });
+        }
+        self.schedule_friend_profile_refetches(projection_generation, profile_refetch_user_ids);
+    }
+
+    fn schedule_friend_profile_refetches(self: &Arc<Self>, generation: u64, user_ids: Vec<String>) {
+        if user_ids.is_empty() {
+            return;
+        }
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        let (active, refetch_ids) = {
+            let mut state = match self.state.lock() {
+                Ok(state) => state,
+                Err(error) => {
+                    tracing::warn!("realtime state lock failed: {error}");
+                    return;
+                }
+            };
+            let Some(active) = state.active_context.clone() else {
+                return;
+            };
+            if active.generation != generation
+                || !self
+                    .deps
+                    .session
+                    .is_realtime_generation_active(active.session_generation)
+            {
+                return;
+            }
+            let mut refetch_ids = Vec::new();
+            for user_id in user_ids {
+                let user_id = user_id.trim().to_string();
+                if user_id.is_empty() || refetch_ids.contains(&user_id) {
+                    continue;
+                }
+                let recent = state
+                    .friend_profile_refetches
+                    .get(&user_id)
+                    .map(|last_ms| {
+                        now_ms.saturating_sub(*last_ms) < FRIEND_PROFILE_REFETCH_THROTTLE_MS
+                    })
+                    .unwrap_or(false);
+                if recent {
+                    continue;
+                }
+                state
+                    .friend_profile_refetches
+                    .insert(user_id.clone(), now_ms);
+                refetch_ids.push(user_id);
+            }
+            (active, refetch_ids)
+        };
+        for user_id in refetch_ids {
+            let runtime = Arc::clone(self);
+            let active = active.clone();
+            self.deps.tasks.spawn(async move {
+                runtime.refetch_friend_profile(active, user_id).await;
+            });
+        }
+    }
+
+    async fn refetch_friend_profile(
+        self: Arc<Self>,
+        active: ActiveRealtimeContext,
+        user_id: String,
+    ) {
+        {
+            let state = match self.state.lock() {
+                Ok(state) => state,
+                Err(error) => {
+                    tracing::warn!("realtime state lock failed: {error}");
+                    return;
+                }
+            };
+            if !self.is_message_current_locked(
+                &state,
+                active.generation,
+                active.session_generation,
+                &active.session,
+            ) {
+                return;
+            }
+        }
+        let (_, request) = match remote_users::user_get_input(
+            active.session.endpoint.clone(),
+            user_id.clone(),
+        ) {
+            Ok(request) => request,
+            Err(error) => {
+                tracing::warn!(user_id = %user_id, "Realtime friend profile refetch input failed: {error}");
+                return;
+            }
+        };
+        let response = match self
+            .deps
+            .web
+            .execute_api(request, ApiScope::Vrchat, &self.deps.db)
+            .await
+        {
+            Ok(response) => response,
+            Err(error) => {
+                tracing::warn!(user_id = %user_id, "Realtime friend profile refetch failed: {error}");
+                return;
+            }
+        };
+        if !(200..300).contains(&response.status) {
+            tracing::warn!(
+                user_id = %user_id,
+                status = response.status,
+                "Realtime friend profile refetch returned non-success"
+            );
+            return;
+        }
+        let profile = match serde_json::from_str::<Value>(&response.data) {
+            Ok(profile) => profile,
+            Err(error) => {
+                tracing::warn!(user_id = %user_id, "Realtime friend profile refetch json failed: {error}");
+                return;
+            }
+        };
+        let profile_user_id = json_string_field(profile.get("id"));
+        if profile_user_id != user_id {
+            tracing::warn!(
+                expected_user_id = %user_id,
+                profile_user_id = %profile_user_id,
+                "Realtime friend profile refetch returned a different user"
+            );
+            return;
+        }
+        {
+            let state = match self.state.lock() {
+                Ok(state) => state,
+                Err(error) => {
+                    tracing::warn!("realtime state lock failed: {error}");
+                    return;
+                }
+            };
+            if !self.is_message_current_locked(
+                &state,
+                active.generation,
+                active.session_generation,
+                &active.session,
+            ) {
+                return;
+            }
+        }
+        match self.friends.apply_refetched_user_profile(
+            active.generation,
+            &user_id,
+            profile,
+            &chrono::Utc::now().to_rfc3339(),
+        ) {
+            RealtimeFriendApplyResult::Output(output) => self.apply_friend_output(*output),
+            RealtimeFriendApplyResult::MissingBaseline | RealtimeFriendApplyResult::Ignored => {}
         }
     }
 

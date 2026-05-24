@@ -12,6 +12,7 @@ pub struct RealtimeFriendOutput {
     pub projection: FriendProjection,
     pub persistence: RealtimePersistenceBatch,
     pub timer_action: PendingOfflineTimerAction,
+    pub profile_refetch_user_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

@@ -144,6 +144,35 @@ impl RealtimeFriendsRuntime {
             .unwrap_or(RealtimeFriendApplyResult::Ignored)
     }
 
+    pub fn apply_refetched_user_profile(
+        &self,
+        generation: u64,
+        user_id: &str,
+        profile: serde_json::Value,
+        received_at: &str,
+    ) -> RealtimeFriendApplyResult {
+        let mut state = self.lock_state();
+        let Some(baseline) = state.baseline.as_ref() else {
+            return RealtimeFriendApplyResult::MissingBaseline;
+        };
+        if baseline.generation != generation {
+            return RealtimeFriendApplyResult::Ignored;
+        }
+        let normalized_user_id = user_id.trim();
+        if normalized_user_id.is_empty() {
+            return RealtimeFriendApplyResult::Ignored;
+        }
+        let content = json!({
+            "userId": normalized_user_id,
+            "user": profile
+        });
+        let now = EventTime::from_received_at(received_at);
+        apply_friend_event(&mut state, "friend-update", &content, &now)
+            .map(Box::new)
+            .map(RealtimeFriendApplyResult::Output)
+            .unwrap_or(RealtimeFriendApplyResult::Ignored)
+    }
+
     pub fn fire_pending_offline(
         &self,
         user_id: &str,

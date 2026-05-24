@@ -16,6 +16,7 @@ pub(super) struct RealtimeHostRuntimeState {
     pub(super) active_context: Option<ActiveRealtimeContext>,
     pub(super) friend_messages_paused: bool,
     pub(super) queued_friend_messages: Vec<RealtimeWsMessagePayload>,
+    pub(super) friend_profile_refetches: HashMap<String, i64>,
 }
 
 #[derive(Clone, Debug, Default)]
