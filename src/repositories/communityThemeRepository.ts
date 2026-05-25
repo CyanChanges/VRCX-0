@@ -9,6 +9,7 @@ export const COMMUNITY_THEME_CATALOG_URL =
     'https://raw.githubusercontent.com/Map1en/VRCX-0-Community-Themes/master/themes/index.json';
 
 export const COMMUNITY_THEME_CSS_FILE_NAME = 'theme.css';
+export const COMMUNITY_THEME_MANIFEST_FILE_NAME = 'theme.json';
 export const COMMUNITY_THEME_PREVIEW_FILE_NAME = 'preview.webp';
 export const COMMUNITY_THEME_README_FILE_NAME = 'README.md';
 
@@ -67,6 +68,27 @@ function normalizeAccentMode(value: unknown): CommunityThemeAccentMode {
     return value === true;
 }
 
+function normalizeThemeIds(value: unknown): string[] {
+    if (!Array.isArray(value)) {
+        throw new Error('Invalid community theme catalog: missing themes.');
+    }
+
+    return value.map((themeId) => {
+        if (typeof themeId !== 'string') {
+            throw new Error(
+                'Invalid community theme catalog: theme id must be a string.'
+            );
+        }
+        const normalizedThemeId = themeId.trim();
+        if (!THEME_ID_PATTERN.test(normalizedThemeId)) {
+            throw new Error(
+                `Invalid community theme catalog id: ${normalizedThemeId || '(empty)'}.`
+            );
+        }
+        return normalizedThemeId;
+    });
+}
+
 export function normalizeCommunityThemeCatalogUrl(value?: string | null): string {
     const catalogUrl = String(value || '').trim();
     if (!catalogUrl) {
@@ -92,10 +114,11 @@ export function resolveCommunityThemeAssetUrl(
 
 function normalizeCommunityThemeManifest(
     value: unknown,
-    catalogUrl: string
+    catalogUrl: string,
+    expectedThemeId: string
 ): CommunityThemeManifest {
     if (!value || typeof value !== 'object') {
-        throw new Error('Invalid community theme catalog entry.');
+        throw new Error(`Invalid community theme manifest: ${expectedThemeId}.`);
     }
 
     const entry = value as RawCommunityThemeEntry;
@@ -103,13 +126,19 @@ function normalizeCommunityThemeManifest(
     if (!THEME_ID_PATTERN.test(context)) {
         throw new Error(`Invalid community theme ${context}: invalid id.`);
     }
+    if (context !== expectedThemeId) {
+        throw new Error(
+            `Invalid community theme ${expectedThemeId}: theme.json id does not match directory.`
+        );
+    }
 
     return {
         id: context,
         name: requireString(entry, 'name', context),
         version: requireString(entry, 'version', context),
         author: normalizeAuthor(entry.author, context),
-        license: optionalString(entry, 'license') ?? DEFAULT_COMMUNITY_THEME_LICENSE,
+        license:
+            optionalString(entry, 'license') ?? DEFAULT_COMMUNITY_THEME_LICENSE,
         licenseUrl: optionalString(entry, 'licenseUrl'),
         description: requireString(entry, 'description', context),
         tags: normalizeTags(entry.tags, context),
@@ -129,6 +158,31 @@ function normalizeCommunityThemeManifest(
     };
 }
 
+async function loadCommunityThemeManifest(
+    catalogUrl: string,
+    themeId: string
+): Promise<CommunityThemeManifest> {
+    const manifestUrl = resolveCommunityThemeAssetUrl(
+        catalogUrl,
+        themeId,
+        COMMUNITY_THEME_MANIFEST_FILE_NAME
+    );
+    const response = await fetch(manifestUrl, {
+        cache: 'no-cache'
+    });
+    if (!response.ok) {
+        throw new Error(
+            `Failed to load community theme manifest ${themeId}: ${response.status} ${response.statusText}`
+        );
+    }
+
+    return normalizeCommunityThemeManifest(
+        await response.json(),
+        catalogUrl,
+        themeId
+    );
+}
+
 export async function loadCommunityThemeCatalog(
     catalogUrl = COMMUNITY_THEME_CATALOG_URL
 ): Promise<CommunityThemeCatalog> {
@@ -143,12 +197,14 @@ export async function loadCommunityThemeCatalog(
     }
 
     const payload = (await response.json()) as RawCommunityThemeEntry;
-    const themes = Array.isArray(payload.themes) ? payload.themes : [];
+    const themeIds = normalizeThemeIds(payload.themes);
     return {
         sourceUrl: normalizedCatalogUrl,
         schemaVersion: Number(payload.schemaVersion) || 1,
-        themes: themes.map((theme) =>
-            normalizeCommunityThemeManifest(theme, normalizedCatalogUrl)
+        themes: await Promise.all(
+            themeIds.map((themeId) =>
+                loadCommunityThemeManifest(normalizedCatalogUrl, themeId)
+            )
         )
     };
 }
