@@ -2534,6 +2534,7 @@
             "action": {
                 "install": "Install and enable",
                 "update_enable": "Update",
+                "no_theme": "No community theme",
                 "enable_theme": "Enable theme",
                 "disable_theme": "Disable theme",
                 "delete_theme": "Delete theme",

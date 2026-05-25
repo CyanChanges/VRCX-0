@@ -213,6 +213,48 @@ function ThemeCatalogCard({
     );
 }
 
+function NoCommunityThemeOption({
+    enabled,
+    loading,
+    onDisable,
+    t
+}: {
+    enabled: boolean;
+    loading: boolean;
+    onDisable: () => void;
+    t: (key: string, options?: any) => string;
+}) {
+    return (
+        <div className="border-border/70 bg-muted/20 flex min-w-0 items-center justify-between gap-3 rounded-md border p-3 text-sm">
+            <div className="grid min-w-0 gap-1">
+                <div className="font-medium">
+                    {t('view.community_themes.action.no_theme')}
+                </div>
+                <div className="text-muted-foreground text-xs">
+                    {t('view.community_themes.settings.status_default')}
+                </div>
+            </div>
+            {enabled ? (
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={onDisable}
+                >
+                    <SquareIcon data-icon="inline-start" />
+                    {t('view.community_themes.action.disable_theme')}
+                </Button>
+            ) : (
+                <Badge className="shrink-0">
+                    <BadgeCheckIcon data-icon="inline-start" />
+                    {t('view.community_themes.status.active')}
+                </Badge>
+            )}
+        </div>
+    );
+}
+
 export function CommunityThemesPage() {
     const { t } = useTranslation();
     const catalog = useCommunityThemeStore((state: any) => state.catalog);
@@ -488,6 +530,14 @@ export function CommunityThemesPage() {
                                 {error}
                             </div>
                         ) : null}
+                        <div className="mb-3">
+                            <NoCommunityThemeOption
+                                enabled={enabled}
+                                loading={loading}
+                                t={t}
+                                onDisable={disableTheme}
+                            />
+                        </div>
                         {catalog.length ? (
                             <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-2">
                                 {catalog.map((theme: any) => {
@@ -549,6 +599,12 @@ export function CommunityThemesPage() {
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="flex flex-col gap-3 text-sm">
+                                <NoCommunityThemeOption
+                                    enabled={enabled}
+                                    loading={loading}
+                                    t={t}
+                                    onDisable={disableTheme}
+                                />
                                 {installedThemes.length ? (
                                     <div className="grid gap-2">
                                         {installedThemes.map(

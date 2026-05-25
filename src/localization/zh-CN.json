@@ -2534,6 +2534,7 @@
             "action": {
                 "install": "安装并启用",
                 "update_enable": "更新",
+                "no_theme": "不使用社区主题",
                 "enable_theme": "启用主题",
                 "disable_theme": "禁用主题",
                 "delete_theme": "删除主题",

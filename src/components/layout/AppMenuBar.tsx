@@ -11,7 +11,10 @@ import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import { logoutFromReactShell } from '@/services/authExecutionService';
 import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
-import { enableInstalledCommunityTheme } from '@/services/communityThemeService';
+import {
+    disableInstalledCommunityTheme,
+    enableInstalledCommunityTheme
+} from '@/services/communityThemeService';
 import { openExternalLink } from '@/services/entityMediaService';
 import {
     setSidebarCollapsedPreference,
@@ -360,6 +363,23 @@ export function AppMenuBar({
         }
     }
 
+    async function runDisableInstalledCommunityTheme() {
+        if (!communityThemeEnabled) {
+            return;
+        }
+
+        try {
+            await disableInstalledCommunityTheme();
+            toast.success(t('view.community_themes.toast.theme_disabled'));
+        } catch (error) {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : t('view.community_themes.toast.disable_failed')
+            );
+        }
+    }
+
     function openLink(url: any) {
         openExternalLink(url);
     }
@@ -558,6 +578,25 @@ export function AppMenuBar({
                                     {t('view.community_themes.header')}
                                 </MenubarSubTrigger>
                                 <MenubarSubContent className="w-60">
+                                    <MenuItem
+                                        onSelect={() => {
+                                            runDisableInstalledCommunityTheme();
+                                        }}
+                                    >
+                                        <span className="flex min-w-0 items-center gap-2">
+                                            <span className="inline-flex size-3.5 shrink-0 items-center justify-center">
+                                                {!communityThemeEnabled ? (
+                                                    <CheckIcon data-icon="inline-start" />
+                                                ) : null}
+                                            </span>
+                                            <span className="min-w-0 truncate">
+                                                {t(
+                                                    'view.community_themes.action.no_theme'
+                                                )}
+                                            </span>
+                                        </span>
+                                    </MenuItem>
+                                    <MenubarSeparator />
                                     {installedCommunityThemes?.length ? (
                                         installedCommunityThemes.map(
                                             (theme: any) => {

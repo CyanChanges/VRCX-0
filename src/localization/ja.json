@@ -2534,6 +2534,7 @@
             "action": {
                 "install": "インストールして有効化",
                 "update_enable": "更新",
+                "no_theme": "コミュニティテーマを使わない",
                 "enable_theme": "テーマを有効化",
                 "disable_theme": "テーマを無効化",
                 "delete_theme": "テーマを削除",
