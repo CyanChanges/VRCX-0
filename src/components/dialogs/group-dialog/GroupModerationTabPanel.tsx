@@ -152,7 +152,7 @@ export function GroupModerationTabPanel({
             {!loading && !error ? (
                 <div className="overflow-auto rounded-md border">
                     <Table>
-                        <TableHeader className="bg-background sticky top-0">
+                        <TableHeader className="vrcx-0-table-header sticky top-0">
                             <TableRow>
                                 <TableHead className="w-56">
                                     {t('dialog.group.label.user')}

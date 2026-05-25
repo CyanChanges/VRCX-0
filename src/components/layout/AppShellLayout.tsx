@@ -130,9 +130,15 @@ export function AppShellLayout() {
 
     return (
         <AppSidebar>
-            <div className="bg-background flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
+            <div
+                data-vrcx-0-surface="main-shell"
+                className="vrcx-0-main-shell flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
+            >
                 <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+                    <div
+                        data-vrcx-0-surface="main-content"
+                        className="vrcx-0-main-content flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+                    >
                         <Outlet />
                     </div>
                     {sidePanelVisible ? (

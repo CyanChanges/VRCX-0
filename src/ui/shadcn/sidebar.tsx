@@ -136,6 +136,7 @@ function SidebarProvider({
         <SidebarContext.Provider value={contextValue}>
             <div
                 data-slot="sidebar-wrapper"
+                data-vrcx-0-surface="sidebar-layout"
                 style={
                     {
                         '--sidebar-width': SIDEBAR_WIDTH,
@@ -144,7 +145,7 @@ function SidebarProvider({
                     } as React.CSSProperties
                 }
                 className={cn(
-                    'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
+                    'vrcx-0-sidebar-layout group/sidebar-wrapper flex min-h-svh w-full',
                     className
                 )}
                 {...props}
@@ -175,8 +176,9 @@ function Sidebar({
         return (
             <div
                 data-slot="sidebar"
+                data-vrcx-0-surface="sidebar"
                 className={cn(
-                    'bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col',
+                    'vrcx-0-sidebar-surface text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col',
                     className
                 )}
                 {...props}
@@ -193,8 +195,9 @@ function Sidebar({
                     dir={dir}
                     data-sidebar="sidebar"
                     data-slot="sidebar"
+                    data-vrcx-0-surface="sidebar"
                     data-mobile="true"
-                    className="bg-sidebar text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
+                    className="vrcx-0-sidebar-surface text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden"
                     style={
                         {
                             '--sidebar-width': SIDEBAR_WIDTH_MOBILE
@@ -224,6 +227,7 @@ function Sidebar({
             data-variant={variant}
             data-side={side}
             data-slot="sidebar"
+            data-vrcx-0-surface="sidebar"
         >
             {/* This is what handles the sidebar gap on desktop */}
             <div
@@ -253,7 +257,8 @@ function Sidebar({
                 <div
                     data-sidebar="sidebar"
                     data-slot="sidebar-inner"
-                    className="bg-sidebar group-data-[variant=floating]:ring-sidebar-border flex size-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1"
+                    data-vrcx-0-surface="sidebar"
+                    className="vrcx-0-sidebar-surface group-data-[variant=floating]:ring-sidebar-border flex size-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1"
                 >
                     {children}
                 </div>
@@ -323,8 +328,9 @@ function SidebarInset({ className, ...props }: React.ComponentProps<'main'>) {
     return (
         <main
             data-slot="sidebar-inset"
+            data-vrcx-0-surface="sidebar-inset"
             className={cn(
-                'bg-background relative flex w-full flex-1 flex-col md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
+                'vrcx-0-sidebar-inset relative flex w-full flex-1 flex-col md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2',
                 className
             )}
             {...props}

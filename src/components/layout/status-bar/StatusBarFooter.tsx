@@ -286,8 +286,9 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
     return (
         <footer
             ref={ref}
+            data-vrcx-0-surface="statusbar"
             className={cn(
-                'bg-background/95 border-t text-xs backdrop-blur',
+                'vrcx-0-statusbar border-t text-xs backdrop-blur',
                 className
             )}
             {...props}

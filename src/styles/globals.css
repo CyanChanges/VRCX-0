@@ -54,6 +54,47 @@
     --chart-3: oklch(0.439 0 0);
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
+    /*
+     * VRCX-0 wallpaper hooks are app-owned CSS entry points for community
+     * themes. They lower selector friction but are not a permanent Theme API.
+     * App-wide wallpaper paints behind the whole shell; make each surface
+     * transparent or translucent when a theme wants full coverage.
+     */
+    --vrcx-0-wallpaper-image: none;
+    --vrcx-0-wallpaper-size: cover;
+    --vrcx-0-wallpaper-position: center;
+    --vrcx-0-wallpaper-repeat: no-repeat;
+    --vrcx-0-wallpaper-opacity: 1;
+    --vrcx-0-wallpaper-filter: none;
+    /*
+     * Main-content wallpaper only paints behind the route Outlet area. Use it
+     * when a theme should leave titlebar, sidebars, and status bar on their
+     * normal surfaces.
+     */
+    --vrcx-0-main-content-wallpaper-image: none;
+    --vrcx-0-main-content-wallpaper-size: cover;
+    --vrcx-0-main-content-wallpaper-position: center;
+    --vrcx-0-main-content-wallpaper-repeat: no-repeat;
+    --vrcx-0-main-content-wallpaper-opacity: 1;
+    --vrcx-0-main-content-wallpaper-filter: none;
+    /*
+     * Surface variables are the readable overlays above wallpaper layers.
+     * Themes can replace them with opaque, transparent, or translucent colors.
+     */
+    --vrcx-0-app-surface: var(--background);
+    --vrcx-0-titlebar-surface: var(--background);
+    --vrcx-0-main-surface: var(--background);
+    --vrcx-0-main-content-surface: transparent;
+    --vrcx-0-sidebar-surface: var(--sidebar);
+    --vrcx-0-sidebar-inset-surface: var(--background);
+    --vrcx-0-side-panel-surface: var(--background);
+    --vrcx-0-statusbar-surface: color-mix(
+        in oklch,
+        var(--background) 95%,
+        transparent
+    );
+    --vrcx-0-table-surface: var(--background);
+    --vrcx-0-table-header-surface: var(--background);
 }
 
 .dark {
@@ -207,6 +248,89 @@
 }
 
 @layer components {
+    .vrcx-0-app-root {
+        position: relative;
+        isolation: isolate;
+        background: var(--vrcx-0-app-surface);
+    }
+
+    .vrcx-0-app-root::before {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        pointer-events: none;
+        content: '';
+        background-image: var(--vrcx-0-wallpaper-image);
+        background-position: var(--vrcx-0-wallpaper-position);
+        background-size: var(--vrcx-0-wallpaper-size);
+        background-repeat: var(--vrcx-0-wallpaper-repeat);
+        opacity: var(--vrcx-0-wallpaper-opacity);
+        filter: var(--vrcx-0-wallpaper-filter);
+    }
+
+    .vrcx-0-route-host {
+        position: relative;
+        z-index: 1;
+    }
+
+    .vrcx-0-titlebar {
+        background: var(--vrcx-0-titlebar-surface);
+    }
+
+    .vrcx-0-main-shell {
+        background: var(--vrcx-0-main-surface);
+    }
+
+    .vrcx-0-main-content {
+        position: relative;
+        isolation: isolate;
+        background: var(--vrcx-0-main-content-surface);
+    }
+
+    .vrcx-0-main-content::before {
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        pointer-events: none;
+        content: '';
+        background-image: var(--vrcx-0-main-content-wallpaper-image);
+        background-position: var(--vrcx-0-main-content-wallpaper-position);
+        background-size: var(--vrcx-0-main-content-wallpaper-size);
+        background-repeat: var(--vrcx-0-main-content-wallpaper-repeat);
+        opacity: var(--vrcx-0-main-content-wallpaper-opacity);
+        filter: var(--vrcx-0-main-content-wallpaper-filter);
+    }
+
+    .vrcx-0-main-content > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    .vrcx-0-sidebar-layout,
+    .vrcx-0-sidebar-surface {
+        background: var(--vrcx-0-sidebar-surface);
+    }
+
+    .vrcx-0-sidebar-inset {
+        background: var(--vrcx-0-sidebar-inset-surface);
+    }
+
+    .vrcx-0-side-panel {
+        background: var(--vrcx-0-side-panel-surface);
+    }
+
+    .vrcx-0-statusbar {
+        background: var(--vrcx-0-statusbar-surface);
+    }
+
+    .vrcx-0-data-table {
+        background: var(--vrcx-0-table-surface);
+    }
+
+    .vrcx-0-table-header {
+        background: var(--vrcx-0-table-header-surface);
+    }
+
     i.x-user-status,
     i.x-status-icon {
         @apply inline-block size-2.5 shrink-0 rounded-full align-middle;

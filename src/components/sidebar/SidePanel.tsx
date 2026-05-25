@@ -631,8 +631,9 @@ export const SidePanel = forwardRef(function SidePanel(
     return (
         <aside
             ref={ref}
+            data-vrcx-0-surface="side-panel"
             className={cn(
-                'bg-background flex h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-l',
+                'vrcx-0-side-panel flex h-full min-h-0 w-80 shrink-0 flex-col overflow-hidden border-l',
                 className
             )}
             style={style}

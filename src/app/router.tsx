@@ -70,9 +70,15 @@ function AppShellRoute() {
 
 function AppRouterContent() {
     return (
-        <div className="bg-background flex h-screen min-h-0 w-full flex-col overflow-hidden">
+        <div
+            data-vrcx-0-surface="app-root"
+            className="vrcx-0-app-root flex h-screen min-h-0 w-full flex-col overflow-hidden"
+        >
             <AppTitleBar />
-            <div className="min-h-0 flex-1 overflow-hidden">
+            <div
+                data-vrcx-0-surface="route-host"
+                className="vrcx-0-route-host min-h-0 flex-1 overflow-hidden"
+            >
                 <Routes>
                     <Route element={<RedirectIfAuthenticated />}>
                         {publicRoutes.map((route: any) => (

@@ -469,7 +469,7 @@ export function PreviousInstanceDetailsPanel({
                             >
                                 <div className="max-h-[32vh] min-h-0 overflow-auto rounded-md border">
                                     <Table>
-                                        <TableHeader className="bg-background sticky top-0">
+                                        <TableHeader className="vrcx-0-table-header sticky top-0">
                                             <TableRow>
                                                 <TableHead>
                                                     {t(
@@ -569,7 +569,7 @@ export function PreviousInstanceDetailsPanel({
                         </summary>
                         <div className="mt-3 max-h-48 overflow-auto">
                             <Table>
-                                <TableHeader className="bg-background sticky top-0">
+                                <TableHeader className="vrcx-0-table-header sticky top-0">
                                     <TableRow>
                                         <TableHead className="h-8 px-2 py-1 text-xs">
                                             {t('table.previous_instances.date')}

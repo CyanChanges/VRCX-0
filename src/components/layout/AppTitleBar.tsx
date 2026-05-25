@@ -341,7 +341,8 @@ export function AppTitleBar() {
         <>
             <header
                 data-app-titlebar="true"
-                className="bg-background text-foreground pointer-events-auto relative z-[60] flex h-8 shrink-0 items-center border-b select-none"
+                data-vrcx-0-surface="titlebar"
+                className="vrcx-0-titlebar text-foreground pointer-events-auto relative z-[60] flex h-8 shrink-0 items-center border-b select-none"
             >
                 <div
                     data-tauri-drag-region

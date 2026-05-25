@@ -236,8 +236,9 @@ export function DataTableHeader({
 export function DataTableSurface({ className = '', children }: any) {
     return (
         <div
+            data-vrcx-0-surface="data-table"
             className={cn(
-                'app-data-table bg-background min-h-0 min-w-0 flex-1 overflow-hidden rounded-md border',
+                'app-data-table vrcx-0-data-table min-h-0 min-w-0 flex-1 overflow-hidden rounded-md border',
                 className
             )}
         >

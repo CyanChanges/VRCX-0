@@ -158,7 +158,7 @@ export function PreviousInstancesListTable({
             {visibleRows.length ? (
                 <div className="min-h-0 flex-1 overflow-auto rounded-md border">
                     <Table>
-                        <TableHeader className="bg-background sticky top-0">
+                        <TableHeader className="vrcx-0-table-header sticky top-0">
                             <TableRow>
                                 <TableHead className="w-44">
                                     <Button

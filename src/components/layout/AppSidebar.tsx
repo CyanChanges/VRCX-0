@@ -81,7 +81,8 @@ export function AppSidebar({ children }: any) {
     return (
         <SidebarProvider
             open={sidebarOpen}
-            className="relative h-full min-h-0 w-full overflow-hidden"
+            data-vrcx-0-surface="sidebar-layout"
+            className="vrcx-0-sidebar-layout relative h-full min-h-0 w-full overflow-hidden"
             style={{ '--sidebar-width': `${navWidth}px` }}
             onOpenChange={(open: any) => {
                 setSidebarCollapsedPreference(!open);
@@ -91,6 +92,7 @@ export function AppSidebar({ children }: any) {
                 side="left"
                 variant="sidebar"
                 collapsible="icon"
+                data-vrcx-0-surface="sidebar"
                 style={{ top: '2rem', bottom: 0, height: 'auto' }}
             >
                 <AppNavMenu isCollapsed={!sidebarOpen} />
@@ -102,7 +104,10 @@ export function AppSidebar({ children }: any) {
                     onPointerDown={startNavResize}
                 />
             ) : null}
-            <SidebarInset className="bg-background min-w-0 overflow-hidden">
+            <SidebarInset
+                data-vrcx-0-surface="sidebar-inset"
+                className="min-w-0 overflow-hidden"
+            >
                 {children}
             </SidebarInset>
         </SidebarProvider>
