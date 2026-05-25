@@ -323,10 +323,7 @@ impl GameLogIngestEngine {
         user_id: &str,
     ) {
         let left_time_ms = parse_event_time_ms(&event.created_at);
-        let player = self
-            .state
-            .players_by_key
-            .remove(&player_key(user_id, display_name));
+        let player = remove_player_for_leave(&mut self.state, display_name, user_id);
         let duration = duration_ms(player.as_ref().and_then(|p| p.join_time_ms), left_time_ms);
 
         batch.join_leave.push(GameLogJoinLeaveEntry {
@@ -444,6 +441,39 @@ fn batch_write_count(batch: &GameLogWriteBatch) -> usize {
         + batch.externals.len()
 }
 
+fn remove_player_for_leave(
+    state: &mut GameLogRuntimeState,
+    display_name: &str,
+    user_id: &str,
+) -> Option<PlayerState> {
+    let key = player_key(user_id, display_name);
+    if let Some(player) = state.players_by_key.remove(&key) {
+        return Some(player);
+    }
+
+    let normalized_display_name = display_name.trim();
+    if normalized_display_name.is_empty() {
+        return None;
+    }
+
+    let matches = state
+        .players_by_key
+        .iter()
+        .filter_map(|(key, player)| {
+            player
+                .display_name
+                .trim()
+                .eq_ignore_ascii_case(normalized_display_name)
+                .then(|| key.clone())
+        })
+        .collect::<Vec<_>>();
+    if matches.len() != 1 {
+        return None;
+    }
+
+    state.players_by_key.remove(&matches[0])
+}
+
 fn decode_video_url(value: &str) -> String {
     percent_encoding::percent_decode_str(value)
         .decode_utf8()
@@ -502,6 +532,46 @@ mod tests {
         assert!(output.batch.is_empty());
         assert_eq!(output.side_effects.len(), 1);
         assert!(output.runtime_persisted_mirrors.is_empty());
+    }
+
+    #[test]
+    fn player_left_removes_unique_display_name_when_user_id_key_changes() {
+        let mut engine = GameLogIngestEngine::default();
+        let output = engine.ingest_events(
+            &[
+                event(
+                    "2026-05-14T04:00:00.000Z",
+                    GameLogEventKind::Location {
+                        location: "wrld_ingest:1".into(),
+                        world_name: "Ingest World".into(),
+                    },
+                ),
+                event(
+                    "2026-05-14T04:00:10.000Z",
+                    GameLogEventKind::PlayerJoined {
+                        display_name: "Left Player".into(),
+                        user_id: String::new(),
+                    },
+                ),
+                event(
+                    "2026-05-14T04:00:40.000Z",
+                    GameLogEventKind::PlayerLeft {
+                        display_name: "Left Player".into(),
+                        user_id: "usr_left".into(),
+                    },
+                ),
+            ],
+            GameLogIngestOptions::default(),
+        );
+
+        assert_eq!(output.batch.join_leave.len(), 2);
+        assert_eq!(output.batch.join_leave[1].event_type, "OnPlayerLeft");
+        assert_eq!(output.batch.join_leave[1].time, 30000);
+        assert!(output
+            .projection
+            .unwrap()
+            .current_location_players
+            .is_empty());
     }
 
     #[test]

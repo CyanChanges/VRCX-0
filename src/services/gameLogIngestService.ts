@@ -248,6 +248,33 @@ function patchCurrentUserLocationFromGameState(
     });
 }
 
+function removeCurrentLocationPlayer(userId: unknown, displayName: unknown) {
+    const playerKey = getPlayerKey(userId, displayName);
+    const player = ingestState.playersByKey.get(playerKey);
+    if (player) {
+        ingestState.playersByKey.delete(playerKey);
+        return player;
+    }
+
+    const normalizedDisplayName = normalizeString(displayName).toLowerCase();
+    if (!normalizedDisplayName) {
+        return undefined;
+    }
+
+    const matches = Array.from(ingestState.playersByKey.entries()).filter(
+        ([, value]: any) =>
+            normalizeString(value?.displayName).toLowerCase() ===
+            normalizedDisplayName
+    );
+    if (matches.length !== 1) {
+        return undefined;
+    }
+
+    const [matchedKey, matchedPlayer] = matches[0];
+    ingestState.playersByKey.delete(matchedKey);
+    return matchedPlayer;
+}
+
 async function persistGameLog(gameLog: GameLogRow, options: GameLogRow = {}) {
     const runtimeStore = useRuntimeStore.getState();
     const location = getCurrentLocation();
@@ -375,8 +402,7 @@ async function persistGameLog(gameLog: GameLogRow, options: GameLogRow = {}) {
         case 'player-left': {
             const userId = normalizeString(gameLog.userId);
             const displayName = normalizeString(gameLog.displayName);
-            const playerKey = getPlayerKey(userId, displayName);
-            const joined = ingestState.playersByKey.get(playerKey) as
+            const joined = removeCurrentLocationPlayer(userId, displayName) as
                 | Record<string, any>
                 | undefined;
             const leftAt = Date.parse(gameLog.dt);
@@ -384,7 +410,6 @@ async function persistGameLog(gameLog: GameLogRow, options: GameLogRow = {}) {
                 joined?.joinTime && Number.isFinite(leftAt)
                     ? Math.max(0, leftAt - joined.joinTime)
                     : 0;
-            ingestState.playersByKey.delete(playerKey);
             runtimeStore.setGameState({
                 currentLocationPlayerIds: getCurrentLocationPlayerIds(),
                 currentLocationPlayers: getCurrentLocationPlayers()

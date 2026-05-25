@@ -104,4 +104,41 @@ describe('playerListPersistenceRepository', () => {
             })
         ]);
     });
+
+    it('removes a joined row by unique display name when the leave row has a different id key', async () => {
+        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
+            created_at: '2026-04-30T10:00:00.000Z',
+            location: 'wrld_live:123',
+            world_id: 'wrld_live',
+            world_name: 'Live World',
+            time: 0,
+            group_name: ''
+        });
+        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows).mockResolvedValueOnce([
+            {
+                id: '1',
+                created_at: '2026-04-30T10:01:00.000Z',
+                type: 'OnPlayerJoined',
+                display_name: 'Left Player',
+                user_id: '',
+                time: 0
+            },
+            {
+                id: '2',
+                created_at: '2026-04-30T10:02:00.000Z',
+                type: 'OnPlayerLeft',
+                display_name: 'Left Player',
+                user_id: 'usr_left',
+                time: 60000
+            }
+        ]);
+
+        await expect(
+            getCurrentInstanceSnapshot({
+                currentLocation: 'wrld_live:123'
+            })
+        ).resolves.toMatchObject({
+            players: []
+        });
+    });
 });

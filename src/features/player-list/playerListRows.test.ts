@@ -107,6 +107,38 @@ describe('playerListRows', () => {
         });
     });
 
+    it('uses reconstructed game-log rows over stale runtime rows once player facts are known', () => {
+        expect(
+            buildPlayerSourceRows({
+                playerRows: [],
+                runtimePlayerRows: [
+                    {
+                        userId: 'usr_left',
+                        displayName: 'Left Player'
+                    }
+                ],
+                runtimeRosterAvailable: true,
+                currentUserId: 'usr_self',
+                currentUserSnapshot: {
+                    displayName: 'Current User'
+                },
+                isGameRunning: true,
+                context: {
+                    location: 'wrld_live:123',
+                    createdAt: '2026-01-02T03:04:05.000Z',
+                    playerFactsKnown: true
+                },
+                currentUserLocation: '',
+                currentLocationStartedAt: ''
+            })
+        ).toEqual([
+            expect.objectContaining({
+                id: 'usr_self',
+                userId: 'usr_self'
+            })
+        ]);
+    });
+
     it('does not add another current user row when the source already identifies them by row id', () => {
         expect(
             buildPlayerSourceRows({

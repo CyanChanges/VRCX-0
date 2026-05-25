@@ -146,7 +146,7 @@ export function buildPlayerSourceRows({
     };
 
     if (canUseLiveRows) {
-        const sourceRows = runtimeRosterAvailable
+        const sourceRows = runtimeRosterAvailable && !context?.playerFactsKnown
             ? runtimePlayerRows
             : playerRows;
         for (const row of Array.isArray(sourceRows) ? sourceRows : []) {

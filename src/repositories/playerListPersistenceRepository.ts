@@ -198,6 +198,30 @@ function findAnonymousPlayerKeyForLeave(
     return nameMatches.length ? nameMatches[0].playerKey : '';
 }
 
+function findPlayerKeyForLeave(
+    playersByKey: Map<string, PlayerListPlayer>,
+    event: PlayerListJoinLeaveRow
+) {
+    const playerKey = buildPlayerKey(event.userId);
+    if (playerKey && playersByKey.has(playerKey)) {
+        return playerKey;
+    }
+
+    const displayName = normalizeString(event?.displayName).toLowerCase();
+    if (displayName) {
+        const matches = Array.from(playersByKey.entries()).filter(
+            ([, player]) =>
+                normalizeString(player.displayName).toLowerCase() ===
+                displayName
+        );
+        if (matches.length === 1) {
+            return matches[0][0];
+        }
+    }
+
+    return findAnonymousPlayerKeyForLeave(playersByKey, event);
+}
+
 async function resolveCurrentLocationContext(
     currentLocation: unknown
 ): Promise<PlayerListContext> {
@@ -308,16 +332,9 @@ async function getCurrentInstanceSnapshot({
                 lastDurationMs: event.time
             });
         } else if (event.type === 'OnPlayerLeft') {
-            if (event.userId) {
-                playersByKey.delete(playerKey);
-            } else {
-                const anonymousPlayerKey = findAnonymousPlayerKeyForLeave(
-                    playersByKey,
-                    event
-                );
-                if (anonymousPlayerKey) {
-                    playersByKey.delete(anonymousPlayerKey);
-                }
+            const leavePlayerKey = findPlayerKeyForLeave(playersByKey, event);
+            if (leavePlayerKey) {
+                playersByKey.delete(leavePlayerKey);
             }
         }
     }
