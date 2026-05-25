@@ -50,6 +50,13 @@ function isRecord(value: unknown): value is Record<string, any> {
     return Boolean(value && typeof value === 'object');
 }
 
+function getErrorMessage(error: unknown, fallbackMessage: string) {
+    if (error instanceof Error && error.message) {
+        return error.message;
+    }
+    return fallbackMessage;
+}
+
 function normalizeAutoLoginDelaySeconds(seconds: unknown) {
     const parsed =
         typeof seconds === 'number'
@@ -332,7 +339,12 @@ export async function executeReactAutoLogin(
             'error',
             error instanceof Error ? error.message : String(error)
         );
-        toast.error(await i18n.t('message.auth.auto_login_failed'));
+        toast.error(
+            getErrorMessage(
+                error,
+                await i18n.t('message.auth.auto_login_failed')
+            )
+        );
 
         if (typeof navigator !== 'undefined' && navigator.onLine === false) {
             toast.error(await i18n.t('message.auth.offline'));

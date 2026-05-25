@@ -38,6 +38,12 @@ export function LoginAutoLoginAlert({
                         {getAutoLoginStateLabel(autoLoginState.status)}
                     </span>
                 ) : null}
+                {autoLoginState.status !== 'scheduled' &&
+                autoLoginState.detail ? (
+                    <span className="min-w-0 flex-1 basis-full text-muted-foreground">
+                        {autoLoginState.detail}
+                    </span>
+                ) : null}
                 {autoLoginState.status === 'scheduled' &&
                 !autoLoginState.detail &&
                 autoLoginState.remainingSeconds > 0 ? (

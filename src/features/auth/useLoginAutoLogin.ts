@@ -276,7 +276,10 @@ export function useLoginAutoLogin({
                         setAutoLoginState({
                             status: 'failed',
                             remainingSeconds: 0,
-                            detail: t('view.auth.auto_login.failed_manual'),
+                            detail: getErrorMessage(
+                                result.error,
+                                t('view.auth.auto_login.failed_manual')
+                            ),
                             userId
                         });
                         break;

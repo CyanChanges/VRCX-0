@@ -12,7 +12,32 @@ import { Toaster } from '@/ui/shadcn/sonner';
 import { Spinner } from '@/ui/shadcn/spinner';
 
 const TITLE_BAR_TOAST_OFFSET: any = { top: 'calc(2rem + 32px)' };
+const VRCHAT_API_UNAVAILABLE_TOAST_DURATION_MS = 12000;
 let sonnerErrorToastPatched = false;
+
+function isVrchatApiUnavailableMessage(message: unknown) {
+    if (typeof message !== 'string') {
+        return false;
+    }
+    return (
+        message.includes('status.vrchat.com') ||
+        message.includes('VRChat API services are currently unavailable')
+    );
+}
+
+function applyErrorToastDefaults(message: unknown, options: any) {
+    if (
+        !isVrchatApiUnavailableMessage(message) ||
+        (options && typeof options === 'object' && options.duration != null)
+    ) {
+        return options;
+    }
+
+    return {
+        ...(options && typeof options === 'object' ? options : {}),
+        duration: VRCHAT_API_UNAVAILABLE_TOAST_DURATION_MS
+    };
+}
 
 function patchSonnerErrorToast() {
     if (sonnerErrorToastPatched || typeof toast.error !== 'function') {
@@ -22,13 +47,16 @@ function patchSonnerErrorToast() {
 
     const originalErrorToast = toast.error.bind(toast);
     try {
-        toast.error = (message: any, options: any) =>
-            originalErrorToast(
+        toast.error = (message: any, options: any) => {
+            const nextMessage =
                 typeof message === 'string' || message instanceof Error
                     ? userFacingErrorMessage(message, 'Action failed.')
-                    : message,
-                options
+                    : message;
+            return originalErrorToast(
+                nextMessage,
+                applyErrorToastDefaults(nextMessage, options)
             );
+        };
     } catch {
         sonnerErrorToastPatched = false;
     }
