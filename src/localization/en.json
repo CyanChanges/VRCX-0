@@ -2598,6 +2598,11 @@
                 "description": "Manage theme source, background image, community themes, accent color, and custom CSS.",
                 "current_source": "Current source"
             },
+            "summary": {
+                "header": "Current theme",
+                "override_on": "Custom CSS on ({count} bytes)",
+                "override_off": "Custom CSS off"
+            },
             "source": {
                 "header": "Theme source",
                 "built_in": "Built-in",
@@ -2614,7 +2619,17 @@
                 "header": "Accent color"
             },
             "custom_css": {
-                "header": "Custom CSS"
+                "header": "Custom CSS",
+                "enabled_summary": "Override CSS is enabled ({count} bytes).",
+                "disabled_summary": "Optional final CSS layer. It is currently disabled.",
+                "edit": "Edit",
+                "hide_editor": "Hide editor"
+            },
+            "developer": {
+                "summary": "Local theme preview tools for theme development builds.",
+                "preview_active": "Previewing {name}.",
+                "show": "Show tools",
+                "hide": "Hide tools"
             },
             "action": {
                 "open_themes": "Open Themes",
@@ -2647,7 +2662,12 @@
                 "image_count_plural": "{count} images",
                 "rotation": "Rotation",
                 "no_custom_source": "No custom image source selected",
-                "no_image": "No image loaded"
+                "no_image": "No image loaded",
+                "no_image_description": "Refresh or choose a source to load an image.",
+                "source_type_file": "Local file",
+                "source_type_files": "Selected files",
+                "source_type_folder": "Folder",
+                "resolved_at": "Loaded"
             },
             "mode": {
                 "off": "Off",

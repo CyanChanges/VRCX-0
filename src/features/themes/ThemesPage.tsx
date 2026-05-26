@@ -1,6 +1,8 @@
 import {
     BadgeCheckIcon,
     BrushIcon,
+    ChevronDownIcon,
+    CodeIcon,
     DownloadIcon,
     EraserIcon,
     ExternalLinkIcon,
@@ -10,10 +12,12 @@ import {
     SquareIcon,
     Trash2Icon
 } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
+import { cn } from '@/lib/utils';
 import {
     PageBody,
     PageHeader,
@@ -55,6 +59,11 @@ import { useShellStore } from '@/state/shellStore';
 import { Badge } from '@/ui/shadcn/badge';
 import { Button } from '@/ui/shadcn/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/ui/shadcn/card';
+import {
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger
+} from '@/ui/shadcn/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
 import { Textarea } from '@/ui/shadcn/textarea';
 
@@ -100,6 +109,29 @@ function ThemeTags({ tags }: { tags: string[] }) {
                 </Badge>
             ))}
         </div>
+    );
+}
+
+function ThemeSourceButton({
+    active,
+    children,
+    onClick
+}: {
+    active: boolean;
+    children: ReactNode;
+    onClick: () => void;
+}) {
+    return (
+        <Button
+            type="button"
+            variant={active ? 'default' : 'outline'}
+            size="sm"
+            className="h-7 justify-start gap-1.5 rounded-md px-2.5"
+            onClick={onClick}
+        >
+            {active ? <BadgeCheckIcon data-icon="inline-start" /> : null}
+            {children}
+        </Button>
     );
 }
 
@@ -267,6 +299,9 @@ export function ThemesPage() {
     const backgroundImageCustomSource = useBackgroundImageStore(
         (state: any) => state.customSource
     );
+    const backgroundImageSnapshot = useBackgroundImageStore(
+        (state: any) => state.snapshot
+    );
     const catalog = useCommunityThemeStore((state: any) => state.catalog);
     const enabled = useCommunityThemeStore((state: any) => state.enabled);
     const installedTheme = useCommunityThemeStore(
@@ -284,10 +319,14 @@ export function ThemesPage() {
     const loading = useCommunityThemeStore((state: any) => state.loading);
     const error = useCommunityThemeStore((state: any) => state.error);
     const [overrideDraft, setOverrideDraft] = useState('');
+    const [customCssOpen, setCustomCssOpen] = useState(
+        Boolean(overrideCssLength)
+    );
     const [devFolderPath, setDevFolderPath] = useState(
         localPreview?.folderPath || ''
     );
     const [devLoading, setDevLoading] = useState(false);
+    const [devSectionOpen, setDevSectionOpen] = useState(false);
     const [devWatchEnabled, setDevWatchEnabled] = useState(false);
     const [devError, setDevError] = useState<string | null>(null);
     const devWatchReloadingRef = useRef(false);
@@ -324,6 +363,12 @@ export function ThemesPage() {
             setDevFolderPath(localPreview.folderPath);
         }
     }, [localPreview?.folderPath]);
+
+    useEffect(() => {
+        if (overrideCssLength) {
+            setCustomCssOpen(true);
+        }
+    }, [overrideCssLength]);
 
     useEffect(() => {
         if (
@@ -589,6 +634,25 @@ export function ThemesPage() {
         ])
     );
     const appearanceControlled = activeSource !== 'built-in';
+    const activeSourceLabel = t(
+        activeSource === 'built-in'
+            ? 'view.themes.source.built_in'
+            : activeSource === 'background'
+              ? 'view.themes.source.background'
+              : 'view.themes.source.community'
+    );
+    const activeSourceDetail =
+        activeSource === 'background'
+            ? backgroundImageSnapshot?.title ||
+              t('view.background_image.settings.no_image')
+            : activeSource === 'community'
+              ? localPreview?.themeName ||
+                installedTheme?.themeName ||
+                t('view.community_themes.installed.empty')
+              : themeModeLabel(themeMode, t);
+    const overrideSummary = overrideCssLength
+        ? t('view.themes.summary.override_on', { count: overrideCssLength })
+        : t('view.themes.summary.override_off');
 
     async function updateThemeMode(nextThemeMode: string) {
         if (appearanceControlled) {
@@ -628,88 +692,55 @@ export function ThemesPage() {
             <PageBody>
                 <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                     <div className="mx-auto flex w-full max-w-6xl flex-col gap-3">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm">
-                                    {t('view.themes.source.header')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="grid gap-2 md:grid-cols-3">
-                                <Button
-                                    type="button"
-                                    variant={
-                                        visibleSource === 'built-in'
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    className="h-auto justify-start p-3 text-left"
-                                    onClick={selectBuiltInSource}
-                                >
-                                    <span className="grid min-w-0 gap-1">
-                                        <span className="font-medium">
-                                            {t('view.themes.source.built_in')}
-                                        </span>
-                                        <span className="text-xs font-normal opacity-80">
+                        <div className="border-border/70 bg-card/70 flex min-w-0 flex-col gap-3 rounded-lg border px-3 py-2.5">
+                            <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                                <div className="grid min-w-0 gap-1">
+                                    <div className="text-sm font-medium">
+                                        {t('view.themes.summary.header')}
+                                    </div>
+                                    <div className="text-muted-foreground flex min-w-0 flex-wrap gap-x-3 gap-y-1 text-xs">
+                                        <span>
                                             {t(
-                                                'view.themes.source.built_in_description'
+                                                'view.themes.settings.current_source'
                                             )}
+                                            : {activeSourceLabel}
                                         </span>
-                                    </span>
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={
-                                        visibleSource === 'background'
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    className="h-auto justify-start p-3 text-left"
-                                    onClick={selectBackgroundSource}
-                                >
-                                    <span className="grid min-w-0 gap-1">
-                                        <span className="font-medium">
-                                            {t('view.themes.source.background')}
+                                        <span className="max-w-96 truncate">
+                                            {activeSourceDetail}
                                         </span>
-                                        <span className="text-xs font-normal opacity-80">
-                                            {t(
-                                                'view.themes.source.background_description'
-                                            )}
-                                        </span>
-                                    </span>
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={
-                                        visibleSource === 'community'
-                                            ? 'default'
-                                            : 'outline'
-                                    }
-                                    className="h-auto justify-start p-3 text-left"
-                                    onClick={selectCommunitySource}
-                                >
-                                    <span className="grid min-w-0 gap-1">
-                                        <span className="font-medium">
-                                            {t('view.themes.source.community')}
-                                        </span>
-                                        <span className="text-xs font-normal opacity-80">
-                                            {t(
-                                                'view.themes.source.community_description'
-                                            )}
-                                        </span>
-                                    </span>
-                                </Button>
-                            </CardContent>
-                        </Card>
+                                        <span>{overrideSummary}</span>
+                                    </div>
+                                </div>
+                                <div className="flex min-w-0 flex-wrap gap-1 rounded-lg bg-muted/30 p-1">
+                                    <ThemeSourceButton
+                                        active={visibleSource === 'built-in'}
+                                        onClick={selectBuiltInSource}
+                                    >
+                                        {t('view.themes.source.built_in')}
+                                    </ThemeSourceButton>
+                                    <ThemeSourceButton
+                                        active={visibleSource === 'background'}
+                                        onClick={selectBackgroundSource}
+                                    >
+                                        {t('view.themes.source.background')}
+                                    </ThemeSourceButton>
+                                    <ThemeSourceButton
+                                        active={visibleSource === 'community'}
+                                        onClick={selectCommunitySource}
+                                    >
+                                        {t('view.themes.source.community')}
+                                    </ThemeSourceButton>
+                                </div>
+                            </div>
 
-                        {visibleSource === 'built-in' ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-sm">
-                                        {t('view.themes.built_in.header')}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex flex-col gap-3">
-                                    <div className="flex flex-wrap gap-2">
+                            {visibleSource === 'built-in' ? (
+                                <div className="border-border/70 flex min-w-0 flex-col gap-2 border-t pt-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="text-muted-foreground text-xs">
+                                        {t(
+                                            'view.themes.source.built_in_description'
+                                        )}
+                                    </div>
+                                    <div className="flex flex-wrap gap-1.5">
                                         {THEME_MODE_OPTIONS.map((mode) => (
                                             <Button
                                                 key={mode}
@@ -720,6 +751,7 @@ export function ThemesPage() {
                                                         ? 'default'
                                                         : 'outline'
                                                 }
+                                                className="h-7"
                                                 onClick={() =>
                                                     updateThemeMode(mode)
                                                 }
@@ -728,235 +760,236 @@ export function ThemesPage() {
                                             </Button>
                                         ))}
                                     </div>
-                                </CardContent>
-                            </Card>
-                        ) : null}
+                                </div>
+                            ) : null}
+                        </div>
 
                         {visibleSource === 'background' ? (
                             <BackgroundImageSection />
                         ) : null}
 
                         {visibleSource === 'community' ? (
-                <Tabs
-                    defaultValue="browse"
-                    className="flex min-h-0 flex-1 flex-col"
-                >
-                    <div className="shrink-0 overflow-x-auto overflow-y-hidden">
-                        <TabsList>
-                            <TabsTrigger value="browse">
-                                {t('view.community_themes.tabs.browse')}
-                            </TabsTrigger>
-                            <TabsTrigger value="installed">
-                                {t('view.community_themes.tabs.installed')}
-                            </TabsTrigger>
-                        </TabsList>
-                    </div>
-                    <TabsContent
-                        value="browse"
-                        className="m-0 min-h-0 flex-1 overflow-y-auto pt-3"
-                    >
-                        {error ? (
-                            <div className="text-destructive p-2 text-sm">
-                                {error}
-                            </div>
-                        ) : null}
-                        {catalog.length ? (
-                            <div className="grid grid-cols-[repeat(auto-fill,minmax(16rem,1fr))] gap-2">
-                                {catalog.map((theme: any) => {
-                                    const installedEntry =
-                                        installedThemeById.get(theme.id);
-                                    const active =
-                                        enabled &&
-                                        installedTheme?.themeId === theme.id;
-                                    const updateAvailable = Boolean(
-                                        installedEntry &&
-                                            !isSameThemeVersion(
-                                                installedEntry.version,
-                                                theme.version
-                                            )
-                                    );
-                                    return (
-                                        <ThemeCatalogCard
-                                            key={theme.id}
-                                            theme={theme}
-                                            active={active}
-                                            installed={Boolean(installedEntry)}
-                                            updateAvailable={updateAvailable}
-                                            loading={loading}
-                                            t={t}
-                                            onInstall={() => {
-                                                if (
-                                                    installedEntry &&
-                                                    !updateAvailable
-                                                ) {
-                                                    enableTheme(theme.id);
-                                                    return;
-                                                }
-                                                installTheme(theme);
-                                            }}
-                                        />
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <Card>
-                                <CardContent className="text-muted-foreground p-6 text-sm">
-                                    {t(
-                                        'view.community_themes.browse.empty'
-                                    )}
-                                </CardContent>
-                            </Card>
-                        )}
-                    </TabsContent>
-                    <TabsContent
-                        value="installed"
-                        className="m-0 min-h-0 flex-1 overflow-y-auto pt-3"
-                    >
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm">
-                                    {t(
-                                        'view.community_themes.installed.header'
-                                    )}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3 text-sm">
-                                {installedThemes.length ? (
-                                    <div className="grid gap-2">
-                                        {installedThemes.map(
-                                            (
-                                                theme: CommunityThemeInstallMetadata
-                                            ) => {
+                            <Tabs
+                                defaultValue="browse"
+                                className="flex min-h-0 flex-col gap-3"
+                            >
+                                <div className="shrink-0 overflow-x-auto overflow-y-hidden">
+                                    <TabsList>
+                                        <TabsTrigger value="browse">
+                                            {t(
+                                                'view.community_themes.tabs.browse'
+                                            )}
+                                        </TabsTrigger>
+                                        <TabsTrigger value="installed">
+                                            {t(
+                                                'view.community_themes.tabs.installed'
+                                            )}
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </div>
+                                <TabsContent value="browse" className="m-0">
+                                    {error ? (
+                                        <div className="text-destructive p-2 text-sm">
+                                            {error}
+                                        </div>
+                                    ) : null}
+                                    {catalog.length ? (
+                                        <div className="grid grid-cols-[repeat(auto-fill,minmax(14rem,16rem))] justify-start gap-2">
+                                            {catalog.map((theme: any) => {
+                                                const installedEntry =
+                                                    installedThemeById.get(
+                                                        theme.id
+                                                    );
                                                 const active =
                                                     enabled &&
                                                     installedTheme?.themeId ===
-                                                        theme.themeId;
-                                                return (
-                                                    <div
-                                                        key={theme.themeId}
-                                                        className="border-border/70 bg-muted/20 min-w-0 rounded-md border p-3"
-                                                    >
-                                                        <div className="flex flex-col gap-3 text-sm">
-                                                            <div className="flex min-w-0 items-start justify-between gap-3">
-                                                                <div className="grid min-w-0 gap-1 text-xs">
-                                                                    <div className="font-medium">
-                                                                        {
-                                                                            theme.themeName
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-muted-foreground">
-                                                                        {t(
-                                                                            'view.community_themes.field.version'
-                                                                        )}
-                                                                        :{' '}
-                                                                        {
-                                                                            theme.version
-                                                                        }
-                                                                    </div>
-                                                                    <div className="text-muted-foreground">
-                                                                        {t(
-                                                                            'view.community_themes.field.accent_mode'
-                                                                        )}
-                                                                        :{' '}
-                                                                        {theme.accentMode
-                                                                            ? t(
-                                                                                  'view.community_themes.value.yes'
-                                                                              )
-                                                                            : t(
-                                                                                  'view.community_themes.value.no'
-                                                                              )}
-                                                                    </div>
-                                                                </div>
-                                                                {active ? (
-                                                                    <Badge className="shrink-0">
-                                                                        <BadgeCheckIcon data-icon="inline-start" />
-                                                                        {t(
-                                                                            'view.community_themes.status.active'
-                                                                        )}
-                                                                    </Badge>
-                                                                ) : null}
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-2">
-                                                                {active ? (
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        onClick={
-                                                                            disableTheme
-                                                                        }
-                                                                    >
-                                                                        <BrushIcon data-icon="inline-start" />
-                                                                        {t(
-                                                                            'view.community_themes.action.disable_theme'
-                                                                        )}
-                                                                    </Button>
-                                                                ) : (
-                                                                    <Button
-                                                                        type="button"
-                                                                        size="sm"
-                                                                        onClick={() =>
-                                                                            enableTheme(
-                                                                                theme.themeId
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <BrushIcon data-icon="inline-start" />
-                                                                        {t(
-                                                                            'view.community_themes.action.enable_theme'
-                                                                        )}
-                                                                    </Button>
-                                                                )}
-                                                                <Button
-                                                                    type="button"
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    onClick={() =>
-                                                                        deleteTheme(
-                                                                            theme.themeId
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <Trash2Icon data-icon="inline-start" />
-                                                                    {t(
-                                                                        'view.community_themes.action.delete_theme'
-                                                                    )}
-                                                                </Button>
-                                                            </div>
-                                                            {active &&
-                                                            accentControlled ? (
-                                                                <p className="text-muted-foreground text-xs">
-                                                                    {t(
-                                                                        'view.community_themes.installed.accent_controlled'
-                                                                    )}
-                                                                </p>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
+                                                        theme.id;
+                                                const updateAvailable = Boolean(
+                                                    installedEntry &&
+                                                        !isSameThemeVersion(
+                                                            installedEntry.version,
+                                                            theme.version
+                                                        )
                                                 );
-                                            }
+                                                return (
+                                                    <ThemeCatalogCard
+                                                        key={theme.id}
+                                                        theme={theme}
+                                                        active={active}
+                                                        installed={Boolean(
+                                                            installedEntry
+                                                        )}
+                                                        updateAvailable={
+                                                            updateAvailable
+                                                        }
+                                                        loading={loading}
+                                                        t={t}
+                                                        onInstall={() => {
+                                                            if (
+                                                                installedEntry &&
+                                                                !updateAvailable
+                                                            ) {
+                                                                enableTheme(
+                                                                    theme.id
+                                                                );
+                                                                return;
+                                                            }
+                                                            installTheme(theme);
+                                                        }}
+                                                    />
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="border-border/70 text-muted-foreground rounded-lg border p-4 text-sm">
+                                            {t(
+                                                'view.community_themes.browse.empty'
+                                            )}
+                                        </div>
+                                    )}
+                                </TabsContent>
+                                <TabsContent value="installed" className="m-0">
+                                    <div className="border-border/70 bg-card/70 rounded-lg border p-3">
+                                        <div className="mb-3 text-sm font-medium">
+                                            {t(
+                                                'view.community_themes.installed.header'
+                                            )}
+                                        </div>
+                                        {installedThemes.length ? (
+                                            <div className="grid gap-2">
+                                                {installedThemes.map(
+                                                    (
+                                                        theme: CommunityThemeInstallMetadata
+                                                    ) => {
+                                                        const active =
+                                                            enabled &&
+                                                            installedTheme?.themeId ===
+                                                                theme.themeId;
+                                                        return (
+                                                            <div
+                                                                key={
+                                                                    theme.themeId
+                                                                }
+                                                                className="border-border/70 bg-muted/20 min-w-0 rounded-md border p-3"
+                                                            >
+                                                                <div className="flex flex-col gap-3 text-sm">
+                                                                    <div className="flex min-w-0 items-start justify-between gap-3">
+                                                                        <div className="grid min-w-0 gap-1 text-xs">
+                                                                            <div className="font-medium">
+                                                                                {
+                                                                                    theme.themeName
+                                                                                }
+                                                                            </div>
+                                                                            <div className="text-muted-foreground">
+                                                                                {t(
+                                                                                    'view.community_themes.field.version'
+                                                                                )}
+                                                                                :{' '}
+                                                                                {
+                                                                                    theme.version
+                                                                                }
+                                                                            </div>
+                                                                            <div className="text-muted-foreground">
+                                                                                {t(
+                                                                                    'view.community_themes.field.accent_mode'
+                                                                                )}
+                                                                                :{' '}
+                                                                                {theme.accentMode
+                                                                                    ? t(
+                                                                                          'view.community_themes.value.yes'
+                                                                                      )
+                                                                                    : t(
+                                                                                          'view.community_themes.value.no'
+                                                                                      )}
+                                                                            </div>
+                                                                        </div>
+                                                                        {active ? (
+                                                                            <Badge className="shrink-0">
+                                                                                <BadgeCheckIcon data-icon="inline-start" />
+                                                                                {t(
+                                                                                    'view.community_themes.status.active'
+                                                                                )}
+                                                                            </Badge>
+                                                                        ) : null}
+                                                                    </div>
+                                                                    <div className="flex flex-wrap gap-2">
+                                                                        {active ? (
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="outline"
+                                                                                size="sm"
+                                                                                onClick={
+                                                                                    disableTheme
+                                                                                }
+                                                                            >
+                                                                                <BrushIcon data-icon="inline-start" />
+                                                                                {t(
+                                                                                    'view.community_themes.action.disable_theme'
+                                                                                )}
+                                                                            </Button>
+                                                                        ) : (
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                onClick={() =>
+                                                                                    enableTheme(
+                                                                                        theme.themeId
+                                                                                    )
+                                                                                }
+                                                                            >
+                                                                                <BrushIcon data-icon="inline-start" />
+                                                                                {t(
+                                                                                    'view.community_themes.action.enable_theme'
+                                                                                )}
+                                                                            </Button>
+                                                                        )}
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="sm"
+                                                                            onClick={() =>
+                                                                                deleteTheme(
+                                                                                    theme.themeId
+                                                                                )
+                                                                            }
+                                                                        >
+                                                                            <Trash2Icon data-icon="inline-start" />
+                                                                            {t(
+                                                                                'view.community_themes.action.delete_theme'
+                                                                            )}
+                                                                        </Button>
+                                                                    </div>
+                                                                    {active &&
+                                                                    accentControlled ? (
+                                                                        <p className="text-muted-foreground text-xs">
+                                                                            {t(
+                                                                                'view.community_themes.installed.accent_controlled'
+                                                                            )}
+                                                                        </p>
+                                                                    ) : null}
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-muted-foreground text-sm">
+                                                {t(
+                                                    'view.community_themes.installed.empty'
+                                                )}
+                                            </p>
                                         )}
                                     </div>
-                                ) : (
-                                    <p className="text-muted-foreground text-sm">
-                                        {t(
-                                            'view.community_themes.installed.empty'
-                                        )}
-                                    </p>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                                </TabsContent>
+                            </Tabs>
                         ) : null}
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm">
+                        <div className="border-border/70 bg-card/60 flex min-w-0 flex-col gap-2 rounded-lg border px-3 py-2.5">
+                            <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                                <div className="text-sm font-medium">
                                     {t('view.themes.accent.header')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3">
+                                </div>
                                 {accentControlled ? (
                                     <p className="text-muted-foreground text-xs">
                                         {t(
@@ -964,219 +997,326 @@ export function ThemesPage() {
                                         )}
                                     </p>
                                 ) : null}
-                                <div className="flex flex-wrap gap-2">
-                                    {THEME_COLORS.map((color: any) => (
-                                        <Button
-                                            key={color.key}
-                                            type="button"
-                                            size="sm"
-                                            variant={
-                                                themeColor === color.key
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            disabled={accentControlled}
-                                            onClick={() =>
-                                                updateThemeColor(color.key)
-                                            }
-                                        >
-                                            <span
-                                                aria-hidden="true"
-                                                className="border-foreground/10 size-2.5 shrink-0 rounded-full border"
-                                                style={{
-                                                    backgroundColor:
-                                                        color.swatch
-                                                }}
-                                            />
-                                            {themeColorLabel(color, t)}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                                {THEME_COLORS.map((color: any) => (
+                                    <Button
+                                        key={color.key}
+                                        type="button"
+                                        size="sm"
+                                        variant={
+                                            themeColor === color.key
+                                                ? 'default'
+                                                : 'outline'
+                                        }
+                                        className="h-7"
+                                        disabled={accentControlled}
+                                        onClick={() =>
+                                            updateThemeColor(color.key)
+                                        }
+                                    >
+                                        <span
+                                            aria-hidden="true"
+                                            className="border-foreground/10 size-2.5 shrink-0 rounded-full border"
+                                            style={{
+                                                backgroundColor: color.swatch
+                                            }}
+                                        />
+                                        {themeColorLabel(color, t)}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle className="text-sm">
-                                    {t('view.themes.custom_css.header')}
-                                </CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex flex-col gap-3">
-                                <Textarea
-                                    className="min-h-72 font-mono text-xs"
-                                    spellCheck={false}
-                                    value={overrideDraft}
-                                    placeholder={t(
-                                        'view.community_themes.override.placeholder'
-                                    )}
-                                    onChange={(event: any) =>
-                                        setOverrideDraft(event.target.value)
-                                    }
-                                />
-                                <div className="flex flex-wrap items-center gap-2">
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        onClick={saveOverride}
-                                    >
-                                        <PaletteIcon data-icon="inline-start" />
-                                        {t(
-                                            'view.community_themes.action.apply_override'
-                                        )}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={!overrideCssLength}
-                                        onClick={disableOverride}
-                                    >
-                                        <SquareIcon data-icon="inline-start" />
-                                        {t(
-                                            'view.community_themes.action.disable_override'
-                                        )}
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        size="sm"
-                                        disabled={!overrideDraft.trim()}
-                                        onClick={clearOverride}
-                                    >
-                                        <EraserIcon data-icon="inline-start" />
-                                        {t(
-                                            'view.community_themes.action.clear_override'
-                                        )}
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {developerToolsAvailable ? (
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-sm">
-                                        {t(
-                                            'view.community_themes.developer.header'
-                                        )}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="flex flex-col gap-3 text-sm">
-                                    <p className="text-muted-foreground text-xs">
-                                        {t(
-                                            'view.community_themes.developer.description'
-                                        )}
-                                    </p>
-                                    <div className="border-input bg-muted/30 min-h-9 rounded-md border px-3 py-2 font-mono text-xs break-all">
-                                        {devFolderPath ||
-                                            t(
-                                                'view.community_themes.developer.no_folder'
-                                            )}
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            disabled={devLoading}
-                                            onClick={pickLocalThemeFolder}
-                                        >
-                                            <FolderOpenIcon data-icon="inline-start" />
-                                            {t(
-                                                'view.community_themes.developer.select_folder'
-                                            )}
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={
-                                                devLoading ||
-                                                !devFolderPath.trim()
-                                            }
-                                            onClick={() => loadLocalPreview()}
-                                        >
-                                            <RefreshCwIcon data-icon="inline-start" />
-                                            {t(
-                                                'view.community_themes.developer.reload'
-                                            )}
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant={
-                                                devWatchEnabled
-                                                    ? 'default'
-                                                    : 'outline'
-                                            }
-                                            size="sm"
-                                            disabled={!devFolderPath.trim()}
-                                            onClick={() =>
-                                                setDevWatchEnabled(
-                                                    (value) => !value
-                                                )
-                                            }
-                                        >
-                                            <RefreshCwIcon data-icon="inline-start" />
-                                            {t(
-                                                devWatchEnabled
-                                                    ? 'view.community_themes.developer.stop_watch'
-                                                    : 'view.community_themes.developer.start_watch'
-                                            )}
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            disabled={!localPreview}
-                                            onClick={stopLocalPreview}
-                                        >
-                                            <SquareIcon data-icon="inline-start" />
-                                            {t(
-                                                'view.community_themes.developer.stop_preview'
-                                            )}
-                                        </Button>
-                                    </div>
-                                    {devError ? (
-                                        <p className="text-destructive text-xs">
-                                            {devError}
-                                        </p>
-                                    ) : null}
-                                    {localPreview ? (
-                                        <div className="grid gap-1 text-xs">
-                                            <div>
-                                                {t(
-                                                    'view.community_themes.field.name'
-                                                )}
-                                                : {localPreview.themeName}
+                        <Collapsible
+                            open={customCssOpen}
+                            onOpenChange={setCustomCssOpen}
+                            className="border-border/70 bg-card/50 rounded-lg border px-3 py-2.5"
+                        >
+                            <div className="flex flex-col gap-3">
+                                    <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                        <div className="grid min-w-0 gap-1">
+                                            <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
+                                                <CodeIcon data-icon="inline-start" />
+                                                {t('view.themes.custom_css.header')}
                                             </div>
-                                            <div>
-                                                {t(
-                                                    'view.community_themes.field.version'
-                                                )}
-                                                : {localPreview.version || '-'}
-                                            </div>
-                                            <div>
-                                                {t(
-                                                    'view.community_themes.field.accent_mode'
-                                                )}
-                                                :{' '}
-                                                {localPreview.accentMode
+                                            <div className="text-muted-foreground text-xs">
+                                                {overrideCssLength
                                                     ? t(
-                                                          'view.community_themes.value.yes'
+                                                          'view.themes.custom_css.enabled_summary',
+                                                          {
+                                                              count: overrideCssLength
+                                                          }
                                                       )
                                                     : t(
-                                                          'view.community_themes.value.no'
+                                                          'view.themes.custom_css.disabled_summary'
                                                       )}
                                             </div>
-                                            <div>
+                                        </div>
+                                        <CollapsibleTrigger asChild>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="h-7 shrink-0"
+                                            >
                                                 {t(
-                                                    'view.community_themes.developer.css_size'
+                                                    customCssOpen
+                                                        ? 'view.themes.custom_css.hide_editor'
+                                                        : 'view.themes.custom_css.edit'
                                                 )}
-                                                : {localPreview.cssLength}
+                                                <ChevronDownIcon
+                                                    data-icon="inline-end"
+                                                    className={cn(
+                                                        'opacity-60 transition-transform',
+                                                        customCssOpen &&
+                                                            'rotate-180'
+                                                    )}
+                                                />
+                                            </Button>
+                                        </CollapsibleTrigger>
+                                    </div>
+                                    <CollapsibleContent>
+                                        <div className="flex flex-col gap-3 border-t pt-3">
+                                            <Textarea
+                                                className="min-h-56 font-mono text-xs"
+                                                spellCheck={false}
+                                                value={overrideDraft}
+                                                placeholder={t(
+                                                    'view.community_themes.override.placeholder'
+                                                )}
+                                                onChange={(event: any) =>
+                                                    setOverrideDraft(
+                                                        event.target.value
+                                                    )
+                                                }
+                                            />
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    onClick={saveOverride}
+                                                >
+                                                    <PaletteIcon data-icon="inline-start" />
+                                                    {t(
+                                                        'view.community_themes.action.apply_override'
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={!overrideCssLength}
+                                                    onClick={disableOverride}
+                                                >
+                                                    <SquareIcon data-icon="inline-start" />
+                                                    {t(
+                                                        'view.community_themes.action.disable_override'
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    disabled={
+                                                        !overrideDraft.trim()
+                                                    }
+                                                    onClick={clearOverride}
+                                                >
+                                                    <EraserIcon data-icon="inline-start" />
+                                                    {t(
+                                                        'view.community_themes.action.clear_override'
+                                                    )}
+                                                </Button>
                                             </div>
                                         </div>
-                                    ) : null}
-                                </CardContent>
-                            </Card>
+                                    </CollapsibleContent>
+                            </div>
+                        </Collapsible>
+
+                        {developerToolsAvailable ? (
+                            <Collapsible
+                                open={devSectionOpen}
+                                onOpenChange={setDevSectionOpen}
+                                className="border-border/70 bg-card/50 rounded-lg border px-3 py-2.5"
+                            >
+                                <div className="flex flex-col gap-3 text-sm">
+                                        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                            <div className="grid min-w-0 gap-1">
+                                                <div className="text-sm font-medium">
+                                                    {t(
+                                                        'view.community_themes.developer.header'
+                                                    )}
+                                                </div>
+                                                <div className="text-muted-foreground text-xs">
+                                                    {localPreview
+                                                        ? t(
+                                                              'view.themes.developer.preview_active',
+                                                              {
+                                                                  name: localPreview.themeName
+                                                              }
+                                                          )
+                                                        : t(
+                                                              'view.themes.developer.summary'
+                                                          )}
+                                                </div>
+                                            </div>
+                                            <CollapsibleTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-7 shrink-0"
+                                                >
+                                                    {t(
+                                                        devSectionOpen
+                                                            ? 'view.themes.developer.hide'
+                                                            : 'view.themes.developer.show'
+                                                    )}
+                                                    <ChevronDownIcon
+                                                        data-icon="inline-end"
+                                                        className={cn(
+                                                            'opacity-60 transition-transform',
+                                                            devSectionOpen &&
+                                                                'rotate-180'
+                                                        )}
+                                                    />
+                                                </Button>
+                                            </CollapsibleTrigger>
+                                        </div>
+                                        <CollapsibleContent>
+                                            <div className="flex flex-col gap-3 border-t pt-3">
+                                                <p className="text-muted-foreground text-xs">
+                                                    {t(
+                                                        'view.community_themes.developer.description'
+                                                    )}
+                                                </p>
+                                                <div className="border-input bg-muted/30 min-h-9 rounded-md border px-3 py-2 font-mono text-xs break-all">
+                                                    {devFolderPath ||
+                                                        t(
+                                                            'view.community_themes.developer.no_folder'
+                                                        )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        disabled={devLoading}
+                                                        onClick={
+                                                            pickLocalThemeFolder
+                                                        }
+                                                    >
+                                                        <FolderOpenIcon data-icon="inline-start" />
+                                                        {t(
+                                                            'view.community_themes.developer.select_folder'
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={
+                                                            devLoading ||
+                                                            !devFolderPath.trim()
+                                                        }
+                                                        onClick={() =>
+                                                            loadLocalPreview()
+                                                        }
+                                                    >
+                                                        <RefreshCwIcon data-icon="inline-start" />
+                                                        {t(
+                                                            'view.community_themes.developer.reload'
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant={
+                                                            devWatchEnabled
+                                                                ? 'default'
+                                                                : 'outline'
+                                                        }
+                                                        size="sm"
+                                                        disabled={
+                                                            !devFolderPath.trim()
+                                                        }
+                                                        onClick={() =>
+                                                            setDevWatchEnabled(
+                                                                (value) => !value
+                                                            )
+                                                        }
+                                                    >
+                                                        <RefreshCwIcon data-icon="inline-start" />
+                                                        {t(
+                                                            devWatchEnabled
+                                                                ? 'view.community_themes.developer.stop_watch'
+                                                                : 'view.community_themes.developer.start_watch'
+                                                        )}
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={!localPreview}
+                                                        onClick={stopLocalPreview}
+                                                    >
+                                                        <SquareIcon data-icon="inline-start" />
+                                                        {t(
+                                                            'view.community_themes.developer.stop_preview'
+                                                        )}
+                                                    </Button>
+                                                </div>
+                                                {devError ? (
+                                                    <p className="text-destructive text-xs">
+                                                        {devError}
+                                                    </p>
+                                                ) : null}
+                                                {localPreview ? (
+                                                    <div className="grid gap-1 text-xs">
+                                                        <div>
+                                                            {t(
+                                                                'view.community_themes.field.name'
+                                                            )}
+                                                            :{' '}
+                                                            {
+                                                                localPreview.themeName
+                                                            }
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                'view.community_themes.field.version'
+                                                            )}
+                                                            :{' '}
+                                                            {localPreview.version ||
+                                                                '-'}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                'view.community_themes.field.accent_mode'
+                                                            )}
+                                                            :{' '}
+                                                            {localPreview.accentMode
+                                                                ? t(
+                                                                      'view.community_themes.value.yes'
+                                                                  )
+                                                                : t(
+                                                                      'view.community_themes.value.no'
+                                                                  )}
+                                                        </div>
+                                                        <div>
+                                                            {t(
+                                                                'view.community_themes.developer.css_size'
+                                                            )}
+                                                            :{' '}
+                                                            {
+                                                                localPreview.cssLength
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        </CollapsibleContent>
+                                </div>
+                            </Collapsible>
                         ) : null}
                     </div>
                 </div>

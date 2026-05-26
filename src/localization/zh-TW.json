@@ -2598,6 +2598,11 @@
                 "description": "管理主題來源、背景圖案、社群主題、強調色和自訂 CSS。",
                 "current_source": "目前來源"
             },
+            "summary": {
+                "header": "目前主題",
+                "override_on": "自訂 CSS 已啟用（{count} bytes）",
+                "override_off": "自訂 CSS 未啟用"
+            },
             "source": {
                 "header": "主題來源",
                 "built_in": "內建主題",
@@ -2614,7 +2619,17 @@
                 "header": "強調色"
             },
             "custom_css": {
-                "header": "自訂 CSS"
+                "header": "自訂 CSS",
+                "enabled_summary": "Override CSS 已啟用（{count} bytes）。",
+                "disabled_summary": "可選的最後一層 CSS，目前未啟用。",
+                "edit": "編輯",
+                "hide_editor": "收合編輯器"
+            },
+            "developer": {
+                "summary": "用於主題開發版本的本機主題預覽工具。",
+                "preview_active": "正在預覽 {name}。",
+                "show": "顯示工具",
+                "hide": "收合工具"
             },
             "action": {
                 "open_themes": "開啟主題",
@@ -2647,7 +2662,12 @@
                 "image_count_plural": "{count} 張圖片",
                 "rotation": "輪播",
                 "no_custom_source": "尚未選擇自訂圖片來源",
-                "no_image": "尚未載入圖片"
+                "no_image": "尚未載入圖片",
+                "no_image_description": "重新整理或選擇來源後會載入圖片。",
+                "source_type_file": "本機檔案",
+                "source_type_files": "已選檔案",
+                "source_type_folder": "資料夾",
+                "resolved_at": "載入時間"
             },
             "mode": {
                 "off": "關閉",

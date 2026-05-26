@@ -2598,6 +2598,11 @@
                 "description": "テーマソース、背景画像、コミュニティテーマ、アクセントカラー、カスタム CSS を管理します。",
                 "current_source": "現在のソース"
             },
+            "summary": {
+                "header": "現在のテーマ",
+                "override_on": "カスタム CSS は有効です（{count} bytes）",
+                "override_off": "カスタム CSS は無効です"
+            },
             "source": {
                 "header": "テーマソース",
                 "built_in": "内蔵テーマ",
@@ -2614,7 +2619,17 @@
                 "header": "アクセントカラー"
             },
             "custom_css": {
-                "header": "カスタム CSS"
+                "header": "カスタム CSS",
+                "enabled_summary": "Override CSS が有効です（{count} bytes）。",
+                "disabled_summary": "任意の最後の CSS レイヤーです。現在は無効です。",
+                "edit": "編集",
+                "hide_editor": "エディターを閉じる"
+            },
+            "developer": {
+                "summary": "テーマ開発ビルド用のローカルテーマプレビューツールです。",
+                "preview_active": "{name} をプレビュー中です。",
+                "show": "ツールを表示",
+                "hide": "ツールを隠す"
             },
             "action": {
                 "open_themes": "テーマを開く",
@@ -2647,7 +2662,12 @@
                 "image_count_plural": "{count} 枚の画像",
                 "rotation": "ローテーション",
                 "no_custom_source": "カスタム画像ソースは未選択です",
-                "no_image": "画像はまだ読み込まれていません"
+                "no_image": "画像はまだ読み込まれていません",
+                "no_image_description": "再読み込みするかソースを選択すると画像を読み込みます。",
+                "source_type_file": "ローカルファイル",
+                "source_type_files": "選択済みファイル",
+                "source_type_folder": "フォルダー",
+                "resolved_at": "読み込み日時"
             },
             "mode": {
                 "off": "オフ",
