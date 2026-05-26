@@ -31,13 +31,17 @@ export function isThemeDevKitBuildLabel(
     return label === THEME_DEVKIT_LABEL;
 }
 
-export function isThemeDeveloperBuild(): boolean {
+export function isDeveloperToolsBuild(): boolean {
     const label = getVrcxBuildLabel();
     return (
         isLocalDevBuild() ||
         isPreviewBuildLabel(label) ||
         isThemeDevKitBuildLabel(label)
     );
+}
+
+export function isThemeDeveloperBuild(): boolean {
+    return isLocalDevBuild() || isThemeDevKitBuildLabel();
 }
 
 export function getBuildBadgeI18nKey(): string | null {

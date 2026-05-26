@@ -655,7 +655,7 @@ export async function loadLocalCommunityThemePreview(
 ): Promise<CommunityThemeLocalPreview> {
     if (!isThemeDeveloperBuild()) {
         throw new Error(
-            'Local theme preview is only available in dev, Preview, or Theme Dev Kit builds.'
+            'Local theme preview is only available in dev or Theme Dev Kit builds.'
         );
     }
 

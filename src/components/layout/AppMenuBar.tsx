@@ -46,7 +46,7 @@ import { publishNavCustomizeRequested } from '@/shared/events/navLayoutEvents';
 import { formatReleaseDisplayVersion } from '@/shared/utils/releaseVersion';
 import {
     getBuildBadgeLabel,
-    isThemeDeveloperBuild
+    isDeveloperToolsBuild
 } from '@/shared/buildLabel';
 import {
     communityThemeControlsAppearance,
@@ -185,7 +185,7 @@ export function AppMenuBar({
     // oxlint-disable-next-line no-undef
     const appVersion = formatReleaseDisplayVersion(VERSION || '') || '-';
     const buildBadgeLabel = getBuildBadgeLabel(t);
-    const developerToolsAvailable = isThemeDeveloperBuild();
+    const developerToolsAvailable = isDeveloperToolsBuild();
     const availableToolCategories = useMemo(
         () =>
             toolCategories
