@@ -2522,7 +2522,6 @@
                 "name": "Name",
                 "author": "Author",
                 "version": "Version",
-                "license": "License",
                 "tested_with": "Tested with",
                 "remote_assets": "Remote assets",
                 "accent_mode": "Accent color customizable"

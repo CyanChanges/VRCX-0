@@ -11,8 +11,6 @@ export interface CommunityThemeManifest {
     name: string;
     version: string;
     author: CommunityThemeAuthor;
-    license: string;
-    licenseUrl?: string;
     description: string;
     tags: string[];
     testedWith: string;

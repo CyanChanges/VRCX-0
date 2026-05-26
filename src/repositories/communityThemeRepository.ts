@@ -15,7 +15,6 @@ export const COMMUNITY_THEME_README_FILE_NAME = 'README.md';
 
 type RawCommunityThemeEntry = Record<string, unknown>;
 
-const DEFAULT_COMMUNITY_THEME_LICENSE = 'GPL-3.0-only';
 const THEME_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function requireString(
@@ -148,9 +147,6 @@ function normalizeCommunityThemeManifest(
         name: requireString(entry, 'name', context),
         version: requireString(entry, 'version', context),
         author: normalizeAuthor(entry.author, context),
-        license:
-            optionalString(entry, 'license') ?? DEFAULT_COMMUNITY_THEME_LICENSE,
-        licenseUrl: optionalString(entry, 'licenseUrl'),
         description: requireString(entry, 'description', context),
         tags: normalizeTags(entry.tags, context),
         testedWith: requireString(entry, 'testedWith', context),

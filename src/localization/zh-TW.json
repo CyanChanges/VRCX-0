@@ -2522,7 +2522,6 @@
                 "name": "名稱",
                 "author": "作者",
                 "version": "版本",
-                "license": "授權",
                 "tested_with": "測試版本",
                 "remote_assets": "遠端資源",
                 "accent_mode": "是否可自訂強調色"

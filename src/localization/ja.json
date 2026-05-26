@@ -2522,7 +2522,6 @@
                 "name": "名前",
                 "author": "作者",
                 "version": "バージョン",
-                "license": "ライセンス",
                 "tested_with": "テスト済みバージョン",
                 "remote_assets": "リモートアセット",
                 "accent_mode": "アクセントカラーをカスタマイズ可能"
