@@ -90,9 +90,11 @@ export default defineConfig(({ mode }) => {
     );
     const version = tauriConf.version;
     const buildTarget = getPlatformBuildTarget();
+    const isProductionBuild = mode === 'production';
     const telemetryEndpoint =
-        process.env.VRCX_0_TELEMETRY_ENDPOINT ||
-        (mode === 'production' ? productionTelemetryEndpoint : '');
+        isProductionBuild ?
+            process.env.VRCX_0_TELEMETRY_ENDPOINT || productionTelemetryEndpoint
+        :   '';
 
     return {
         base: '',
@@ -142,6 +144,9 @@ export default defineConfig(({ mode }) => {
             ),
             VRCX_0_BUILD_BADGE: JSON.stringify(
                 process.env['VRCX-0_BUILD_BADGE'] || ''
+            ),
+            VRCX_0_TELEMETRY_ENABLED: JSON.stringify(
+                isProductionBuild && telemetryEndpoint.length > 0
             ),
             VRCX_0_TELEMETRY_ENDPOINT: JSON.stringify(telemetryEndpoint)
         },

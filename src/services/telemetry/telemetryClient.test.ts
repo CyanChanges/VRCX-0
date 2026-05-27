@@ -3,11 +3,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 describe('postTelemetry', () => {
     afterEach(() => {
         vi.useRealTimers();
+        vi.resetModules();
         vi.unstubAllGlobals();
     });
 
     it('aborts a hung telemetry request after the timeout', async () => {
         vi.useFakeTimers();
+        vi.stubGlobal('VRCX_0_TELEMETRY_ENABLED', true);
         vi.stubGlobal('VRCX_0_TELEMETRY_ENDPOINT', 'https://telemetry.example');
 
         let signal: AbortSignal | undefined;
@@ -28,5 +30,17 @@ describe('postTelemetry', () => {
         await vi.advanceTimersByTimeAsync(15_000);
 
         expect(signal?.aborted).toBe(true);
+    });
+
+    it('does not send when the telemetry build flag is disabled', async () => {
+        vi.stubGlobal('VRCX_0_TELEMETRY_ENABLED', false);
+        vi.stubGlobal('VRCX_0_TELEMETRY_ENDPOINT', 'https://telemetry.example');
+        const fetch = vi.fn();
+        vi.stubGlobal('fetch', fetch);
+
+        const { postTelemetry } = await import('./telemetryClient');
+        await postTelemetry('/api/v1/telemetry/session/start', {});
+
+        expect(fetch).not.toHaveBeenCalled();
     });
 });

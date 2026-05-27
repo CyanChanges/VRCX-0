@@ -3,6 +3,9 @@ export const TELEMETRY_HEARTBEAT_INTERVAL_MS = 10 * 60 * 1000;
 export const TELEMETRY_REQUEST_TIMEOUT_MS = 15_000;
 
 export function getTelemetryEndpoint(): string {
+    if (!VRCX_0_TELEMETRY_ENABLED) {
+        return '';
+    }
     return String(VRCX_0_TELEMETRY_ENDPOINT || '').trim().replace(/\/+$/, '');
 }
 
