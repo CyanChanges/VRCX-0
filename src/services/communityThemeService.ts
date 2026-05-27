@@ -41,6 +41,7 @@ const USER_OVERRIDE_LAYER = 'user-override';
 const COMMUNITY_THEME_ACCENT_ATTR = 'data-vrcx-0-community-theme-accent';
 const LEGACY_NASA_APOD_WALLPAPER_THEME_ID = 'nasa-apod-wallpaper';
 const CSS_URL_PATTERN = /url\(\s*(['"]?)([^'")]+)\1\s*\)/gi;
+const LOCAL_PREVIEW_WATCH_INTERVAL_MS = 1200;
 
 const CONFIG_KEYS = {
     enabled: 'VRCX_communityThemeEnabled',
@@ -61,6 +62,10 @@ let installedThemeCssSnapshot = '';
 let localPreviewCssSnapshot = '';
 let overrideCssSnapshot = '';
 let overrideCssEnabled = false;
+let localPreviewWatchTimer: number | null = null;
+let localPreviewWatchFolderPath = '';
+let localPreviewWatchReloading = false;
+let localPreviewWatchGeneration = 0;
 
 async function refreshCommunityThemeTrayMenu(): Promise<void> {
     try {
@@ -651,7 +656,8 @@ export function getCommunityThemeOverrideCssSnapshot(): string {
 }
 
 export async function loadLocalCommunityThemePreview(
-    folderPath: string
+    folderPath: string,
+    shouldApply?: () => boolean
 ): Promise<CommunityThemeLocalPreview> {
     if (!isThemeDeveloperBuild()) {
         throw new Error(
@@ -661,13 +667,22 @@ export async function loadLocalCommunityThemePreview(
 
     const output =
         await tauriClient.app.CommunityThemeDebugLoadLocalTheme(folderPath);
+    if (shouldApply && !shouldApply()) {
+        throw new Error('Local theme preview load was cancelled.');
+    }
     const loadedAt = currentTimestamp();
     const cssText = rewriteLocalThemeAssetUrls(
         output.css,
         output.cssPath,
         loadedAt
     );
+    if (shouldApply && !shouldApply()) {
+        throw new Error('Local theme preview load was cancelled.');
+    }
     await disableBackgroundImage({ restoreAppTheme: false });
+    if (shouldApply && !shouldApply()) {
+        throw new Error('Local theme preview load was cancelled.');
+    }
     localPreviewCssSnapshot = cssText;
 
     const preview: CommunityThemeLocalPreview = {
@@ -687,7 +702,90 @@ export async function loadLocalCommunityThemePreview(
     return preview;
 }
 
+function resolveLocalPreviewWatchError(error: unknown): string {
+    return error instanceof Error
+        ? error.message
+        : 'Failed to load local community theme preview.';
+}
+
+async function reloadLocalCommunityThemePreviewForWatch(
+    generation: number
+): Promise<void> {
+    if (
+        localPreviewWatchReloading ||
+        generation !== localPreviewWatchGeneration ||
+        !localPreviewWatchFolderPath
+    ) {
+        return;
+    }
+
+    localPreviewWatchReloading = true;
+    const folderPath = localPreviewWatchFolderPath;
+    try {
+        await loadLocalCommunityThemePreview(
+            folderPath,
+            () => generation === localPreviewWatchGeneration
+        );
+        if (generation === localPreviewWatchGeneration) {
+            useCommunityThemeStore.getState().setLocalPreviewWatch({
+                enabled: true,
+                folderPath,
+                error: null
+            });
+        }
+    } catch (error) {
+        if (generation === localPreviewWatchGeneration) {
+            useCommunityThemeStore.getState().setLocalPreviewWatch({
+                enabled: true,
+                folderPath,
+                error: resolveLocalPreviewWatchError(error)
+            });
+        }
+    } finally {
+        if (generation === localPreviewWatchGeneration) {
+            localPreviewWatchReloading = false;
+        }
+    }
+}
+
+export function startLocalCommunityThemePreviewWatch(folderPath: string): void {
+    const nextFolderPath = folderPath.trim();
+    if (!nextFolderPath) {
+        return;
+    }
+
+    stopLocalCommunityThemePreviewWatch();
+    localPreviewWatchGeneration += 1;
+    localPreviewWatchFolderPath = nextFolderPath;
+    useCommunityThemeStore.getState().setLocalPreviewWatch({
+        enabled: true,
+        folderPath: nextFolderPath,
+        error: null
+    });
+
+    const generation = localPreviewWatchGeneration;
+    void reloadLocalCommunityThemePreviewForWatch(generation);
+    localPreviewWatchTimer = window.setInterval(() => {
+        void reloadLocalCommunityThemePreviewForWatch(generation);
+    }, LOCAL_PREVIEW_WATCH_INTERVAL_MS);
+}
+
+export function stopLocalCommunityThemePreviewWatch(): void {
+    localPreviewWatchGeneration += 1;
+    localPreviewWatchFolderPath = '';
+    localPreviewWatchReloading = false;
+    if (localPreviewWatchTimer !== null) {
+        window.clearInterval(localPreviewWatchTimer);
+        localPreviewWatchTimer = null;
+    }
+    useCommunityThemeStore.getState().setLocalPreviewWatch({
+        enabled: false,
+        error: null
+    });
+}
+
 export async function stopLocalCommunityThemePreview(): Promise<void> {
+    stopLocalCommunityThemePreviewWatch();
     localPreviewCssSnapshot = '';
     useCommunityThemeStore.getState().setLocalPreview(null);
     syncCommunityStyleLayers();

@@ -13,7 +13,7 @@ import {
     Trash2Icon
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -35,6 +35,8 @@ import {
     loadCatalog,
     loadLocalCommunityThemePreview,
     saveCommunityThemeOverrideCss,
+    startLocalCommunityThemePreviewWatch,
+    stopLocalCommunityThemePreviewWatch,
     stopLocalCommunityThemePreview
 } from '@/services/communityThemeService';
 import {
@@ -315,6 +317,9 @@ export function ThemesPage() {
     const localPreview = useCommunityThemeStore(
         (state: any) => state.localPreview
     );
+    const localPreviewWatch = useCommunityThemeStore(
+        (state: any) => state.localPreviewWatch
+    );
     const overrideCssLength = useCommunityThemeStore(
         (state: any) => state.overrideCssLength
     );
@@ -325,15 +330,14 @@ export function ThemesPage() {
         Boolean(overrideCssLength)
     );
     const [devFolderPath, setDevFolderPath] = useState(
-        localPreview?.folderPath || ''
+        localPreview?.folderPath || localPreviewWatch.folderPath || ''
     );
     const [devLoading, setDevLoading] = useState(false);
     const [devSectionOpen, setDevSectionOpen] = useState(false);
-    const [devWatchEnabled, setDevWatchEnabled] = useState(false);
-    const [devError, setDevError] = useState<string | null>(null);
     const [themeStatsById, setThemeStatsById] =
         useState<CommunityThemeStatsById>({});
-    const devWatchReloadingRef = useRef(false);
+    const devWatchEnabled = Boolean(localPreviewWatch.enabled);
+    const devError = localPreviewWatch.error;
     const developerToolsAvailable = isThemeDeveloperBuild();
     const activeSource = resolveActiveThemeSource(
         backgroundImageEnabled,
@@ -384,59 +388,18 @@ export function ThemesPage() {
     useEffect(() => {
         if (localPreview?.folderPath) {
             setDevFolderPath(localPreview.folderPath);
+            return;
         }
-    }, [localPreview?.folderPath]);
+        if (localPreviewWatch.folderPath) {
+            setDevFolderPath(localPreviewWatch.folderPath);
+        }
+    }, [localPreview?.folderPath, localPreviewWatch.folderPath]);
 
     useEffect(() => {
         if (overrideCssLength) {
             setCustomCssOpen(true);
         }
     }, [overrideCssLength]);
-
-    useEffect(() => {
-        if (
-            !developerToolsAvailable ||
-            !devWatchEnabled ||
-            !devFolderPath.trim()
-        ) {
-            return undefined;
-        }
-
-        let disposed = false;
-        const reloadForWatch = async () => {
-            if (devWatchReloadingRef.current || disposed) {
-                return;
-            }
-
-            devWatchReloadingRef.current = true;
-            try {
-                await loadLocalCommunityThemePreview(devFolderPath);
-                if (!disposed) {
-                    setDevError(null);
-                }
-            } catch (watchError) {
-                if (!disposed) {
-                    setDevError(
-                        watchError instanceof Error
-                            ? watchError.message
-                            : t('view.community_themes.developer.load_failed')
-                    );
-                }
-            } finally {
-                devWatchReloadingRef.current = false;
-            }
-        };
-
-        void reloadForWatch();
-        const timer = window.setInterval(() => {
-            void reloadForWatch();
-        }, 1200);
-
-        return () => {
-            disposed = true;
-            window.clearInterval(timer);
-        };
-    }, [devFolderPath, devWatchEnabled, developerToolsAvailable, t]);
 
     async function installTheme(theme: CommunityThemeManifest) {
         try {
@@ -608,20 +571,34 @@ export function ThemesPage() {
             return;
         }
         setDevLoading(true);
-        setDevError(null);
         try {
             await loadLocalCommunityThemePreview(nextFolderPath);
+            if (devWatchEnabled) {
+                startLocalCommunityThemePreviewWatch(nextFolderPath);
+            }
             toast.success(t('view.community_themes.developer.loaded'));
         } catch (loadError) {
             const message =
                 loadError instanceof Error
                     ? loadError.message
                     : t('view.community_themes.developer.load_failed');
-            setDevError(message);
             toast.error(message);
         } finally {
             setDevLoading(false);
         }
+    }
+
+    function toggleLocalPreviewWatch() {
+        if (devWatchEnabled) {
+            stopLocalCommunityThemePreviewWatch();
+            return;
+        }
+
+        const nextFolderPath = devFolderPath.trim();
+        if (!nextFolderPath) {
+            return;
+        }
+        startLocalCommunityThemePreviewWatch(nextFolderPath);
     }
 
     async function pickLocalThemeFolder() {
@@ -645,7 +622,7 @@ export function ThemesPage() {
 
     async function stopLocalPreview() {
         try {
-            setDevWatchEnabled(false);
+            stopLocalCommunityThemePreviewWatch();
             await stopLocalCommunityThemePreview();
             toast.success(t('view.community_themes.developer.stopped'));
         } catch (stopError) {
@@ -1288,10 +1265,8 @@ export function ThemesPage() {
                                                         disabled={
                                                             !devFolderPath.trim()
                                                         }
-                                                        onClick={() =>
-                                                            setDevWatchEnabled(
-                                                                (value) => !value
-                                                            )
+                                                        onClick={
+                                                            toggleLocalPreviewWatch
                                                         }
                                                     >
                                                         <RefreshCwIcon data-icon="inline-start" />

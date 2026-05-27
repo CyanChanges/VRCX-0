@@ -6,6 +6,12 @@ import type {
     CommunityThemeManifest
 } from '@/features/themes/communityThemeTypes';
 
+interface CommunityThemeLocalPreviewWatch {
+    enabled: boolean;
+    folderPath: string;
+    error: string | null;
+}
+
 interface CommunityThemeStore {
     catalogUrl: string;
     catalog: CommunityThemeManifest[];
@@ -13,6 +19,7 @@ interface CommunityThemeStore {
     installedTheme: CommunityThemeInstallMetadata | null;
     installedThemes: CommunityThemeInstallMetadata[];
     localPreview: CommunityThemeLocalPreview | null;
+    localPreviewWatch: CommunityThemeLocalPreviewWatch;
     overrideCssLength: number;
     loading: boolean;
     error: string | null;
@@ -31,6 +38,9 @@ interface CommunityThemeStore {
         installedThemes?: CommunityThemeInstallMetadata[];
     }): void;
     setLocalPreview(localPreview: CommunityThemeLocalPreview | null): void;
+    setLocalPreviewWatch(
+        localPreviewWatch: Partial<CommunityThemeLocalPreviewWatch>
+    ): void;
     setOverrideCssLength(length: number): void;
     setLoading(loading: boolean): void;
     setError(error: string | null): void;
@@ -63,6 +73,11 @@ export const useCommunityThemeStore = create<CommunityThemeStore>(
         installedTheme: null,
         installedThemes: [],
         localPreview: null,
+        localPreviewWatch: {
+            enabled: false,
+            folderPath: '',
+            error: null
+        },
         overrideCssLength: 0,
         loading: false,
         error: null,
@@ -87,6 +102,11 @@ export const useCommunityThemeStore = create<CommunityThemeStore>(
                       ? [installedTheme]
                       : [],
                 localPreview: localPreview ?? null,
+                localPreviewWatch: {
+                    enabled: false,
+                    folderPath: '',
+                    error: null
+                },
                 overrideCssLength: Math.max(0, Number(overrideCssLength) || 0)
             });
         },
@@ -101,6 +121,14 @@ export const useCommunityThemeStore = create<CommunityThemeStore>(
         },
         setLocalPreview(localPreview) {
             set({ localPreview });
+        },
+        setLocalPreviewWatch(localPreviewWatch) {
+            set((state: CommunityThemeStore) => ({
+                localPreviewWatch: {
+                    ...state.localPreviewWatch,
+                    ...localPreviewWatch
+                }
+            }));
         },
         setOverrideCssLength(length) {
             set({ overrideCssLength: Math.max(0, Number(length) || 0) });
