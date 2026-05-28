@@ -17,7 +17,6 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/ui/shadcn/select';
-import { Tabs, TabsList, TabsTrigger } from '@/ui/shadcn/tabs';
 
 import { Field, FieldGroup } from '../SettingsField';
 
@@ -25,7 +24,6 @@ export function FeedFilterDialog({
     open: feedFilterDialogOpen,
     onOpenChange: setFeedFilterDialogOpen,
     mode: feedFilterMode,
-    onModeChange: setFeedFilterMode,
     options: currentSharedFeedFilterOptions,
     filters: sharedFeedFilters,
     onUpdate: updateSharedFeedFilter,
@@ -41,9 +39,7 @@ export function FeedFilterDialog({
             <DialogContent className="max-h-[85vh] overflow-hidden sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {feedFilterMode === 'noty'
-                            ? t('dialog.shared_feed_filters.notification')
-                            : t('dialog.shared_feed_filters.wrist')}
+                        {t('dialog.shared_feed_filters.notification')}
                     </DialogTitle>
                     <DialogDescription>
                         {t(
@@ -52,23 +48,7 @@ export function FeedFilterDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 overflow-hidden">
-                    <Tabs
-                        value={feedFilterMode}
-                        onValueChange={setFeedFilterMode}
-                    >
-                        <div className="max-w-full overflow-x-auto">
-                            <TabsList>
-                                <TabsTrigger value="noty">
-                                    {t(
-                                        'dialog.shared_feed_filters.notification'
-                                    )}
-                                </TabsTrigger>
-                                <TabsTrigger value="wrist">
-                                    {t('dialog.shared_feed_filters.wrist')}
-                                </TabsTrigger>
-                            </TabsList>
-                        </div>
-                    </Tabs>
+                    {/* Wrist feed filters are hidden until wrist feed consumes this shared filter mode. */}
                     <FieldGroup className="max-h-[60vh] overflow-y-auto pr-1">
                         {currentSharedFeedFilterOptions.map((setting: any) => (
                             <Field

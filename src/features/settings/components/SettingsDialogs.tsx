@@ -82,7 +82,6 @@ export function SettingsDialogs({
                 open={feedFilter.open}
                 onOpenChange={feedFilter.setOpen}
                 mode={feedFilter.mode}
-                onModeChange={feedFilter.setMode}
                 options={feedFilter.options}
                 filters={feedFilter.filters}
                 onUpdate={feedFilter.onUpdate}
