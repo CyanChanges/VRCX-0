@@ -2730,7 +2730,7 @@
             "run": "運行",
             "stop": "在關閉 VRChat 後終止",
             "actions": "操作",
-            "scope_all": "桌面模式和 VR 模式",
+            "scope_all": "所有模式",
             "scope_desktop": "桌面模式",
             "scope_vr": "VR 模式",
             "run_policy_always": "每次 VRChat 啟動",
