@@ -24,8 +24,8 @@ jobs:
         name: Vitest
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
+            - uses: actions/checkout@v5
+            - uses: actions/setup-node@v5
               with:
                   node-version: 24.x
                   cache: npm
@@ -39,7 +39,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - uses: dtolnay/rust-toolchain@stable
             - uses: Swatinem/rust-cache@v2
               with:
@@ -50,7 +50,7 @@ jobs:
         name: Rust Backend (Linux)
         runs-on: ubuntu-24.04
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - name: Install Linux dependencies
               run: |
                   sudo apt-get update
@@ -72,7 +72,7 @@ jobs:
             run:
                 shell: bash
         steps:
-            - uses: actions/checkout@v4
+            - uses: actions/checkout@v5
             - uses: dtolnay/rust-toolchain@stable
             - uses: Swatinem/rust-cache@v2
               with:
