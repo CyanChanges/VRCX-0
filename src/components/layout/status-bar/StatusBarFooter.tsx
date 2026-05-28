@@ -106,17 +106,24 @@ function NowPlayingProgress({ formatter, nowPlaying }: any) {
         return null;
     }
 
-    const elapsedSeconds = nowPlaying.startedAt
-        ? Math.max(
-              0,
-              Math.floor((nowMs - Date.parse(nowPlaying.startedAt)) / 1000) +
-                  Number(nowPlaying.position || 0)
-          )
-        : Number(nowPlaying.position || 0);
+    const lengthSeconds = Math.max(0, Number(nowPlaying.length) || 0);
+    const startedAtMs = nowPlaying.startedAt
+        ? Date.parse(nowPlaying.startedAt)
+        : Number.NaN;
+    const elapsedSeconds = Math.min(
+        lengthSeconds,
+        Math.max(
+            0,
+            Number(nowPlaying.position || 0) +
+                (Number.isFinite(startedAtMs)
+                    ? Math.floor((nowMs - startedAtMs) / 1000)
+                    : 0)
+        )
+    );
 
     return (
         <span className="text-muted-foreground shrink-0 text-xs tabular-nums">
-            {`${formatter(elapsedSeconds * 1000)} / ${formatter(Number(nowPlaying.length) * 1000)}`}
+            {`${formatter(elapsedSeconds * 1000)} / ${formatter(lengthSeconds * 1000)}`}
         </span>
     );
 }
