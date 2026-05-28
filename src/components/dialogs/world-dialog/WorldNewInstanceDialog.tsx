@@ -95,6 +95,7 @@ export function WorldNewInstanceDialog({
     request,
     world,
     currentUserId = '',
+    isGameRunning = false,
     groupOptions = [],
     submitting,
     onOpenChange,
@@ -818,16 +819,18 @@ export function WorldNewInstanceDialog({
                         >
                             {t('dialog.world.action.launch')}
                         </Button>
-                        <Button
-                            type="button"
-                            disabled={submitting}
-                            onClick={() => {
-                                commitDisplayNamePreset();
-                                onOpenInGame?.(activeCreated);
-                            }}
-                        >
-                            {t('dialog.world.action.open_in_game')}
-                        </Button>
+                        {isGameRunning ? (
+                            <Button
+                                type="button"
+                                disabled={submitting}
+                                onClick={() => {
+                                    commitDisplayNamePreset();
+                                    onOpenInGame?.(activeCreated);
+                                }}
+                            >
+                                {t('dialog.world.action.open_in_game')}
+                            </Button>
+                        ) : null}
                     </DialogFooter>
                 ) : (
                     <DialogFooter>

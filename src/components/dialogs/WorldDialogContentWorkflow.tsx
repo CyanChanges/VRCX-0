@@ -195,6 +195,7 @@ export function WorldDialogContentWorkflow({
         currentEndpoint,
         currentHomeLocation,
         currentUserId,
+        isGameRunning,
         prompt,
         setAuthBootstrap,
         showLaunchDialog,
@@ -1491,6 +1492,7 @@ export function WorldDialogContentWorkflow({
                 request={newInstanceRequest}
                 world={world}
                 currentUserId={currentUserId}
+                isGameRunning={isGameRunning}
                 groupOptions={newInstanceGroups}
                 submitting={actionStatus === 'new-instance'}
                 onOpenChange={(open: any) => {

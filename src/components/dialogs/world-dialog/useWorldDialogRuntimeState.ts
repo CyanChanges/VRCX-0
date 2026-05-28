@@ -12,6 +12,9 @@ export function useWorldDialogRuntimeState() {
     const currentHomeLocation = useRuntimeStore(
         (state: any) => state.auth.currentUserSnapshot?.homeLocation || ''
     );
+    const isGameRunning = useRuntimeStore((state: any) =>
+        Boolean(state.gameState.isGameRunning)
+    );
     const setAuthBootstrap = useRuntimeStore((state: any) => state.setAuthBootstrap);
     const confirm = useModalStore((state: any) => state.confirm);
     const prompt = useModalStore((state: any) => state.prompt);
@@ -27,6 +30,7 @@ export function useWorldDialogRuntimeState() {
         currentEndpoint,
         currentHomeLocation,
         currentUserId,
+        isGameRunning,
         prompt,
         setAuthBootstrap,
         showLaunchDialog,
