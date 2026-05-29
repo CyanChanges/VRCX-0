@@ -285,7 +285,7 @@ function EntityDialogTabContent({
 }
 
 function EntityMemoTextarea({
-    label = 'Memo',
+    label = '',
     value = '',
     placeholder = '',
     onSave

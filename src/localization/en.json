@@ -296,7 +296,7 @@
         "search_no_results": "No results found",
         "search_min_chars": "Type at least 2 characters",
         "search_categories": "Search for...",
-        "search_scope_all": "Name, memo & note",
+        "search_scope_all": "Name, local note & note",
         "search_scope_avatars": "Own & favorites",
         "search_scope_worlds": "Own & favorites",
         "search_scope_joined": "Own & joined",
@@ -1096,7 +1096,7 @@
                 "status": "Status",
                 "bio": "Bio",
                 "note": "Note",
-                "memo": "Memo"
+                "memo": "Local Note"
             },
             "label": {
                 "friend_details_are_already_loaded": "Friend details are already loaded",
@@ -1342,8 +1342,8 @@
             },
             "export": {
                 "header": "Export",
-                "export_notes": "Export User Memos",
-                "export_notes_description": "Export VRCX-0 user memos to VRChat notes",
+                "export_notes": "Export User Local Notes",
+                "export_notes_description": "Export VRCX-0 local notes to VRChat notes",
                 "discord_names": "Discord Names",
                 "export_friend_list": "Export Friends List",
                 "export_own_avatars": "Export Own Avatars"
@@ -1786,8 +1786,8 @@
                     "show_status_bar": "Show Status Bar",
                     "age_gated_instances": "Show Age-Gated Instances",
                     "age_gated_instances_description": "Show age-restricted instances. When disabled, these instances are hidden and shown as restricted.",
-                    "nicknames": "Friend Memo Nicknames",
-                    "nicknames_description": "Show your custom memo names after usernames.",
+                    "nicknames": "Friend Local Note Nicknames",
+                    "nicknames_description": "Show your custom local note names after usernames.",
                     "sort_instance_users_by": "Sort Users in Instance by",
                     "sort_instance_users_by_time": "Time in Instance",
                     "sort_instance_users_by_alphabet": "Name",
@@ -1852,8 +1852,8 @@
                     "header": "User Dialog",
                     "vrchat_notes": "VRChat Notes",
                     "vrchat_notes_description": "Shows notes stored in VRChat",
-                    "vrcx_memos": "VRCX-0 Memos",
-                    "vrcx_memos_description": "Shows notes saved locally in VRCX-0",
+                    "vrcx_memos": "Local Notes",
+                    "vrcx_memos_description": "Shows local notes saved in VRCX-0",
                     "recent_action_cooldown": "Recent Action Icon",
                     "recent_action_cooldown_description": "Show a clock icon on recent invite and request actions.",
                     "recent_action_cooldown_minutes": "Cooldown (Minutes)"
@@ -1922,7 +1922,7 @@
                         "header": "Text-To-Speech",
                         "when_to_play": "Notification TTS",
                         "tts_voice": "TTS Voice",
-                        "use_memo_nicknames": "Use Memo Nicknames for TTS",
+                        "use_memo_nicknames": "Use Local Note Nicknames for TTS",
                         "play": "Play",
                         "tts_test_placeholder": "Play Test TTS"
                     }
@@ -2823,7 +2823,7 @@
                 "unfriend": "Unfriend",
                 "unfriend_success_msg": "Unfriended",
                 "logout": "Logout",
-                "edit_note_memo": "Edit Note and Memo",
+                "edit_note_memo": "Edit Note and Local Note",
                 "reset_home": "Reset Home"
             },
             "profile_media": {
@@ -2847,7 +2847,7 @@
                 "header": "Info",
                 "current_status": "Current Status",
                 "profile_details": "Profile Details",
-                "notes_memo": "Notes & Memo",
+                "notes_memo": "Note & Local Note",
                 "activity_summary": "Activity Summary",
                 "launch_invite_tooltip": "Launch/Invite",
                 "self_invite_tooltip": "Invite Yourself",
@@ -2863,8 +2863,8 @@
                 "instance_creator": "Instance Creator",
                 "note": "Note",
                 "note_placeholder": "Click to add a note",
-                "memo": "Memo",
-                "memo_placeholder": "Click to add a memo",
+                "memo": "Local Note",
+                "memo_placeholder": "Click to add a local note",
                 "avatar_info": "Avatar Info",
                 "avatar_info_last_seen": "Avatar Info Last Seen",
                 "unknown_avatar": "Unknown Avatar",
@@ -3018,7 +3018,7 @@
                 "failed_to_load": "Failed to load activity"
             },
             "note_memo": {
-                "header": "Edit Note And Memo",
+                "header": "Edit Note And Local Note",
                 "cancel": "Cancel",
                 "confirm": "Confirm"
             },
@@ -3119,9 +3119,9 @@
                 "update_your_profile_details": "Edit the profile details shown on your card."
             },
             "toast": {
-                "memo_saved": "Memo saved",
-                "memo_cleared": "Memo cleared",
-                "failed_to_save_memo": "Failed to save memo",
+                "memo_saved": "Local note saved",
+                "memo_cleared": "Local note cleared",
+                "failed_to_save_memo": "Failed to save local note",
                 "failed_to_save_status_preset": "Failed to save status preset",
                 "failed_to_remove_status_preset": "Failed to remove status preset",
                 "failed_to_update_social_status": "Failed to update social status",
@@ -3159,7 +3159,7 @@
             "modal": {
                 "edit_vrchat_note": "Edit VRChat note",
                 "next": "Next",
-                "edit_local_memo": "Edit local memo",
+                "edit_local_memo": "Edit local note",
                 "report_hacking": "Report hacking?",
                 "report": "Report",
                 "send_invite": "Send invite?",
@@ -3252,8 +3252,8 @@
                 "header": "Info",
                 "name": "Name",
                 "description": "Description",
-                "memo": "Memo",
-                "memo_placeholder": "Click to add a memo",
+                "memo": "Local Note",
+                "memo_placeholder": "Click to add a local note",
                 "translate_description": "Translate Description",
                 "show_original_description": "Show Original",
                 "id": "World ID",
@@ -3377,9 +3377,9 @@
                 "failed_to_launch_vrchat_instance": "Failed to launch VRChat instance",
                 "home_world_reset": "Home world reset",
                 "failed_to_update_home_world": "Failed to update home world",
-                "memo_saved": "Memo saved",
-                "memo_cleared": "Memo cleared",
-                "failed_to_save_memo": "Failed to save memo",
+                "memo_saved": "Local note saved",
+                "memo_cleared": "Local note cleared",
+                "failed_to_save_memo": "Failed to save local note",
                 "failed_to_open_world_cache_folder": "Failed to open world cache folder",
                 "failed_to_delete_world_cache": "Failed to delete world cache",
                 "world_published": "World published",
@@ -3402,7 +3402,7 @@
                 "translation_failed": "Translation failed"
             },
             "modal": {
-                "edit_local_memo": "Edit local memo",
+                "edit_local_memo": "Edit local note",
                 "rename_world": "Rename world",
                 "change_world_description": "Change world description",
                 "change_youtube_preview": "Change YouTube preview",
@@ -3489,8 +3489,8 @@
                 "time_spent": "Time Spent",
                 "visibility": "Visibility",
                 "tags": "Tags",
-                "memo": "Memo",
-                "memo_placeholder": "Click to add a memo",
+                "memo": "Local Note",
+                "memo_placeholder": "Click to add a local note",
                 "listings": "Listings",
                 "gallery": "Gallery"
             },
@@ -3549,9 +3549,9 @@
                 "value_avatar_state_refresh_failed": "{value} Avatar state refresh failed",
                 "avatar_unblocked": "Avatar unblocked",
                 "failed_to_update_avatar_moderation": "Failed to update avatar moderation",
-                "memo_saved": "Memo saved",
-                "memo_cleared": "Memo cleared",
-                "failed_to_save_memo": "Failed to save memo",
+                "memo_saved": "Local note saved",
+                "memo_cleared": "Local note cleared",
+                "failed_to_save_memo": "Failed to save local note",
                 "failed_to_open_avatar_cache_folder": "Failed to open avatar cache folder",
                 "failed_to_delete_avatar_cache": "Failed to delete avatar cache",
                 "selected_file_is_too_large": "Selected file is too large",
@@ -3570,7 +3570,7 @@
                 "select_fallback_avatar": "Select fallback avatar?",
                 "select_fallback": "Select Fallback",
                 "delete_avatar": "Delete avatar?",
-                "edit_local_memo": "Edit local memo",
+                "edit_local_memo": "Edit local note",
                 "create_impostor_title": "Create impostor?",
                 "create": "Create",
                 "delete_impostor_title": "Delete impostor?",
@@ -4102,20 +4102,22 @@
         },
         "note_export": {
             "header": "Note Export",
-            "description1": "This process will export all of your VRCX-0 memos and import them into VRChat notes.",
+            "description1": "This process will export all of your VRCX-0 local notes and import them into VRChat notes.",
             "description2": "Be warned of the following limitations:",
             "description3": "- API endpoint has a rate limit that requires a large delay between requests.",
             "description4": "- Character limit of 256 per note.",
             "description5": "- Swear words filter (no fun allowed).",
             "description6": "- No new lines (they will replaced with a space).",
             "description7": "- This will overwrite any existing VRChat notes for these users.",
-            "description8": "- Any edits made here wont affect VRCX-0 memos but will affect VRChat notes once exported.",
+            "description8": "- Any edits made here wont affect VRCX-0 local notes but will affect VRChat notes once exported.",
             "refresh": "Refresh",
             "export": "Export",
             "cancel": "Cancel",
             "progress": "Progress:",
             "errors": "Errors:",
-            "clear_errors": "Clear Errors"
+            "clear_errors": "Clear Errors",
+            "failed_to_update_local_note": "Failed to update local note.",
+            "no_local_note_differences": "No local note differences found."
         },
         "gallery_icons": {
             "header": "Gallery",
@@ -5695,7 +5697,7 @@
             "toast": {
                 "failed_to_export_friends_list": "Failed to export friends list",
                 "failed_to_export_avatar_list": "Failed to export avatar list",
-                "failed_to_load_memo_export_rows": "Failed to load memo export rows",
+                "failed_to_load_memo_export_rows": "Failed to load local note export rows",
                 "failed_to_load_group_events": "Failed to load group events",
                 "failed_to_update_group_event_follow_state": "Failed to update group event follow state",
                 "failed_to_download_ics_file": "Failed to download .ics file",

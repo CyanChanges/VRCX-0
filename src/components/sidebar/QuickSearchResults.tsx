@@ -4,6 +4,7 @@ import {
     UserIcon,
     UsersIcon
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 import { CommandGroup, CommandItem } from '@/ui/shadcn/command';
@@ -24,6 +25,7 @@ export function entityTypeLabel(type: any) {
 }
 
 function ResultRow({ item, onSelect }: any) {
+    const { t } = useTranslation();
     const Icon =
         item.type === 'friend'
             ? UserIcon
@@ -67,12 +69,12 @@ function ResultRow({ item, onSelect }: any) {
                     </span>
                     {item.matchedField !== 'name' && item.memo ? (
                         <span className="text-muted-foreground truncate text-xs">
-                            Memo: {item.memo}
+                            {t('dialog.user.info.memo')}: {item.memo}
                         </span>
                     ) : null}
                     {item.matchedField !== 'name' && item.note ? (
                         <span className="text-muted-foreground truncate text-xs">
-                            Note: {item.note}
+                            {t('dialog.user.info.note')}: {item.note}
                         </span>
                     ) : null}
                 </div>

@@ -296,7 +296,7 @@
         "search_no_results": "結果が見つかりません",
         "search_min_chars": "少なくとも2文字入力してください",
         "search_categories": "検索...",
-        "search_scope_all": "名前、メモ、ノート",
+        "search_scope_all": "名前、ローカルノート、ノート",
         "search_scope_avatars": "自分のものとお気に入り",
         "search_scope_worlds": "自分のものとお気に入り",
         "search_scope_joined": "参加したグループ",
@@ -1096,7 +1096,7 @@
                 "status": "ステータス",
                 "bio": "自己紹介",
                 "note": "ノート",
-                "memo": "メモ"
+                "memo": "ローカルノート"
             },
             "label": {
                 "friend_details_are_already_loaded": "フレンド詳細はすでに読み込まれています",
@@ -1342,8 +1342,8 @@
             },
             "export": {
                 "header": "エクスポート",
-                "export_notes": "ユーザーメモのエクスポート",
-                "export_notes_description": "VRCX-0 のユーザーメモを VRChat のノートにエクスポート",
+                "export_notes": "ユーザーローカルノートのエクスポート",
+                "export_notes_description": "VRCX-0 のローカルノートを VRChat のノートにエクスポート",
                 "discord_names": "Discord のユーザー名",
                 "export_friend_list": "フレンドリストをエクスポート",
                 "export_own_avatars": "自分のアバターをエクスポート"
@@ -1786,8 +1786,8 @@
                     "show_status_bar": "ステータスバーを表示",
                     "age_gated_instances": "年齢制限付きインスタンス",
                     "age_gated_instances_description": "年齢制限付きインスタンスを表示します。無効にすると、これらのインスタンスは非表示になり、制限付きとして表示されます。",
-                    "nicknames": "ニックネームにメモを表示",
-                    "nicknames_description": "カスタムメモ名をユーザー名の後に表示します。",
+                    "nicknames": "ローカルノートのニックネーム",
+                    "nicknames_description": "ローカルノート名をユーザー名の後に表示します。",
                     "sort_instance_users_by": "インスタンス人数を並び替え:",
                     "sort_instance_users_by_time": "時間順",
                     "sort_instance_users_by_alphabet": "アルファベット順",
@@ -1852,8 +1852,8 @@
                     "header": "ユーザーダイアログ",
                     "vrchat_notes": "VRChat のノート",
                     "vrchat_notes_description": "VRChat のノートを表示",
-                    "vrcx_memos": "VRCX-0 のメモ",
-                    "vrcx_memos_description": "VRCX-0 にローカルに保存されたメモを表示",
+                    "vrcx_memos": "ローカルノート",
+                    "vrcx_memos_description": "VRCX-0 に保存されたローカルノートを表示",
                     "recent_action_cooldown": "アクションのクールダウン",
                     "recent_action_cooldown_description": "招待または招待リクエストを最近送信した場合、時計のアイコンが表示されます。",
                     "recent_action_cooldown_minutes": "クールダウン (分)"
@@ -1922,7 +1922,7 @@
                         "header": "テキスト読み上げ",
                         "when_to_play": "読み上げタイミング",
                         "tts_voice": "読み上げボイス",
-                        "use_memo_nicknames": "メモのニックネームを使用",
+                        "use_memo_nicknames": "ローカルノートのニックネームを使用",
                         "play": "再生",
                         "tts_test_placeholder": "TTS のテスト"
                     }
@@ -2823,7 +2823,7 @@
                 "unfriend": "フレンドを解除",
                 "unfriend_success_msg": "フレンドを解除しました。",
                 "logout": "ログアウト",
-                "edit_note_memo": "ノートとメモを編集",
+                "edit_note_memo": "ノートとローカルノートを編集",
                 "reset_home": "ホームをリセット"
             },
             "profile_media": {
@@ -2847,7 +2847,7 @@
                 "header": "情報",
                 "current_status": "現在のステータス",
                 "profile_details": "プロフィール詳細",
-                "notes_memo": "ノートとメモ",
+                "notes_memo": "ノートとローカルノート",
                 "activity_summary": "アクティビティ概要",
                 "launch_invite_tooltip": "起動/招待",
                 "self_invite_tooltip": "自分を招待",
@@ -2861,10 +2861,10 @@
                 "instance_queuing_enabled": "待機列使用可能",
                 "instance_disabled_content": "無効なコンテンツ:",
                 "instance_creator": "インスタンス作成者",
-                "note": "ノート (VRChat)",
+                "note": "ノート",
                 "note_placeholder": "クリックしてノートを追加",
-                "memo": "メモ (VRCX-0)",
-                "memo_placeholder": "クリックしてメモを追加",
+                "memo": "ローカルノート",
+                "memo_placeholder": "クリックしてローカルノートを追加",
                 "avatar_info": "アバター情報",
                 "avatar_info_last_seen": "最後に見たアバター情報",
                 "unknown_avatar": "不明なアバター",
@@ -3018,7 +3018,7 @@
                 "failed_to_load": "活動の読み込みに失敗しました"
             },
             "note_memo": {
-                "header": "ノートとメモを編集",
+                "header": "ノートとローカルノートを編集",
                 "cancel": "キャンセル",
                 "confirm": "保存"
             },
@@ -3119,9 +3119,9 @@
                 "update_your_profile_details": "カードに表示されるプロフィール詳細を編集します。"
             },
             "toast": {
-                "memo_saved": "メモを保存しました",
-                "memo_cleared": "メモをクリアしました",
-                "failed_to_save_memo": "メモの保存に失敗しました",
+                "memo_saved": "ローカルノートを保存しました",
+                "memo_cleared": "ローカルノートをクリアしました",
+                "failed_to_save_memo": "ローカルノートの保存に失敗しました",
                 "failed_to_save_status_preset": "ステータスプリセットを保存できませんでした",
                 "failed_to_remove_status_preset": "ステータスプリセットを削除できませんでした",
                 "failed_to_update_social_status": "ソーシャルステータスを更新できませんでした",
@@ -3157,9 +3157,9 @@
                 "failed_to_update_group_order": "グループの並び順を更新できませんでした"
             },
             "modal": {
-                "edit_vrchat_note": "VRChat メモを編集",
+                "edit_vrchat_note": "VRChat ノートを編集",
                 "next": "次",
-                "edit_local_memo": "ローカルメモを編集",
+                "edit_local_memo": "ローカルノートを編集",
                 "report_hacking": "チート行為を通報しますか？",
                 "report": "通報",
                 "send_invite": "招待を送信しますか？",
@@ -3252,8 +3252,8 @@
                 "header": "情報",
                 "name": "名前",
                 "description": "説明",
-                "memo": "メモ",
-                "memo_placeholder": "クリックしてメモを追加",
+                "memo": "ローカルノート",
+                "memo_placeholder": "クリックしてローカルノートを追加",
                 "translate_description": "説明を翻訳",
                 "show_original_description": "原文を表示",
                 "id": "ワールドID",
@@ -3377,9 +3377,9 @@
                 "failed_to_launch_vrchat_instance": "VRChat インスタンスを起動できませんでした",
                 "home_world_reset": "ホームワールドをリセットしました",
                 "failed_to_update_home_world": "ホームワールドを更新できませんでした",
-                "memo_saved": "メモを保存しました",
-                "memo_cleared": "メモをクリアしました",
-                "failed_to_save_memo": "メモの保存に失敗しました",
+                "memo_saved": "ローカルノートを保存しました",
+                "memo_cleared": "ローカルノートをクリアしました",
+                "failed_to_save_memo": "ローカルノートの保存に失敗しました",
                 "failed_to_open_world_cache_folder": "ワールドキャッシュフォルダーを開けませんでした",
                 "failed_to_delete_world_cache": "ワールドキャッシュを削除できませんでした",
                 "world_published": "ワールドを公開しました",
@@ -3402,7 +3402,7 @@
                 "translation_failed": "翻訳に失敗しました"
             },
             "modal": {
-                "edit_local_memo": "ローカルメモを編集",
+                "edit_local_memo": "ローカルノートを編集",
                 "rename_world": "ワールド名を変更",
                 "change_world_description": "ワールド説明を変更",
                 "change_youtube_preview": "YouTube プレビューを変更",
@@ -3489,8 +3489,8 @@
                 "time_spent": "過ごした時間",
                 "visibility": "可視性",
                 "tags": "タグ",
-                "memo": "メモ (VRCX-0)",
-                "memo_placeholder": "クリックしてメモを追加",
+                "memo": "ローカルノート",
+                "memo_placeholder": "クリックしてローカルノートを追加",
                 "listings": "リスティング",
                 "gallery": "ギャラリー"
             },
@@ -3549,9 +3549,9 @@
                 "value_avatar_state_refresh_failed": "{value} のアバター状態の更新に失敗しました",
                 "avatar_unblocked": "アバターのブロックを解除しました",
                 "failed_to_update_avatar_moderation": "アバターモデレーションの更新に失敗しました",
-                "memo_saved": "メモを保存しました",
-                "memo_cleared": "メモをクリアしました",
-                "failed_to_save_memo": "メモの保存に失敗しました",
+                "memo_saved": "ローカルノートを保存しました",
+                "memo_cleared": "ローカルノートをクリアしました",
+                "failed_to_save_memo": "ローカルノートの保存に失敗しました",
                 "failed_to_open_avatar_cache_folder": "アバターキャッシュフォルダーを開けませんでした",
                 "failed_to_delete_avatar_cache": "アバターキャッシュの削除に失敗しました",
                 "selected_file_is_too_large": "選択したファイルが大きすぎます",
@@ -3570,7 +3570,7 @@
                 "select_fallback_avatar": "フォールバックアバターを選択しますか？",
                 "select_fallback": "フォールバックを選択",
                 "delete_avatar": "アバターを削除しますか？",
-                "edit_local_memo": "ローカルメモを編集",
+                "edit_local_memo": "ローカルノートを編集",
                 "create_impostor_title": "Impostor を作成しますか？",
                 "create": "作成",
                 "delete_impostor_title": "Impostor を削除しますか？",
@@ -4102,20 +4102,22 @@
         },
         "note_export": {
             "header": "ノートをエクスポート",
-            "description1": "これにより、VRCX-0 のノートが全て VRChat のノートにインポートされます。",
+            "description1": "これにより、VRCX-0 のローカルノートが全て VRChat のノートにインポートされます。",
             "description2": "以下の制限にご注意ください:",
             "description3": "- API エンドポイントにはレート制限があり、リクエストを送る際は間隔を開ける必要があります。",
             "description4": "- ノート1つにつき256文字の制限があります。",
             "description5": "- 汚い言葉はフィルタリングされます (おふざけは禁止されています)。",
             "description6": "- 改行はできません。スペースに置き換えられます。",
             "description7": "- 既にノートが設定されているユーザーのノートは上書きされます。",
-            "description8": "- ここで編集した内容は VRCX-0 のメモには影響しませんが、エクスポートされた VRChat のノートには影響します。",
+            "description8": "- ここで編集した内容は VRCX-0 のローカルノートには影響しませんが、エクスポートされた VRChat のノートには影響します。",
             "refresh": "更新",
             "export": "エクスポート",
             "cancel": "キャンセル",
             "progress": "進捗:",
             "errors": "エラー:",
-            "clear_errors": "エラーを消去"
+            "clear_errors": "エラーを消去",
+            "failed_to_update_local_note": "ローカルノートの更新に失敗しました。",
+            "no_local_note_differences": "ローカルノートの差分はありません。"
         },
         "gallery_icons": {
             "header": "ギャラリーとインベントリ",
@@ -5695,7 +5697,7 @@
             "toast": {
                 "failed_to_export_friends_list": "フレンド一覧をエクスポートできませんでした",
                 "failed_to_export_avatar_list": "アバター一覧をエクスポートできませんでした",
-                "failed_to_load_memo_export_rows": "メモのエクスポート行を読み込めませんでした",
+                "failed_to_load_memo_export_rows": "ローカルノートのエクスポート行を読み込めませんでした",
                 "failed_to_load_group_events": "グループイベントを読み込めませんでした",
                 "failed_to_update_group_event_follow_state": "グループイベントのフォロー状態を更新できませんでした",
                 "failed_to_download_ics_file": ".ics ファイルをダウンロードできませんでした",

@@ -142,7 +142,7 @@ export function NoteExportDialog({ open, onOpenChange }: any) {
                 } catch (error) {
                     setErrors(
                         (current: any) =>
-                            `${current}Name: ${row.name}\n${userFacingErrorMessage(error, 'Failed to update memo.')}\n\n`
+                            `${current}Name: ${row.name}\n${userFacingErrorMessage(error, t('dialog.note_export.failed_to_update_local_note'))}\n\n`
                     );
                     break;
                 }
@@ -238,7 +238,9 @@ export function NoteExportDialog({ open, onOpenChange }: any) {
                                     {t('table.import.image')}
                                 </TableHead>
                                 <TableHead>{t('table.import.name')}</TableHead>
-                                <TableHead>{t('table.import.note')}</TableHead>
+                                <TableHead>
+                                    {t('dialog.user.info.memo')}
+                                </TableHead>
                                 <TableHead className="w-20 text-right">
                                     {t('table.import.skip_export')}
                                 </TableHead>
@@ -355,8 +357,10 @@ export function NoteExportDialog({ open, onOpenChange }: any) {
                                         className="text-muted-foreground h-24 text-center"
                                     >
                                         {loading
-                                            ? 'Loading.'
-                                            : 'No memo differences found.'}
+                                            ? t('common.loading')
+                                            : t(
+                                                  'dialog.note_export.no_local_note_differences'
+                                              )}
                                     </TableCell>
                                 </TableRow>
                             )}

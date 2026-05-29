@@ -87,7 +87,7 @@ export function ExportFriendsListDialog({ open, onOpenChange }: any) {
                 if (!active) {
                     return;
                 }
-                const lines = ['UserID,DisplayName,Memo'];
+                const lines = ['UserID,DisplayName,LocalNote'];
                 const friendsList = [];
                 for (const userId of getFriendIds(orderedFriendIds)) {
                     const friend = friendsById[userId];
