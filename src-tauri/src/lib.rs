@@ -2,6 +2,8 @@ mod adapters;
 mod bootstrap;
 mod commands;
 mod error;
+#[cfg(target_os = "macos")]
+mod macos_menu;
 mod state;
 
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
@@ -281,6 +283,12 @@ pub fn run() {
                 "tray-exit" => {
                     commands::host::window::stop_runtime_services(app);
                     app.exit(0);
+                }
+                id if id.starts_with("mac-menu-") => {
+                    #[cfg(target_os = "macos")]
+                    if let Err(error) = macos_menu::emit_menu_action(app, id) {
+                        tracing::warn!(error = %error, id, "failed to emit macOS menu action");
+                    }
                 }
                 _ => {}
             }

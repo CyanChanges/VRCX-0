@@ -583,6 +583,8 @@ pub fn setup_app_with_data_dir(
         .runtime_context
         .runtime
         .record_phase("tray", "completed", "System tray configured.");
+    #[cfg(target_os = "macos")]
+    crate::macos_menu::configure_macos_app_menu(app.handle())?;
     sync_autostart_from_db(app, &state);
     apply_autostart_window_state_if_needed(app, &state);
     start_host_services(app.handle(), &state);
@@ -614,6 +616,13 @@ fn create_main_window(
         })?;
 
     let mut builder = WebviewWindowBuilder::from_config(app, window_config)?;
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder
+            .decorations(true)
+            .title_bar_style(tauri::TitleBarStyle::Overlay)
+            .traffic_light_position(tauri::LogicalPosition::new(16.0, 16.0));
+    }
     let state = app.state::<AppState>();
     if let Some(route) = state.take_background_resume_route() {
         let route = serde_json::to_string(&route)?;
