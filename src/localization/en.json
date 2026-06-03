@@ -68,6 +68,12 @@
             "failed_open_instance_in_vrchat_falling_back_to_self_invite": "Failed open instance in VRChat, falling back to self invite"
         }
     },
+    "overlay": {
+        "footer": {
+            "players": "{count} players",
+            "instance_duration": "Instance {duration}"
+        }
+    },
     "nav_tooltip": {
         "friends_locations": "Friend Locations",
         "feed": "Feed",

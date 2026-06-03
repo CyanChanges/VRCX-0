@@ -68,6 +68,12 @@
             "failed_open_instance_in_vrchat_falling_back_to_self_invite": "无法在 VRChat 中打开房间，改用自我邀请"
         }
     },
+    "overlay": {
+        "footer": {
+            "players": "{count} 名玩家",
+            "instance_duration": "停留 {duration}"
+        }
+    },
     "nav_tooltip": {
         "friends_locations": "好友位置",
         "feed": "好友动态",

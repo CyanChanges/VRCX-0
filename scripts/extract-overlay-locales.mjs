@@ -50,6 +50,10 @@ const keys = [
     'muted_player_joined',
     'muted_player_left'
 ];
+const pathKeys = [
+    ['overlay.footer.players', ['overlay', 'footer', 'players']],
+    ['overlay.footer.instance_duration', ['overlay', 'footer', 'instance_duration']]
+];
 
 const catalog = {
     version: 1,
@@ -70,6 +74,13 @@ for (const locale of locales) {
         }
         entries[`notifications.${key}`] = value;
     }
+    for (const [outputKey, sourcePath] of pathKeys) {
+        const value = readPath(source, sourcePath);
+        if (typeof value !== 'string') {
+            throw new Error(`${inputPath} is missing ${outputKey}`);
+        }
+        entries[outputKey] = value;
+    }
 
     catalog.locales[locale] = entries;
 }
@@ -77,3 +88,12 @@ for (const locale of locales) {
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(catalog, null, 2)}\n`);
 console.log(`Wrote ${path.relative(repoRoot, outputPath)}`);
+
+function readPath(source, sourcePath) {
+    return sourcePath.reduce((value, key) => {
+        if (value && typeof value === 'object') {
+            return value[key];
+        }
+        return undefined;
+    }, source);
+}

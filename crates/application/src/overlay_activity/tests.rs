@@ -149,6 +149,45 @@ fn notification_projection_uses_sender_as_actor() {
 }
 
 #[test]
+fn snapshot_marks_favorite_relation_before_friend_relation() {
+    let runtime = OverlayActivityRuntime::with_filters(OverlayActivityFilters::from_json(json!({
+        "version": 1,
+        "wrist": {
+            "types": {
+                "friendRequest": {
+                    "scope": "on",
+                    "favoriteGroupKeys": "all"
+                }
+            }
+        }
+    })));
+    runtime.set_friend_user_ids(["usr_favorite", "usr_friend"]);
+    runtime.set_favorite_groups(OverlayFavoriteGroups::from_pairs([(
+        "fav-a",
+        ["usr_favorite"].as_slice(),
+    )]));
+
+    runtime.ingest_candidate(candidate("friendRequest", "usr_favorite"));
+    runtime.ingest_candidate(candidate("friendRequest", "usr_friend"));
+    runtime.ingest_candidate(candidate("friendRequest", "usr_other"));
+
+    let entries = runtime.snapshot().entries;
+    assert_eq!(entries.len(), 3);
+    assert_eq!(
+        entries[0].actor_relation,
+        OverlayActivityActorRelation::Favorite
+    );
+    assert_eq!(
+        entries[1].actor_relation,
+        OverlayActivityActorRelation::Friend
+    );
+    assert_eq!(
+        entries[2].actor_relation,
+        OverlayActivityActorRelation::None
+    );
+}
+
+#[test]
 fn notification_projection_without_ids_uses_stable_fallback_source_ids() {
     let runtime = OverlayActivityRuntime::with_filters(OverlayActivityFilters::from_json(json!({
         "version": 1,

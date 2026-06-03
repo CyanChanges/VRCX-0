@@ -2,8 +2,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::{json, Value};
 use vrcx_0_application::{
-    OverlayActivityCategory, OverlayActivityContent, OverlayActivityEntry, OverlayActivitySnapshot,
-    OverlayActivityText,
+    OverlayActivityActorRelation, OverlayActivityCategory, OverlayActivityContent,
+    OverlayActivityEntry, OverlayActivitySnapshot, OverlayActivityText,
 };
 use vrcx_0_host::vr_overlay::{VrDeviceSnapshot, VrDeviceStatus};
 use vrcx_0_runtime_host::vr_overlay::{
@@ -40,9 +40,12 @@ impl MockPreview {
             show_battery_percent: true,
         };
         preview.inject(1);
+        preview.inject(2);
         preview.inject(3);
         preview.inject(4);
         preview.inject(5);
+        preview.inject(6);
+        preview.inject(7);
         preview
     }
 
@@ -55,7 +58,7 @@ impl MockPreview {
             footer: WristRuntimeFooter {
                 player_count: 12,
                 instance_duration: "24m".to_string(),
-                local_time: *b"12:34",
+                local_time: "12:34".to_string(),
             },
             options: WristOverlayRenderOptions {
                 size: SIZES[self.size_index],
@@ -70,102 +73,233 @@ impl MockPreview {
     }
 
     pub fn inject(&mut self, key: u32) {
-        let entry = match key {
-            1 => self.entry(
-                "OnPlayerJoined",
-                OverlayActivityCategory::CurrentInstance,
-                "Ada",
-                localized_body("notifications.has_joined", json!({}), "has joined"),
-                EntryMeta::default(),
-            ),
-            2 => self.entry(
-                "OnPlayerLeft",
-                OverlayActivityCategory::CurrentInstance,
-                "Mika",
-                localized_body("notifications.has_left", json!({}), "has left"),
-                EntryMeta::default(),
-            ),
-            3 => self.entry(
-                "Online",
-                OverlayActivityCategory::FavoriteMovement,
-                "Kuro",
-                localized_body(
-                    "notifications.online_location",
-                    json!({ "location": "wrld_mock" }),
-                    "has logged in to wrld_mock",
-                ),
-                EntryMeta {
-                    location: "wrld_mock:12345".to_string(),
-                    world_name: "Preview World".to_string(),
-                    ..EntryMeta::default()
-                },
-            ),
-            4 => self.entry(
-                "invite",
-                OverlayActivityCategory::ActionRequired,
-                "Rin",
-                localized_body(
-                    "notifications.invite",
-                    json!({
-                        "location": "wrld_invite",
-                        "message": "Join?",
-                    }),
-                    "has invited you to wrld_invite Join?",
-                ),
-                EntryMeta {
-                    location: "wrld_invite:preview".to_string(),
-                    world_name: "Invite Lab".to_string(),
-                    ..EntryMeta::default()
-                },
-            ),
-            5 => self.entry(
-                "group.queueReady",
-                OverlayActivityCategory::ActionRequired,
-                "",
-                literal_body("Queue pop: Preview Group".to_string()),
-                EntryMeta {
-                    title: localized_body(
-                        "notifications.group_queue_ready_title",
-                        json!({}),
-                        "Instance Queue Ready",
+        match key {
+            1 => {
+                self.push_entry(
+                    "OnPlayerJoined",
+                    OverlayActivityCategory::CurrentInstance,
+                    "Ada",
+                    localized_body("notifications.has_joined", json!({}), "has joined"),
+                    EntryMeta {
+                        actor_relation: OverlayActivityActorRelation::Favorite,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "OnPlayerJoined",
+                    OverlayActivityCategory::CurrentInstance,
+                    "Mika",
+                    localized_body("notifications.has_joined", json!({}), "has joined"),
+                    EntryMeta {
+                        actor_relation: OverlayActivityActorRelation::Friend,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "OnPlayerJoined",
+                    OverlayActivityCategory::CurrentInstance,
+                    "Visitor 12",
+                    localized_body("notifications.has_joined", json!({}), "has joined"),
+                    EntryMeta::default(),
+                );
+            }
+            2 => {
+                self.push_entry(
+                    "OnPlayerLeft",
+                    OverlayActivityCategory::CurrentInstance,
+                    "Mika",
+                    localized_body("notifications.has_left", json!({}), "has left"),
+                    EntryMeta {
+                        actor_relation: OverlayActivityActorRelation::Friend,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "OnPlayerLeft",
+                    OverlayActivityCategory::CurrentInstance,
+                    "Visitor 27",
+                    localized_body("notifications.has_left", json!({}), "has left"),
+                    EntryMeta::default(),
+                );
+            }
+            3 => {
+                self.push_entry(
+                    "Online",
+                    OverlayActivityCategory::FavoriteMovement,
+                    "Kuro",
+                    localized_body(
+                        "notifications.online_location",
+                        json!({ "location": "wrld_mock" }),
+                        "has logged in to wrld_mock",
                     ),
-                    group_name: "Preview Group".to_string(),
-                    ..EntryMeta::default()
-                },
-            ),
-            6 => self.entry(
-                "GPS",
-                OverlayActivityCategory::FavoriteMovement,
-                "Yui",
-                localized_body(
-                    "notifications.gps",
-                    json!({ "location": "wrld_private" }),
-                    "is in wrld_private",
-                ),
-                EntryMeta {
-                    location: "wrld_private:preview~private(usr_preview)".to_string(),
-                    world_name: "Private Preview".to_string(),
-                    ..EntryMeta::default()
-                },
-            ),
-            7 => self.entry(
-                "AvatarChange",
-                OverlayActivityCategory::ProfileChange,
-                "Noa",
-                localized_body(
-                    "notifications.avatar_change",
-                    json!({ "avatar": "Debug Avatar" }),
-                    "changed into avatar Debug Avatar",
-                ),
-                EntryMeta {
-                    avatar_name: "Debug Avatar".to_string(),
-                    ..EntryMeta::default()
-                },
-            ),
-            _ => return,
-        };
+                    EntryMeta {
+                        location: "wrld_mock:12345".to_string(),
+                        world_name: "Preview World".to_string(),
+                        actor_relation: OverlayActivityActorRelation::Favorite,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "Online",
+                    OverlayActivityCategory::FavoriteMovement,
+                    "Public Guest",
+                    localized_body(
+                        "notifications.online_location",
+                        json!({ "location": "wrld_public" }),
+                        "has logged in to wrld_public",
+                    ),
+                    EntryMeta {
+                        location: "wrld_public:preview".to_string(),
+                        world_name: "Public Test World".to_string(),
+                        ..EntryMeta::default()
+                    },
+                );
+            }
+            4 => {
+                self.push_entry(
+                    "invite",
+                    OverlayActivityCategory::ActionRequired,
+                    "Rin",
+                    localized_body(
+                        "notifications.invite",
+                        json!({
+                            "location": "wrld_invite",
+                            "message": "Join?",
+                        }),
+                        "has invited you to wrld_invite Join?",
+                    ),
+                    EntryMeta {
+                        location: "wrld_invite:preview".to_string(),
+                        world_name: "Invite Lab".to_string(),
+                        actor_relation: OverlayActivityActorRelation::Friend,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "requestInvite",
+                    OverlayActivityCategory::ActionRequired,
+                    "Traveler",
+                    localized_body(
+                        "notifications.request_invite",
+                        json!({ "message": "Can I join?" }),
+                        "has requested an invite Can I join?",
+                    ),
+                    EntryMeta::default(),
+                );
+                self.push_entry(
+                    "friendRequest",
+                    OverlayActivityCategory::ActionRequired,
+                    "New Person",
+                    localized_body(
+                        "notifications.friend_request",
+                        json!({}),
+                        "has sent you a friend request",
+                    ),
+                    EntryMeta::default(),
+                );
+            }
+            5 => {
+                self.push_entry(
+                    "group.queueReady",
+                    OverlayActivityCategory::ActionRequired,
+                    "",
+                    literal_body("Queue pop: Preview Group".to_string()),
+                    EntryMeta {
+                        title: localized_body(
+                            "notifications.group_queue_ready_title",
+                            json!({}),
+                            "Instance Queue Ready",
+                        ),
+                        group_name: "Preview Group".to_string(),
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "instance.closed",
+                    OverlayActivityCategory::ActionRequired,
+                    "",
+                    literal_body("Instance closed by owner".to_string()),
+                    EntryMeta {
+                        title: literal_title("Instance Closed"),
+                        ..EntryMeta::default()
+                    },
+                );
+            }
+            6 => {
+                self.push_entry(
+                    "VideoPlay",
+                    OverlayActivityCategory::Media,
+                    "",
+                    literal_body("Now playing https://www.youtube.com/watch?v=preview".to_string()),
+                    EntryMeta::default(),
+                );
+                self.push_entry(
+                    "VideoPlay",
+                    OverlayActivityCategory::Media,
+                    "Desk DJ",
+                    literal_body("started playing a preview video".to_string()),
+                    EntryMeta::default(),
+                );
+            }
+            7 => {
+                self.push_entry(
+                    "GPS",
+                    OverlayActivityCategory::FavoriteMovement,
+                    "Yui",
+                    localized_body(
+                        "notifications.gps",
+                        json!({ "location": "wrld_private" }),
+                        "is in wrld_private",
+                    ),
+                    EntryMeta {
+                        location: "wrld_private:preview~private(usr_preview)".to_string(),
+                        world_name: "Private Preview".to_string(),
+                        actor_relation: OverlayActivityActorRelation::Favorite,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "AvatarChange",
+                    OverlayActivityCategory::ProfileChange,
+                    "Noa",
+                    localized_body(
+                        "notifications.avatar_change",
+                        json!({ "avatar": "Debug Avatar" }),
+                        "changed into avatar Debug Avatar",
+                    ),
+                    EntryMeta {
+                        avatar_name: "Debug Avatar".to_string(),
+                        actor_relation: OverlayActivityActorRelation::Friend,
+                        ..EntryMeta::default()
+                    },
+                );
+                self.push_entry(
+                    "Status",
+                    OverlayActivityCategory::FavoriteMovement,
+                    "Solo Tester",
+                    localized_body(
+                        "notifications.status_update",
+                        json!({ "status": "busy", "description": "recording" }),
+                        "status is now busy recording",
+                    ),
+                    EntryMeta::default(),
+                );
+            }
+            _ => {}
+        }
+    }
+
+    fn push_entry(
+        &mut self,
+        activity_type: &str,
+        category: OverlayActivityCategory,
+        actor: &str,
+        body: OverlayActivityText,
+        meta: EntryMeta,
+    ) {
+        let entry = self.entry(activity_type, category, actor, body, meta);
         self.entries.push(entry);
-        if self.entries.len() > 32 {
+        if self.entries.len() > 48 {
             self.entries.remove(0);
         }
     }
@@ -218,6 +352,7 @@ impl MockPreview {
     ) -> OverlayActivityEntry {
         let sequence = self.next_sequence;
         self.next_sequence = self.next_sequence.saturating_add(1);
+        let actor_relation = meta.actor_relation;
         let title = if meta.title.fallback.is_empty() && meta.title.key.is_empty() {
             literal_title(actor)
         } else {
@@ -246,6 +381,7 @@ impl MockPreview {
                 avatar_name: meta.avatar_name,
                 image_url: String::new(),
             },
+            actor_relation,
             payload: Value::Null,
         }
     }
@@ -258,10 +394,11 @@ struct EntryMeta {
     world_name: String,
     group_name: String,
     avatar_name: String,
+    actor_relation: OverlayActivityActorRelation,
 }
 
 fn mock_devices() -> Vec<VrDeviceSnapshot> {
-    vec![
+    let mut devices = vec![
         VrDeviceSnapshot {
             label: "HMD".to_string(),
             serial: Some("preview-hmd".to_string()),
@@ -280,13 +417,23 @@ fn mock_devices() -> Vec<VrDeviceSnapshot> {
             status: VrDeviceStatus::Charging,
             battery_percent: Some(67),
         },
-        VrDeviceSnapshot {
-            label: "T1".to_string(),
-            serial: Some("preview-tracker-1".to_string()),
-            status: VrDeviceStatus::CriticalBattery,
-            battery_percent: Some(9),
-        },
-    ]
+    ];
+    for index in 1..=11 {
+        let (status, battery_percent) = match index {
+            1 => (VrDeviceStatus::CriticalBattery, Some(9)),
+            3 => (VrDeviceStatus::LowBattery, Some(21)),
+            8 => (VrDeviceStatus::Disconnected, None),
+            9 => (VrDeviceStatus::TrackingWarning, Some(48)),
+            _ => (VrDeviceStatus::Normal, Some(80)),
+        };
+        devices.push(VrDeviceSnapshot {
+            label: format!("T{index}"),
+            serial: Some(format!("preview-tracker-{index}")),
+            status,
+            battery_percent,
+        });
+    }
+    devices
 }
 
 fn literal_title(value: &str) -> OverlayActivityText {

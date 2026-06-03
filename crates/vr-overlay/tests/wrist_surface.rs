@@ -1,7 +1,7 @@
 use vrcx_0_vr_overlay::{
-    build_wrist_scene, Color, DeviceChip, DeviceStatus, FeedKind, FeedLine, FeedSeverity,
-    OverlayFooter, OverlayRenderer, OverlaySize, OverlaySurfaceId, TinySkiaRenderer,
-    WristSurfaceModel,
+    build_wrist_scene, Color, DeviceChip, DeviceRole, DeviceStatus, DrawCommand, FeedKind,
+    FeedLine, FeedRelation, FeedSeverity, OverlayFooter, OverlayRenderer, OverlaySize,
+    OverlaySurfaceId, TinySkiaRenderer, WristSurfaceModel,
 };
 
 #[test]
@@ -40,6 +40,177 @@ fn tiny_skia_renderer_outputs_non_empty_rgba_frame() {
     );
 }
 
+#[test]
+fn wrist_surface_aggregates_normal_trackers_and_expands_abnormal_trackers() {
+    let mut model = sample_wrist_model();
+    model.show_battery_percent = false;
+    model.devices = vec![
+        device("HMD", DeviceRole::Hmd, DeviceStatus::Normal, Some(82)),
+        device(
+            "L",
+            DeviceRole::LeftController,
+            DeviceStatus::Normal,
+            Some(64),
+        ),
+        device(
+            "R",
+            DeviceRole::RightController,
+            DeviceStatus::Charging,
+            Some(71),
+        ),
+    ];
+    for index in 1..=10 {
+        let status = match index {
+            3 => DeviceStatus::LowBattery,
+            8 => DeviceStatus::Disconnected,
+            9 => DeviceStatus::TrackingWarning,
+            _ => DeviceStatus::Normal,
+        };
+        model.devices.push(device(
+            &format!("T{index}"),
+            DeviceRole::Tracker,
+            status,
+            Some(80),
+        ));
+    }
+
+    let scene = build_wrist_scene(&model);
+    let texts = scene_texts(&scene.commands);
+
+    assert!(texts.iter().any(|text| text == "HMD"));
+    assert!(texts.iter().any(|text| text == "L"));
+    assert!(texts.iter().any(|text| text == "R"));
+    assert!(texts.iter().any(|text| text == "T8"));
+    assert!(texts.iter().any(|text| text == "T3"));
+    assert!(texts.iter().any(|text| text == "+1"));
+    assert!(texts.iter().any(|text| text == "T×7"));
+    assert!(
+        texts.iter().all(|text| !["LOW", "CRIT", "OFF", "WARN"]
+            .iter()
+            .any(|suffix| text.contains(suffix))),
+        "device strip should use battery shape/color instead of status words"
+    );
+    assert!(
+        !texts.iter().any(|text| text == "T1"),
+        "normal trackers should be summarized instead of listed one by one"
+    );
+}
+
+#[test]
+fn wrist_surface_shows_percent_for_each_specific_device_when_enabled() {
+    let mut model = sample_wrist_model();
+    model.show_battery_percent = true;
+    model.devices = vec![
+        device("HMD", DeviceRole::Hmd, DeviceStatus::Normal, Some(82)),
+        device(
+            "L",
+            DeviceRole::LeftController,
+            DeviceStatus::LowBattery,
+            Some(18),
+        ),
+        device(
+            "R",
+            DeviceRole::RightController,
+            DeviceStatus::Charging,
+            Some(67),
+        ),
+        device(
+            "T1",
+            DeviceRole::Tracker,
+            DeviceStatus::CriticalBattery,
+            Some(9),
+        ),
+    ];
+
+    let scene = build_wrist_scene(&model);
+    let texts = scene_texts(&scene.commands);
+
+    assert!(texts.iter().any(|text| text == "82%"));
+    assert!(texts.iter().any(|text| text == "18%"));
+    assert!(texts.iter().any(|text| text == "67%"));
+    assert!(texts.iter().any(|text| text == "9%"));
+    assert_eq!(
+        text_color(&scene.commands, "9%"),
+        Some(Color::rgba(239, 68, 68, 255))
+    );
+}
+
+#[test]
+fn wrist_surface_uses_extra_width_to_expand_more_tracker_statuses() {
+    let mut model = sample_wrist_model();
+    model.size = OverlaySize::new(640, 640);
+    model.show_battery_percent = false;
+    model.devices = vec![
+        device("HMD", DeviceRole::Hmd, DeviceStatus::Normal, Some(82)),
+        device(
+            "L",
+            DeviceRole::LeftController,
+            DeviceStatus::Normal,
+            Some(64),
+        ),
+        device(
+            "R",
+            DeviceRole::RightController,
+            DeviceStatus::Charging,
+            Some(71),
+        ),
+    ];
+    for index in 1..=10 {
+        let status = match index {
+            3 => DeviceStatus::LowBattery,
+            8 => DeviceStatus::Disconnected,
+            9 => DeviceStatus::TrackingWarning,
+            _ => DeviceStatus::Normal,
+        };
+        model.devices.push(device(
+            &format!("T{index}"),
+            DeviceRole::Tracker,
+            status,
+            Some(80),
+        ));
+    }
+
+    let scene = build_wrist_scene(&model);
+    let texts = scene_texts(&scene.commands);
+
+    assert!(texts.iter().any(|text| text == "T3"));
+    assert!(texts.iter().any(|text| text == "T8"));
+    assert!(texts.iter().any(|text| text == "T9"));
+    assert!(!texts.iter().any(|text| text == "+1"));
+    assert!(texts.iter().any(|text| text == "T×7"));
+}
+
+#[test]
+fn wrist_surface_draws_actor_text_with_relation_hierarchy() {
+    let mut model = sample_wrist_model();
+    model.feed_rows = vec![
+        FeedLine {
+            time_text: "16:31".to_string(),
+            kind: FeedKind::Friend,
+            actor_text: "Fav User".to_string(),
+            detail: "Fav User joined current instance".to_string(),
+            relation: FeedRelation::Favorite,
+            severity: FeedSeverity::Normal,
+        },
+        FeedLine {
+            time_text: "16:30".to_string(),
+            kind: FeedKind::Friend,
+            actor_text: "Friend User".to_string(),
+            detail: "Friend User joined current instance".to_string(),
+            relation: FeedRelation::Friend,
+            severity: FeedSeverity::Normal,
+        },
+    ];
+
+    let scene = build_wrist_scene(&model);
+
+    let fav_color = text_color(&scene.commands, "Fav User").expect("favorite actor text");
+    let friend_color = text_color(&scene.commands, "Friend User").expect("friend actor text");
+
+    assert_eq!(fav_color, Color::rgba(245, 205, 84, 255));
+    assert_eq!(friend_color, Color::rgba(246, 246, 246, 255));
+}
+
 fn sample_wrist_model() -> WristSurfaceModel {
     WristSurfaceModel {
         size: OverlaySize::new(512, 512),
@@ -48,6 +219,7 @@ fn sample_wrist_model() -> WristSurfaceModel {
         devices: vec![
             DeviceChip {
                 label: "HMD".to_string(),
+                role: DeviceRole::Hmd,
                 status: DeviceStatus::Normal,
                 battery_percent: Some(82),
                 text: "82".to_string(),
@@ -55,6 +227,7 @@ fn sample_wrist_model() -> WristSurfaceModel {
             },
             DeviceChip {
                 label: "L".to_string(),
+                role: DeviceRole::LeftController,
                 status: DeviceStatus::LowBattery,
                 battery_percent: Some(18),
                 text: "18 low".to_string(),
@@ -62,6 +235,7 @@ fn sample_wrist_model() -> WristSurfaceModel {
             },
             DeviceChip {
                 label: "T4".to_string(),
+                role: DeviceRole::Tracker,
                 status: DeviceStatus::TrackingWarning,
                 battery_percent: Some(44),
                 text: "warn".to_string(),
@@ -72,19 +246,25 @@ fn sample_wrist_model() -> WristSurfaceModel {
             FeedLine {
                 time_text: "16:31".to_string(),
                 kind: FeedKind::Invite,
+                actor_text: "Ada".to_string(),
                 detail: "Ada invited you to 测试世界".to_string(),
+                relation: FeedRelation::Favorite,
                 severity: FeedSeverity::Important,
             },
             FeedLine {
                 time_text: "16:30".to_string(),
                 kind: FeedKind::Friend,
+                actor_text: "Mika".to_string(),
                 detail: "Mika joined current instance".to_string(),
+                relation: FeedRelation::Friend,
                 severity: FeedSeverity::Normal,
             },
             FeedLine {
                 time_text: "16:28".to_string(),
                 kind: FeedKind::System,
+                actor_text: String::new(),
                 detail: "Instance queue ready".to_string(),
+                relation: FeedRelation::None,
                 severity: FeedSeverity::Normal,
             },
         ],
@@ -96,4 +276,37 @@ fn sample_wrist_model() -> WristSurfaceModel {
         accent: Color::rgba(94, 234, 212, 255),
         captured_at_ms: 1_717_200_000_000,
     }
+}
+
+fn device(
+    label: &str,
+    role: DeviceRole,
+    status: DeviceStatus,
+    battery_percent: Option<u8>,
+) -> DeviceChip {
+    DeviceChip {
+        label: label.to_string(),
+        role,
+        status,
+        battery_percent,
+        text: String::new(),
+        priority: 10,
+    }
+}
+
+fn scene_texts(commands: &[DrawCommand]) -> Vec<String> {
+    commands
+        .iter()
+        .filter_map(|command| match command {
+            DrawCommand::Text { text, .. } => Some(text.clone()),
+            _ => None,
+        })
+        .collect()
+}
+
+fn text_color(commands: &[DrawCommand], expected_text: &str) -> Option<Color> {
+    commands.iter().find_map(|command| match command {
+        DrawCommand::Text { text, style, .. } if text == expected_text => Some(style.color),
+        _ => None,
+    })
 }

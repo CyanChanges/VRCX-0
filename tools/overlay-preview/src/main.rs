@@ -1,7 +1,8 @@
 // Wrist overlay preview key bindings:
-// 1..7 inject mock entries, C clears mock feed, L cycles locale, S cycles size,
-// B toggles dark background, D toggles devices, P toggles battery percent,
-// M toggles mock/live mode. Mock-editing keys switch the preview back to mock.
+// 1..7 inject mock entry groups, C clears mock feed, L cycles locale,
+// S cycles size, B toggles dark background, D toggles devices,
+// P toggles battery percent, M toggles mock/live mode.
+// Mock-editing keys switch the preview back to mock.
 
 mod fixtures;
 

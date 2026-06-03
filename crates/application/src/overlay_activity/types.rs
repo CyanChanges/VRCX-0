@@ -184,6 +184,15 @@ pub struct OverlayActivityContent {
     pub image_url: String,
 }
 
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum OverlayActivityActorRelation {
+    #[default]
+    None,
+    Friend,
+    Favorite,
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityEntry {
@@ -195,6 +204,8 @@ pub struct OverlayActivityEntry {
     pub actor_user_id: String,
     pub actor_display_name: String,
     pub content: OverlayActivityContent,
+    #[serde(default)]
+    pub actor_relation: OverlayActivityActorRelation,
     #[serde(default)]
     pub payload: Value,
 }

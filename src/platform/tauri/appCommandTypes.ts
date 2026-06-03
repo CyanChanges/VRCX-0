@@ -306,6 +306,8 @@ export interface OverlayActivityContent {
     imageUrl: string;
 }
 
+export type OverlayActivityActorRelation = 'none' | 'friend' | 'favorite';
+
 export interface OverlayActivityEntry {
     sequence: number;
     sourceId: string;
@@ -315,6 +317,7 @@ export interface OverlayActivityEntry {
     actorUserId: string;
     actorDisplayName: string;
     content: OverlayActivityContent;
+    actorRelation?: OverlayActivityActorRelation;
     payload?: unknown;
 }
 

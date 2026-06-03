@@ -44,6 +44,7 @@ pub const VR_OVERLAY_DARK_BACKGROUND_CONFIG_KEY: &str = "wristOverlayDarkBackgro
 pub const VR_OVERLAY_SHOW_DEVICES_CONFIG_KEY: &str = "wristOverlayShowDevices";
 pub const VR_OVERLAY_SHOW_BATTERY_PERCENT_CONFIG_KEY: &str = "wristOverlayShowBatteryPercent";
 const APP_LANGUAGE_CONFIG_KEY: &str = "appLanguage";
+const DATE_TIME_HOUR12_CONFIG_KEY: &str = "dtHour12";
 const WRIST_DEVICE_REFRESH_INTERVAL: Duration = Duration::from_secs(5);
 const WRIST_FRAME_REFRESH_INTERVAL: Duration = Duration::from_secs(1);
 
@@ -72,6 +73,7 @@ pub(super) struct VrOverlayRuntimeConfig {
     hand: WristOverlayHand,
     render: WristOverlayRenderOptions,
     locale: OverlayLocale,
+    dt_hour12: bool,
 }
 
 impl Default for VrOverlayRuntimeConfig {
@@ -82,6 +84,7 @@ impl Default for VrOverlayRuntimeConfig {
             hand: WristOverlayHand::Left,
             render: WristOverlayRenderOptions::default(),
             locale: OverlayLocale::default(),
+            dt_hour12: false,
         }
     }
 }
@@ -535,7 +538,7 @@ pub(super) fn build_wrist_frame_input(
                 &game_log.started_at,
                 captured_at_ms,
             ),
-            local_time: local_time_hh_mm(),
+            local_time: local_time_text(config.dt_hour12),
         },
         options: config.render,
         locale: config.locale.as_str().to_string(),
@@ -582,6 +585,9 @@ pub(super) fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntime
         .get_string(APP_LANGUAGE_CONFIG_KEY, "en")
         .map(|value| OverlayLocale::from_config(&value))
         .unwrap_or_default();
+    let dt_hour12 = config
+        .get_bool(DATE_TIME_HOUR12_CONFIG_KEY, false)
+        .unwrap_or(false);
 
     VrOverlayRuntimeConfig {
         start_mode,
@@ -595,6 +601,7 @@ pub(super) fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntime
             show_battery_percent,
         },
         locale,
+        dt_hour12,
     }
 }
 
@@ -605,17 +612,21 @@ fn now_ms() -> i64 {
         .unwrap_or_default()
 }
 
-fn local_time_hh_mm() -> [u8; 5] {
+fn local_time_text(hour12: bool) -> String {
     let now = Local::now();
-    let hour = now.hour();
-    let minute = now.minute();
-    [
-        b'0' + (hour / 10) as u8,
-        b'0' + (hour % 10) as u8,
-        b':',
-        b'0' + (minute / 10) as u8,
-        b'0' + (minute % 10) as u8,
-    ]
+    format_local_time(now.hour(), now.minute(), hour12)
+}
+
+fn format_local_time(hour: u32, minute: u32, hour12: bool) -> String {
+    if !hour12 {
+        return format!("{hour:02}:{minute:02}");
+    }
+    let period = if hour < 12 { "AM" } else { "PM" };
+    let display_hour = match hour % 12 {
+        0 => 12,
+        value => value,
+    };
+    format!("{display_hour}:{minute:02} {period}")
 }
 
 fn instance_duration_text(location: &str, started_at: &str, now_ms: i64) -> String {
@@ -672,6 +683,16 @@ mod tests {
     }
 
     #[test]
+    fn clock_mode_is_render_only_config() {
+        let base = VrOverlayRuntimeConfig::default();
+        let mut hour12 = base;
+        hour12.dt_hour12 = true;
+
+        assert_eq!(base.surface_config_key(), hour12.surface_config_key());
+        assert!(!base.should_clear_device_snapshot_for(hour12));
+    }
+
+    #[test]
     fn surface_config_key_tracks_surface_affecting_fields() {
         let base = VrOverlayRuntimeConfig::default();
 
@@ -702,5 +723,14 @@ mod tests {
         let mut percent = base;
         percent.render.show_battery_percent = !percent.render.show_battery_percent;
         assert_eq!(base.surface_config_key(), percent.surface_config_key());
+    }
+
+    #[test]
+    fn format_local_time_respects_hour12_setting() {
+        assert_eq!(format_local_time(0, 5, false), "00:05");
+        assert_eq!(format_local_time(23, 7, false), "23:07");
+        assert_eq!(format_local_time(0, 5, true), "12:05 AM");
+        assert_eq!(format_local_time(12, 30, true), "12:30 PM");
+        assert_eq!(format_local_time(23, 7, true), "11:07 PM");
     }
 }

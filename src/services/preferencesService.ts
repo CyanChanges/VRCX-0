@@ -79,6 +79,7 @@ const DISCORD_BOOL_PREFERENCE_KEYS = new Set([
 const VRCHAT_RICH_PRESENCE_CONFIG_KEY = 'disableRichPresence';
 const WRIST_OVERLAY_RUNTIME_CONFIG_KEYS = new Set([
     'appLanguage',
+    'dtHour12',
     'wristOverlayStartMode',
     'wristOverlayButton',
     'wristOverlayHand',

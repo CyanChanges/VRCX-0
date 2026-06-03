@@ -68,6 +68,12 @@
             "failed_open_instance_in_vrchat_falling_back_to_self_invite": "VRChat でインスタンスを開けなかったため、自分への招待に切り替えます"
         }
     },
+    "overlay": {
+        "footer": {
+            "players": "{count}人",
+            "instance_duration": "滞在 {duration}"
+        }
+    },
     "nav_tooltip": {
         "friends_locations": "フレンドの現在地",
         "feed": "フィード",

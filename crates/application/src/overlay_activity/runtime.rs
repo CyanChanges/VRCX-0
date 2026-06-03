@@ -6,8 +6,9 @@ use serde_json::Value;
 use super::content::build_activity_content;
 use super::definitions::{default_rule, known_definition_for_type, normalize_id};
 use super::types::{
-    OverlayActivityCandidate, OverlayActivityEntry, OverlayActivityFavoriteGroupKeys,
-    OverlayActivityFilters, OverlayActivityRule, OverlayActivityScope, OverlayActivitySnapshot,
+    OverlayActivityActorRelation, OverlayActivityCandidate, OverlayActivityEntry,
+    OverlayActivityFavoriteGroupKeys, OverlayActivityFilters, OverlayActivityRule,
+    OverlayActivityScope, OverlayActivitySnapshot,
 };
 
 const DEFAULT_CAPACITY: usize = 128;
@@ -233,15 +234,18 @@ impl OverlayActivityRuntime {
                 &candidate,
                 &actor_display_name,
             );
+            let actor_user_id = normalize_id(&candidate.actor_user_id);
+            let actor_relation = actor_relation_for_user_id(&state, &actor_user_id);
             let entry = OverlayActivityEntry {
                 sequence: state.next_sequence,
                 source_id: source_id.clone(),
                 activity_type: definition.key.to_string(),
                 category: definition.category,
                 created_at: candidate.created_at,
-                actor_user_id: normalize_id(&candidate.actor_user_id),
+                actor_user_id,
                 actor_display_name,
                 content,
+                actor_relation,
                 payload: candidate.payload,
             };
             state.next_sequence = state.next_sequence.saturating_add(1);
@@ -290,8 +294,33 @@ impl OverlayActivityRuntime {
 
 fn snapshot_from_state(state: &OverlayActivityState) -> OverlayActivitySnapshot {
     OverlayActivitySnapshot {
-        entries: state.entries.iter().cloned().collect(),
+        entries: state
+            .entries
+            .iter()
+            .cloned()
+            .map(|mut entry| {
+                entry.actor_relation = actor_relation_for_user_id(state, &entry.actor_user_id);
+                entry
+            })
+            .collect(),
     }
+}
+
+fn actor_relation_for_user_id(
+    state: &OverlayActivityState,
+    actor_user_id: &str,
+) -> OverlayActivityActorRelation {
+    let actor_user_id = normalize_id(actor_user_id);
+    if actor_user_id.is_empty() {
+        return OverlayActivityActorRelation::None;
+    }
+    if state.favorite_groups.contains_any(&actor_user_id) {
+        return OverlayActivityActorRelation::Favorite;
+    }
+    if state.friend_user_ids.contains(&actor_user_id) {
+        return OverlayActivityActorRelation::Friend;
+    }
+    OverlayActivityActorRelation::None
 }
 
 fn candidate_matches_rule(

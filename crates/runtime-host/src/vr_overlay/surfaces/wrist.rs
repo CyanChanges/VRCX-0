@@ -1,15 +1,16 @@
 use vrcx_0_application::{
-    OverlayActivityCategory, OverlayActivityEntry, OverlayActivitySnapshot, OverlayActivityText,
+    OverlayActivityActorRelation, OverlayActivityCategory, OverlayActivityEntry,
+    OverlayActivitySnapshot, OverlayActivityText,
 };
 use vrcx_0_host::vr_overlay::{VrDeviceSnapshot, VrDeviceStatus};
 use vrcx_0_vr_overlay::{
-    Color, DeviceChip, DeviceStatus, FeedKind, FeedLine, FeedSeverity, OverlayFooter, OverlaySize,
-    WristSurfaceModel,
+    Color, DeviceChip, DeviceRole, DeviceStatus, FeedKind, FeedLine, FeedRelation, FeedSeverity,
+    OverlayFooter, OverlaySize, WristSurfaceModel,
 };
 
 use super::super::localization::{OverlayLocale, OverlayLocalizer};
 
-const MAX_FEED_ROWS: usize = 10;
+const MAX_FEED_ROWS: usize = 24;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -92,7 +93,7 @@ pub struct WristOverlayFrameInput {
 pub struct WristRuntimeFooter {
     pub player_count: u32,
     pub instance_duration: String,
-    pub local_time: [u8; 5],
+    pub local_time: String,
 }
 
 pub fn build_wrist_surface_model(input: WristOverlayFrameInput) -> WristSurfaceModel {
@@ -127,7 +128,7 @@ pub fn build_wrist_surface_model(input: WristOverlayFrameInput) -> WristSurfaceM
                 params: serde_json::json!({ "count": input.footer.player_count }),
             }),
             center: localized_instance_duration(&localizer, &input.footer.instance_duration),
-            right: String::from_utf8_lossy(&input.footer.local_time).to_string(),
+            right: input.footer.local_time,
         },
         accent: Color::rgba(94, 234, 212, 255),
         captured_at_ms: input.captured_at_ms,
@@ -174,6 +175,7 @@ fn device_chip_from_snapshot(snapshot: VrDeviceSnapshot) -> DeviceChip {
         VrDeviceStatus::Normal => 10,
     };
     DeviceChip {
+        role: device_role(&snapshot.label),
         label: snapshot.label,
         status,
         battery_percent: snapshot.battery_percent,
@@ -182,12 +184,41 @@ fn device_chip_from_snapshot(snapshot: VrDeviceSnapshot) -> DeviceChip {
     }
 }
 
+fn device_role(label: &str) -> DeviceRole {
+    match label.trim() {
+        "HMD" => DeviceRole::Hmd,
+        "L" => DeviceRole::LeftController,
+        "R" => DeviceRole::RightController,
+        value if value.starts_with('T') && value[1..].parse::<u32>().is_ok() => DeviceRole::Tracker,
+        _ => DeviceRole::Other,
+    }
+}
+
 fn feed_line_from_activity(entry: &OverlayActivityEntry, localizer: &OverlayLocalizer) -> FeedLine {
     FeedLine {
         time_text: time_text(&entry.created_at),
         kind: feed_kind(entry),
+        actor_text: feed_actor(entry, localizer),
         detail: feed_detail(entry, localizer),
+        relation: feed_relation(entry.actor_relation),
         severity: feed_severity(entry),
+    }
+}
+
+fn feed_actor(entry: &OverlayActivityEntry, localizer: &OverlayLocalizer) -> String {
+    let localized_title = localizer.text(&entry.content.title);
+    first_non_empty([
+        localized_title.as_str(),
+        entry.content.title.fallback.as_str(),
+        entry.actor_display_name.as_str(),
+    ])
+}
+
+fn feed_relation(relation: OverlayActivityActorRelation) -> FeedRelation {
+    match relation {
+        OverlayActivityActorRelation::Favorite => FeedRelation::Favorite,
+        OverlayActivityActorRelation::Friend => FeedRelation::Friend,
+        OverlayActivityActorRelation::None => FeedRelation::None,
     }
 }
 
@@ -432,7 +463,8 @@ where
 mod tests {
     use serde_json::{json, Value};
     use vrcx_0_application::{
-        OverlayActivityCategory, OverlayActivityContent, OverlayActivityEntry, OverlayActivityText,
+        OverlayActivityActorRelation, OverlayActivityCategory, OverlayActivityContent,
+        OverlayActivityEntry, OverlayActivityText,
     };
 
     use super::*;
@@ -551,6 +583,7 @@ mod tests {
                 body: text(),
                 ..OverlayActivityContent::default()
             },
+            actor_relation: OverlayActivityActorRelation::None,
             payload: Value::Null,
         }
     }
