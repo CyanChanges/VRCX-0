@@ -13,8 +13,8 @@ use serde_json::{json, Value};
 
 use crate::{
     vr_overlay::{
-        VrOverlayActivitySink, VrOverlayRuntime, VrOverlayRuntimeSnapshot,
-        VR_OVERLAY_ENABLED_CONFIG_KEY,
+        start_preview_bridge_if_enabled, VrOverlayActivitySink, VrOverlayRuntime,
+        VrOverlayRuntimeSnapshot, VR_OVERLAY_ENABLED_CONFIG_KEY,
     },
     GameClientHostRuntime, GameLogEventSink, GameLogHostRuntime, HostFileAccess,
     HostGameLogEventFanout, HostLogLocationSnapshotScanner, HostRegistryBackupActions, LogWatcher,
@@ -230,6 +230,7 @@ impl RuntimeHostState {
         runtime_context.set_overlay_activity_extra_sink(Arc::new(VrOverlayActivitySink::new(
             Arc::clone(&vr_overlay_runtime),
         )));
+        start_preview_bridge_if_enabled(Arc::clone(&runtime_context));
         let game_log_sink: Arc<dyn GameLogEventSink> = Arc::new(HostGameLogEventFanout::new(vec![
             game_log_runtime.clone(),
             vr_overlay_runtime.clone(),

@@ -66,7 +66,7 @@ impl WristOverlayHand {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-struct VrOverlayRuntimeConfig {
+pub(super) struct VrOverlayRuntimeConfig {
     start_mode: WristOverlayStartMode,
     button: OverlayActivationButton,
     hand: WristOverlayHand,
@@ -460,25 +460,8 @@ impl RuntimeWristFrameProducer {
 
 impl VrOverlayFrameProducer for RuntimeWristFrameProducer {
     fn next_frame(&mut self, input: VrOverlayFrameInput) -> Result<RgbaFrame, String> {
-        let game_log = self.context.game_log_snapshot();
-        let activity = self.context.overlay_activity.snapshot();
-        let captured_at_ms = now_ms();
-        let model = build_wrist_surface_model(WristOverlayFrameInput {
-            activity,
-            devices: input.devices,
-            footer: WristRuntimeFooter {
-                player_count: game_log.players.len() as u32,
-                instance_duration: instance_duration_text(
-                    &game_log.location,
-                    &game_log.started_at,
-                    captured_at_ms,
-                ),
-                local_time: local_time_hh_mm(),
-            },
-            options: input.config.render,
-            locale: input.config.locale.as_str().to_string(),
-            captured_at_ms,
-        });
+        let frame_input = build_wrist_frame_input(&self.context, input.config, input.devices);
+        let model = build_wrist_surface_model(frame_input);
         self.renderer
             .render(&build_wrist_scene(&model))
             .map_err(|error| error.to_string())
@@ -535,7 +518,32 @@ fn wrist_surface_config(
     }
 }
 
-fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntimeConfig {
+pub(super) fn build_wrist_frame_input(
+    context: &RuntimeHostContext,
+    config: VrOverlayRuntimeConfig,
+    devices: Vec<VrDeviceSnapshot>,
+) -> WristOverlayFrameInput {
+    let game_log = context.game_log_snapshot();
+    let captured_at_ms = now_ms();
+    WristOverlayFrameInput {
+        activity: context.overlay_activity.snapshot(),
+        devices,
+        footer: WristRuntimeFooter {
+            player_count: game_log.players.len() as u32,
+            instance_duration: instance_duration_text(
+                &game_log.location,
+                &game_log.started_at,
+                captured_at_ms,
+            ),
+            local_time: local_time_hh_mm(),
+        },
+        options: config.render,
+        locale: config.locale.as_str().to_string(),
+        captured_at_ms,
+    }
+}
+
+pub(super) fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntimeConfig {
     let start_mode = config
         .get_string(VR_OVERLAY_START_MODE_CONFIG_KEY, "vrchatVrMode")
         .map(|value| WristOverlayStartMode::from_config(&value))
