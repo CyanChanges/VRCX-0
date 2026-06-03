@@ -90,6 +90,7 @@ fn start_background_mode_and_hide_window(app: tauri::AppHandle) {
                     && current.mode == BackendRuntimeMode::Background
                     && current.phase == BackendRuntimePhase::Running
                 {
+                    bootstrap::show_background_mode_started_notification(&app, &state);
                     bootstrap::destroy_main_window_for_background_mode(&app);
                 }
                 refresh_tray_menu(&app, &state);
