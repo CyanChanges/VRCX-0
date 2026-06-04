@@ -2920,6 +2920,7 @@
                 "time_together": "Time Together",
                 "play_time": "Play Time",
                 "online_for": "Online For",
+                "estimated_online_for": "Online for about {duration}",
                 "offline_for": "Offline For",
                 "last_activity": "Last Activity",
                 "last_login": "Last Login",

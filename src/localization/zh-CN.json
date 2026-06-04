@@ -2920,6 +2920,7 @@
                 "time_together": "一起游玩的时长",
                 "play_time": "总在线时长",
                 "online_for": "本次在线时长",
+                "estimated_online_for": "已在线约 {duration}",
                 "offline_for": "离线时长",
                 "last_activity": "最后活动时间",
                 "last_login": "最后登录时间",

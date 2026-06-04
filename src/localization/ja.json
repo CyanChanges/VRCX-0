@@ -2920,6 +2920,7 @@
                 "time_together": "一緒に居た時間",
                 "play_time": "プレイ時間",
                 "online_for": "オンライン時間",
+                "estimated_online_for": "約 {duration} オンライン",
                 "offline_for": "オフライン時間",
                 "last_activity": "最終活動時間",
                 "last_login": "最終ログイン日",
