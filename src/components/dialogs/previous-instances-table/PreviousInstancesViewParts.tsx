@@ -13,6 +13,7 @@ import {
     useKnownUserFact,
     useKnownUserFacts
 } from '@/domain/users/useKnownUser';
+import { openGameLogUser } from '@/features/game-log/gameLogUserLookup';
 import { timeToText } from '@/lib/dateTime';
 import gameLogRepository from '@/repositories/gameLogRepository';
 import userProfileRepository from '@/repositories/userProfileRepository';
@@ -147,6 +148,41 @@ export function InstanceOwnerCell({ userId, location = '', endpoint = '' }: any)
                     .join('\n')}
             </TooltipContent>
         </Tooltip>
+    );
+}
+
+function PreviousInstancePlayerNameButton({
+    player,
+    displayName,
+    knownUser = null
+}: any) {
+    const { t } = useTranslation();
+    const userId = playerUserId(player);
+    const canOpenUser = Boolean(userId || displayName);
+
+    if (!canOpenUser) {
+        return <span className="text-muted-foreground">-</span>;
+    }
+
+    return (
+        <Button
+            type="button"
+            variant="ghost"
+            className="hover:text-primary h-auto max-w-full min-w-0 justify-start p-0 text-left font-normal"
+            onClick={() => {
+                if (userId) {
+                    openUserDialog({
+                        userId,
+                        title: displayName || undefined,
+                        seedData: knownUser || null
+                    });
+                    return;
+                }
+                openGameLogUser({ ...player, displayName }, t);
+            }}
+        >
+            <span className="truncate">{displayName || userId}</span>
+        </Button>
     );
 }
 
@@ -501,9 +537,21 @@ export function PreviousInstanceDetailsPanel({
                                                             key={`${playerDisplayName(player)}:${playerUserId(player)}:${index}`}
                                                         >
                                                             <TableCell className="align-top">
-                                                                {resolvePlayerDisplayName(
-                                                                    player
-                                                                )}
+                                                                <PreviousInstancePlayerNameButton
+                                                                    player={
+                                                                        player
+                                                                    }
+                                                                    displayName={resolvePlayerDisplayName(
+                                                                        player
+                                                                    )}
+                                                                    knownUser={
+                                                                        knownPlayersById[
+                                                                            playerUserId(
+                                                                                player
+                                                                            )
+                                                                        ]
+                                                                    }
+                                                                />
                                                             </TableCell>
                                                             <TableCell className="align-top text-xs tabular-nums">
                                                                 {player?.count ||
@@ -596,9 +644,19 @@ export function PreviousInstanceDetailsPanel({
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="px-2 py-1 text-xs">
-                                                    {resolvePlayerDisplayName(
-                                                        detailRow
-                                                    )}
+                                                    <PreviousInstancePlayerNameButton
+                                                        player={detailRow}
+                                                        displayName={resolvePlayerDisplayName(
+                                                            detailRow
+                                                        )}
+                                                        knownUser={
+                                                            knownPlayersById[
+                                                                playerUserId(
+                                                                    detailRow
+                                                                )
+                                                            ]
+                                                        }
+                                                    />
                                                 </TableCell>
                                                 <TableCell className="px-2 py-1 text-xs tabular-nums">
                                                     {Number(
