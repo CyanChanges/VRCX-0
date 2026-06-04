@@ -134,7 +134,7 @@ export function ChangelogDialog({ open, onOpenChange, targetVersion }: any) {
                 setActiveLanguage(
                     resolvePreferredChangelogLanguage(
                         nextEntries,
-                        i18n.language
+                        i18n.resolvedLanguage || i18n.language
                     )
                 );
             })
@@ -157,7 +157,7 @@ export function ChangelogDialog({ open, onOpenChange, targetVersion }: any) {
         return () => {
             active = false;
         };
-    }, [i18n.language, open, t, targetVersion]);
+    }, [i18n.language, i18n.resolvedLanguage, open, t, targetVersion]);
 
     const selectedEntry = useMemo(
         () =>

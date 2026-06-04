@@ -62,7 +62,7 @@ function sanitizeChangelogMarkdown(markdown: unknown) {
 }
 
 function normalizeChangelogLanguage(language: string) {
-    const [base = '', region = ''] = language.split('-');
+    const [base = '', region = ''] = language.replace(/_/g, '-').split('-');
     if (!region) {
         return base.toLowerCase();
     }
@@ -133,7 +133,9 @@ export function resolvePreferredChangelogLanguage(
     locale: unknown
 ) {
     const availableLanguages = entries.map((entry) => entry.lang);
-    const requestedLocale = String(locale || '').trim();
+    const requestedLocale = normalizeChangelogLanguage(
+        String(locale || '').trim()
+    );
     const baseLanguage = requestedLocale.split('-')[0];
 
     if (availableLanguages.includes(requestedLocale)) {
