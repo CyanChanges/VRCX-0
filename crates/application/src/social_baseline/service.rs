@@ -1,26 +1,20 @@
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use chrono::{SecondsFormat, Utc};
 use serde_json::{json, Map, Number, Value};
 use std::sync::Arc;
 use vrcx_0_core::json::RawJson;
-use vrcx_0_persistence::config::{ConfigRepository, ConfigWriteEntry};
+use vrcx_0_persistence::config::ConfigRepository;
 use vrcx_0_persistence::DatabaseService;
 use vrcx_0_vrchat_client::http_api::{
     normalize_vrchat_api_endpoint, ApiScope, HttpApiRequestInput,
 };
-use vrcx_0_vrchat_client::{
-    favorites as remote_favorites, friends as remote_friends, users as remote_users,
-};
+use vrcx_0_vrchat_client::{favorites as remote_favorites, friends as remote_friends};
 
 use crate::auth_scope::RuntimeAuthScope;
 use crate::session::HostSessionRuntime;
 use crate::web_client::WebClient;
 use crate::{Error, Result};
-use vrcx_0_persistence::friends::{
-    FriendLogCurrentEntryInput, FriendLogHistoryEntryInput, FriendLogReplaceOptionsInput,
-};
 
 use crate::social_baseline::types::{
     SocialFavoritesBaselineInput, SocialFavoritesBaselineOutput, SocialFriendRosterBaselineInput,
@@ -30,8 +24,6 @@ use crate::social_baseline::types::{
 const FAVORITES_PAGE_SIZE: i64 = 300;
 const FAVORITE_GROUPS_PAGE_SIZE: i64 = 50;
 const FRIEND_PAGE_SIZE: i64 = 50;
-const FRIEND_REMOVAL_STATUS_CONFIRMATION_LIMIT: usize = 50;
-const FRIEND_ADDITION_RECONCILIATION_LIMIT: usize = 50;
 
 #[derive(Clone)]
 pub struct SocialBaselineDeps {
@@ -47,10 +39,6 @@ fn normalize_text(value: impl AsRef<str>) -> String {
 
 fn normalize_endpoint(endpoint: &str) -> String {
     normalize_vrchat_api_endpoint(Some(endpoint))
-}
-
-fn now_iso() -> String {
-    Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
 fn value_as_string(value: &Value) -> String {
@@ -122,12 +110,6 @@ fn unique_values(values: Vec<String>) -> Vec<String> {
     let mut output = Vec::new();
     extend_unique(&mut output, &mut seen, values);
     output
-}
-
-fn get_config_bool(deps: &SocialBaselineDeps, key: &str, default_value: bool) -> Result<bool> {
-    ConfigRepository::new(Arc::clone(&deps.db))
-        .get_bool(key, default_value)
-        .map_err(Error::from)
 }
 
 fn get_config_array(deps: &SocialBaselineDeps, key: &str) -> Result<Vec<String>> {

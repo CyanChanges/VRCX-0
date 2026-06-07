@@ -1,9 +1,5 @@
 use super::*;
 
-fn get_friend_log_init_key(user_id: &str) -> String {
-    format!("friendLogInit_{user_id}")
-}
-
 fn add_state_bucket_ids(
     snapshot: &Value,
     key: &str,
@@ -169,225 +165,6 @@ fn apply_fetched_friend_state_bucket(
     };
     state_by_id.insert(friend_id, state_bucket);
     true
-}
-
-fn bulk_friend_state_input(friend: &Value) -> String {
-    let platform = object_field_string(friend, &["platform"]);
-    if platform == "web" {
-        return "active".into();
-    }
-    if !platform.is_empty() {
-        return "online".into();
-    }
-    "offline".into()
-}
-
-fn fetched_profile_needs_user_refetch(
-    profile: &RemoteFriendProfile,
-    state_by_id: &HashMap<String, String>,
-) -> bool {
-    let current_state = state_by_id
-        .get(&profile.id)
-        .map(String::as_str)
-        .unwrap_or("offline");
-    if current_state != bulk_friend_state_input(&profile.raw) {
-        return true;
-    }
-    object_field_string(&profile.raw, &["location"]) == "traveling"
-}
-
-async fn fetch_user_profile(
-    deps: &SocialBaselineDeps,
-    endpoint: &str,
-    user_id: &str,
-) -> Result<Value> {
-    let (_, request) = remote_users::user_get_input(endpoint.to_string(), user_id.to_string())?;
-    execute_vrchat_json_request(deps, request).await
-}
-
-async fn fetch_friend_status(
-    deps: &SocialBaselineDeps,
-    endpoint: &str,
-    user_id: &str,
-) -> Result<Value> {
-    let (_, request) =
-        remote_friends::friend_status_get_input(endpoint.to_string(), user_id.to_string())?;
-    execute_vrchat_json_request(deps, request).await
-}
-
-async fn fetch_missing_friends(
-    deps: &SocialBaselineDeps,
-    endpoint: &str,
-    user_ids: Vec<String>,
-) -> Vec<Value> {
-    let mut recovered = Vec::new();
-    for user_id in user_ids {
-        match fetch_user_profile(deps, endpoint, &user_id).await {
-            Ok(profile) if !object_field_normalized(&profile, &["id"]).is_empty() => {
-                recovered.push(profile);
-            }
-            _ => {}
-        }
-    }
-    recovered
-}
-
-async fn fetch_missing_confirmed_friends(
-    deps: &SocialBaselineDeps,
-    endpoint: &str,
-    user_ids: Vec<String>,
-) -> Vec<Value> {
-    let mut recovered = Vec::new();
-    for user_id in user_ids {
-        let Ok(status) = fetch_friend_status(deps, endpoint, &user_id).await else {
-            continue;
-        };
-        if object_field(&status, "isFriend").and_then(Value::as_bool) != Some(true) {
-            continue;
-        }
-        match fetch_user_profile(deps, endpoint, &user_id).await {
-            Ok(profile) if !object_field_normalized(&profile, &["id"]).is_empty() => {
-                recovered.push(profile);
-            }
-            _ => {}
-        }
-    }
-    recovered
-}
-
-fn build_unfriend_history_entry(
-    row: &Value,
-    created_at: &str,
-) -> Option<FriendLogHistoryEntryInput> {
-    let user_id = object_field_normalized(row, &["userId", "user_id"]);
-    if user_id.is_empty() {
-        return None;
-    }
-    let display_name = object_field_string(row, &["displayName", "display_name"]);
-    Some(FriendLogHistoryEntryInput {
-        row_id: Value::Null,
-        created_at: created_at.to_string(),
-        r#type: "Unfriend".into(),
-        user_id: user_id.clone(),
-        display_name: if display_name.is_empty() {
-            user_id.clone()
-        } else {
-            display_name
-        },
-        previous_display_name: String::new(),
-        trust_level: String::new(),
-        previous_trust_level: String::new(),
-        friend_number: object_field(row, "friendNumber")
-            .or_else(|| object_field(row, "$friendNumber"))
-            .cloned()
-            .unwrap_or(Value::Null),
-    })
-}
-
-fn build_friend_history_entry(row: &Value, created_at: &str) -> Option<FriendLogHistoryEntryInput> {
-    let user_id = object_field_normalized(row, &["userId", "id"]);
-    if user_id.is_empty() {
-        return None;
-    }
-    let display_name = object_field_string(row, &["displayName", "username"]);
-    Some(FriendLogHistoryEntryInput {
-        row_id: Value::Null,
-        created_at: created_at.to_string(),
-        r#type: "Friend".into(),
-        user_id: user_id.clone(),
-        display_name: if display_name.is_empty() {
-            user_id
-        } else {
-            display_name
-        },
-        previous_display_name: String::new(),
-        trust_level: object_field_string(row, &["trustLevel", "$trustLevel"]),
-        previous_trust_level: String::new(),
-        friend_number: object_field(row, "friendNumber")
-            .or_else(|| object_field(row, "$friendNumber"))
-            .cloned()
-            .unwrap_or(Value::Null),
-    })
-}
-
-fn build_friend_log_removal_candidates(
-    current_user_id: &str,
-    existing_rows: &[Value],
-    fetched_friend_ids: &HashSet<String>,
-    snapshot_friend_ids: &HashSet<String>,
-    has_friend_list: bool,
-) -> Vec<Value> {
-    existing_rows
-        .iter()
-        .filter_map(|row| {
-            let user_id = object_field_normalized(row, &["userId", "user_id"]);
-            if user_id.is_empty()
-                || user_id == current_user_id
-                || (fetched_friend_ids.contains(&user_id)
-                    && (!has_friend_list || snapshot_friend_ids.contains(&user_id)))
-            {
-                None
-            } else {
-                Some(row.clone())
-            }
-        })
-        .collect()
-}
-
-async fn confirm_friend_log_removal_history_entries(
-    deps: &SocialBaselineDeps,
-    endpoint: &str,
-    candidates: Vec<Value>,
-    created_at: &str,
-) -> (Vec<Value>, Vec<FriendLogHistoryEntryInput>) {
-    if candidates.is_empty() || candidates.len() > FRIEND_REMOVAL_STATUS_CONFIRMATION_LIMIT {
-        return (Vec::new(), Vec::new());
-    }
-
-    let mut removed_rows = Vec::new();
-    let mut history_entries = Vec::new();
-    for row in candidates {
-        let target_user_id = object_field_normalized(&row, &["userId", "user_id"]);
-        if target_user_id.is_empty() {
-            continue;
-        }
-        let Ok(status) = fetch_friend_status(deps, endpoint, &target_user_id).await else {
-            continue;
-        };
-        if object_field(&status, "isFriend").and_then(Value::as_bool) != Some(false) {
-            continue;
-        }
-        if let Some(entry) = build_unfriend_history_entry(&row, created_at) {
-            removed_rows.push(row);
-            history_entries.push(entry);
-        }
-    }
-    (removed_rows, history_entries)
-}
-
-fn build_removed_friend_ids(removed_rows: &[Value]) -> HashSet<String> {
-    removed_rows
-        .iter()
-        .map(|row| object_field_normalized(row, &["userId", "user_id"]))
-        .filter(|value| !value.is_empty())
-        .collect()
-}
-
-fn build_reconciled_included_friend_ids(
-    expected_ids: &[String],
-    fetched_friend_ids: &HashSet<String>,
-    existing_rows_by_id: &HashMap<String, Value>,
-    removed_user_ids: &HashSet<String>,
-) -> Vec<String> {
-    expected_ids
-        .iter()
-        .filter(|friend_id| {
-            !removed_user_ids.contains(*friend_id)
-                && (fetched_friend_ids.contains(*friend_id)
-                    || existing_rows_by_id.contains_key(*friend_id))
-        })
-        .cloned()
-        .collect()
 }
 
 fn compute_trust_level(tags: &[String], developer_type: &str) -> TrustLevelInfo {
@@ -735,17 +512,63 @@ fn build_bucket_ids(
     ids
 }
 
-fn current_entry_value(
+fn build_fast_roster_snapshot(
     user_id: &str,
-    display_name: &str,
-    trust_level: &str,
-    friend_number: i64,
+    expected_ids: &[String],
+    state_by_id: &HashMap<String, String>,
+    fetched_friends_by_id: &HashMap<String, RemoteFriendProfile>,
 ) -> Value {
+    let friend_order_numbers = expected_ids
+        .iter()
+        .enumerate()
+        .map(|(index, friend_id)| (friend_id.clone(), (index + 1) as i64))
+        .collect::<HashMap<_, _>>();
+
+    let mut friends_by_id = Map::new();
+    for friend_id in expected_ids {
+        let fetched_profile = fetched_friends_by_id.get(friend_id);
+        let friend = fetched_profile.map(|profile| &profile.raw);
+        let existing_row = json!({
+            "userId": friend_id,
+            "displayName": friend.map(get_display_name).filter(|name| !name.is_empty()).unwrap_or_else(|| friend_id.clone()),
+            "trustLevel": "Visitor",
+            "friendNumber": friend_order_numbers.get(friend_id).copied().unwrap_or_default()
+        });
+        let state_bucket = state_by_id
+            .get(friend_id)
+            .map(String::as_str)
+            .unwrap_or("offline");
+        let mut normalized_friend = normalize_friend_entry(friend, state_bucket, &existing_row);
+        if let Some(object) = normalized_friend.as_object_mut() {
+            object.insert(
+                "$profileSource".into(),
+                Value::String(if friend.is_some() {
+                    "remote".into()
+                } else {
+                    "placeholder".into()
+                }),
+            );
+        }
+        friends_by_id.insert(friend_id.clone(), normalized_friend);
+    }
+
+    let online_ids = build_bucket_ids(expected_ids, &friends_by_id, "online");
+    let active_ids = build_bucket_ids(expected_ids, &friends_by_id, "active");
+    let offline_ids = build_bucket_ids(expected_ids, &friends_by_id, "offline");
+    let mut ordered_friend_ids = Vec::new();
+    ordered_friend_ids.extend(online_ids.clone());
+    ordered_friend_ids.extend(active_ids.clone());
+    ordered_friend_ids.extend(offline_ids.clone());
+
+    let detail = String::new();
     json!({
-        "userId": user_id,
-        "displayName": display_name,
-        "trustLevel": trust_level,
-        "friendNumber": friend_number
+        "currentUserId": user_id,
+        "friendsById": friends_by_id,
+        "orderedFriendIds": ordered_friend_ids,
+        "onlineIds": online_ids,
+        "activeIds": active_ids,
+        "offlineIds": offline_ids,
+        "detail": detail
     })
 }
 
@@ -772,7 +595,6 @@ pub async fn build_friend_roster_baseline(
         state_by_id,
         state_order_ids,
         friend_ids: snapshot_friend_ids,
-        friend_id_set: snapshot_friend_id_set,
         has_friend_list,
         ..
     } = current_user;
@@ -783,7 +605,6 @@ pub async fn build_friend_roster_baseline(
             "Current user friend list is incomplete.".into(),
         ));
     }
-    let has_snapshot_state_map = !state_by_id.is_empty();
     let mut expected_ids = Vec::new();
     let mut expected_seen = HashSet::new();
     extend_unique(&mut expected_ids, &mut expected_seen, state_order_ids);
@@ -793,7 +614,6 @@ pub async fn build_friend_roster_baseline(
         snapshot_friend_ids.clone(),
     );
 
-    let friend_log_initialized = get_config_bool(&deps, &get_friend_log_init_key(&user_id), false)?;
     let online_friends = fetch_all_friends(&deps, &input.endpoint, false).await?;
     let offline_friends = fetch_all_friends(&deps, &input.endpoint, true).await?;
     let mut fetched_friends_by_id: HashMap<String, RemoteFriendProfile> = HashMap::new();
@@ -824,219 +644,13 @@ pub async fn build_friend_roster_baseline(
         );
     }
 
-    let refetch_ids = if has_snapshot_state_map {
-        fetched_friends_by_id
-            .values()
-            .filter(|profile| fetched_profile_needs_user_refetch(profile, &state_by_id))
-            .map(|profile| profile.id.clone())
-            .collect::<Vec<_>>()
-    } else {
-        Vec::new()
-    };
-    for friend in fetch_missing_friends(&deps, &input.endpoint, refetch_ids).await {
-        apply_fetched_friend_state_bucket(
-            &mut state_by_id,
-            insert_fetched_friend(
-                &mut fetched_friends_by_id,
-                &mut fetched_friend_ids_ordered,
-                &mut fetched_friend_ids_seen,
-                friend,
-                None,
-            ),
-        );
-    }
-
-    let missing_ids = expected_ids
-        .iter()
-        .filter(|friend_id| !fetched_friends_by_id.contains_key(*friend_id))
-        .cloned()
-        .collect::<Vec<_>>();
-    for friend in fetch_missing_confirmed_friends(&deps, &input.endpoint, missing_ids).await {
-        apply_fetched_friend_state_bucket(
-            &mut state_by_id,
-            insert_fetched_friend(
-                &mut fetched_friends_by_id,
-                &mut fetched_friend_ids_ordered,
-                &mut fetched_friend_ids_seen,
-                friend,
-                None,
-            ),
-        );
-    }
-
-    let existing_rows = serde_json::to_value(
-        vrcx_0_persistence::friends::friend_log_current_list(deps.db.as_ref(), user_id.clone())?,
-    )?
-    .as_array()
-    .cloned()
-    .unwrap_or_default();
-    let mut existing_rows_by_id = HashMap::new();
-    for row in &existing_rows {
-        let existing_user_id = object_field_normalized(row, &["userId", "user_id"]);
-        if existing_user_id.is_empty() {
-            continue;
-        }
-        existing_rows_by_id.insert(existing_user_id, row.clone());
-    }
-
-    let fetched_friend_ids = fetched_friends_by_id
-        .keys()
-        .cloned()
-        .collect::<HashSet<_>>();
-    let reconciliation_created_at = now_iso();
-    let (removed_rows, history_entries) = if friend_log_initialized {
-        confirm_friend_log_removal_history_entries(
-            &deps,
-            &input.endpoint,
-            build_friend_log_removal_candidates(
-                &user_id,
-                &existing_rows,
-                &fetched_friend_ids,
-                &snapshot_friend_id_set,
-                has_friend_list,
-            ),
-            &reconciliation_created_at,
-        )
-        .await
-    } else {
-        (Vec::new(), Vec::new())
-    };
-    let removed_user_ids = build_removed_friend_ids(&removed_rows);
-
-    let mut included_ids = Vec::new();
-    let mut included_seen = HashSet::new();
-    let included_source_ids = build_reconciled_included_friend_ids(
-        &expected_ids,
-        &fetched_friend_ids,
-        &existing_rows_by_id,
-        &removed_user_ids,
-    );
-    extend_unique(&mut included_ids, &mut included_seen, included_source_ids);
-
-    let friend_order_source_ids = if !snapshot_friend_ids.is_empty() {
-        snapshot_friend_ids
-    } else {
-        included_ids.clone()
-    };
-    let friend_order_numbers = friend_order_source_ids
-        .iter()
-        .enumerate()
-        .map(|(index, friend_id)| (friend_id.clone(), (index + 1) as i64))
-        .collect::<HashMap<_, _>>();
-    let explicit_add_intent_user_ids = input
-        .explicit_add_intent_user_ids
-        .into_iter()
-        .map(normalize_text)
-        .filter(|value| !value.is_empty())
-        .collect::<HashSet<_>>();
-
-    let mut friends_by_id = Map::new();
-    let mut friend_log_rows = Vec::new();
-    let mut added_history_entries = Vec::new();
-
-    for friend_id in &included_ids {
-        let fetched_profile = fetched_friends_by_id.get(friend_id);
-        let friend = fetched_profile.map(|profile| &profile.raw);
-        let mut existing_row = existing_rows_by_id
-            .get(friend_id)
-            .cloned()
-            .unwrap_or_else(|| {
-                json!({
-                    "userId": friend_id,
-                    "displayName": friend.map(get_display_name).filter(|name| !name.is_empty()).unwrap_or_else(|| friend_id.clone()),
-                    "trustLevel": "Visitor",
-                    "friendNumber": 0
-                })
-            });
-        if value_as_i64(
-            object_field(&existing_row, "friendNumber")
-                .or_else(|| object_field(&existing_row, "$friendNumber")),
-        ) <= 0
-        {
-            if let Some(number) = friend_order_numbers.get(friend_id) {
-                if let Some(object) = existing_row.as_object_mut() {
-                    object.insert("friendNumber".into(), number_value(*number));
-                }
-            }
-        }
-
-        let snapshot_state_bucket = state_by_id.get(friend_id).map(String::as_str);
-        let snapshot_state = snapshot_state_bucket.map(|value| value.to_string());
-        let state_bucket = snapshot_state.unwrap_or_else(|| "offline".into());
-        let normalized_friend = normalize_friend_entry(friend, &state_bucket, &existing_row);
-        friends_by_id.insert(friend_id.clone(), normalized_friend.clone());
-
-        let display_name = object_field_string(&normalized_friend, &["displayName"]);
-        let trust_level = object_field_string(&normalized_friend, &["$trustLevel"]);
-        let friend_number = value_as_i64(
-            object_field(&normalized_friend, "$friendNumber")
-                .or_else(|| object_field(&normalized_friend, "friendNumber")),
-        );
-        let friend_log_row =
-            current_entry_value(friend_id, &display_name, &trust_level, friend_number);
-        friend_log_rows.push(FriendLogCurrentEntryInput {
-            user_id: friend_id.clone(),
-            display_name,
-            trust_level: Some(trust_level),
-            friend_number: number_value(friend_number),
-        });
-
-        if friend_log_initialized
-            && friend_id != &user_id
-            && !existing_rows_by_id.contains_key(friend_id)
-            && !explicit_add_intent_user_ids.contains(friend_id)
-        {
-            if let Some(entry) =
-                build_friend_history_entry(&friend_log_row, &reconciliation_created_at)
-            {
-                added_history_entries.push(entry);
-            }
-        }
-    }
-
-    if added_history_entries.len() > FRIEND_ADDITION_RECONCILIATION_LIMIT {
-        added_history_entries.clear();
-    }
-
-    let online_ids = build_bucket_ids(&included_ids, &friends_by_id, "online");
-    let active_ids = build_bucket_ids(&included_ids, &friends_by_id, "active");
-    let offline_ids = build_bucket_ids(&included_ids, &friends_by_id, "offline");
-    let mut ordered_friend_ids = Vec::new();
-    ordered_friend_ids.extend(online_ids.clone());
-    ordered_friend_ids.extend(active_ids.clone());
-    ordered_friend_ids.extend(offline_ids.clone());
-
     if !auth_scope_matches(&deps, &user_id, &input.endpoint) {
         return Ok(stale_friend_output(user_id, String::new()));
     }
 
-    vrcx_0_persistence::friends::friend_log_replace_current(
-        deps.db.as_ref(),
-        user_id.clone(),
-        friend_log_rows,
-        FriendLogReplaceOptionsInput {
-            history_entries,
-            added_history_entries,
-        },
-    )?;
-    vrcx_0_persistence::config::config_set_values(
-        deps.db.as_ref(),
-        vec![ConfigWriteEntry {
-            key: get_friend_log_init_key(&user_id),
-            value: "true".into(),
-        }],
-    )?;
-
+    let snapshot =
+        build_fast_roster_snapshot(&user_id, &expected_ids, &state_by_id, &fetched_friends_by_id);
     let detail = String::new();
-    let snapshot = json!({
-        "currentUserId": user_id.clone(),
-        "friendsById": friends_by_id,
-        "orderedFriendIds": ordered_friend_ids,
-        "onlineIds": online_ids,
-        "activeIds": active_ids,
-        "offlineIds": offline_ids,
-        "detail": detail.clone()
-    });
     let count = snapshot
         .get("orderedFriendIds")
         .and_then(Value::as_array)
@@ -1085,48 +699,70 @@ mod tests {
         let profile = fetched_friends_by_id
             .get("usr_friend")
             .expect("inserted friend profile");
-        assert!(!fetched_profile_needs_user_refetch(profile, &state_by_id));
+        assert_eq!(profile.id, "usr_friend");
     }
 
     #[test]
-    fn confirmed_removed_friend_is_not_reinserted_from_stale_snapshot() {
-        let expected_ids = vec![
-            "usr_removed".to_string(),
-            "usr_existing".to_string(),
-            "usr_fetched".to_string(),
-            "usr_stale_unknown".to_string(),
-        ];
-        let fetched_friend_ids = HashSet::from(["usr_fetched".to_string()]);
-        let existing_rows_by_id = HashMap::from([
-            (
-                "usr_removed".to_string(),
-                json!({
-                    "userId": "usr_removed",
-                    "displayName": "Removed Friend"
-                }),
-            ),
-            (
-                "usr_existing".to_string(),
-                json!({
-                    "userId": "usr_existing",
-                    "displayName": "Existing Friend"
-                }),
-            ),
+    fn fast_roster_snapshot_uses_current_user_ids_and_remote_profiles_without_friend_log() {
+        let expected_ids = vec!["usr_online".to_string(), "usr_missing".to_string()];
+        let state_by_id = HashMap::from([
+            ("usr_online".to_string(), "online".to_string()),
+            ("usr_missing".to_string(), "offline".to_string()),
         ]);
-        let removed_user_ids = build_removed_friend_ids(&[json!({
-            "userId": "usr_removed"
-        })]);
+        let fetched_friends_by_id = HashMap::from([(
+            "usr_online".to_string(),
+            RemoteFriendProfile::from_raw(
+                json!({
+                    "id": "usr_online",
+                    "displayName": "Online Friend",
+                    "location": "wrld_live:123",
+                    "platform": "standalonewindows",
+                    "tags": ["system_trust_known"]
+                }),
+                Some("online"),
+            )
+            .expect("valid profile"),
+        )]);
 
-        let included_ids = build_reconciled_included_friend_ids(
+        let snapshot = build_fast_roster_snapshot(
+            "usr_self",
             &expected_ids,
-            &fetched_friend_ids,
-            &existing_rows_by_id,
-            &removed_user_ids,
+            &state_by_id,
+            &fetched_friends_by_id,
         );
 
+        let friends_by_id = snapshot
+            .get("friendsById")
+            .and_then(Value::as_object)
+            .expect("friendsById object");
         assert_eq!(
-            included_ids,
-            vec!["usr_existing".to_string(), "usr_fetched".to_string()]
+            friends_by_id
+                .get("usr_online")
+                .and_then(|friend| object_field(friend, "displayName"))
+                .and_then(Value::as_str),
+            Some("Online Friend")
+        );
+        assert_eq!(
+            friends_by_id
+                .get("usr_online")
+                .and_then(|friend| object_field(friend, "location"))
+                .and_then(Value::as_str),
+            Some("wrld_live:123")
+        );
+        assert_eq!(
+            friends_by_id
+                .get("usr_missing")
+                .and_then(|friend| object_field(friend, "displayName"))
+                .and_then(Value::as_str),
+            Some("usr_missing")
+        );
+        assert_eq!(
+            snapshot
+                .get("orderedFriendIds")
+                .and_then(Value::as_array)
+                .cloned()
+                .unwrap_or_default(),
+            vec![json!("usr_online"), json!("usr_missing")]
         );
     }
 }

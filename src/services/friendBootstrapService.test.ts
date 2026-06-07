@@ -4,7 +4,14 @@ const serviceMocks = vi.hoisted(() => ({
     recordFriendPatch: vi.fn(),
     recordFriendRosterFacts: vi.fn(),
     getFriendLogCurrent: vi.fn(),
+    upsertFriendLogCurrent: vi.fn(),
+    replaceFriendLogCurrent: vi.fn(),
+    deleteFriendLogCurrentArray: vi.fn(),
+    getConfigBool: vi.fn(),
+    setConfigBool: vi.fn(),
     socialFriendRosterBaselineGet: vi.fn(),
+    vrchatUserGet: vi.fn(),
+    vrchatFriendStatusGet: vi.fn(),
     notifyRuntimeVrchatAuthFailure: vi.fn()
 }));
 
@@ -12,14 +19,26 @@ vi.mock('@/platform/tauri/client', () => ({
     tauriClient: {
         app: {
             SocialFriendRosterBaselineGet:
-                serviceMocks.socialFriendRosterBaselineGet
+                serviceMocks.socialFriendRosterBaselineGet,
+            VrchatUserGet: serviceMocks.vrchatUserGet,
+            VrchatFriendStatusGet: serviceMocks.vrchatFriendStatusGet
         }
     }
 }));
 
 vi.mock('@/repositories/friendLogRepository', () => ({
     default: {
-        getFriendLogCurrent: serviceMocks.getFriendLogCurrent
+        getFriendLogCurrent: serviceMocks.getFriendLogCurrent,
+        upsertFriendLogCurrent: serviceMocks.upsertFriendLogCurrent,
+        replaceFriendLogCurrent: serviceMocks.replaceFriendLogCurrent,
+        deleteFriendLogCurrentArray: serviceMocks.deleteFriendLogCurrentArray
+    }
+}));
+
+vi.mock('@/repositories/configRepository', () => ({
+    default: {
+        getBool: serviceMocks.getConfigBool,
+        setBool: serviceMocks.setConfigBool
     }
 }));
 
@@ -68,6 +87,32 @@ describe('friendBootstrapService snapshot state sync', () => {
             sessionPhase: 'ready'
         });
         serviceMocks.getFriendLogCurrent.mockResolvedValue([]);
+        serviceMocks.upsertFriendLogCurrent.mockResolvedValue({
+            userId: 'usr_self',
+            count: 1,
+            inserted: true,
+            historyCount: 1
+        });
+        serviceMocks.replaceFriendLogCurrent.mockResolvedValue({
+            userId: 'usr_self',
+            count: 1,
+            historyCount: 0
+        });
+        serviceMocks.deleteFriendLogCurrentArray.mockResolvedValue({
+            userId: 'usr_self',
+            count: 1,
+            historyCount: 1
+        });
+        serviceMocks.getConfigBool.mockResolvedValue(true);
+        serviceMocks.setConfigBool.mockResolvedValue(undefined);
+        serviceMocks.vrchatUserGet.mockResolvedValue({
+            status: 200,
+            data: {}
+        });
+        serviceMocks.vrchatFriendStatusGet.mockResolvedValue({
+            status: 200,
+            data: { isFriend: true }
+        });
         serviceMocks.socialFriendRosterBaselineGet.mockResolvedValue({
             stale: false,
             count: 0,
@@ -283,6 +328,300 @@ describe('friendBootstrapService snapshot state sync', () => {
             }
         });
         expect(useSessionStore.getState().isFriendsLoaded).toBe(true);
+    });
+
+    it('marks friends loaded after the fast roster snapshot before background supplements finish', async () => {
+        const { useFriendRosterStore } =
+            await import('@/state/friendRosterStore');
+        const { useSessionStore } = await import('@/state/sessionStore');
+        const { bootstrapFriendRoster } = await import(
+            './friendBootstrapService'
+        );
+        const userGet = deferred<Record<string, any>>();
+        serviceMocks.socialFriendRosterBaselineGet.mockResolvedValue({
+            stale: false,
+            count: 2,
+            detail: 'fast roster',
+            snapshot: {
+                friendsById: {
+                    usr_online: {
+                        id: 'usr_online',
+                        displayName: 'Online Fast',
+                        stateBucket: 'online',
+                        platform: 'standalonewindows',
+                        location: 'wrld_live:123'
+                    },
+                    usr_traveling: {
+                        id: 'usr_traveling',
+                        displayName: 'Traveling Fast',
+                        stateBucket: 'online',
+                        platform: 'standalonewindows',
+                        location: 'traveling'
+                    }
+                }
+            }
+        });
+        serviceMocks.vrchatUserGet.mockReturnValue(userGet.promise);
+
+        await bootstrapFriendRoster({
+            userId: 'usr_self',
+            endpoint: 'https://api.example.test',
+            currentUserSnapshot: {
+                id: 'usr_self',
+                friends: ['usr_online', 'usr_traveling', 'usr_missing'],
+                offlineFriends: ['usr_missing'],
+                activeFriends: [],
+                onlineFriends: ['usr_online', 'usr_traveling']
+            }
+        });
+
+        expect(useSessionStore.getState().isFriendsLoaded).toBe(true);
+        expect(useFriendRosterStore.getState()).toMatchObject({
+            loadStatus: 'ready',
+            detail: 'fast roster',
+            friendsById: {
+                usr_online: {
+                    displayName: 'Online Fast',
+                    location: 'wrld_live:123'
+                },
+                usr_traveling: {
+                    displayName: 'Traveling Fast',
+                    location: 'traveling'
+                }
+            }
+        });
+        expect(serviceMocks.vrchatUserGet).toHaveBeenCalledWith({
+            endpoint: 'https://api.example.test',
+            userId: 'usr_traveling'
+        });
+        expect(serviceMocks.vrchatFriendStatusGet).not.toHaveBeenCalled();
+
+        userGet.resolve({
+            status: 200,
+            data: {
+                id: 'usr_traveling',
+                displayName: 'Traveling Fresh',
+                location: 'wrld_fresh:456'
+            }
+        });
+        await vi.waitFor(() => {
+            expect(serviceMocks.vrchatUserGet).toHaveBeenCalledWith({
+                endpoint: 'https://api.example.test',
+                userId: 'usr_missing'
+            });
+        });
+    });
+
+    it('reconciles startup friend history after the fast roster without blocking loaded state', async () => {
+        const { useSessionStore } = await import('@/state/sessionStore');
+        const { bootstrapFriendRoster } = await import(
+            './friendBootstrapService'
+        );
+        serviceMocks.getFriendLogCurrent.mockResolvedValue([
+            {
+                userId: 'usr_existing',
+                displayName: 'Existing Friend',
+                trustLevel: 'Known User',
+                friendNumber: 1
+            },
+            {
+                userId: 'usr_removed',
+                displayName: 'Removed Friend',
+                trustLevel: 'Visitor',
+                friendNumber: 2
+            }
+        ]);
+        serviceMocks.socialFriendRosterBaselineGet.mockResolvedValue({
+            stale: false,
+            count: 2,
+            detail: 'fast roster',
+            snapshot: {
+                friendsById: {
+                    usr_existing: {
+                        id: 'usr_existing',
+                        displayName: 'Existing Friend',
+                        stateBucket: 'online'
+                    },
+                    usr_new: {
+                        id: 'usr_new',
+                        displayName: 'New Friend',
+                        stateBucket: 'offline',
+                        tags: ['system_trust_known']
+                    }
+                }
+            }
+        });
+        serviceMocks.vrchatFriendStatusGet.mockResolvedValue({
+            status: 200,
+            data: { isFriend: false }
+        });
+
+        await bootstrapFriendRoster({
+            userId: 'usr_self',
+            endpoint: 'https://api.example.test',
+            currentUserSnapshot: {
+                id: 'usr_self',
+                friends: ['usr_existing', 'usr_new'],
+                offlineFriends: ['usr_new'],
+                activeFriends: [],
+                onlineFriends: ['usr_existing']
+            }
+        });
+
+        await vi.waitFor(() => {
+            expect(serviceMocks.upsertFriendLogCurrent).toHaveBeenCalledWith(
+                'usr_self',
+                expect.objectContaining({
+                    userId: 'usr_new',
+                    displayName: 'New Friend'
+                }),
+                expect.objectContaining({
+                    historyEntry: expect.objectContaining({
+                        type: 'Friend',
+                        userId: 'usr_new',
+                        displayName: 'New Friend'
+                    })
+                })
+            );
+        });
+        expect(serviceMocks.upsertFriendLogCurrent).not.toHaveBeenCalledWith(
+            'usr_self',
+            expect.objectContaining({ userId: 'usr_existing' }),
+            expect.anything()
+        );
+        expect(serviceMocks.vrchatFriendStatusGet).toHaveBeenCalledWith({
+            endpoint: 'https://api.example.test',
+            userId: 'usr_removed'
+        });
+        await vi.waitFor(() => {
+            expect(serviceMocks.deleteFriendLogCurrentArray).toHaveBeenCalledWith(
+                'usr_self',
+                ['usr_removed'],
+                expect.objectContaining({
+                    historyEntries: [
+                        expect.objectContaining({
+                            type: 'Unfriend',
+                            userId: 'usr_removed',
+                            displayName: 'Removed Friend'
+                        })
+                    ]
+                })
+            );
+        });
+        expect(useSessionStore.getState().isFriendsLoaded).toBe(true);
+    });
+
+    it('initializes friend log current in the background without creating friend history spam', async () => {
+        const { bootstrapFriendRoster } = await import(
+            './friendBootstrapService'
+        );
+        serviceMocks.getConfigBool.mockResolvedValue(false);
+        serviceMocks.getFriendLogCurrent.mockResolvedValue([]);
+        serviceMocks.socialFriendRosterBaselineGet.mockResolvedValue({
+            stale: false,
+            count: 2,
+            detail: 'fast roster',
+            snapshot: {
+                friendsById: {
+                    usr_a: {
+                        id: 'usr_a',
+                        displayName: 'Friend A',
+                        stateBucket: 'online'
+                    },
+                    usr_b: {
+                        id: 'usr_b',
+                        displayName: 'Friend B',
+                        stateBucket: 'offline'
+                    }
+                }
+            }
+        });
+
+        await bootstrapFriendRoster({
+            userId: 'usr_self',
+            endpoint: 'https://api.example.test',
+            currentUserSnapshot: {
+                id: 'usr_self',
+                friends: ['usr_a', 'usr_b'],
+                offlineFriends: ['usr_b'],
+                activeFriends: [],
+                onlineFriends: ['usr_a']
+            }
+        });
+
+        await vi.waitFor(() => {
+            expect(serviceMocks.replaceFriendLogCurrent).toHaveBeenCalledWith(
+                'usr_self',
+                [
+                    expect.objectContaining({
+                        userId: 'usr_a',
+                        displayName: 'Friend A'
+                    }),
+                    expect.objectContaining({
+                        userId: 'usr_b',
+                        displayName: 'Friend B'
+                    })
+                ],
+                { historyEntries: [], addedHistoryEntries: [] }
+            );
+        });
+        expect(serviceMocks.upsertFriendLogCurrent).not.toHaveBeenCalled();
+        expect(serviceMocks.setConfigBool).toHaveBeenCalledWith(
+            'friendLogInit_usr_self',
+            true
+        );
+    });
+
+    it('does not write startup friend history after the bootstrap target changes', async () => {
+        const { useRuntimeStore } = await import('@/state/runtimeStore');
+        const { bootstrapFriendRoster } = await import(
+            './friendBootstrapService'
+        );
+        const backgroundRows = deferred<Record<string, any>[]>();
+        serviceMocks.getFriendLogCurrent
+            .mockResolvedValueOnce([])
+            .mockReturnValueOnce(backgroundRows.promise);
+        serviceMocks.socialFriendRosterBaselineGet.mockResolvedValue({
+            stale: false,
+            count: 1,
+            detail: 'fast roster',
+            snapshot: {
+                friendsById: {
+                    usr_new: {
+                        id: 'usr_new',
+                        displayName: 'New Friend',
+                        stateBucket: 'offline'
+                    }
+                }
+            }
+        });
+
+        await bootstrapFriendRoster({
+            userId: 'usr_self',
+            endpoint: 'https://api.example.test',
+            currentUserSnapshot: {
+                id: 'usr_self',
+                friends: ['usr_new'],
+                offlineFriends: ['usr_new'],
+                activeFriends: [],
+                onlineFriends: []
+            }
+        });
+        await vi.waitFor(() => {
+            expect(serviceMocks.getFriendLogCurrent).toHaveBeenCalledTimes(2);
+        });
+
+        useRuntimeStore.getState().setAuthBootstrap({
+            currentUserId: 'usr_other',
+            currentUserEndpoint: 'https://api.example.test',
+            currentUserSnapshot: { id: 'usr_other' }
+        });
+        backgroundRows.resolve([]);
+        await Promise.resolve();
+        await Promise.resolve();
+
+        expect(serviceMocks.upsertFriendLogCurrent).not.toHaveBeenCalled();
+        expect(serviceMocks.setConfigBool).not.toHaveBeenCalled();
     });
 
     it('keeps the seeded roster visible when the Rust baseline fails', async () => {

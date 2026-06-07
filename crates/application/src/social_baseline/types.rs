@@ -32,8 +32,6 @@ pub struct SocialFriendRosterBaselineInput {
     pub endpoint: String,
     #[serde(default)]
     pub current_user_snapshot: RawJson,
-    #[serde(default)]
-    pub explicit_add_intent_user_ids: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]

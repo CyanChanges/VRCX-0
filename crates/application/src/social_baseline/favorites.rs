@@ -326,20 +326,18 @@ pub(super) struct CurrentUserSnapshotView {
     pub(super) state_by_id: HashMap<String, String>,
     pub(super) state_order_ids: Vec<String>,
     pub(super) friend_ids: Vec<String>,
-    pub(super) friend_id_set: HashSet<String>,
     pub(super) has_friend_list: bool,
 }
 
 impl CurrentUserSnapshotView {
     pub(super) fn from_raw(snapshot: &Value) -> Self {
         let (state_by_id, state_order_ids) = build_friend_state_map(snapshot);
-        let (friend_ids, friend_id_set, has_friend_list) = build_snapshot_friend_ids(snapshot);
+        let (friend_ids, _, has_friend_list) = build_snapshot_friend_ids(snapshot);
         Self {
             user_id: object_field_string(snapshot, &["id"]),
             state_by_id,
             state_order_ids,
             friend_ids,
-            friend_id_set,
             has_friend_list,
         }
     }

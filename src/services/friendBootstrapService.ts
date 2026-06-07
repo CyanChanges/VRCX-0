@@ -1,4 +1,5 @@
 import { tauriClient } from '@/platform/tauri/client';
+import configRepository from '@/repositories/configRepository';
 import friendLogRepository from '@/repositories/friendLogRepository';
 import {
     computeTrustLevel,
@@ -229,6 +230,75 @@ function buildFriendHistoryEntry(row: Record<string, any>, createdAt: string) {
         displayName: row?.displayName || row?.username || userId,
         trustLevel: row?.trustLevel ?? row?.$trustLevel ?? '',
         friendNumber: row?.friendNumber ?? row?.$friendNumber ?? null
+    };
+}
+
+function getFriendLogInitKey(userId: string) {
+    return `friendLogInit_${userId}`;
+}
+
+function parseVrchatResponseData(response: any) {
+    const data = response?.data;
+    if (typeof data !== 'string') {
+        return data && typeof data === 'object' ? data : null;
+    }
+
+    try {
+        const parsed = JSON.parse(data);
+        return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+        return null;
+    }
+}
+
+function isValidUserProfile(value: any) {
+    return Boolean(value && typeof value === 'object' && normalizeUserId(value.id));
+}
+
+function bulkFriendStateInput(friend: Record<string, any> | null | undefined) {
+    const platform = normalizeUserId(friend?.platform);
+    if (platform === 'web') {
+        return 'active';
+    }
+    if (platform) {
+        return 'online';
+    }
+    return 'offline';
+}
+
+function friendNeedsSupplementalFetch(
+    friend: Record<string, any> | null | undefined,
+    snapshotStateBucket: string
+) {
+    if (!friend || typeof friend !== 'object') {
+        return true;
+    }
+    if (normalizeUserId(friend.$profileSource) === 'placeholder') {
+        return true;
+    }
+    const currentState = resolveSnapshotStateBucket(snapshotStateBucket);
+    return (
+        currentState !== bulkFriendStateInput(friend) ||
+        normalizeUserId(friend.location) === 'traveling'
+    );
+}
+
+function buildCurrentEntryFromFriend({
+    userId,
+    friend,
+    friendNumber
+}: {
+    userId: string;
+    friend: Record<string, any> | null | undefined;
+    friendNumber: number;
+}) {
+    const trustLevel =
+        normalizeUserId(friend?.$trustLevel || friend?.trustLevel) || 'Visitor';
+    return {
+        userId,
+        displayName: getDisplayName(friend) || userId,
+        trustLevel,
+        friendNumber
     };
 }
 
@@ -611,6 +681,308 @@ async function seedFriendRosterFromCurrentUserSnapshot({
     return true;
 }
 
+async function fetchSupplementalFriendProfile({
+    normalizedUserId,
+    endpoint,
+    userId,
+    stateBucket,
+    detail
+}: {
+    normalizedUserId: string;
+    endpoint: string;
+    userId: string;
+    stateBucket: string;
+    detail: string;
+}) {
+    const response = await tauriClient.app.VrchatUserGet({
+        endpoint,
+        userId
+    });
+    const profile = parseVrchatResponseData(response);
+    if (!isValidUserProfile(profile)) {
+        return false;
+    }
+    if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+        return false;
+    }
+
+    const nextStateBucket = resolveSnapshotStateBucket(
+        stateBucket || profile.stateBucket || profile.state
+    );
+    useFriendRosterStore.getState().applyFriendPatches(
+        [
+            {
+                userId,
+                stateBucket: nextStateBucket,
+                patch: profile
+            }
+        ],
+        detail
+    );
+    recordFriendPatch({
+        endpoint,
+        userId,
+        stateBucket: nextStateBucket,
+        patch: profile
+    });
+    return true;
+}
+
+async function runFriendRosterBackgroundSupplements({
+    normalizedUserId,
+    endpoint,
+    currentUserSnapshot,
+    fastFriendsById,
+    detail
+}: {
+    normalizedUserId: string;
+    endpoint: string;
+    currentUserSnapshot: any;
+    fastFriendsById: Record<string, any>;
+    detail: string;
+}) {
+    if (!hasCompleteFriendStateSnapshot(currentUserSnapshot)) {
+        return;
+    }
+    const stateById = buildFriendStateMap(currentUserSnapshot);
+    const fetchIds = new Set<string>();
+    for (const [userId, stateBucket] of stateById.entries()) {
+        const friend = fastFriendsById[userId];
+        if (friendNeedsSupplementalFetch(friend, stateBucket)) {
+            fetchIds.add(userId);
+        }
+    }
+
+    for (const userId of fetchIds) {
+        if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+            return;
+        }
+        try {
+            await fetchSupplementalFriendProfile({
+                normalizedUserId,
+                endpoint,
+                userId,
+                stateBucket: stateById.get(userId) || 'offline',
+                detail
+            });
+        } catch (error) {
+            console.warn('Failed to supplement friend profile:', error);
+        }
+    }
+}
+
+async function confirmRemovedFriend({
+    endpoint,
+    userId
+}: {
+    endpoint: string;
+    userId: string;
+}) {
+    const response = await tauriClient.app.VrchatFriendStatusGet({
+        endpoint,
+        userId
+    });
+    const status = parseVrchatResponseData(response);
+    return status?.isFriend === false;
+}
+
+async function runFriendLogStartupReconciliation({
+    normalizedUserId,
+    endpoint,
+    currentUserSnapshot,
+    fastFriendsById,
+    nowIso = () => new Date().toJSON()
+}: {
+    normalizedUserId: string;
+    endpoint: string;
+    currentUserSnapshot: any;
+    fastFriendsById: Record<string, any>;
+    nowIso?: () => string;
+}) {
+    if (!Array.isArray(currentUserSnapshot?.friends)) {
+        return;
+    }
+
+    await enqueueFriendLogMutation(normalizedUserId, async () => {
+        const initialized = await configRepository.getBool(
+            getFriendLogInitKey(normalizedUserId),
+            false
+        );
+        const existingRows = (await friendLogRepository.getFriendLogCurrent(
+            normalizedUserId
+        )) as Record<string, any>[];
+        if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+            return;
+        }
+
+        const existingRowsById = buildFriendLogRowsById(existingRows);
+        const currentFriendIds = currentUserSnapshot.friends
+            .map(normalizeUserId)
+            .filter(Boolean);
+        const currentFriendIdSet = new Set(currentFriendIds);
+        const maxFriendNumber = existingRows.reduce((maxValue, row) => {
+            const friendNumber =
+                Number.parseInt(
+                    row?.friendNumber ?? row?.$friendNumber ?? 0,
+                    10
+                ) || 0;
+            return Math.max(maxValue, friendNumber);
+        }, 0);
+        let nextFriendNumber =
+            maxFriendNumber > 0 ? maxFriendNumber + 1 : existingRows.length + 1;
+        const explicitAddIntentUserIds = new Set(
+            getExplicitFriendLogAddIntentUserIds(normalizedUserId)
+        );
+
+        if (!initialized) {
+            const entries = currentFriendIds
+                .filter((friendId) => friendId !== normalizedUserId)
+                .map((friendId, index) =>
+                    buildCurrentEntryFromFriend({
+                        userId: friendId,
+                        friend: fastFriendsById[friendId] || { id: friendId },
+                        friendNumber: index + 1
+                    })
+                );
+            if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+                return;
+            }
+            await friendLogRepository.replaceFriendLogCurrent(
+                normalizedUserId,
+                entries,
+                { historyEntries: [], addedHistoryEntries: [] }
+            );
+            for (const friendId of explicitAddIntentUserIds) {
+                if (currentFriendIdSet.has(friendId)) {
+                    markExplicitFriendLogAddIntentsHandledByBootstrap(
+                        normalizedUserId,
+                        [friendId]
+                    );
+                }
+            }
+            if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+                return;
+            }
+            await configRepository.setBool(
+                getFriendLogInitKey(normalizedUserId),
+                true
+            );
+            return;
+        }
+
+        for (const friendId of currentFriendIds) {
+            if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+                return;
+            }
+            if (friendId === normalizedUserId || existingRowsById.has(friendId)) {
+                continue;
+            }
+            const friend = fastFriendsById[friendId] || { id: friendId };
+            const currentEntry = buildCurrentEntryFromFriend({
+                userId: friendId,
+                friend,
+                friendNumber: nextFriendNumber++
+            });
+            const hasExplicitAddIntent = explicitAddIntentUserIds.has(friendId);
+            const historyEntry =
+                initialized && !hasExplicitAddIntent
+                    ? buildFriendHistoryEntry(currentEntry, nowIso())
+                    : null;
+            await friendLogRepository.upsertFriendLogCurrent(
+                normalizedUserId,
+                currentEntry,
+                historyEntry ? { historyEntry } : {}
+            );
+            if (hasExplicitAddIntent) {
+                markExplicitFriendLogAddIntentsHandledByBootstrap(
+                    normalizedUserId,
+                    [friendId]
+                );
+            }
+        }
+
+        if (initialized) {
+            for (const row of existingRows) {
+                if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+                    return;
+                }
+                const friendId = normalizeUserId(row?.userId);
+                if (
+                    !friendId ||
+                    friendId === normalizedUserId ||
+                    currentFriendIdSet.has(friendId)
+                ) {
+                    continue;
+                }
+                let confirmedRemoved = false;
+                try {
+                    confirmedRemoved = await confirmRemovedFriend({
+                        endpoint,
+                        userId: friendId
+                    });
+                } catch (error) {
+                    console.warn('Failed to confirm removed friend:', error);
+                }
+                if (
+                    !confirmedRemoved ||
+                    !isCurrentBootstrapTarget(normalizedUserId, endpoint)
+                ) {
+                    continue;
+                }
+                const historyEntry = buildUnfriendHistoryEntry(row, nowIso());
+                if (!historyEntry) {
+                    continue;
+                }
+                await friendLogRepository.deleteFriendLogCurrentArray(
+                    normalizedUserId,
+                    [friendId],
+                    { historyEntries: [historyEntry] }
+                );
+            }
+        }
+
+        if (!isCurrentBootstrapTarget(normalizedUserId, endpoint)) {
+            return;
+        }
+        await configRepository.setBool(
+            getFriendLogInitKey(normalizedUserId),
+            true
+        );
+    });
+}
+
+function startFriendRosterBackgroundTasks({
+    normalizedUserId,
+    endpoint,
+    currentUserSnapshot,
+    fastFriendsById,
+    detail
+}: {
+    normalizedUserId: string;
+    endpoint: string;
+    currentUserSnapshot: any;
+    fastFriendsById: Record<string, any>;
+    detail: string;
+}) {
+    void runFriendRosterBackgroundSupplements({
+        normalizedUserId,
+        endpoint,
+        currentUserSnapshot,
+        fastFriendsById,
+        detail
+    }).catch((error) => {
+        console.warn('Friend roster background supplement failed:', error);
+    });
+    void runFriendLogStartupReconciliation({
+        normalizedUserId,
+        endpoint,
+        currentUserSnapshot,
+        fastFriendsById
+    }).catch((error) => {
+        console.warn('Friend log startup reconciliation failed:', error);
+    });
+}
+
 function bootstrapTargetKey(userId: any, endpoint: any = '') {
     return `${normalizeUserId(userId)}\u0000${String(endpoint || '')}`;
 }
@@ -663,35 +1035,20 @@ async function runFriendBootstrap({
         });
     }
 
-    const bootstrapResult = await enqueueFriendLogMutation(
-        normalizedUserId,
-        async () => {
-            const explicitAddIntentUserIds =
-                getExplicitFriendLogAddIntentUserIds(normalizedUserId);
-            const result = await tauriClient.app
-                .SocialFriendRosterBaselineGet({
-                    userId: normalizedUserId,
-                    endpoint,
-                    currentUserSnapshot,
-                    explicitAddIntentUserIds
-                })
-                .catch((error: any) => {
-                    notifyRuntimeVrchatAuthFailure(
-                        error,
-                        endpoint,
-                        'friend roster baseline'
-                    );
-                    throw error;
-                });
-            if (!result.stale && result.snapshot) {
-                markExplicitFriendLogAddIntentsHandledByBootstrap(
-                    normalizedUserId,
-                    explicitAddIntentUserIds
-                );
-            }
-            return result;
-        }
-    );
+    const bootstrapResult = await tauriClient.app
+        .SocialFriendRosterBaselineGet({
+            userId: normalizedUserId,
+            endpoint,
+            currentUserSnapshot
+        })
+        .catch((error: any) => {
+            notifyRuntimeVrchatAuthFailure(
+                error,
+                endpoint,
+                'friend roster baseline'
+            );
+            throw error;
+        });
 
     const result = bootstrapResult as Record<string, any>;
     const snapshot = result.snapshot as Record<string, any> | null | undefined;
@@ -736,6 +1093,13 @@ async function runFriendBootstrap({
     });
     useSessionStore.getState().setFriendsLoaded(true);
     syncStartupServicesTask([detail]);
+    startFriendRosterBackgroundTasks({
+        normalizedUserId,
+        endpoint,
+        currentUserSnapshot,
+        fastFriendsById: snapshot.friendsById || {},
+        detail
+    });
 
     return {
         userId: normalizedUserId,

@@ -1794,7 +1794,6 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
         userId: string;
         endpoint?: string;
         currentUserSnapshot: Record<string, unknown>;
-        explicitAddIntentUserIds?: string[];
     }): Promise<SocialFriendRosterBaselineResult>;
     VrchatToolsCalendarsGet(input: {
         endpoint?: string;

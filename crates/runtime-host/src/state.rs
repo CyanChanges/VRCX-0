@@ -1125,7 +1125,6 @@ impl RuntimeHostState {
                 user_id: session.user_id.clone(),
                 endpoint: session.endpoint.clone(),
                 current_user_snapshot: RawJson::from(session.current_user.clone()),
-                explicit_add_intent_user_ids: Vec::new(),
             },
         )
         .await?;
@@ -2442,7 +2441,6 @@ async fn run_background_social_baseline_refresh(
             user_id: session.current_user_id.clone(),
             endpoint: session.endpoint.clone(),
             current_user_snapshot: RawJson::from(session.current_user_snapshot.clone()),
-            explicit_add_intent_user_ids: Vec::new(),
         },
     )
     .await;
