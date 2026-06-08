@@ -175,11 +175,6 @@ fn validate_registry_context(context: &LinuxRegistryContext) -> Result<(), Strin
 fn discover_wine_path(steam_roots: &[PathBuf], compat_tool: &str) -> Option<PathBuf> {
     for root in steam_roots {
         let candidates = [
-            root.join("compatibilitytools.d")
-                .join(compat_tool)
-                .join("files")
-                .join("bin")
-                .join("wine"),
             root.join("steamapps")
                 .join("common")
                 .join(compat_tool)
@@ -198,9 +193,18 @@ fn discover_wine_path(steam_roots: &[PathBuf], compat_tool: &str) -> Option<Path
                 return Some(candidate);
             }
         }
+    }
 
-        let compatibilitytools = root.join("compatibilitytools.d");
-        let Ok(entries) = fs::read_dir(compatibilitytools) else {
+    for root in compatibility_tool_roots(steam_roots) {
+        let candidates = [root.clone(), root.join(compat_tool)];
+        for candidate in candidates {
+            let wine = candidate.join("files").join("bin").join("wine");
+            if wine.is_file() {
+                return Some(wine);
+            }
+        }
+
+        let Ok(entries) = fs::read_dir(&root) else {
             continue;
         };
         for entry in entries.flatten() {
@@ -216,6 +220,24 @@ fn discover_wine_path(steam_roots: &[PathBuf], compat_tool: &str) -> Option<Path
     }
 
     None
+}
+
+fn compatibility_tool_roots(steam_roots: &[PathBuf]) -> Vec<PathBuf> {
+    let mut roots = vec![
+        PathBuf::from("/usr/share/steam/compatibilitytools.d"),
+        PathBuf::from("/usr/local/share/steam/compatibilitytools.d"),
+    ];
+
+    if let Some(extra_paths) = std::env::var_os("STEAM_EXTRA_COMPAT_TOOLS_PATHS") {
+        roots.extend(std::env::split_paths(&extra_paths));
+    }
+
+    roots.extend(
+        steam_roots
+            .iter()
+            .map(|root| root.join("compatibilitytools.d")),
+    );
+    roots
 }
 
 fn read_registry_entries(path: &Path) -> Result<HashMap<String, String>, String> {
@@ -469,11 +491,14 @@ fn quoted_tokens(line: &str) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use std::fs;
+    use std::sync::Mutex;
 
     use super::{
         discover_wine_path, find_section_range, format_registry_value, is_vrchat_registry_section,
         parse_compat_tool_mapping, parse_registry_value,
     };
+
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn parses_vrchat_compat_tool_mapping() {
@@ -553,5 +578,71 @@ mod tests {
         );
 
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn discovers_extra_compat_tool_parent_path() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let previous = std::env::var_os("STEAM_EXTRA_COMPAT_TOOLS_PATHS");
+        let steam_root = std::env::temp_dir().join(format!(
+            "vrcx-linux-registry-test-{}-steam-root",
+            std::process::id()
+        ));
+        let extra_root = std::env::temp_dir().join(format!(
+            "vrcx-linux-registry-test-{}-extra-parent",
+            std::process::id()
+        ));
+        let wine = extra_root
+            .join("GE-Proton9-27")
+            .join("files")
+            .join("bin")
+            .join("wine");
+        fs::create_dir_all(wine.parent().unwrap()).unwrap();
+        fs::write(&wine, b"").unwrap();
+        std::env::set_var("STEAM_EXTRA_COMPAT_TOOLS_PATHS", &extra_root);
+
+        assert_eq!(
+            discover_wine_path(&[steam_root.clone()], "GE-Proton9-27"),
+            Some(wine)
+        );
+
+        restore_extra_compat_tools_paths(previous);
+        let _ = fs::remove_dir_all(steam_root);
+        fs::remove_dir_all(extra_root).unwrap();
+    }
+
+    #[test]
+    fn discovers_extra_compat_tool_direct_path() {
+        let _guard = ENV_LOCK.lock().unwrap();
+        let previous = std::env::var_os("STEAM_EXTRA_COMPAT_TOOLS_PATHS");
+        let steam_root = std::env::temp_dir().join(format!(
+            "vrcx-linux-registry-test-{}-steam-root-direct",
+            std::process::id()
+        ));
+        let tool_root = std::env::temp_dir().join(format!(
+            "vrcx-linux-registry-test-{}-extra-direct",
+            std::process::id()
+        ));
+        let wine = tool_root.join("files").join("bin").join("wine");
+        fs::create_dir_all(wine.parent().unwrap()).unwrap();
+        fs::write(&wine, b"").unwrap();
+        std::env::set_var("STEAM_EXTRA_COMPAT_TOOLS_PATHS", &tool_root);
+
+        assert_eq!(
+            discover_wine_path(&[steam_root.clone()], "GE-Proton9-27"),
+            Some(wine)
+        );
+
+        restore_extra_compat_tools_paths(previous);
+        let _ = fs::remove_dir_all(steam_root);
+        fs::remove_dir_all(tool_root).unwrap();
+    }
+
+    fn restore_extra_compat_tools_paths(previous: Option<std::ffi::OsString>) {
+        if let Some(value) = previous {
+            std::env::set_var("STEAM_EXTRA_COMPAT_TOOLS_PATHS", value);
+        } else {
+            std::env::remove_var("STEAM_EXTRA_COMPAT_TOOLS_PATHS");
+        }
     }
 }
