@@ -21,10 +21,7 @@ import { useSessionStore } from '@/state/sessionStore';
 import { buildAvatarWearSnapshotUpdate } from './avatarWearTimeService';
 import { recordCurrentUserSnapshot } from './domainIngestionService';
 import { bootstrapFavorites } from './favoriteBootstrapService';
-import {
-    bootstrapFriendRoster,
-    syncFriendRosterStateFromCurrentUserSnapshot
-} from './friendBootstrapService';
+import { bootstrapFriendRoster } from './friendBootstrapService';
 import { refreshModerationSync } from './moderationSyncService';
 import { resetPresenceAutomationExecutor } from './presence-automation/index';
 import {
@@ -134,12 +131,6 @@ const CURRENT_USER_FRIEND_ARRAY_FIELDS = new Set([
     'activeFriends',
     'offlineFriends'
 ]);
-
-function hasCompleteCurrentUserFriendBucketSnapshot(source: any) {
-    return Array.from(CURRENT_USER_FRIEND_ARRAY_FIELDS).every((field) =>
-        Array.isArray(source?.[field])
-    );
-}
 
 function mergeCurrentUserRefreshOverlayPatch(record: any, patch: any) {
     if (!patch || typeof patch !== 'object') {
@@ -368,12 +359,6 @@ async function refreshCurrentUserForTarget({ target, record }: any) {
     recordCurrentUserSnapshot(nextSnapshot, {
         endpoint: target.currentUserEndpoint
     });
-    if (hasCompleteCurrentUserFriendBucketSnapshot(responseUser)) {
-        syncFriendRosterStateFromCurrentUserSnapshot(
-            nextSnapshot,
-            `Friend roster states refreshed for ${nextSnapshot.displayName || nextSnapshot.username || nextSnapshot.id}.`
-        );
-    }
     return nextSnapshot;
 }
 

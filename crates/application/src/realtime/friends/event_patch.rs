@@ -259,21 +259,32 @@ pub(super) fn apply_friend_event(
         "friend-location" => {
             let user_id = event_user_id(content)?;
             let has_embedded_user = has_embedded_location_user(content);
-            if has_embedded_user {
+            let user_patch =
+                event_user_patch(content, &user_id).unwrap_or_else(|| json!({ "id": user_id }));
+            let has_online_location = location_event_has_online_proof(content, &user_patch);
+            let preserve_pending_offline =
+                !has_online_location && state.pending_offline.contains_key(&user_id);
+            if has_embedded_user && has_online_location {
                 state.pending_offline.remove(&user_id);
             }
             let previous = get_friend_value(state, &user_id);
-            let user_patch =
-                event_user_patch(content, &user_id).unwrap_or_else(|| json!({ "id": user_id }));
-            let state_bucket = resolve_location_event_state_bucket(content, previous.as_ref())?;
-            let state_bucket_authority = if has_embedded_user {
+            let state_bucket = resolve_location_event_state_bucket(
+                content,
+                previous.as_ref(),
+                has_online_location,
+            )?;
+            let state_bucket_authority = if has_embedded_user && has_online_location {
                 "explicit"
             } else {
                 "preserve"
             };
             let mut patch =
                 online_patch(content, user_patch, previous.as_ref(), now, &state_bucket);
-            if !has_embedded_user {
+            if preserve_pending_offline {
+                if let Some(patch_object) = patch.as_object_mut() {
+                    patch_object.insert("pendingOffline".into(), Value::Bool(true));
+                }
+            } else if !has_embedded_user {
                 if let Some(patch_object) = patch.as_object_mut() {
                     patch_object.remove("pendingOffline");
                 }
@@ -291,11 +302,13 @@ pub(super) fn apply_friend_event(
             if state_bucket != "online" {
                 state.recent_gps.remove(&user_id);
             }
-            request_profile_refetch_for_impossible_location(
+            request_profile_refetch_for_location_event(
                 &mut output,
                 &user_id,
                 &patch,
                 &state_bucket,
+                has_embedded_user,
+                has_online_location,
             );
             apply_patch_to_state_with_authority(
                 state,
@@ -325,9 +338,34 @@ fn request_profile_refetch_for_impossible_location(
     patch: &Value,
     state_bucket: &str,
 ) {
-    if state_bucket == "online" || !is_real_instance_patch(patch) {
-        return;
+    if state_bucket != "online" && is_real_instance_patch(patch) {
+        push_profile_refetch_user_id(output, user_id);
     }
+}
+
+fn request_profile_refetch_for_location_event(
+    output: &mut RealtimeFriendOutput,
+    user_id: &str,
+    patch: &Value,
+    state_bucket: &str,
+    has_embedded_user: bool,
+    has_online_location: bool,
+) {
+    let embedded_user_without_online_proof = has_embedded_user && !has_online_location;
+    let online_with_missing_or_offline_location =
+        state_bucket == "online" && !patch_has_online_location(patch);
+    let non_online_with_real_instance_location =
+        state_bucket != "online" && is_real_instance_patch(patch);
+
+    if embedded_user_without_online_proof
+        || online_with_missing_or_offline_location
+        || non_online_with_real_instance_location
+    {
+        push_profile_refetch_user_id(output, user_id);
+    }
+}
+
+fn push_profile_refetch_user_id(output: &mut RealtimeFriendOutput, user_id: &str) {
     if output
         .profile_refetch_user_ids
         .iter()
@@ -336,6 +374,16 @@ fn request_profile_refetch_for_impossible_location(
         return;
     }
     output.profile_refetch_user_ids.push(user_id.to_string());
+}
+
+fn patch_has_online_location(patch: &Value) -> bool {
+    [
+        patch.get("location").and_then(Value::as_str),
+        patch.get("travelingToLocation").and_then(Value::as_str),
+    ]
+    .iter()
+    .flatten()
+    .any(|value| is_online_location_proof(value))
 }
 
 fn is_real_instance_patch(patch: &Value) -> bool {
@@ -486,8 +534,9 @@ fn has_embedded_location_user(content: &Value) -> bool {
 fn resolve_location_event_state_bucket(
     content: &Value,
     previous: Option<&Value>,
+    has_online_location: bool,
 ) -> Option<String> {
-    if has_embedded_location_user(content) {
+    if has_embedded_location_user(content) && has_online_location {
         return Some("online".into());
     }
     for candidate in [
@@ -502,6 +551,33 @@ fn resolve_location_event_state_bucket(
         }
     }
     None
+}
+
+fn location_event_has_online_proof(content: &Value, user_patch: &Value) -> bool {
+    let content_locations = [
+        content.get("location").and_then(Value::as_str),
+        content.get("travelingToLocation").and_then(Value::as_str),
+    ];
+    if content_locations.iter().flatten().any(|value| !value.trim().is_empty()) {
+        return content_locations
+            .iter()
+            .flatten()
+            .any(|value| is_online_location_proof(value));
+    }
+
+    let user_locations = [
+        user_patch.get("location").and_then(Value::as_str),
+        user_patch.get("travelingToLocation").and_then(Value::as_str),
+    ];
+    user_locations
+        .iter()
+        .flatten()
+        .any(|value| is_online_location_proof(value))
+}
+
+fn is_online_location_proof(value: &str) -> bool {
+    let normalized = value.trim().to_ascii_lowercase();
+    !normalized.is_empty() && normalized != "offline" && normalized != "offline:offline"
 }
 
 pub(super) fn online_patch(

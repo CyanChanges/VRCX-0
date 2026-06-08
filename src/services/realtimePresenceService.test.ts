@@ -306,7 +306,7 @@ describe('realtimePresenceService projection boundary', () => {
         );
     });
 
-    it('applies runtime current-user projection', async () => {
+    it('does not sync roster buckets from complete current-user projection', async () => {
         const { useFriendRosterStore } =
             await import('@/state/friendRosterStore');
         const { useRuntimeStore } = await import('@/state/runtimeStore');
@@ -364,10 +364,15 @@ describe('realtimePresenceService projection boundary', () => {
         expect(
             useRuntimeStore.getState().auth.currentUserSnapshot?.friends
         ).toEqual(['usr_friend']);
-        expect(useFriendRosterStore.getState().onlineIds).toEqual([
-            'usr_friend'
-        ]);
-        expect(useFriendRosterStore.getState().offlineIds).toEqual([]);
+        expect(useFriendRosterStore.getState()).toMatchObject({
+            onlineIds: [],
+            offlineIds: ['usr_friend'],
+            friendsById: {
+                usr_friend: {
+                    stateBucket: 'offline'
+                }
+            }
+        });
         expect(useRuntimeStore.getState().auth.currentUserDisplayName).toBe(
             'New Self'
         );

@@ -9,7 +9,6 @@ import {
     recordCurrentUserSnapshot,
     recordFriendPatch
 } from './domainIngestionService';
-import { syncFriendRosterStateFromCurrentUserSnapshot } from './friendBootstrapService';
 import { handleInviteAutomationNotification } from './inviteAutomationService';
 import {
     handleRealtimeInstanceQueueProjection
@@ -351,15 +350,6 @@ function handleRealtimeCurrentUserProjection(payload: unknown) {
         endpoint: runtimeStore.auth.currentUserEndpoint,
         source: 'currentUser'
     });
-    if (getCurrentUserProjectionFriendBucketSource(projection)) {
-        syncFriendRosterStateFromCurrentUserSnapshot(
-            snapshot,
-            `Friend roster states refreshed for ${currentUserDisplayName(
-                snapshot,
-                runtimeStore.auth.currentUserDisplayName
-            )}.`
-        );
-    }
 }
 
 async function handleRealtimeInstanceClosedProjection(payload: unknown) {

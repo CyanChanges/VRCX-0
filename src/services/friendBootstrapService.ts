@@ -417,51 +417,6 @@ export async function recordFriendLogFriendByUserId({
     });
 }
 
-export function syncFriendRosterStateFromCurrentUserSnapshot(
-    currentUserSnapshot: any,
-    detail: any = ''
-) {
-    if (!hasCompleteFriendStateSnapshot(currentUserSnapshot)) {
-        return false;
-    }
-    const stateById = buildFriendStateMap(currentUserSnapshot);
-    const rosterStore = useFriendRosterStore.getState();
-    const patchEntries = Array.from(stateById.entries()).map(
-        ([userId, stateBucket]: any) => {
-            const nextStateBucket = resolveSnapshotStateBucket(stateBucket);
-            return {
-                userId,
-                stateBucket: nextStateBucket,
-                patch: {
-                    id: userId,
-                    state: nextStateBucket
-                }
-            };
-        }
-    );
-
-    const snapshotIds = new Set(Array.from(stateById.keys()));
-    const removedIds = Object.keys(rosterStore.friendsById || {}).filter(
-        (userId) => !snapshotIds.has(userId)
-    );
-
-    if (patchEntries.length) {
-        rosterStore.applyFriendPatches(patchEntries, detail);
-    }
-    for (const userId of removedIds) {
-        useFriendRosterStore.getState().removeFriend(userId, detail);
-    }
-    for (const { userId, stateBucket, patch } of patchEntries as any[]) {
-        recordFriendPatch({
-            endpoint: useRuntimeStore.getState().auth.currentUserEndpoint,
-            userId,
-            stateBucket,
-            patch
-        });
-    }
-    return Boolean(patchEntries.length || removedIds.length);
-}
-
 export async function recordFriendLogUnfriendByUserId({
     currentUserId,
     targetUserId,
