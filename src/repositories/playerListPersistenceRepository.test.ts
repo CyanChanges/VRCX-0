@@ -141,4 +141,41 @@ describe('playerListPersistenceRepository', () => {
             players: []
         });
     });
+
+    it('falls back to the database enter time when a stale runtime start filters the roster out', async () => {
+        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
+            created_at: '2026-06-09T12:26:31.000Z',
+            location: 'wrld_live:83220',
+            world_id: 'wrld_live',
+            world_name: 'Live World',
+            time: 0,
+            group_name: ''
+        });
+        const joinRow = {
+            id: '1',
+            created_at: '2026-06-09T12:26:59.000Z',
+            type: 'OnPlayerJoined',
+            display_name: 'CyanChanges',
+            user_id: 'usr_cyan',
+            time: 0
+        };
+        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows)
+            .mockResolvedValueOnce([joinRow])
+            .mockResolvedValueOnce([joinRow]);
+
+        const snapshot = await getCurrentInstanceSnapshot({
+            currentLocation: 'wrld_live:83220',
+            // WS user-location fallback "now", later than every join row
+            currentLocationStartedAt: '2026-06-10T19:00:00.000Z'
+        });
+
+        expect(snapshot.players).toEqual([
+            expect.objectContaining({
+                userId: 'usr_cyan',
+                displayName: 'CyanChanges'
+            })
+        ]);
+        expect(snapshot.context.createdAt).toBe('2026-06-09T12:26:31.000Z');
+        expect(snapshot.context.playerFactsKnown).toBe(true);
+    });
 });

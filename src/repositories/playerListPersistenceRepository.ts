@@ -283,31 +283,18 @@ async function resolveCurrentLocationContext(
     };
 }
 
-async function getCurrentInstanceSnapshot({
-    currentUserId = '',
-    currentLocation = '',
-    currentLocationStartedAt = ''
-}: CurrentInstanceSnapshotInput = {}) {
-    const context = resolveSnapshotContext(
-        await resolveCurrentLocationContext(currentLocation),
-        currentLocationStartedAt
-    );
-
-    if (!isLiveLocation(context.location)) {
-        return {
-            context,
-            players: []
-        };
-    }
-
-    const startedAtMs = parseDateMs(context.createdAt);
+async function rebuildInstanceRoster(
+    location: string,
+    startedAt: string,
+    normalizedCurrentUserId: string
+) {
+    const startedAtMs = parseDateMs(startedAt);
     const rows = await tauriClient.app.PlayerListJoinLeaveRows({
-        location: context.location,
-        startedAt: startedAtMs ? context.createdAt : ''
+        location,
+        startedAt: startedAtMs ? startedAt : ''
     });
 
     const playersByKey = new Map<string, PlayerListPlayer>();
-    const normalizedCurrentUserId = normalizeString(currentUserId);
     let observedPlayerEventCount = 0;
 
     for (const [rowIndex, row] of (Array.isArray(rows) ? rows : []).entries()) {
@@ -363,14 +350,65 @@ async function getCurrentInstanceSnapshot({
             );
         });
 
+    return { players, observedPlayerEventCount };
+}
+
+async function getCurrentInstanceSnapshot({
+    currentUserId = '',
+    currentLocation = '',
+    currentLocationStartedAt = ''
+}: CurrentInstanceSnapshotInput = {}) {
+    const locationContext = await resolveCurrentLocationContext(currentLocation);
+    const context = resolveSnapshotContext(
+        locationContext,
+        currentLocationStartedAt
+    );
+
+    if (!isLiveLocation(context.location)) {
+        return {
+            context,
+            players: []
+        };
+    }
+
+    const normalizedCurrentUserId = normalizeString(currentUserId);
+    let roster = await rebuildInstanceRoster(
+        context.location,
+        context.createdAt,
+        normalizedCurrentUserId
+    );
+    let effectiveContext = context;
+
+    // The runtime-reported start time can come from the WS user-location fallback, which
+    // is set to the event's "now" while the game isn't detected as running. That value is
+    // later than every join row and filters the whole current roster out. When that
+    // happens but the DB holds an earlier real enter time for this exact location, rebuild
+    // from the DB enter time so the current session's players survive.
+    const dbStartedAtMs = parseDateMs(locationContext.createdAt);
+    if (
+        roster.players.length === 0 &&
+        dbStartedAtMs > 0 &&
+        dbStartedAtMs < parseDateMs(context.createdAt)
+    ) {
+        const dbRoster = await rebuildInstanceRoster(
+            locationContext.location,
+            locationContext.createdAt,
+            normalizedCurrentUserId
+        );
+        if (dbRoster.players.length > 0) {
+            roster = dbRoster;
+            effectiveContext = locationContext;
+        }
+    }
+
     return {
         context: {
-            ...context,
-            playerCount: players.length,
-            observedPlayerEventCount,
-            playerFactsKnown: observedPlayerEventCount > 0
+            ...effectiveContext,
+            playerCount: roster.players.length,
+            observedPlayerEventCount: roster.observedPlayerEventCount,
+            playerFactsKnown: roster.observedPlayerEventCount > 0
         },
-        players
+        players: roster.players
     };
 }
 
