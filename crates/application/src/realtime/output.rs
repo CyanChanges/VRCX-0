@@ -4,15 +4,15 @@ use super::projection::{
     FriendProjection, RealtimeCurrentUserProjection, RealtimeInstanceClosedProjection,
     RealtimeNotificationProjection,
 };
-use super::runtime_types::{DelayedOfflineFeedTimerAction, FriendProfileRefetchRequest};
+use super::runtime_types::PendingOfflineTimerAction;
 
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct RealtimeFriendOutput {
     pub owner_user_id: String,
     pub projection: FriendProjection,
     pub persistence: RealtimePersistenceBatch,
-    pub timer_action: DelayedOfflineFeedTimerAction,
-    pub profile_refetch_requests: Vec<FriendProfileRefetchRequest>,
+    pub timer_action: PendingOfflineTimerAction,
+    pub profile_refetch_user_ids: Vec<String>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

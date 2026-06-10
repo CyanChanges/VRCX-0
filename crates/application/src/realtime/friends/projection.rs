@@ -41,3 +41,11 @@ pub(super) fn has_event_state_bucket(content: &Value) -> bool {
             .is_some()
     })
 }
+
+pub(super) fn state_bucket_from_patch(patch: &Value, fallback: &str) -> String {
+    patch
+        .get("state")
+        .and_then(Value::as_str)
+        .and_then(normalize_state_bucket)
+        .unwrap_or_else(|| fallback.to_string())
+}

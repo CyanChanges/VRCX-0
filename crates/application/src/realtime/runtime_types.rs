@@ -51,7 +51,7 @@ pub enum RealtimeFriendApplyResult {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
-pub enum DelayedOfflineFeedTimerAction {
+pub enum PendingOfflineTimerAction {
     #[default]
     None,
     Schedule {
@@ -59,10 +59,4 @@ pub enum DelayedOfflineFeedTimerAction {
         token: u64,
         delay_ms: u64,
     },
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum FriendProfileRefetchRequest {
-    LocationRepair { user_id: String },
-    OfflineConfirm { user_id: String, token: u64 },
 }

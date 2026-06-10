@@ -152,6 +152,9 @@ function resolveFriendLocationStatus(friend: any, currentUser: any) {
         currentUser?.activeFriends || []
     ).includes(userId);
 
+    if (friend?.pendingOffline || source?.pendingOffline) {
+        return 'offline';
+    }
     if (
         rawStatus !== 'active' &&
         location === 'private' &&

@@ -48,6 +48,9 @@ function normalizeUserStatus(value: unknown) {
     const record = asUserStatusSource(value);
     const source =
         record.ref && typeof record.ref === 'object' ? record.ref : record;
+    if (record.pendingOffline || source?.pendingOffline) {
+        return 'offline';
+    }
     const lastLocation =
         record.lastLocation ||
         record.last_location ||

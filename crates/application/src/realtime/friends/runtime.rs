@@ -9,9 +9,8 @@ use vrcx_0_core::realtime::RealtimeWsMessagePayload;
 use vrcx_0_persistence::realtime::{FriendLogDelete, FriendLogUpsert};
 
 use super::super::{
-    DelayedOfflineFeedTimerAction, FriendBaselineResult, FriendProfileRefetchRequest,
-    FriendProjection, FriendProjectionPatch, RealtimeFriendApplyResult, RealtimeFriendOutput,
-    RealtimeFriendSnapshot,
+    FriendBaselineResult, FriendProjection, FriendProjectionPatch, PendingOfflineTimerAction,
+    RealtimeFriendApplyResult, RealtimeFriendOutput, RealtimeFriendSnapshot,
 };
 
 #[path = "event_patch.rs"]

@@ -109,6 +109,7 @@ const CURRENT_USER_LOCAL_AUTHORITY_FIELDS = [
     'statusDescription',
     'state',
     'stateBucket',
+    'pendingOffline',
     'location',
     '$location',
     '$location_at',

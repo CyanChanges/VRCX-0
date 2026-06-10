@@ -410,11 +410,13 @@ pub(super) fn resolve_gps_duration(previous: &Value) -> i64 {
             0
         };
     }
-    let record = FriendRecord::deserialize(previous.clone()).ok();
-    record
-        .as_ref()
-        .map(|record| duration_ms(record, Utc::now().timestamp_millis()))
-        .unwrap_or(0)
+    match FriendRecord::deserialize(previous.clone()) {
+        Ok(record) => duration_ms(&record, Utc::now().timestamp_millis()),
+        Err(error) => {
+            tracing::warn!("resolve_gps_duration friend record deserialize failed: {error}");
+            0
+        }
+    }
 }
 
 pub(super) fn duration_ms(previous: &FriendRecord, now_ms: i64) -> i64 {

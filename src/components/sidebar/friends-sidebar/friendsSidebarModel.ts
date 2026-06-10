@@ -43,7 +43,8 @@ export function readFriendStatusSource(friend: any) {
     return {
         ...ref,
         ...friend,
-        ref
+        ref,
+        pendingOffline: Boolean(friend?.pendingOffline || ref?.pendingOffline)
     };
 }
 
@@ -254,6 +255,10 @@ export function resolveSidebarStatusDotClassName(
             );
         }
         return activeStatusDotClassName(status);
+    }
+
+    if (source?.pendingOffline) {
+        return 'bg-[var(--status-offline)]';
     }
 
     if (

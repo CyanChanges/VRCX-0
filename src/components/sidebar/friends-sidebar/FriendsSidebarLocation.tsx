@@ -121,7 +121,7 @@ export function resolveFriendRowLocationState({
         friendStateBucket === 'active' ||
         friendStateBucket === 'offline';
     const groupByInstanceTimerVisible = Boolean(
-        isGroupByInstance && !isActiveOrOffline
+        isGroupByInstance && !isActiveOrOffline && !statusSource?.pendingOffline
     );
     const groupByInstanceEpoch = readFriendInstanceEpoch(
         statusSource,
@@ -129,6 +129,7 @@ export function resolveFriendRowLocationState({
     );
     const showLocationSubline = Boolean(
         displayLocation &&
+        !statusSource?.pendingOffline &&
         !groupByInstanceTimerVisible &&
         (!isActiveOrOffline ||
             parsedFriendLocation.isRealInstance ||

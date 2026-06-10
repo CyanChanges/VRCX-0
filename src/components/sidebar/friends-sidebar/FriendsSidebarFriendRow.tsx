@@ -1,4 +1,5 @@
 import { UserIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { getNameColour, userImage } from '@/services/entityMediaService';
 import { TRUST_COLOR_DEFAULTS } from '@/shared/utils/trustColors';
@@ -35,6 +36,7 @@ export function FriendRow({
     rowCommands,
     appearance
 }: any) {
+    const { t } = useTranslation();
     const {
         isCurrentUser,
         isGroupByInstance = false,
@@ -92,6 +94,7 @@ export function FriendRow({
     );
     const isActiveStatusDot = statusDotClassName.includes('bg-background');
     const {
+        statusSource,
         friendLocation,
         parsedFriendLocation,
         isTraveling,
@@ -112,7 +115,9 @@ export function FriendRow({
         parsedFriendLocation.worldId &&
         parsedFriendLocation.instanceId
     );
-    const subline = displaySource?.statusDescription || '';
+    const subline = statusSource?.pendingOffline
+        ? t('side_panel.pending_offline')
+        : displaySource?.statusDescription || '';
 
     return (
         <ContextMenu>

@@ -102,6 +102,7 @@ const CURRENT_USER_REFRESH_LOCAL_AUTHORITY_FIELDS: &[&str] = &[
     "statusDescription",
     "state",
     "stateBucket",
+    "pendingOffline",
     "location",
     "$location",
     "$location_at",
