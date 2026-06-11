@@ -73,41 +73,7 @@ pub(super) fn first_owned(values: impl IntoIterator<Item = String>) -> String {
         .to_string()
 }
 
-#[derive(Default)]
-pub(super) struct ParsedLocation {
-    pub(super) world_id: String,
-    pub(super) instance_id: String,
-    pub(super) group_id: String,
-}
-
-impl ParsedLocation {
-    pub(super) fn to_value(&self, tag: &str) -> Value {
-        json!({
-            "tag": tag,
-            "worldId": self.world_id,
-            "instanceId": self.instance_id,
-            "groupId": self.group_id,
-        })
-    }
-}
-
-pub(super) fn parse_location(location: &str) -> ParsedLocation {
-    let mut parsed = ParsedLocation::default();
-    let location = location.trim();
-    if let Some((world_id, instance)) = location.split_once(':') {
-        parsed.world_id = world_id.to_string();
-        parsed.instance_id = instance.to_string();
-    } else if location.starts_with("wrld_") {
-        parsed.world_id = location.to_string();
-    }
-    if let Some(start) = location.find("group(") {
-        let rest = &location[start + "group(".len()..];
-        if let Some(end) = rest.find(')') {
-            parsed.group_id = rest[..end].to_string();
-        }
-    }
-    parsed
-}
+pub(super) use vrcx_0_core::location::parse_location;
 
 pub(super) struct EventTime {
     pub(super) iso: String,

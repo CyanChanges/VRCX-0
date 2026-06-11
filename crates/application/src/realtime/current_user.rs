@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Utc};
 use serde_json::{json, Map, Value};
+use vrcx_0_core::location::parse_location;
 use vrcx_0_core::realtime::RealtimeWsMessagePayload;
 use vrcx_0_persistence::game_log::GameLogLocationEntry;
 use vrcx_0_persistence::realtime::{
@@ -393,10 +394,10 @@ fn game_log_authority_patch(
         "travelingToInstance".into(),
         Value::String(parsed_traveling.instance_id.clone()),
     );
-    patch.insert("$location".into(), parsed.to_value(location));
+    patch.insert("$location".into(), parsed.to_minimal_value(location));
     patch.insert(
         "$travelingToLocation".into(),
-        parsed_traveling.to_value(traveling_to_location),
+        parsed_traveling.to_minimal_value(traveling_to_location),
     );
     let world_name = authority.game_log_world_name.trim();
     if !world_name.is_empty() {
@@ -515,10 +516,13 @@ fn build_location_patch(
         "travelingToInstance".into(),
         Value::String(parsed_traveling.instance_id.clone()),
     );
-    patch.insert("$location".into(), parsed_location.to_value(&location));
+    patch.insert(
+        "$location".into(),
+        parsed_location.to_minimal_value(&location),
+    );
     patch.insert(
         "$travelingToLocation".into(),
-        parsed_traveling.to_value(&traveling),
+        parsed_traveling.to_minimal_value(&traveling),
     );
     patch
 }
@@ -539,7 +543,7 @@ fn location_game_log_entry(
         world_id: parsed.world_id,
         world_name,
         time: 0,
-        group_name: parsed.group_id,
+        group_name: parsed.group_id.unwrap_or_default(),
     })
 }
 
@@ -663,42 +667,6 @@ fn is_real_instance(location: &str) -> bool {
             | "private"
             | "private:private"
     )
-}
-
-#[derive(Default)]
-struct ParsedLocation {
-    world_id: String,
-    instance_id: String,
-    group_id: String,
-}
-
-impl ParsedLocation {
-    fn to_value(&self, tag: &str) -> Value {
-        json!({
-            "tag": tag,
-            "worldId": self.world_id,
-            "instanceId": self.instance_id,
-            "groupId": self.group_id,
-        })
-    }
-}
-
-fn parse_location(location: &str) -> ParsedLocation {
-    let mut parsed = ParsedLocation::default();
-    let location = location.trim();
-    if let Some((world_id, instance)) = location.split_once(':') {
-        parsed.world_id = world_id.to_string();
-        parsed.instance_id = instance.to_string();
-    } else if location.starts_with("wrld_") {
-        parsed.world_id = location.to_string();
-    }
-    if let Some(start) = location.find("group(") {
-        let rest = &location[start + "group(".len()..];
-        if let Some(end) = rest.find(')') {
-            parsed.group_id = rest[..end].to_string();
-        }
-    }
-    parsed
 }
 
 struct EventTime {

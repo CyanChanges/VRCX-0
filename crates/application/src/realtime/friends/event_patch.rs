@@ -802,10 +802,13 @@ pub(super) fn online_patch(
         "travelingToInstance".into(),
         Value::String(parsed_traveling.instance_id.clone()),
     );
-    patch.insert("$location".into(), parsed_location.to_value(&location));
+    patch.insert(
+        "$location".into(),
+        parsed_location.to_minimal_value(&location),
+    );
     patch.insert(
         "$travelingToLocation".into(),
-        parsed_traveling.to_value(&string_field(patch.get("travelingToLocation"))),
+        parsed_traveling.to_minimal_value(&string_field(patch.get("travelingToLocation"))),
     );
     add_location_metadata(&mut patch, previous, now.timestamp_ms);
     Value::Object(patch)

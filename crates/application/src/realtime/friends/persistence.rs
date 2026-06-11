@@ -376,7 +376,7 @@ pub(super) fn resolve_location_name(
             previous
                 .map(|previous| string_field(previous.get("groupName")))
                 .unwrap_or_default(),
-            parsed.group_id.clone(),
+            parsed.group_id.clone().unwrap_or_default(),
         ]),
     )
 }

@@ -57,7 +57,7 @@ pub use background_capabilities::{
     BackgroundDiscordActivityPayload, BackgroundDiscordPresenceCommand,
     BackgroundDiscordPresenceState, BackgroundGroupInstancesRefresh,
     BackgroundPresenceAutomationResult, BackgroundPresenceAutomationState, BackgroundPresenceFacts,
-    BackgroundPresenceFactsInput, ParsedLocation, PresencePlayer,
+    BackgroundPresenceFactsInput, PresencePlayer,
 };
 pub use diagnostics::{RuntimeDiagnostics, RuntimeDiagnosticsSnapshot};
 pub use error::Error;
@@ -144,6 +144,7 @@ pub use sync::{RuntimeSyncEngine, RuntimeSyncSnapshot};
 pub use task_supervisor::{
     RuntimeTask, RuntimeTaskExecutor, RuntimeTaskHandle, TaskStopToken, TaskSupervisor,
 };
+pub use vrcx_0_core::location::ParsedLocation;
 pub use web_client::WebClient;
 pub use worker::{OverflowPolicy, RuntimeJobHandler, RuntimePushReport};
 

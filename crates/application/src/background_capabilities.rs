@@ -5,6 +5,7 @@ use futures_util::{stream, StreamExt};
 use serde::Serialize;
 use serde_json::{json, Map, Value};
 use vrcx_0_core::friends::FriendRecord;
+use vrcx_0_core::location::{normalize_instance_type, parse_location, ParsedLocation};
 use vrcx_0_persistence::config::ConfigRepository;
 use vrcx_0_persistence::DatabaseService;
 use vrcx_0_vrchat_client::groups::current_user_group_instances_get_input;
@@ -150,32 +151,6 @@ pub struct PresencePlayer {
     pub id: String,
     pub user_id: String,
     pub display_name: String,
-}
-
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
-#[serde(rename_all = "camelCase")]
-pub struct ParsedLocation {
-    pub tag: String,
-    pub is_offline: bool,
-    pub is_private: bool,
-    pub is_traveling: bool,
-    pub is_real_instance: bool,
-    pub world_id: String,
-    pub instance_id: String,
-    pub instance_name: String,
-    pub access_type: String,
-    pub access_type_name: String,
-    pub region: String,
-    pub short_name: String,
-    pub user_id: Option<String>,
-    pub hidden_id: Option<String>,
-    pub private_id: Option<String>,
-    pub friends_id: Option<String>,
-    pub group_id: Option<String>,
-    pub group_access_type: Option<String>,
-    pub can_request_invite: bool,
-    pub strict: bool,
-    pub age_gate: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -1739,116 +1714,6 @@ fn check_can_invite(location: &str, parsed: &ParsedLocation, current_user_id: &s
         return false;
     }
     true
-}
-
-pub fn parse_location(tag: &str) -> ParsedLocation {
-    let mut raw = tag.trim().to_string();
-    let mut parsed = ParsedLocation {
-        tag: raw.clone(),
-        ..Default::default()
-    };
-    match raw.as_str() {
-        "offline" | "offline:offline" => {
-            parsed.is_offline = true;
-            return parsed;
-        }
-        "private" | "private:private" => {
-            parsed.is_private = true;
-            return parsed;
-        }
-        "traveling" | "traveling:traveling" => {
-            parsed.is_traveling = true;
-            return parsed;
-        }
-        _ => {}
-    }
-    if raw.is_empty() || raw.starts_with("local") {
-        return parsed;
-    }
-    parsed.is_real_instance = true;
-    const SHORT_NAME_QUALIFIER: &str = "&shortName=";
-    if let Some(index) = raw.find(SHORT_NAME_QUALIFIER) {
-        parsed.short_name = raw[index + SHORT_NAME_QUALIFIER.len()..].to_string();
-        raw.truncate(index);
-    }
-    if let Some(separator) = raw.find(':') {
-        parsed.world_id = raw[..separator].to_string();
-        parsed.instance_id = raw[separator + 1..].to_string();
-        for (index, segment) in parsed.instance_id.split('~').enumerate() {
-            if index == 0 {
-                parsed.instance_name = segment.to_string();
-                continue;
-            }
-            let (key, value) = parse_location_segment(segment);
-            match key.as_str() {
-                "hidden" => parsed.hidden_id = Some(value),
-                "private" => parsed.private_id = Some(value),
-                "friends" => parsed.friends_id = Some(value),
-                "canRequestInvite" => parsed.can_request_invite = true,
-                "region" => parsed.region = value,
-                "group" => parsed.group_id = Some(value),
-                "groupAccessType" => parsed.group_access_type = Some(value),
-                "strict" => parsed.strict = true,
-                "ageGate" => parsed.age_gate = true,
-                _ => {}
-            }
-        }
-        parsed.access_type = "public".into();
-        if let Some(value) = parsed.private_id.clone() {
-            parsed.access_type = if parsed.can_request_invite {
-                "invite+".into()
-            } else {
-                "invite".into()
-            };
-            parsed.user_id = Some(value);
-        } else if let Some(value) = parsed.friends_id.clone() {
-            parsed.access_type = "friends".into();
-            parsed.user_id = Some(value);
-        } else if let Some(value) = parsed.hidden_id.clone() {
-            parsed.access_type = "friends+".into();
-            parsed.user_id = Some(value);
-        } else if parsed.group_id.is_some() {
-            parsed.access_type = "group".into();
-        }
-        parsed.access_type_name = parsed.access_type.clone();
-        if let Some(group_access_type) = parsed.group_access_type.as_deref() {
-            if group_access_type == "public" {
-                parsed.access_type_name = "groupPublic".into();
-            } else if group_access_type == "plus" {
-                parsed.access_type_name = "groupPlus".into();
-            }
-        }
-    } else {
-        parsed.world_id = raw;
-    }
-    parsed
-}
-
-fn parse_location_segment(segment: &str) -> (String, String) {
-    let Some(open) = segment.find('(') else {
-        return (segment.to_string(), String::new());
-    };
-    let Some(close) = segment.rfind(')') else {
-        return (segment.to_string(), String::new());
-    };
-    if open >= close {
-        return (segment.to_string(), String::new());
-    }
-    (
-        segment[..open].to_string(),
-        segment[open + 1..close].to_string(),
-    )
-}
-
-fn normalize_instance_type(parsed: &ParsedLocation) -> String {
-    if parsed.access_type != "group" {
-        return parsed.access_type.clone();
-    }
-    match parsed.group_access_type.as_deref() {
-        Some("members") => "groupOnly".into(),
-        Some("plus") => "groupPlus".into(),
-        _ => "groupPublic".into(),
-    }
 }
 
 fn is_live_current_location(location: &str) -> bool {
