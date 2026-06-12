@@ -1,9 +1,9 @@
 use std::sync::{Arc, Mutex};
 
 use vrcx_0_host::vr_overlay::{
-    OverlayActivationButton, OverlayActorHandle, OverlayBackend, OverlayCommandError,
-    OverlayPlacement, OverlayServiceCommand, OverlayServicePhase, OverlaySurfaceConfig,
-    VrDeviceSnapshot,
+    BackendStartError, OverlayActivationButton, OverlayActorHandle, OverlayBackend,
+    OverlayCommandError, OverlayPlacement, OverlayServiceCommand, OverlayServicePhase,
+    OverlaySurfaceConfig, VrDeviceSnapshot,
 };
 use vrcx_0_vr_overlay::{OverlaySize, OverlaySurfaceId, RgbaFrame};
 
@@ -65,6 +65,29 @@ fn overlay_actor_reports_backend_errors_without_panicking() {
         .as_deref()
         .unwrap_or_default()
         .contains("show failed"));
+}
+
+#[test]
+fn overlay_actor_maps_permanent_start_failure_to_backend_unsupported() {
+    let actor = OverlayActorHandle::spawn_with_backend(UnsupportedStartBackend);
+
+    let result = actor.send(OverlayServiceCommand::Start);
+
+    assert!(matches!(
+        result,
+        Err(OverlayCommandError::BackendUnsupported(_))
+    ));
+    let status = actor.status();
+    assert_eq!(status.phase, OverlayServicePhase::Error);
+    assert!(status
+        .last_error
+        .as_deref()
+        .unwrap_or_default()
+        .contains("runtime unsupported"));
+
+    actor
+        .send(OverlayServiceCommand::Stop)
+        .expect("stop overlay");
 }
 
 #[test]
@@ -159,7 +182,7 @@ struct RecordingBackend {
 }
 
 impl OverlayBackend for RecordingBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         self.calls.lock().unwrap().push("start".to_string());
         Ok(())
     }
@@ -214,7 +237,7 @@ impl OverlayBackend for RecordingBackend {
 struct FailingBackend;
 
 impl OverlayBackend for FailingBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         Ok(())
     }
 
@@ -248,7 +271,7 @@ impl OverlayBackend for FailingBackend {
 struct FailingRegisterBackend;
 
 impl OverlayBackend for FailingRegisterBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         Ok(())
     }
 
@@ -279,14 +302,48 @@ impl OverlayBackend for FailingRegisterBackend {
     fn stop(&mut self) {}
 }
 
+struct UnsupportedStartBackend;
+
+impl OverlayBackend for UnsupportedStartBackend {
+    fn start(&mut self) -> Result<(), BackendStartError> {
+        Err(BackendStartError::permanent("runtime unsupported"))
+    }
+
+    fn register_surface(&mut self, _config: OverlaySurfaceConfig) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn update_frame(
+        &mut self,
+        _surface_id: &OverlaySurfaceId,
+        _frame: RgbaFrame,
+    ) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn show(&mut self, _surface_id: &OverlaySurfaceId) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn hide(&mut self, _surface_id: &OverlaySurfaceId) -> Result<(), String> {
+        Ok(())
+    }
+
+    fn snapshot_devices(&mut self) -> Result<Vec<VrDeviceSnapshot>, String> {
+        Ok(Vec::new())
+    }
+
+    fn stop(&mut self) {}
+}
+
 struct FailingStartBackend {
     calls: Arc<Mutex<Vec<String>>>,
 }
 
 impl OverlayBackend for FailingStartBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         self.calls.lock().unwrap().push("start".to_string());
-        Err("start failed".to_string())
+        Err(BackendStartError::transient("start failed"))
     }
 
     fn register_surface(&mut self, _config: OverlaySurfaceConfig) -> Result<(), String> {

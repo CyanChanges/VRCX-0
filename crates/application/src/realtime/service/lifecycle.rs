@@ -1808,7 +1808,7 @@ mod tests {
         assert!(!stranger_added);
         assert_eq!(friend.display_name, "Fresh Friend");
         assert_eq!(friend.location, "wrld_fresh:456");
-        assert!(snapshot.friends_by_id.get("usr_stranger").is_none());
+        assert!(!snapshot.friends_by_id.contains_key("usr_stranger"));
         Ok(())
     }
 

@@ -2476,12 +2476,11 @@ mod tests {
         );
 
         assert!(matches!(result, RealtimeFriendApplyResult::Ignored));
-        assert!(runtime
+        assert!(!runtime
             .snapshot()
             .unwrap()
             .friends_by_id
-            .get("usr_stranger")
-            .is_none());
+            .contains_key("usr_stranger"));
     }
 
     #[test]

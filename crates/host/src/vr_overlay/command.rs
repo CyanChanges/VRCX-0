@@ -28,4 +28,6 @@ pub enum OverlayCommandError {
     InvalidFrameDimensions,
     #[error("overlay backend error: {0}")]
     Backend(String),
+    #[error("overlay backend is unsupported by the current VR runtime: {0}")]
+    BackendUnsupported(String),
 }

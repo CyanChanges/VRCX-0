@@ -26,7 +26,7 @@ use super::{
     eligibility::{VrOverlayEligibility, WristOverlayStartMode},
     localization::OverlayLocale,
     manager::VrOverlayManager,
-    service::HostVrOverlayService,
+    service::{HostVrOverlayService, OverlayBackendPreference},
     WristOverlayFrameInput, WristOverlayRenderOptions, WristOverlaySizePreset, WristRuntimeFooter,
 };
 
@@ -35,6 +35,7 @@ trait VrOverlayFrameProducer: Send {
 }
 
 pub const VR_OVERLAY_ENABLED_CONFIG_KEY: &str = "wristOverlayEnabled";
+pub const VR_OVERLAY_BACKEND_CONFIG_KEY: &str = "wristOverlayBackend";
 pub const VR_OVERLAY_START_MODE_CONFIG_KEY: &str = "wristOverlayStartMode";
 pub const VR_OVERLAY_BUTTON_CONFIG_KEY: &str = "wristOverlayButton";
 pub const VR_OVERLAY_HAND_CONFIG_KEY: &str = "wristOverlayHand";
@@ -69,6 +70,7 @@ impl WristOverlayHand {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(super) struct VrOverlayRuntimeConfig {
     start_mode: WristOverlayStartMode,
+    backend: OverlayBackendPreference,
     button: OverlayActivationButton,
     hand: WristOverlayHand,
     render: WristOverlayRenderOptions,
@@ -80,6 +82,7 @@ impl Default for VrOverlayRuntimeConfig {
     fn default() -> Self {
         Self {
             start_mode: WristOverlayStartMode::VrchatVrMode,
+            backend: OverlayBackendPreference::Auto,
             button: OverlayActivationButton::Grip,
             hand: WristOverlayHand::Left,
             render: WristOverlayRenderOptions::default(),
@@ -124,6 +127,7 @@ pub struct VrOverlayRuntimeSnapshot {
     pub running: bool,
     pub vr_mode: bool,
     pub steamvr_running: bool,
+    pub active_backend: Option<String>,
 }
 
 pub struct VrOverlayRuntime {
@@ -187,7 +191,7 @@ impl VrOverlayRuntime {
         frame_producer: Box<dyn VrOverlayFrameProducer>,
     ) -> Self {
         let service = if context.is_some() {
-            HostVrOverlayService::new(wrist_surface_configs(config))
+            HostVrOverlayService::new_with_preference(wrist_surface_configs(config), config.backend)
         } else {
             HostVrOverlayService::new_noop(wrist_surface_configs(config))
         };
@@ -207,7 +211,7 @@ impl VrOverlayRuntime {
 
     pub fn set_enabled(&self, enabled: bool) {
         if enabled && !self.backend_available {
-            tracing::warn!("SteamVR overlay backend is not available in this build");
+            tracing::warn!("no VR overlay backend is available in this build");
         }
         self.enabled.store(enabled, Ordering::Release);
         self.reconcile_current_with_device_refresh(true);
@@ -255,12 +259,19 @@ impl VrOverlayRuntime {
     }
 
     pub fn snapshot(&self) -> VrOverlayRuntimeSnapshot {
+        let active_backend = self
+            .manager
+            .lock()
+            .ok()
+            .and_then(|manager| manager.active_backend())
+            .map(str::to_string);
         VrOverlayRuntimeSnapshot {
             enabled: self.enabled.load(Ordering::Acquire),
             backend_available: self.backend_available,
             running: self.is_running(),
             vr_mode: self.vr_mode.load(Ordering::Acquire),
             steamvr_running: self.steamvr_running.load(Ordering::Acquire),
+            active_backend,
         }
     }
 
@@ -289,6 +300,9 @@ impl VrOverlayRuntime {
         if let Ok(mut manager) = self.manager.lock() {
             let mut config = self.current_runtime_config();
             if let Some(next_config) = changed_config {
+                if config.backend != next_config.backend {
+                    manager.set_backend_preference(next_config.backend);
+                }
                 let surface_config_changed =
                     config.surface_config_key() != next_config.surface_config_key();
                 let clear_devices = config.should_clear_device_snapshot_for(next_config);
@@ -551,6 +565,10 @@ pub(super) fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntime
         .get_string(VR_OVERLAY_START_MODE_CONFIG_KEY, "vrchatVrMode")
         .map(|value| WristOverlayStartMode::from_config(&value))
         .unwrap_or_default();
+    let backend = config
+        .get_string(VR_OVERLAY_BACKEND_CONFIG_KEY, "auto")
+        .map(|value| OverlayBackendPreference::from_config(&value))
+        .unwrap_or_default();
     let button = config
         .get_string(VR_OVERLAY_BUTTON_CONFIG_KEY, "grip")
         .map(|value| match value.trim() {
@@ -591,6 +609,7 @@ pub(super) fn load_runtime_config(config: &ConfigRepository) -> VrOverlayRuntime
 
     VrOverlayRuntimeConfig {
         start_mode,
+        backend,
         button,
         hand,
         render: WristOverlayRenderOptions {

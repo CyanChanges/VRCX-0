@@ -1,6 +1,34 @@
 use serde::{Deserialize, Serialize};
 use vrcx_0_vr_overlay::{OverlaySize, OverlaySurfaceId};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct BackendStartError {
+    pub message: String,
+    pub permanent: bool,
+}
+
+impl BackendStartError {
+    pub fn permanent(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            permanent: true,
+        }
+    }
+
+    pub fn transient(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            permanent: false,
+        }
+    }
+}
+
+impl std::fmt::Display for BackendStartError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.message)
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct OverlaySurfaceConfig {
     pub surface_id: OverlaySurfaceId,

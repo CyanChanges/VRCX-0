@@ -9,17 +9,19 @@ use vrcx_0_vr_overlay::{OverlaySurfaceId, RgbaFrame};
 
 #[cfg(all(feature = "steamvr-overlay", any(windows, target_os = "linux")))]
 use super::openvr_backend::OpenVrOverlayBackend;
+#[cfg(all(feature = "openxr-overlay", any(windows, target_os = "linux")))]
+use super::openxr_backend::OpenXrOverlayBackend;
 use super::{
     command::{OverlayCommandError, OverlayServiceCommand},
     noop::NoopOverlayBackend,
     status::{OverlayServicePhase, OverlayServiceStatus},
-    types::{OverlaySurfaceConfig, VrDeviceSnapshot},
+    types::{BackendStartError, OverlaySurfaceConfig, VrDeviceSnapshot},
 };
 
 const OVERLAY_TICK_INTERVAL: Duration = Duration::from_millis(100);
 
 pub trait OverlayBackend: Send + 'static {
-    fn start(&mut self) -> Result<(), String>;
+    fn start(&mut self) -> Result<(), BackendStartError>;
     fn register_surface(&mut self, config: OverlaySurfaceConfig) -> Result<(), String>;
     fn unregister_surface(&mut self, surface_id: &OverlaySurfaceId) -> Result<(), String> {
         self.hide(surface_id)
@@ -62,6 +64,11 @@ impl OverlayActorHandle {
     #[cfg(all(feature = "steamvr-overlay", any(windows, target_os = "linux")))]
     pub fn spawn_openvr() -> Self {
         Self::spawn_with_backend(OpenVrOverlayBackend::new())
+    }
+
+    #[cfg(all(feature = "openxr-overlay", any(windows, target_os = "linux")))]
+    pub fn spawn_openxr() -> Self {
+        Self::spawn_with_backend(OpenXrOverlayBackend::new())
     }
 
     #[cfg(test)]
@@ -174,9 +181,17 @@ where
         OverlayServiceCommand::Start => {
             update_status(status, OverlayServicePhase::Starting, None);
             if let Err(error) = backend.start() {
-                let command_error = record_backend_error(status, error);
+                update_status(
+                    status,
+                    OverlayServicePhase::Error,
+                    Some(error.message.clone()),
+                );
                 backend.stop();
-                return Err(command_error);
+                return Err(if error.permanent {
+                    OverlayCommandError::BackendUnsupported(error.message)
+                } else {
+                    OverlayCommandError::Backend(error.message)
+                });
             }
             update_status(status, OverlayServicePhase::Running, None);
             Ok(())

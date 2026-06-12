@@ -1,15 +1,59 @@
 use vrcx_0_host::vr_overlay::{
-    OverlayActorHandle, OverlayServiceCommand, OverlayServicePhase, OverlaySurfaceConfig,
-    VrDeviceSnapshot,
+    OverlayActorHandle, OverlayCommandError, OverlayServiceCommand, OverlayServicePhase,
+    OverlaySurfaceConfig, VrDeviceSnapshot,
 };
 use vrcx_0_vr_overlay::{OverlaySurfaceId, RgbaFrame};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct OverlayServiceStartError {
+    pub message: String,
+    pub permanent: bool,
+}
+
+impl OverlayServiceStartError {
+    pub fn transient(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            permanent: false,
+        }
+    }
+
+    pub fn permanent(message: impl Into<String>) -> Self {
+        Self {
+            message: message.into(),
+            permanent: true,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum OverlayBackendPreference {
+    #[default]
+    Auto,
+    OpenVr,
+    OpenXr,
+}
+
+impl OverlayBackendPreference {
+    pub fn from_config(value: &str) -> Self {
+        match value.trim() {
+            "openvr" => Self::OpenVr,
+            "openxr" => Self::OpenXr,
+            _ => Self::Auto,
+        }
+    }
+}
+
 pub trait VrOverlayServiceControl {
-    fn start(&mut self) -> Result<(), String>;
+    fn start(&mut self) -> Result<(), OverlayServiceStartError>;
     fn update_frame(&mut self, frame: RgbaFrame) -> Result<(), String>;
     fn show(&mut self) -> Result<(), String>;
     fn snapshot_devices(&mut self) -> Result<Vec<VrDeviceSnapshot>, String>;
     fn set_surface_configs(&mut self, configs: Vec<OverlaySurfaceConfig>) -> Result<(), String>;
+    fn set_backend_preference(&mut self, _preference: OverlayBackendPreference) {}
+    fn active_backend(&self) -> Option<&'static str> {
+        None
+    }
     fn stop(&mut self);
     fn is_running(&self) -> bool;
 }
@@ -19,6 +63,8 @@ pub struct HostVrOverlayService {
     surface_ids: Vec<OverlaySurfaceId>,
     actor: Option<OverlayActorHandle>,
     backend: OverlayBackendKind,
+    preference: OverlayBackendPreference,
+    active_backend: Option<&'static str>,
     last_frame: Option<RgbaFrame>,
     frame_dirty: bool,
 }
@@ -32,6 +78,15 @@ enum OverlayBackendKind {
 impl HostVrOverlayService {
     pub fn new(configs: Vec<OverlaySurfaceConfig>) -> Self {
         Self::new_with_backend(configs, OverlayBackendKind::Auto)
+    }
+
+    pub fn new_with_preference(
+        configs: Vec<OverlaySurfaceConfig>,
+        preference: OverlayBackendPreference,
+    ) -> Self {
+        let mut service = Self::new_with_backend(configs, OverlayBackendKind::Auto);
+        service.preference = preference;
+        service
     }
 
     pub fn new_noop(configs: Vec<OverlaySurfaceConfig>) -> Self {
@@ -48,6 +103,8 @@ impl HostVrOverlayService {
             surface_ids,
             actor: None,
             backend,
+            preference: OverlayBackendPreference::Auto,
+            active_backend: None,
             last_frame: None,
             frame_dirty: true,
         }
@@ -55,7 +112,7 @@ impl HostVrOverlayService {
 
     pub fn backend_available() -> bool {
         cfg!(all(
-            feature = "steamvr-overlay",
+            any(feature = "steamvr-overlay", feature = "openxr-overlay"),
             any(windows, target_os = "linux")
         ))
     }
@@ -92,31 +149,39 @@ impl HostVrOverlayService {
 }
 
 impl VrOverlayServiceControl for HostVrOverlayService {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), OverlayServiceStartError> {
         if self.actor.as_ref().is_some_and(actor_is_active) {
             return Ok(());
         }
         self.stop();
 
-        let actor = spawn_overlay_actor(self.backend);
+        let (actor, backend_kind) = spawn_overlay_actor(self.backend, self.preference);
         if let Err(error) = actor.send(OverlayServiceCommand::Start) {
             let _ = actor.send(OverlayServiceCommand::Stop);
-            return Err(error.to_string());
+            let permanent = matches!(error, OverlayCommandError::BackendUnsupported(_));
+            return Err(OverlayServiceStartError {
+                message: error.to_string(),
+                permanent,
+            });
         }
         let registered_surface_ids = match Self::register_surface_configs(&actor, &self.configs) {
             Ok(surface_ids) => surface_ids,
             Err(error) => {
                 let _ = actor.send(OverlayServiceCommand::Stop);
-                return Err(error);
+                return Err(OverlayServiceStartError::transient(error));
             }
         };
         if registered_surface_ids.is_empty() {
             let _ = actor.send(OverlayServiceCommand::Stop);
-            return Err("no VR overlay surfaces were registered".to_string());
+            return Err(OverlayServiceStartError::transient(
+                "no VR overlay surfaces were registered",
+            ));
         }
         self.surface_ids = registered_surface_ids;
         self.actor = Some(actor);
+        self.active_backend = Some(backend_kind);
         self.frame_dirty = true;
+        tracing::info!(backend = backend_kind, "VR overlay service started");
         Ok(())
     }
 
@@ -204,10 +269,29 @@ impl VrOverlayServiceControl for HostVrOverlayService {
         Ok(())
     }
 
+    fn set_backend_preference(&mut self, preference: OverlayBackendPreference) {
+        if self.preference == preference {
+            return;
+        }
+        self.preference = preference;
+        if self.actor.is_some() {
+            self.stop();
+        }
+    }
+
+    fn active_backend(&self) -> Option<&'static str> {
+        if self.is_running() {
+            self.active_backend
+        } else {
+            None
+        }
+    }
+
     fn stop(&mut self) {
         if let Some(actor) = self.actor.take() {
             let _ = actor.send(OverlayServiceCommand::Stop);
         }
+        self.active_backend = None;
         self.frame_dirty = true;
     }
 
@@ -247,22 +331,76 @@ fn actor_is_active(actor: &OverlayActorHandle) -> bool {
     )
 }
 
-fn spawn_overlay_actor(kind: OverlayBackendKind) -> OverlayActorHandle {
+fn spawn_overlay_actor(
+    kind: OverlayBackendKind,
+    preference: OverlayBackendPreference,
+) -> (OverlayActorHandle, &'static str) {
     match kind {
-        OverlayBackendKind::Noop => OverlayActorHandle::spawn_noop(),
-        OverlayBackendKind::Auto => spawn_auto_overlay_actor(),
+        OverlayBackendKind::Noop => (OverlayActorHandle::spawn_noop(), "noop"),
+        OverlayBackendKind::Auto => spawn_auto_overlay_actor(preference),
     }
 }
 
-fn spawn_auto_overlay_actor() -> OverlayActorHandle {
+fn spawn_auto_overlay_actor(
+    preference: OverlayBackendPreference,
+) -> (OverlayActorHandle, &'static str) {
+    let spawned = match preference {
+        OverlayBackendPreference::OpenVr => spawn_openvr_actor(),
+        OverlayBackendPreference::OpenXr => spawn_openxr_actor(),
+        OverlayBackendPreference::Auto => {
+            let openxr_supported = openxr_runtime_supported();
+            if cfg!(target_os = "linux") && openxr_supported {
+                spawn_openxr_actor()
+            } else {
+                spawn_openvr_actor().or_else(|| openxr_supported.then(spawn_openxr_actor).flatten())
+            }
+        }
+    };
+    spawned.unwrap_or_else(|| {
+        tracing::warn!(
+            preference = ?preference,
+            "no VR overlay backend is available in this build; using noop backend"
+        );
+        (OverlayActorHandle::spawn_noop(), "noop")
+    })
+}
+
+fn spawn_openvr_actor() -> Option<(OverlayActorHandle, &'static str)> {
     #[cfg(all(feature = "steamvr-overlay", any(windows, target_os = "linux")))]
     {
-        OverlayActorHandle::spawn_openvr()
+        Some((OverlayActorHandle::spawn_openvr(), "openvr"))
     }
-
     #[cfg(not(all(feature = "steamvr-overlay", any(windows, target_os = "linux"))))]
     {
-        OverlayActorHandle::spawn_noop()
+        None
+    }
+}
+
+fn spawn_openxr_actor() -> Option<(OverlayActorHandle, &'static str)> {
+    #[cfg(all(feature = "openxr-overlay", any(windows, target_os = "linux")))]
+    {
+        Some((OverlayActorHandle::spawn_openxr(), "openxr"))
+    }
+    #[cfg(not(all(feature = "openxr-overlay", any(windows, target_os = "linux"))))]
+    {
+        None
+    }
+}
+
+fn openxr_runtime_supported() -> bool {
+    #[cfg(all(feature = "openxr-overlay", any(windows, target_os = "linux")))]
+    {
+        match vrcx_0_host::vr_overlay::probe_openxr_runtime() {
+            Ok(()) => true,
+            Err(error) => {
+                tracing::debug!(error = %error, "OpenXR overlay runtime probe failed");
+                false
+            }
+        }
+    }
+    #[cfg(not(all(feature = "openxr-overlay", any(windows, target_os = "linux"))))]
+    {
+        false
     }
 }
 

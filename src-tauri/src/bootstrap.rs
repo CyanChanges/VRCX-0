@@ -960,27 +960,6 @@ fn sync_autostart_from_db(app: &tauri::App, state: &AppState) {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn auth_failure_notification_label_language_prefixes_are_localized() {
-        assert_eq!(
-            auth_failure_notification_labels_for_language("zh-CN").title,
-            "VRChat 登录已失效"
-        );
-        assert_eq!(
-            auth_failure_notification_labels_for_language("zh-TW").title,
-            "VRChat 登入已失效"
-        );
-        assert_eq!(
-            auth_failure_notification_labels_for_language("ja").title,
-            "VRChat ログインの有効期限が切れました"
-        );
-    }
-}
-
 fn apply_autostart_window_state_if_needed(app: &tauri::App, state: &AppState) {
     if state.launched_from_autostart
         && state.storage.get("VRCX_StartAsMinimizedState").as_deref() == Some("true")
@@ -1035,5 +1014,26 @@ fn start_host_services(app: &tauri::AppHandle, state: &AppState) {
         state
             .log_watcher_compat_bridge
             .start(app.clone(), state.log_watcher.clone());
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn auth_failure_notification_label_language_prefixes_are_localized() {
+        assert_eq!(
+            auth_failure_notification_labels_for_language("zh-CN").title,
+            "VRChat 登录已失效"
+        );
+        assert_eq!(
+            auth_failure_notification_labels_for_language("zh-TW").title,
+            "VRChat 登入已失效"
+        );
+        assert_eq!(
+            auth_failure_notification_labels_for_language("ja").title,
+            "VRChat ログインの有効期限が切れました"
+        );
     }
 }

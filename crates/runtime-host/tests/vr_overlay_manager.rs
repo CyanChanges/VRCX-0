@@ -1,6 +1,7 @@
 use vrcx_0_host::vr_overlay::{OverlaySurfaceConfig, VrDeviceSnapshot};
 use vrcx_0_runtime_host::vr_overlay::{
-    VrOverlayEligibility, VrOverlayManager, VrOverlayServiceControl, WristOverlayStartMode,
+    OverlayServiceStartError, VrOverlayEligibility, VrOverlayManager, VrOverlayServiceControl,
+    WristOverlayStartMode,
 };
 use vrcx_0_vr_overlay::{OverlaySize, RgbaFrame};
 
@@ -139,10 +140,9 @@ fn manager_retries_start_when_service_reports_not_running_after_failure() {
 #[test]
 fn manager_backs_off_after_start_error() {
     let service = RecordingOverlayService {
-        start_error: Some(
-            "overlay backend error: OpenVR init failed: VRInitError_Init_NoServerForBackgroundApp"
-                .to_string(),
-        ),
+        start_error: Some(OverlayServiceStartError::transient(
+            "overlay backend error: OpenVR init failed: VRInitError_Init_NoServerForBackgroundApp",
+        )),
         ..RecordingOverlayService::default()
     };
     let starts = service.starts.clone();
@@ -160,6 +160,68 @@ fn manager_backs_off_after_start_error() {
 
     assert_eq!(*starts.borrow(), 1);
     assert!(!manager.is_running());
+}
+
+#[test]
+fn manager_blocks_retries_after_permanent_start_error_until_eligibility_changes() {
+    let service = RecordingOverlayService {
+        start_error: Some(OverlayServiceStartError::permanent(
+            "overlay backend is unsupported by the current VR runtime: \
+             OpenVR init failed: VRInitError_Init_InterfaceNotFound",
+        )),
+        ..RecordingOverlayService::default()
+    };
+    let starts = service.starts.clone();
+    let mut manager = VrOverlayManager::new(service);
+    let eligibility = VrOverlayEligibility {
+        enabled: true,
+        backend_available: true,
+        vr_mode: true,
+        steamvr_running: true,
+        start_mode: WristOverlayStartMode::VrchatVrMode,
+    };
+
+    for _ in 0..5 {
+        manager.reconcile(eligibility);
+    }
+    assert_eq!(*starts.borrow(), 1);
+
+    let changed = VrOverlayEligibility {
+        start_mode: WristOverlayStartMode::SteamVr,
+        ..eligibility
+    };
+    manager.reconcile(changed);
+    manager.reconcile(changed);
+    assert_eq!(*starts.borrow(), 2);
+}
+
+#[test]
+fn manager_permanent_block_clears_after_eligibility_drops_and_returns() {
+    let service = RecordingOverlayService {
+        start_error: Some(OverlayServiceStartError::permanent("unsupported runtime")),
+        ..RecordingOverlayService::default()
+    };
+    let starts = service.starts.clone();
+    let mut manager = VrOverlayManager::new(service);
+    let eligibility = VrOverlayEligibility {
+        enabled: true,
+        backend_available: true,
+        vr_mode: true,
+        steamvr_running: true,
+        start_mode: WristOverlayStartMode::VrchatVrMode,
+    };
+
+    manager.reconcile(eligibility);
+    manager.reconcile(eligibility);
+    assert_eq!(*starts.borrow(), 1);
+
+    manager.reconcile(VrOverlayEligibility {
+        vr_mode: false,
+        ..eligibility
+    });
+    manager.reconcile(eligibility);
+    manager.reconcile(eligibility);
+    assert_eq!(*starts.borrow(), 2);
 }
 
 #[test]
@@ -204,7 +266,7 @@ struct RecordingOverlayService {
     shows: std::rc::Rc<std::cell::RefCell<u32>>,
     running: bool,
     report_running_after_start: bool,
-    start_error: Option<String>,
+    start_error: Option<OverlayServiceStartError>,
 }
 
 impl Default for RecordingOverlayService {
@@ -222,7 +284,7 @@ impl Default for RecordingOverlayService {
 }
 
 impl VrOverlayServiceControl for RecordingOverlayService {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), OverlayServiceStartError> {
         *self.starts.borrow_mut() += 1;
         if let Some(error) = &self.start_error {
             return Err(error.clone());

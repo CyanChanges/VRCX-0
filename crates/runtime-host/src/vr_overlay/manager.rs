@@ -3,13 +3,19 @@ use std::time::{Duration, Instant};
 use vrcx_0_host::vr_overlay::{OverlaySurfaceConfig, VrDeviceSnapshot};
 use vrcx_0_vr_overlay::RgbaFrame;
 
-use super::{eligibility::VrOverlayEligibility, service::VrOverlayServiceControl};
+use super::{
+    eligibility::VrOverlayEligibility,
+    service::{OverlayBackendPreference, VrOverlayServiceControl},
+};
 
-const OVERLAY_START_RETRY_BACKOFF: Duration = Duration::from_secs(5);
+const OVERLAY_START_RETRY_INITIAL_BACKOFF: Duration = Duration::from_secs(5);
+const OVERLAY_START_RETRY_MAX_BACKOFF: Duration = Duration::from_secs(60);
 
 pub struct VrOverlayManager<S> {
     service: S,
     next_start_attempt_at: Option<Instant>,
+    start_retry_backoff: Duration,
+    unsupported_eligibility: Option<VrOverlayEligibility>,
 }
 
 impl<S> VrOverlayManager<S>
@@ -20,11 +26,20 @@ where
         Self {
             service,
             next_start_attempt_at: None,
+            start_retry_backoff: OVERLAY_START_RETRY_INITIAL_BACKOFF,
+            unsupported_eligibility: None,
         }
     }
 
     pub fn reconcile(&mut self, eligibility: VrOverlayEligibility) {
         if eligibility.can_run() {
+            if self
+                .unsupported_eligibility
+                .is_some_and(|blocked| blocked == eligibility)
+            {
+                return;
+            }
+            self.unsupported_eligibility = None;
             if !self.service.is_running() {
                 let now = Instant::now();
                 if self
@@ -35,22 +50,39 @@ where
                 }
                 match self.service.start() {
                     Ok(()) => {
-                        self.next_start_attempt_at = None;
+                        self.reset_retry_state();
+                    }
+                    Err(error) if error.permanent => {
+                        self.reset_retry_state();
+                        self.unsupported_eligibility = Some(eligibility);
+                        tracing::warn!(
+                            error = %error.message,
+                            "VR overlay backend is unsupported by the current VR runtime; \
+                             retrying once VR conditions change"
+                        );
                     }
                     Err(error) => {
-                        self.next_start_attempt_at = Some(now + OVERLAY_START_RETRY_BACKOFF);
-                        log_overlay_start_error(&error);
+                        self.next_start_attempt_at = Some(now + self.start_retry_backoff);
+                        self.start_retry_backoff =
+                            (self.start_retry_backoff * 2).min(OVERLAY_START_RETRY_MAX_BACKOFF);
+                        log_overlay_start_error(&error.message);
                     }
                 }
             } else {
-                self.next_start_attempt_at = None;
+                self.reset_retry_state();
             }
         } else {
-            self.next_start_attempt_at = None;
+            self.reset_retry_state();
+            self.unsupported_eligibility = None;
             if self.service.is_running() {
                 self.service.stop();
             }
         }
+    }
+
+    fn reset_retry_state(&mut self) {
+        self.next_start_attempt_at = None;
+        self.start_retry_backoff = OVERLAY_START_RETRY_INITIAL_BACKOFF;
     }
 
     pub fn is_running(&self) -> bool {
@@ -74,6 +106,16 @@ where
         configs: Vec<OverlaySurfaceConfig>,
     ) -> Result<(), String> {
         self.service.set_surface_configs(configs)
+    }
+
+    pub fn set_backend_preference(&mut self, preference: OverlayBackendPreference) {
+        self.unsupported_eligibility = None;
+        self.reset_retry_state();
+        self.service.set_backend_preference(preference);
+    }
+
+    pub fn active_backend(&self) -> Option<&'static str> {
+        self.service.active_backend()
     }
 
     pub fn into_inner(self) -> S {

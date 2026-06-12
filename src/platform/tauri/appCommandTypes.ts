@@ -1,8 +1,9 @@
-import type { TauriCommandNamespace } from './commands';
 import type {
     OverlayActivityCategory,
     OverlayActivityScope
 } from '@/shared/constants/overlayActivityFilters';
+
+import type { TauriCommandNamespace } from './commands';
 
 export interface AssetBundleCacheCheckResult {
     Item1?: number;
@@ -339,6 +340,7 @@ export interface VrOverlayRuntimeSnapshot {
     running: boolean;
     vrMode: boolean;
     steamvrRunning: boolean;
+    activeBackend: string | null;
 }
 
 export interface RuntimeAuthScopeSnapshot {
@@ -1089,7 +1091,9 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
         userId: string;
         cutoffDate?: string | null;
     }): Promise<number>;
-    FeedRowsQuery(input: { query: FeedRowsQueryInput }): Promise<FeedRowOutput[]>;
+    FeedRowsQuery(input: {
+        query: FeedRowsQueryInput;
+    }): Promise<FeedRowOutput[]>;
     FeedReadModelQuery(input: {
         query: FeedReadModelQueryInput;
     }): Promise<FeedReadModelOutput>;
@@ -1143,9 +1147,7 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
     ActivitySyncStateGet(input: {
         userId: string;
     }): Promise<ActivitySyncStateOutput | null>;
-    ActivitySyncStateUpsert(input: {
-        entry: RawJsonRecord;
-    }): Promise<void>;
+    ActivitySyncStateUpsert(input: { entry: RawJsonRecord }): Promise<void>;
     ActivitySessionsGet(input: {
         userId: string;
     }): Promise<ActivitySessionOutput[]>;
@@ -1161,9 +1163,7 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
     ActivityBucketCacheGet(input: {
         query: RawJsonRecord;
     }): Promise<ActivityBucketCacheOutput | null>;
-    ActivityBucketCacheUpsert(input: {
-        entry: RawJsonRecord;
-    }): Promise<void>;
+    ActivityBucketCacheUpsert(input: { entry: RawJsonRecord }): Promise<void>;
     MutualGraphTablesEnsure(input: { userId: string }): Promise<RawJsonRecord>;
     MutualGraphSnapshotGet(input: {
         userId: string;
@@ -1199,13 +1199,18 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
     MemoListUserNotes(input: {
         ownerUserId: string;
     }): Promise<UserNoteOutput[]>;
-    MemoSaveUser(input: { userId: string; memo: string }): Promise<MemoSaveResult>;
+    MemoSaveUser(input: {
+        userId: string;
+        memo: string;
+    }): Promise<MemoSaveResult>;
     MemoGetWorld(input: { worldId: string }): Promise<WorldMemoOutput | null>;
     MemoSaveWorld(input: {
         worldId: string;
         memo: string;
     }): Promise<MemoSaveResult>;
-    MemoGetAvatar(input: { avatarId: string }): Promise<AvatarMemoOutput | null>;
+    MemoGetAvatar(input: {
+        avatarId: string;
+    }): Promise<AvatarMemoOutput | null>;
     MemoSaveAvatar(input: {
         avatarId: string;
         memo: string;
@@ -1709,7 +1714,10 @@ export interface AppTauriCommandNamespace extends TauriCommandNamespace {
         notification: RawJsonRecord;
     }): Promise<void>;
     NotificationV2Expire(input: { userId: string; id: string }): Promise<void>;
-    NotificationV2MarkSeen(input: { userId: string; id: string }): Promise<void>;
+    NotificationV2MarkSeen(input: {
+        userId: string;
+        id: string;
+    }): Promise<void>;
     NotificationUpdateExpired(input: {
         userId: string;
         id: unknown;

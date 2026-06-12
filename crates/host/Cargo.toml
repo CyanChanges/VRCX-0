@@ -6,6 +6,7 @@ edition = "2021"
 [features]
 default = []
 steamvr-overlay = ["dep:openvr"]
+openxr-overlay = ["dep:openxr", "dep:ash"]
 
 [dependencies]
 arboard = "3"
@@ -45,3 +46,5 @@ winreg = "0.56"
 
 [target.'cfg(any(windows, target_os = "linux"))'.dependencies]
 openvr = { version = "0.9", optional = true }
+openxr = { version = "0.21", optional = true, default-features = false, features = ["loaded"] }
+ash = { version = "0.38", optional = true }

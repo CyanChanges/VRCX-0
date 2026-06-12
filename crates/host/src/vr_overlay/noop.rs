@@ -2,14 +2,14 @@ use vrcx_0_vr_overlay::{OverlaySurfaceId, RgbaFrame};
 
 use super::{
     actor::OverlayBackend,
-    types::{OverlaySurfaceConfig, VrDeviceSnapshot},
+    types::{BackendStartError, OverlaySurfaceConfig, VrDeviceSnapshot},
 };
 
 #[derive(Default)]
 pub struct NoopOverlayBackend;
 
 impl OverlayBackend for NoopOverlayBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         Ok(())
     }
 

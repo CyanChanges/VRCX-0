@@ -17,13 +17,13 @@ use vrcx_0_vr_overlay::{OverlaySurfaceId, RgbaFrame};
 
 use super::{
     actor::OverlayBackend,
+    policy::WristVisibilityPolicy,
     types::{
-        OverlayActivationButton, OverlayPlacement, OverlaySurfaceConfig, VrDeviceSnapshot,
-        VrDeviceStatus,
+        BackendStartError, OverlayActivationButton, OverlayPlacement, OverlaySurfaceConfig,
+        VrDeviceSnapshot, VrDeviceStatus,
     },
 };
 
-const WRIST_OVERLAY_VISIBLE_DURATION: Duration = Duration::from_secs(10);
 const VISIBLE_FRAME_UPLOAD_INTERVAL: Duration = Duration::from_secs(2);
 
 pub struct OpenVrOverlayBackend {
@@ -36,7 +36,7 @@ struct OpenVrSurface {
     handle: OverlayHandle,
     config: OverlaySurfaceConfig,
     transform_device: Option<TrackedDeviceIndex>,
-    opened_until: Option<Instant>,
+    policy: WristVisibilityPolicy,
     visible: bool,
     active: bool,
     pending_frame: Option<RgbaFrame>,
@@ -49,7 +49,7 @@ struct SurfaceUpdateCandidate {
     handle: OverlayHandle,
     config: OverlaySurfaceConfig,
     transform_device: Option<TrackedDeviceIndex>,
-    opened_until: Option<Instant>,
+    policy: WristVisibilityPolicy,
 }
 
 impl OpenVrOverlayBackend {
@@ -69,23 +69,23 @@ impl Default for OpenVrOverlayBackend {
 }
 
 impl OverlayBackend for OpenVrOverlayBackend {
-    fn start(&mut self) -> Result<(), String> {
+    fn start(&mut self) -> Result<(), BackendStartError> {
         if self.context.is_some() && self.overlay.is_some() {
             return Ok(());
         }
 
         let context = unsafe { openvr::init(ApplicationType::Background) }
-            .map_err(|error| format!("OpenVR init failed: {error:?}"))?;
+            .map_err(|error| init_start_error("OpenVR init failed", error))?;
         let overlay = context
             .overlay()
-            .map_err(|error| format!("OpenVR overlay interface failed: {error:?}"))?;
+            .map_err(|error| init_start_error("OpenVR overlay interface failed", error))?;
         self.context = Some(context);
         self.overlay = Some(overlay);
         Ok(())
     }
 
     fn register_surface(&mut self, config: OverlaySurfaceConfig) -> Result<(), String> {
-        self.start()?;
+        self.start().map_err(|error| error.message)?;
         let surface_id = config.surface_id.clone();
         if self.surfaces.contains_key(&surface_id) {
             self.apply_config(&config)?;
@@ -112,7 +112,7 @@ impl OverlayBackend for OpenVrOverlayBackend {
                 handle,
                 config: config.clone(),
                 transform_device: None,
-                opened_until: None,
+                policy: WristVisibilityPolicy::default(),
                 visible: false,
                 active: true,
                 pending_frame: None,
@@ -180,13 +180,13 @@ impl OverlayBackend for OpenVrOverlayBackend {
         self.set_visibility(surface_id, false)?;
         if let Some(surface) = self.surfaces.get_mut(surface_id) {
             surface.active = false;
-            surface.opened_until = None;
+            surface.policy.close();
         }
         Ok(())
     }
 
     fn snapshot_devices(&mut self) -> Result<Vec<VrDeviceSnapshot>, String> {
-        self.start()?;
+        self.start().map_err(|error| error.message)?;
         let context = self
             .context
             .as_ref()
@@ -235,7 +235,7 @@ impl OpenVrOverlayBackend {
                 handle: surface.handle,
                 config: surface.config.clone(),
                 transform_device: surface.transform_device,
-                opened_until: surface.opened_until,
+                policy: surface.policy,
             })
             .collect::<Vec<_>>();
 
@@ -248,7 +248,7 @@ impl OpenVrOverlayBackend {
         let mut visibility_updates = Vec::new();
         for candidate in candidates {
             let mut transform_device = candidate.transform_device;
-            let mut opened_until = candidate.opened_until;
+            let mut policy = candidate.policy;
 
             if let Ok(device) = resolve_device(&system, &candidate.config.placement) {
                 if transform_device != Some(device) {
@@ -268,23 +268,19 @@ impl OpenVrOverlayBackend {
                 }
                 transform_device = Some(device);
                 if device_button_pressed(&system, device, candidate.config.activation_button) {
-                    opened_until = Some(now + WRIST_OVERLAY_VISIBLE_DURATION);
+                    policy.open(now);
                 }
             }
 
-            let visible =
-                transform_device.is_some() && opened_until.is_some_and(|until| now <= until);
-            if !visible && opened_until.is_some_and(|until| now > until) {
-                opened_until = None;
-            }
-            surface_updates.push((candidate.surface_id.clone(), transform_device, opened_until));
+            let visible = policy.evaluate(now, transform_device.is_some());
+            surface_updates.push((candidate.surface_id.clone(), transform_device, policy));
             visibility_updates.push((candidate.surface_id, visible));
         }
 
-        for (surface_id, transform_device, opened_until) in surface_updates {
+        for (surface_id, transform_device, policy) in surface_updates {
             if let Some(surface) = self.surfaces.get_mut(&surface_id) {
                 surface.transform_device = transform_device;
-                surface.opened_until = opened_until;
+                surface.policy = policy;
             }
         }
         for (surface_id, visible) in visibility_updates {
@@ -419,6 +415,25 @@ impl OpenVrOverlayBackend {
                     surface_id.as_str()
                 )
             })
+    }
+}
+
+fn init_start_error(context: &str, error: openvr::InitError) -> BackendStartError {
+    let message = format!("{context}: {error:?}");
+    let permanent = matches!(
+        error,
+        openvr::InitError::Init_InterfaceNotFound
+            | openvr::InitError::Init_InvalidInterface
+            | openvr::InitError::Init_InstallationNotFound
+            | openvr::InitError::Init_InstallationCorrupt
+            | openvr::InitError::Init_VRClientDLLNotFound
+            | openvr::InitError::Init_FactoryNotFound
+            | openvr::InitError::Init_PathRegistryNotFound
+    );
+    if permanent {
+        BackendStartError::permanent(message)
+    } else {
+        BackendStartError::transient(message)
     }
 }
 
