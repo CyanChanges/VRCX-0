@@ -343,28 +343,6 @@ function findGameLogSessionIndex(
     return -1;
 }
 
-function findMatchingGameLogSessionIndex(
-    event: GameLogRow,
-    segmentsAsc: Array<GameLogSessionSegment & { epoch: number }>,
-    locationMap: Map<string, number[]>
-): number {
-    const eventEpoch = toGameLogSessionEpoch(event.created_at);
-    const target = eventEpoch + SESSION_TOLERANCE_MS;
-    const candidates = event.location ? locationMap.get(event.location) : null;
-
-    if (candidates && candidates.length > 0) {
-        for (let index = candidates.length - 1; index >= 0; index -= 1) {
-            const segmentIndex = candidates[index];
-            if (segmentsAsc[segmentIndex].epoch <= target) {
-                return segmentIndex;
-            }
-        }
-        return -1;
-    }
-
-    return findGameLogSessionIndex(eventEpoch, segmentsAsc);
-}
-
 function toGameLogSessionMember(event: GameLogRow): GameLogSessionMember {
     return {
         displayName: event.displayName,
@@ -570,21 +548,11 @@ export function buildGameLogSessions(
         });
     }
 
-    const locationMap = new Map();
-    for (let index = 0; index < segmentsAsc.length; index += 1) {
-        const location = segmentsAsc[index].location;
-        if (!locationMap.has(location)) {
-            locationMap.set(location, []);
-        }
-        locationMap.get(location).push(index);
-    }
-
     if (dedupedEvents && dedupedEvents.length > 0) {
         for (const event of dedupedEvents) {
-            const index = findMatchingGameLogSessionIndex(
-                event,
-                segmentsAsc,
-                locationMap
+            const index = findGameLogSessionIndex(
+                toGameLogSessionEpoch(event.created_at),
+                segmentsAsc
             );
             if (index === -1) {
                 continue;

@@ -1308,18 +1308,13 @@ pub fn game_log_query(db: &DatabaseService, query: GameLogQueryInput) -> Result<
             let mut db_params = HashMap::new();
             db_params.insert("@after_date".into(), Value::String(after_date));
             db_params.insert("@before_date".into(), Value::String(before_date));
-            let placeholders = add_list_params(&mut db_params, &location_tags, "location_tag");
-            let location_in = placeholders.join(", ");
             let mut rows = Vec::new();
             for row in db.execute(
-                &format!(
-                    "SELECT id, type, created_at, display_name, user_id, location
+                "SELECT id, type, created_at, display_name, user_id, location
                      FROM gamelog_join_leave
-                     WHERE location IN ({location_in})
-                       AND created_at >= @after_date
+                     WHERE created_at >= @after_date
                        AND created_at <= @before_date
-                     ORDER BY created_at ASC, id ASC"
-                ),
+                     ORDER BY created_at ASC, id ASC",
                 &db_params,
             )? {
                 rows.push(json!({
@@ -1332,14 +1327,11 @@ pub fn game_log_query(db: &DatabaseService, query: GameLogQueryInput) -> Result<
                 }));
             }
             for row in db.execute(
-                &format!(
-                    "SELECT id, created_at, video_url, video_name, video_id, display_name, user_id, location
+                "SELECT id, created_at, video_url, video_name, video_id, display_name, user_id, location
                      FROM gamelog_video_play
-                     WHERE location IN ({location_in})
-                       AND created_at >= @after_date
+                     WHERE created_at >= @after_date
                        AND created_at <= @before_date
-                     ORDER BY created_at ASC, id ASC"
-                ),
+                     ORDER BY created_at ASC, id ASC",
                 &db_params,
             )? {
                 rows.push(json!({

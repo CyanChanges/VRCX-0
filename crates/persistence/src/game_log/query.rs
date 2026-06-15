@@ -39,6 +39,22 @@ fn location_before_or_at_sql() -> String {
         .to_string(SqliteQueryBuilder)
 }
 
+fn last_location_sql() -> String {
+    Query::select()
+        .columns([
+            ident(COL_CREATED_AT),
+            ident(COL_LOCATION),
+            ident(COL_WORLD_ID),
+            ident(COL_WORLD_NAME),
+            ident(COL_TIME),
+            ident(COL_GROUP_NAME),
+        ])
+        .from(ident(TABLE_LOCATION))
+        .order_by(ident(COL_ID), Order::Desc)
+        .limit(1)
+        .to_string(SqliteQueryBuilder)
+}
+
 fn join_leave_entries_for_location_range_sql() -> String {
     Query::select()
         .columns([
@@ -223,6 +239,27 @@ pub fn get_game_log_locations(db: &DatabaseService) -> Result<Vec<GameLogLocatio
             group_name: row_string(&row, 5),
         })
         .collect())
+}
+
+pub fn get_last_game_log_location(
+    db: &DatabaseService,
+) -> Result<Option<GameLogLocationEntry>, Error> {
+    ensure_game_log_tables(db)?;
+    Ok(db
+        .execute(&last_location_sql(), &Default::default())?
+        .into_iter()
+        .next()
+        .map(|row| GameLogLocationEntry {
+            created_at: row_string(&row, 0),
+            location: row_string(&row, 1),
+            world_id: row_string(&row, 2),
+            world_name: row_string(&row, 3),
+            time: row
+                .get(4)
+                .and_then(serde_json::Value::as_i64)
+                .unwrap_or_default(),
+            group_name: row_string(&row, 5),
+        }))
 }
 
 pub fn get_game_log_join_leave(db: &DatabaseService) -> Result<Vec<GameLogJoinLeaveEntry>, Error> {

@@ -130,6 +130,64 @@ describe('gameLog utilities', () => {
         ]);
     });
 
+    it('brackets events into sessions by stream order, ignoring stale event locations', () => {
+        const result = buildGameLogSessions(
+            [
+                {
+                    id: 1,
+                    created_at: '2024-01-01T10:00:00.000Z',
+                    location: 'wrld_old:1',
+                    worldId: 'wrld_old',
+                    worldName: 'Old World'
+                },
+                {
+                    id: 2,
+                    created_at: '2024-01-01T11:00:00.000Z',
+                    location: 'wrld_new:1',
+                    worldId: 'wrld_new',
+                    worldName: 'New World'
+                }
+            ],
+            [
+                {
+                    type: 'OnPlayerJoined',
+                    created_at: '2024-01-01T10:30:00.000Z',
+                    location: 'wrld_old:1',
+                    userId: 'usr_old',
+                    displayName: 'Old'
+                },
+                // Joined during the NEW session but stamped with an empty location
+                // (watcher resumed mid-instance) — must still land in the new session.
+                {
+                    type: 'OnPlayerJoined',
+                    created_at: '2024-01-01T11:05:00.000Z',
+                    location: '',
+                    userId: 'usr_empty',
+                    displayName: 'Empty'
+                },
+                // Joined during the NEW session but stamped with a stale old location —
+                // stream order must win over the location field.
+                {
+                    type: 'OnPlayerJoined',
+                    created_at: '2024-01-01T11:06:00.000Z',
+                    location: 'wrld_old:1',
+                    userId: 'usr_stale',
+                    displayName: 'Stale'
+                }
+            ]
+        );
+
+        const [newSegment, oldSegment] = result.segments;
+        expect(newSegment.worldId).toBe('wrld_new');
+        expect(
+            newSegment.events.map((event: any) => event.userId).sort()
+        ).toEqual(['usr_empty', 'usr_stale']);
+        expect(oldSegment.worldId).toBe('wrld_old');
+        expect(oldSegment.events.map((event: any) => event.userId)).toEqual([
+            'usr_old'
+        ]);
+    });
+
     it('filters and orders log rows by user-facing searchable fields', () => {
         expect(
             gameLogSearchFilter(

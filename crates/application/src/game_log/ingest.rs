@@ -78,6 +78,13 @@ impl GameLogIngestEngine {
     pub fn runtime_snapshot(&self) -> RuntimeSnapshot {
         self.state.snapshot()
     }
+    pub fn seed_current_location(&mut self, location: String, world_name: String) {
+        if location.is_empty() || !self.state.current_location.is_empty() {
+            return;
+        }
+        self.state.current_location = location;
+        self.state.current_world_name = world_name;
+    }
 
     pub fn ingest_events(
         &mut self,
@@ -593,5 +600,53 @@ mod tests {
         assert_eq!(output.batch.externals.len(), 1);
         assert_eq!(output.runtime_persisted_mirrors.len(), 1);
         assert_eq!(output.runtime_persisted_mirrors[0][2], "vrcx");
+    }
+
+    #[test]
+    fn seeded_location_applies_to_join_without_location_event() {
+        let mut engine = GameLogIngestEngine::default();
+        engine.seed_current_location("wrld_seed:1".into(), "Seed World".into());
+        let output = engine.ingest_events(
+            &[event(
+                "2026-05-14T10:05:00.000Z",
+                GameLogEventKind::PlayerJoined {
+                    display_name: "Resumed".into(),
+                    user_id: "usr_resumed".into(),
+                },
+            )],
+            GameLogIngestOptions::default(),
+        );
+
+        assert_eq!(output.batch.join_leave.len(), 1);
+        assert_eq!(output.batch.join_leave[0].location, "wrld_seed:1");
+    }
+
+    #[test]
+    fn seed_does_not_override_observed_location() {
+        let mut engine = GameLogIngestEngine::default();
+        engine.ingest_events(
+            &[event(
+                "2026-05-14T10:00:00.000Z",
+                GameLogEventKind::Location {
+                    location: "wrld_real:1".into(),
+                    world_name: "Real".into(),
+                },
+            )],
+            GameLogIngestOptions::default(),
+        );
+        // Seeding after a real "Joining" line was observed must be ignored.
+        engine.seed_current_location("wrld_seed:1".into(), "Seed".into());
+        let output = engine.ingest_events(
+            &[event(
+                "2026-05-14T10:01:00.000Z",
+                GameLogEventKind::PlayerJoined {
+                    display_name: "Player".into(),
+                    user_id: "usr_player".into(),
+                },
+            )],
+            GameLogIngestOptions::default(),
+        );
+
+        assert_eq!(output.batch.join_leave[0].location, "wrld_real:1");
     }
 }

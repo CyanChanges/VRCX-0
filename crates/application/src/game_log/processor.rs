@@ -102,9 +102,18 @@ pub struct GameLogProcessor {
 
 impl GameLogProcessor {
     pub fn new(deps: GameLogProcessorDeps) -> Self {
+        let mut engine = GameLogIngestEngine::default();
+        if vrcx_0_persistence::game_log::game_log_location_table_exists(&deps.db).unwrap_or(false) {
+            if let Some(last) = vrcx_0_persistence::game_log::get_last_game_log_location(&deps.db)
+                .ok()
+                .flatten()
+            {
+                engine.seed_current_location(last.location, last.world_name);
+            }
+        }
         Self {
             deps,
-            engine: Arc::new(Mutex::new(GameLogIngestEngine::default())),
+            engine: Arc::new(Mutex::new(engine)),
             media_queue: InstanceMediaQueue::new(),
         }
     }

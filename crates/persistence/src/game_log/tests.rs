@@ -322,3 +322,134 @@ fn local_query_negative_limits_are_clamped_to_zero() -> Result<(), Error> {
     assert_eq!(result.as_array().map(Vec::len), Some(0));
     Ok(())
 }
+
+#[test]
+fn sessions_events_fetch_all_in_window_regardless_of_location() -> Result<(), Error> {
+    let test_db = test_db("store-gamelog-sessions-events-window")?;
+    let db = &test_db.db;
+
+    insert_location(
+        db,
+        &GameLogLocationEntry {
+            created_at: "2026-05-14T08:00:00.000Z".into(),
+            location: "wrld_orphan:1".into(),
+            world_id: "wrld_orphan".into(),
+            world_name: "Orphan".into(),
+            time: 0,
+            group_name: "".into(),
+        },
+    )?;
+
+    insert_join_leave(
+        db,
+        &GameLogJoinLeaveEntry {
+            created_at: "2026-05-14T08:00:10.000Z".into(),
+            event_type: "OnPlayerJoined".into(),
+            display_name: "Matched".into(),
+            location: "wrld_orphan:1".into(),
+            user_id: "usr_matched".into(),
+            time: 0,
+        },
+    )?;
+    insert_join_leave(
+        db,
+        &GameLogJoinLeaveEntry {
+            created_at: "2026-05-14T08:05:00.000Z".into(),
+            event_type: "OnPlayerJoined".into(),
+            display_name: "EmptyLoc".into(),
+            location: "".into(),
+            user_id: "usr_empty".into(),
+            time: 0,
+        },
+    )?;
+
+    insert_join_leave(
+        db,
+        &GameLogJoinLeaveEntry {
+            created_at: "2026-05-14T08:06:00.000Z".into(),
+            event_type: "OnPlayerJoined".into(),
+            display_name: "Traveling".into(),
+            location: "traveling".into(),
+            user_id: "usr_traveling".into(),
+            time: 0,
+        },
+    )?;
+
+    insert_join_leave(
+        db,
+        &GameLogJoinLeaveEntry {
+            created_at: "2026-05-14T08:07:00.000Z".into(),
+            event_type: "OnPlayerJoined".into(),
+            display_name: "Elsewhere".into(),
+            location: "wrld_elsewhere:1".into(),
+            user_id: "usr_elsewhere".into(),
+            time: 0,
+        },
+    )?;
+
+    let result = game_log_query(
+        db,
+        GameLogQueryInput {
+            kind: "sessionsEventsForSegments".into(),
+            params: RawJson::from(json!({
+                "locationTags": ["wrld_orphan:1"],
+                "afterDate": "2026-05-14T07:59:00.000Z",
+                "beforeDate": "2026-05-14T08:30:00.000Z"
+            })),
+        },
+    )?;
+
+    let rows = result.as_array().cloned().unwrap_or_default();
+    let names = rows
+        .iter()
+        .filter_map(|row| row.get("displayName").and_then(|value| value.as_str()))
+        .collect::<Vec<_>>();
+    assert!(names.contains(&"Matched"), "matched-location row missing");
+    assert!(names.contains(&"EmptyLoc"), "empty-location row missing");
+    assert!(
+        names.contains(&"Traveling"),
+        "traveling-location row missing"
+    );
+    assert!(
+        names.contains(&"Elsewhere"),
+        "different-location row missing"
+    );
+    assert_eq!(rows.len(), 4);
+    Ok(())
+}
+
+#[test]
+fn get_last_location_returns_latest_by_id() -> Result<(), Error> {
+    let test_db = test_db("store-gamelog-last-location")?;
+    let db = &test_db.db;
+
+    insert_location(
+        db,
+        &GameLogLocationEntry {
+            created_at: "2026-05-14T09:00:00.000Z".into(),
+            location: "wrld_a:1".into(),
+            world_id: "wrld_a".into(),
+            world_name: "A".into(),
+            time: 0,
+            group_name: "".into(),
+        },
+    )?;
+    insert_location(
+        db,
+        &GameLogLocationEntry {
+            created_at: "2026-05-14T10:00:00.000Z".into(),
+            location: "wrld_b:1".into(),
+            world_id: "wrld_b".into(),
+            world_name: "B".into(),
+            time: 0,
+            group_name: "".into(),
+        },
+    )?;
+
+    let last = crate::game_log::get_last_game_log_location(db)?;
+    assert_eq!(
+        last.map(|entry| entry.location),
+        Some("wrld_b:1".to_string())
+    );
+    Ok(())
+}
