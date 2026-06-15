@@ -7,6 +7,7 @@ mod output;
 mod projection;
 mod runtime_types;
 pub(crate) mod service;
+mod ws_event_log;
 
 pub use friends::{is_friend_event_type, RealtimeFriendsRuntime};
 pub use output::{

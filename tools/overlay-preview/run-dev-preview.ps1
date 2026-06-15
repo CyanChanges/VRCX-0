@@ -10,8 +10,8 @@ $previewStderr = Join-Path $previewDir 'preview.stderr.log'
 New-Item -ItemType Directory -Force -Path $previewDir | Out-Null
 Remove-Item -Force -ErrorAction SilentlyContinue $previewPath
 
-$env:VRCX0_OVERLAY_PREVIEW = '1'
-$env:VRCX0_OVERLAY_PREVIEW_PATH = $previewPath
+$env:VRCX_0_OVERLAY_PREVIEW = '1'
+$env:VRCX_0_OVERLAY_PREVIEW_PATH = $previewPath
 
 $previewArgs = @(
     'cargo',

@@ -165,10 +165,10 @@ export default defineConfig(({ mode }) => {
         define: {
             VERSION: JSON.stringify(version),
             VRCX_0_BUILD_LABEL: JSON.stringify(
-                process.env['VRCX-0_BUILD_LABEL'] || ''
+                process.env['VRCX_0_BUILD_LABEL'] || ''
             ),
             VRCX_0_BUILD_BADGE: JSON.stringify(
-                process.env['VRCX-0_BUILD_BADGE'] || ''
+                process.env['VRCX_0_BUILD_BADGE'] || ''
             ),
             VRCX_0_TELEMETRY_ENABLED: JSON.stringify(
                 isProductionBuild && telemetryEndpoint.length > 0

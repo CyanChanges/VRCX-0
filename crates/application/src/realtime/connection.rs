@@ -398,6 +398,7 @@ async fn connect_once(
     );
 
     let mut parser = RealtimeMessageParser::default();
+    let ws_event_log_path = crate::realtime::ws_event_log::resolve_path(deps.db.db_path());
     loop {
         tokio::select! {
             changed = attempt.cancel_rx.changed() => {
@@ -421,6 +422,9 @@ async fn connect_once(
                 match classify_websocket_frame(frame) {
                     RealtimeFrame::Text(text) => {
                         let received_at = chrono::Utc::now().to_rfc3339();
+                        if let Some(path) = &ws_event_log_path {
+                            crate::realtime::ws_event_log::append(path, &received_at, &text);
+                        }
                         if let Some(payload) = parser.parse_text(&text, received_at) {
                             let message_type = payload
                                 .json

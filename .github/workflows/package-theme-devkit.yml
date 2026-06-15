@@ -195,8 +195,8 @@ jobs:
             - name: Build Windows Theme Dev Kit exe
               if: runner.os == 'Windows'
               env:
-                  VRCX-0_BUILD_LABEL: theme-devkit
-                  VRCX-0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: theme-devkit
+                  VRCX_0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --config "${{ steps.config.outputs.config }}" \
@@ -206,8 +206,8 @@ jobs:
             - name: Build Linux Theme Dev Kit AppImage
               if: runner.os == 'Linux'
               env:
-                  VRCX-0_BUILD_LABEL: theme-devkit
-                  VRCX-0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: theme-devkit
+                  VRCX_0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --config "${{ steps.config.outputs.config }}" \
@@ -216,8 +216,8 @@ jobs:
             - name: Build macOS Theme Dev Kit DMG
               if: runner.os == 'macOS'
               env:
-                  VRCX-0_BUILD_LABEL: theme-devkit
-                  VRCX-0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: theme-devkit
+                  VRCX_0_BUILD_BADGE: Theme Dev Kit ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --target "${{ matrix.rust_target }}" \

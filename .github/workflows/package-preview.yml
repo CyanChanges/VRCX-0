@@ -162,8 +162,8 @@ jobs:
             - name: Build Windows Preview exe
               if: runner.os == 'Windows'
               env:
-                  VRCX-0_BUILD_LABEL: preview
-                  VRCX-0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: preview
+                  VRCX_0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --debug \
@@ -174,8 +174,8 @@ jobs:
             - name: Build Linux Preview AppImage
               if: runner.os == 'Linux'
               env:
-                  VRCX-0_BUILD_LABEL: preview
-                  VRCX-0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: preview
+                  VRCX_0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --config "${{ steps.config.outputs.config }}" \
@@ -184,8 +184,8 @@ jobs:
             - name: Build macOS Preview DMG
               if: runner.os == 'macOS'
               env:
-                  VRCX-0_BUILD_LABEL: preview
-                  VRCX-0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
+                  VRCX_0_BUILD_LABEL: preview
+                  VRCX_0_BUILD_BADGE: Preview ${{ needs.prepare.outputs.timestamp }}
               run: |
                   npm run tauri:build:devtools -- \
                       --target "${{ matrix.rust_target }}" \

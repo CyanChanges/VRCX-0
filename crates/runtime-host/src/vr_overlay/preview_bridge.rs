@@ -14,8 +14,8 @@ use super::{
     WristOverlayFrameInput,
 };
 
-const PREVIEW_ENABLED_ENV_KEY: &str = "VRCX0_OVERLAY_PREVIEW";
-const PREVIEW_PATH_ENV_KEY: &str = "VRCX0_OVERLAY_PREVIEW_PATH";
+const PREVIEW_ENABLED_ENV_KEY: &str = "VRCX_0_OVERLAY_PREVIEW";
+const PREVIEW_PATH_ENV_KEY: &str = "VRCX_0_OVERLAY_PREVIEW_PATH";
 const PREVIEW_DIR_NAME: &str = "vrcx0-overlay-preview";
 const PREVIEW_FILE_NAME: &str = "wrist.json";
 const PREVIEW_WRITE_INTERVAL: Duration = Duration::from_millis(250);

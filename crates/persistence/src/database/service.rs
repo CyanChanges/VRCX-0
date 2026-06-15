@@ -75,6 +75,10 @@ impl DatabaseService {
         })
     }
 
+    pub fn db_path(&self) -> &Path {
+        &self.db_path
+    }
+
     pub(crate) fn execute(
         &self,
         sql: &str,
