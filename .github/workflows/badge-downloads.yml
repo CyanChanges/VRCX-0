@@ -21,8 +21,6 @@ jobs:
               id: count
               env:
                   GH_TOKEN: ${{ github.token }}
-              # Count only user-facing installers; excludes the updater manifest
-              # (latest_linux_and_macos.json) and the macOS in-place update archives.
               run: |
                   count="$(gh api --paginate "repos/${{ github.repository }}/releases" \
                       --jq '[.[].assets[] | select(.name | test("\\.(exe|msi|rpm|deb|dmg|AppImage)$"; "i")) | .download_count] | add // 0')"
