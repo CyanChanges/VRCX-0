@@ -4754,7 +4754,7 @@
         "vrcx_updater": {
             "header": "VRCX-0 アップデーター",
             "latest_version": "VRCX-0は最新版です。",
-            "ready_for_update": "インストールの準備が完了しました。VRCX-0 を再起動して適用してください。",
+            "ready_for_update": "アップデート {value} の準備ができました",
             "branch_stable": "安定板",
             "release": "リリース",
             "download": "ダウンロード",

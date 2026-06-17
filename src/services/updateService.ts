@@ -27,6 +27,13 @@ export type UpdateOptions = {
     linuxPackageKind?: string;
     requireInstallerAsset?: boolean;
     onProgress?: (progress: number) => void;
+    onDownloadProgress?: (progress: UpdateDownloadProgress) => void;
+};
+
+export type UpdateDownloadProgress = {
+    downloadedBytes: number;
+    totalBytes: number;
+    percent: number;
 };
 
 type GitHubReleaseAsset = {
@@ -367,16 +374,28 @@ async function checkTauriUpdateForRelease(
 
 function handleTauriDownloadEvent(
     event: TauriDownloadEvent,
-    onProgress?: (progress: number) => void
+    onProgress?: (progress: number) => void,
+    onDownloadProgress?: (progress: UpdateDownloadProgress) => void
 ) {
     if (event.event === 'Started') {
+        const contentLength = Number(event.data?.contentLength) || 0;
+        onDownloadProgress?.({
+            downloadedBytes: 0,
+            totalBytes: contentLength,
+            percent: 0
+        });
         return {
             downloaded: 0,
-            contentLength: Number(event.data?.contentLength) || 0
+            contentLength
         };
     }
     if (event.event === 'Finished') {
         onProgress?.(100);
+        onDownloadProgress?.({
+            downloadedBytes: 0,
+            totalBytes: 0,
+            percent: 100
+        });
     }
     return null;
 }
@@ -446,7 +465,11 @@ async function downloadAndInstallUpdate(
             options.linuxPackageKind || 'unknown'
         );
         const onEvent = (event: TauriDownloadEvent) => {
-            const state = handleTauriDownloadEvent(event, options.onProgress);
+            const state = handleTauriDownloadEvent(
+                event,
+                options.onProgress,
+                options.onDownloadProgress
+            );
             if (state) {
                 downloaded = state.downloaded;
                 contentLength = state.contentLength;
@@ -456,12 +479,22 @@ async function downloadAndInstallUpdate(
             if (event.event === 'Progress') {
                 downloaded += Number(event.data?.chunkLength) || 0;
                 if (contentLength > 0) {
-                    options.onProgress?.(
-                        Math.min(
-                            100,
-                            Math.round((downloaded / contentLength) * 100)
-                        )
+                    const percent = Math.min(
+                        100,
+                        Math.round((downloaded / contentLength) * 100)
                     );
+                    options.onProgress?.(percent);
+                    options.onDownloadProgress?.({
+                        downloadedBytes: downloaded,
+                        totalBytes: contentLength,
+                        percent
+                    });
+                } else {
+                    options.onDownloadProgress?.({
+                        downloadedBytes: downloaded,
+                        totalBytes: 0,
+                        percent: 0
+                    });
                 }
                 return;
             }

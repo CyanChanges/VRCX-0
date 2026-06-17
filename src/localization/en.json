@@ -4754,7 +4754,7 @@
         "vrcx_updater": {
             "header": "VRCX-0 Updater",
             "latest_version": "VRCX-0 is up to date",
-            "ready_for_update": "Ready to install. Restart VRCX-0 to apply",
+            "ready_for_update": "Update {value} is ready",
             "branch_stable": "Stable",
             "release": "Release",
             "download": "Download",

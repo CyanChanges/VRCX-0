@@ -1195,7 +1195,7 @@
         "vrcx_updater": {
             "header": "Cập nhật VRCX-0",
             "latest_version": "VRCX-0 đã được cập nhật mới nhất.",
-            "ready_for_update": "Sẵn sằng cài đặt, khởi động lại để áp dụng",
+            "ready_for_update": "Bản cập nhật {value} đã sẵn sàng",
             "download": "Tải xuống",
             "install": "Cài đặt"
         },

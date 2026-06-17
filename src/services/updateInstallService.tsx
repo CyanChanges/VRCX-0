@@ -1,0 +1,219 @@
+import { toast } from 'sonner';
+
+import { userFacingErrorMessage } from '@/lib/errorDisplay';
+import i18n from '@/services/i18nService';
+import { restartApplication } from '@/services/shellIntegrationService';
+import {
+    downloadAndInstallUpdate,
+    formatReleaseDisplayVersion,
+    type NormalizedRelease,
+    type UpdateDownloadProgress
+} from '@/services/updateService';
+import { useRuntimeStore } from '@/state/runtimeStore';
+
+export const UPDATE_AVAILABLE_TOAST_ID = 'vrcx-update-available';
+
+let directInstallInFlight: Promise<void> | null = null;
+
+type DirectUpdateInstallOptions = {
+    toastId?: string | number;
+};
+
+type DownloadToastContentProps = {
+    title: string;
+    detail: string;
+    progress: UpdateDownloadProgress;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return Boolean(value && typeof value === 'object');
+}
+
+function getString(value: unknown) {
+    return typeof value === 'string' ? value : String(value || '');
+}
+
+function formatMegabytes(bytes: number) {
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+        return '0.00 MB';
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function formatProgressDetail(progress: UpdateDownloadProgress) {
+    const percentText = `${progress.percent}%`;
+    const downloadedText = formatMegabytes(progress.downloadedBytes);
+    if (progress.totalBytes > 0) {
+        return `${percentText} · ${downloadedText} / ${formatMegabytes(
+            progress.totalBytes
+        )}`;
+    }
+    return `${percentText} · ${downloadedText}`;
+}
+
+function DownloadToastContent({
+    title,
+    detail,
+    progress
+}: DownloadToastContentProps) {
+    const percent = Math.max(0, Math.min(100, progress.percent || 0));
+
+    return (
+        <div className="flex w-full flex-col gap-2">
+            <div className="flex min-w-0 flex-col gap-1">
+                <div className="text-sm font-medium">{title}</div>
+                <div className="text-muted-foreground text-xs tabular-nums">
+                    {detail}
+                </div>
+            </div>
+            <div className="bg-muted h-2 overflow-hidden rounded-full">
+                <div
+                    className="bg-primary h-full transition-[width]"
+                    style={{ width: `${percent}%` }}
+                />
+            </div>
+        </div>
+    );
+}
+
+function readLatestInstallableUpdate(): NormalizedRelease | null {
+    const release =
+        useRuntimeStore.getState().updateLoop.latestUpdaterRelease;
+    if (!isRecord(release)) {
+        return null;
+    }
+
+    const manifestUrl = getString(release.manifestUrl).trim();
+    const target = getString(release.target).trim();
+    if (!manifestUrl || !target) {
+        return null;
+    }
+
+    return {
+        manifestUrl,
+        target,
+        canonicalVersion: getString(release.canonicalVersion),
+        channel: 'Stable',
+        displayVersion: getString(release.displayVersion),
+        htmlUrl: getString(release.htmlUrl),
+        tagName: getString(release.tagName),
+        displayName: getString(release.displayName || release.title),
+        prerelease: false,
+        publishedAt: getString(release.publishedAt),
+        body: '',
+        updaterType: 'tauri'
+    };
+}
+
+export function installLatestAvailableUpdate({
+    toastId = UPDATE_AVAILABLE_TOAST_ID
+}: DirectUpdateInstallOptions = {}) {
+    if (directInstallInFlight) {
+        return directInstallInFlight;
+    }
+
+    const release = readLatestInstallableUpdate();
+    if (!release) {
+        toast.error(
+            i18n.t('message.vrcx_updater.no_downloadable_releases_found'),
+            {
+                id: toastId,
+                position: 'bottom-right',
+                closeButton: true
+            }
+        );
+        return Promise.resolve();
+    }
+
+    const runtimeState = useRuntimeStore.getState();
+    const hostCapabilities = runtimeState.hostCapabilities;
+    const displayVersion =
+        release.displayVersion ||
+        formatReleaseDisplayVersion(release.canonicalVersion) ||
+        release.tagName ||
+        '-';
+    const downloadTitle = i18n.t(
+        'host.system_dialogs.dynamic.downloading_value',
+        {
+            value: displayVersion
+        }
+    );
+
+    directInstallInFlight = (async () => {
+        const updateLoadingToast = (progress: UpdateDownloadProgress) => {
+            if (progress.percent >= 100) {
+                toast.loading(i18n.t('message.vrcx_updater.installing_update'), {
+                    id: toastId,
+                    duration: Infinity,
+                    position: 'bottom-right',
+                    dismissible: false
+                });
+                return;
+            }
+
+            toast.custom(
+                () => (
+                    <DownloadToastContent
+                        title={downloadTitle}
+                        detail={formatProgressDetail(progress)}
+                        progress={progress}
+                    />
+                ),
+                {
+                    id: toastId,
+                    duration: Infinity,
+                    position: 'bottom-right',
+                    dismissible: false
+                }
+            );
+        };
+
+        try {
+            updateLoadingToast({
+                downloadedBytes: 0,
+                totalBytes: 0,
+                percent: 0
+            });
+            await downloadAndInstallUpdate(release, {
+                hostArch: getString(hostCapabilities.arch),
+                hostPlatform: getString(hostCapabilities.platform),
+                linuxPackageKind: getString(
+                    hostCapabilities.linuxPackageKind
+                ),
+                onDownloadProgress: updateLoadingToast
+            });
+            useRuntimeStore.getState().setUpdateLoopState({
+                hasAvailableUpdate: false,
+                latestUpdaterRelease: null
+            });
+            toast.success(
+                i18n.t('dialog.vrcx_updater.ready_for_update', {
+                    value: displayVersion
+                }),
+                {
+                    id: toastId,
+                    duration: 4000,
+                    position: 'bottom-right'
+                }
+            );
+            await restartApplication();
+        } catch (error) {
+            toast.error(
+                userFacingErrorMessage(
+                    error,
+                    i18n.t('message.vrcx_updater.failed_install')
+                ),
+                {
+                    id: toastId,
+                    duration: Infinity,
+                    position: 'bottom-right',
+                    closeButton: true
+                }
+            );
+        } finally {
+            directInstallInFlight = null;
+        }
+    })();
+
+    return directInstallInFlight;
+}

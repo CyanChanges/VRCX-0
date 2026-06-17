@@ -15,6 +15,7 @@ import { toast } from 'sonner';
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { cn } from '@/lib/utils';
 import { setSidebarCollapsedPreference } from '@/services/preferencesService';
+import { installLatestAvailableUpdate } from '@/services/updateInstallService';
 import { getBuildBadgeLabel } from '@/shared/buildLabel';
 import { usePreferencesStore } from '@/state/preferencesStore';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -106,9 +107,6 @@ export function MacOverlayTitleBar() {
     );
     const removeNavNotification = useShellStore(
         (state: any) => state.removeNotify
-    );
-    const setSystemHostOpen = useRuntimeStore(
-        (state: any) => state.setSystemHostOpen
     );
     const hasAvailableUpdate = useRuntimeStore((state: any) =>
         Boolean(state.updateLoop.hasAvailableUpdate)
@@ -236,9 +234,9 @@ export function MacOverlayTitleBar() {
                     <div className="flex h-full min-w-0 shrink-0 items-center gap-1 px-2">
                         {hasAvailableUpdate ? (
                             <TitleBarUpdateButton
-                                onClick={() =>
-                                    setSystemHostOpen('updaterOpen', true)
-                                }
+                                onClick={() => {
+                                    void installLatestAvailableUpdate();
+                                }}
                             />
                         ) : null}
                         <div className="flex min-w-0 shrink items-center gap-1">

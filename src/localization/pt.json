@@ -2263,7 +2263,7 @@
         "vrcx_updater": {
             "header": "Atualizador do VRCX-0",
             "latest_version": "O VRCX-0 está atualizado.",
-            "ready_for_update": "Pronto para instalação, reinicie o VRCX-0 para aplicar.",
+            "ready_for_update": "A atualização {value} está pronta",
             "branch_stable": "Estável",
             "branch_beta": "Beta",
             "beta_title": "Builds Beta",

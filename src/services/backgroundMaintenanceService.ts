@@ -107,7 +107,15 @@ function toUpdaterReleaseSnapshot(release: UpdaterReleaseSnapshotSource) {
             String(release.tagName || ''),
         publishedAt:
             release.publishedAt ||
-            ('date' in release && release.date ? release.date : '')
+            ('date' in release && release.date ? release.date : ''),
+        manifestUrl: release.manifestUrl || '',
+        target: release.target || '',
+        canonicalVersion: release.canonicalVersion || '',
+        displayVersion: release.displayVersion || '',
+        htmlUrl: release.htmlUrl || '',
+        tagName: release.tagName || '',
+        displayName: release.displayName || '',
+        updaterType: release.updaterType || 'manual'
     };
 }
 
@@ -610,9 +618,6 @@ async function checkForAppUpdate({
                         message
                     });
                     setUpdaterCheckResult(true, message, update);
-                    useRuntimeStore
-                        .getState()
-                        .setSystemHostOpen('updaterOpen', true);
                 } else {
                     setUpdaterCheckResult(false);
                 }
@@ -646,9 +651,6 @@ async function checkForAppUpdate({
                         message
                     });
                     setUpdaterCheckResult(true, message, latestRelease);
-                    useRuntimeStore
-                        .getState()
-                        .setSystemHostOpen('updaterOpen', true);
                 } else {
                     setUpdaterCheckResult(false);
                 }

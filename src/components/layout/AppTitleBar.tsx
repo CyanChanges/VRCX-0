@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { cn } from '@/lib/utils';
 import { setSidebarCollapsedPreference } from '@/services/preferencesService';
+import { installLatestAvailableUpdate } from '@/services/updateInstallService';
 import {
     closeWindow,
     isWindowMaximized,
@@ -198,9 +199,6 @@ export function AppTitleBar() {
     );
     const removeNavNotification = useShellStore(
         (state: any) => state.removeNotify
-    );
-    const setSystemHostOpen = useRuntimeStore(
-        (state: any) => state.setSystemHostOpen
     );
     const hostPlatform = useRuntimeStore(
         (state: any) => state.hostCapabilities.platform
@@ -384,9 +382,9 @@ export function AppTitleBar() {
                     <div className="flex h-full min-w-0 shrink-0 items-center gap-1 px-1">
                         {hasAvailableUpdate ? (
                             <TitleBarUpdateButton
-                                onClick={() =>
-                                    setSystemHostOpen('updaterOpen', true)
-                                }
+                                onClick={() => {
+                                    void installLatestAvailableUpdate();
+                                }}
                             />
                         ) : null}
                         <TitleBarCommandGroup

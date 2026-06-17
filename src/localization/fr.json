@@ -1525,7 +1525,7 @@
         "vrcx_updater": {
             "header": "Mise à jour de VRCX-0",
             "latest_version": "VRCX-0 est à jour.",
-            "ready_for_update": "Prêt pour l'installation, redémarrer VRCX-0 pour l'appliquer.",
+            "ready_for_update": "La mise à jour {value} est prête",
             "download": "Télécharger",
             "install": "Installer"
         },

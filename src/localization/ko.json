@@ -4680,7 +4680,7 @@
         "vrcx_updater": {
             "header": "VRCX-0 업데이트",
             "latest_version": "VRCX-0이 최신 버전입니다",
-            "ready_for_update": "설치가 준비됐습니다. VRCX-0를 재시작하면 적용됩니다",
+            "ready_for_update": "{value} 업데이트가 준비되었습니다",
             "branch_stable": "안정적",
             "release": "출시",
             "download": "다운로드",

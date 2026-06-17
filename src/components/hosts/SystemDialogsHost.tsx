@@ -15,6 +15,7 @@ import { LaunchOptionsDialog } from './system-dialogs/LaunchOptionsDialog';
 import { RegistryBackupDialog } from './system-dialogs/RegistryBackupDialog';
 import { UpdaterDialog } from './system-dialogs/UpdaterDialog';
 import { VRChatConfigDialog } from './system-dialogs/VRChatConfigDialog';
+import { UpdateAvailableToastHost } from './UpdateAvailableToastHost';
 
 export function SystemDialogsHost() {
     const updaterOpen = useRuntimeStore(
@@ -81,6 +82,7 @@ export function SystemDialogsHost() {
 
     return (
         <>
+            <UpdateAvailableToastHost />
             <UpdaterDialog
                 open={Boolean(updaterOpen)}
                 onOpenChange={(open: any) =>

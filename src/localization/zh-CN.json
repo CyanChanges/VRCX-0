@@ -4754,7 +4754,7 @@
         "vrcx_updater": {
             "header": "VRCX-0 更新",
             "latest_version": "VRCX-0 已是最新版本",
-            "ready_for_update": "现已准备好安装更新，重启 VRCX-0 以开始安装",
+            "ready_for_update": "新版本 {value} 已就绪",
             "branch_stable": "稳定版",
             "release": "版本",
             "download": "下载",
