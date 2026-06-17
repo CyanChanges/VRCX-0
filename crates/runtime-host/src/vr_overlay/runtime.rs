@@ -119,7 +119,7 @@ struct VrOverlayFrameInput {
     devices: Vec<VrDeviceSnapshot>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrOverlayRuntimeSnapshot {
     pub enabled: bool,

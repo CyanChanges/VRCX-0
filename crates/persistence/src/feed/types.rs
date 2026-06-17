@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use vrcx_0_core::json::RawJson;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedCursorInput {
     pub created_at: String,
@@ -9,7 +9,7 @@ pub struct FeedCursorInput {
     pub row_id: i64,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedRowsQueryInput {
     pub user_id: String,
@@ -31,7 +31,7 @@ pub struct FeedRowsQueryInput {
     pub cursor: Option<FeedCursorInput>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedLiveEntryInput {
     pub sequence: i64,
@@ -39,7 +39,7 @@ pub struct FeedLiveEntryInput {
     pub entry: RawJson,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedReadModelQueryInput {
     pub user_id: String,
@@ -72,7 +72,7 @@ pub struct FeedReadModelQueryInput {
     pub max_rows: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedLiveRowsMergeInput {
     #[serde(default)]
@@ -101,14 +101,14 @@ pub struct FeedLiveRowsMergeInput {
     pub max_rows: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedReadModelOutput {
     pub rows: Vec<RawJson>,
     pub max_sequence: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FeedRowOutput {
     #[serde(rename = "rowId")]

@@ -1,7 +1,7 @@
+import { commands } from '@/platform/tauri/bindings';
 import { toast } from 'sonner';
 
 import { clearEntityQueryCache } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 import authRepository from '@/repositories/authRepository';
 import avatarProfileRepository from '@/repositories/avatarProfileRepository';
 import { isVrchatSessionRecoveryError } from '@/repositories/vrchatRequest';
@@ -119,8 +119,7 @@ function getCurrentUserDisplayName(user: Record<string, any> | null) {
 }
 
 function setRuntimeAuthScope(userId: any = '', endpoint: any = '') {
-    return tauriClient.app
-        .RuntimeAuthScopeSet({
+    return commands.appRuntimeAuthScopeSet({
             userId,
             endpoint
         })

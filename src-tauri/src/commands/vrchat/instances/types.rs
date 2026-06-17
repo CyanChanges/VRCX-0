@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInstanceIdentityInput {
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct VrchatInstanceIdentityInput {
     pub(crate) instance_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInstanceShortNameInput {
     #[serde(default)]
@@ -25,7 +25,7 @@ pub struct VrchatInstanceShortNameInput {
     pub(crate) short_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInstanceCreateInput {
     #[serde(default)]
@@ -33,7 +33,7 @@ pub struct VrchatInstanceCreateInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInstanceSelfInviteInput {
     #[serde(default)]
@@ -46,7 +46,7 @@ pub struct VrchatInstanceSelfInviteInput {
     pub(crate) short_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInstanceCloseInput {
     #[serde(default)]

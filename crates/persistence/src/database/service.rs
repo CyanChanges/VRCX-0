@@ -20,7 +20,7 @@ use super::value::{json_to_sql, sqlite_value_to_json};
 
 const READ_CONNECTION_COUNT: usize = 2;
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct DatabaseUpgradeStatus {
     pub from_version: i64,

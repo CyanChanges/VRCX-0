@@ -1,5 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
 import { getKnownUserFact } from '@/domain/users/userFactAccess';
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import memoPersistenceRepository from '@/repositories/memoPersistenceRepository';
 import { userImage as resolveUserImageUrl } from '@/services/entityMediaService';
@@ -359,7 +359,7 @@ async function resolveDeliveryImage(directive: NotificationDeliveryDirective) {
         if (!fileId || !fileVersion) {
             return '';
         }
-        return await tauriClient.app.GetImage(imageUrl, fileId, fileVersion);
+        return await commands.appGetImage(imageUrl, fileId, fileVersion);
     } catch (error) {
         console.warn('Failed to resolve notification image:', error);
         return '';
@@ -437,7 +437,7 @@ export async function executeNotificationDelivery(
     const deliveries = [];
     if (playDesktopToast) {
         deliveries.push(
-            tauriClient.app.DesktopNotification(
+            commands.appDesktopNotification(
                 title,
                 body,
                 image,
@@ -447,7 +447,7 @@ export async function executeNotificationDelivery(
     }
     if (playXSNotification) {
         deliveries.push(
-            tauriClient.app.XSNotification(
+            commands.appXsNotification(
                 'VRCX',
                 overlayText,
                 overlayTimeout,
@@ -458,7 +458,7 @@ export async function executeNotificationDelivery(
     }
     if (playOvrtHudNotifications || playOvrtWristNotifications) {
         deliveries.push(
-            tauriClient.app.OVRTNotification(
+            commands.appOvrtNotification(
                 playOvrtHudNotifications,
                 playOvrtWristNotifications,
                 'VRCX',

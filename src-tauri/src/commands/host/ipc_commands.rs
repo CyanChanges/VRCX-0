@@ -9,6 +9,7 @@ use crate::state::AppState;
 use vrcx_0_host::host_capabilities::{require_host_capability, HostCapability};
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__ipc_announce_start(state: State<'_, AppState>) -> Result<(), AppError> {
     require_host_capability(HostCapability::Ipc)?;
     let packet = IpcPacket {
@@ -21,6 +22,7 @@ pub fn app__ipc_announce_start(state: State<'_, AppState>) -> Result<(), AppErro
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__send_ipc(
     state: State<'_, AppState>,
     type_name: String,
@@ -37,6 +39,7 @@ pub fn app__send_ipc(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__try_open_instance_in_vrc(launch_url: String) -> Result<bool, AppError> {
     require_host_capability(HostCapability::VrchatLaunchPipe)?;
     Ok(crate::adapters::ipc::vrcipc_send(&launch_url))

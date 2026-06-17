@@ -36,6 +36,7 @@ async fn execute_tools_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_calendars_get(
     state: State<'_, AppState>,
     input: VrchatToolsCalendarListInput,
@@ -50,6 +51,7 @@ pub async fn app__vrchat_tools_calendars_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_group_calendar_get(
     state: State<'_, AppState>,
     input: VrchatToolsCalendarGroupInput,
@@ -65,6 +67,7 @@ pub async fn app__vrchat_tools_group_calendar_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_following_calendars_get(
     state: State<'_, AppState>,
     input: VrchatToolsCalendarListInput,
@@ -79,6 +82,7 @@ pub async fn app__vrchat_tools_following_calendars_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_featured_calendars_get(
     state: State<'_, AppState>,
     input: VrchatToolsCalendarListInput,
@@ -93,6 +97,7 @@ pub async fn app__vrchat_tools_featured_calendars_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_group_event_follow(
     state: State<'_, AppState>,
     input: VrchatToolsFollowGroupEventInput,
@@ -113,6 +118,7 @@ pub async fn app__vrchat_tools_group_event_follow(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_group_calendar_ics_get(
     state: State<'_, AppState>,
     input: VrchatToolsCalendarEventInput,
@@ -129,6 +135,7 @@ pub async fn app__vrchat_tools_group_calendar_ics_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_user_note_save(
     state: State<'_, AppState>,
     input: VrchatToolsUserNoteSaveInput,
@@ -145,6 +152,7 @@ pub async fn app__vrchat_tools_user_note_save(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_user_report(
     state: State<'_, AppState>,
     input: VrchatToolsUserReportInput,
@@ -166,6 +174,7 @@ pub async fn app__vrchat_tools_user_report(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_invite_messages_get(
     state: State<'_, AppState>,
     input: VrchatToolsInviteMessagesInput,
@@ -182,6 +191,7 @@ pub async fn app__vrchat_tools_invite_messages_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_tools_invite_message_edit(
     state: State<'_, AppState>,
     input: VrchatToolsInviteMessageEditInput,

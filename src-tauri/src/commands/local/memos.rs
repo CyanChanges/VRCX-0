@@ -10,6 +10,7 @@ use vrcx_0_persistence::memos::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_get_avatar(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -18,6 +19,7 @@ pub fn app__memo_get_avatar(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_get_user(
     state: State<'_, AppState>,
     user_id: String,
@@ -26,6 +28,7 @@ pub fn app__memo_get_user(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_get_world(
     state: State<'_, AppState>,
     world_id: String,
@@ -34,6 +37,7 @@ pub fn app__memo_get_world(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_list_user_notes(
     state: State<'_, AppState>,
     owner_user_id: String,
@@ -43,11 +47,13 @@ pub fn app__memo_list_user_notes(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_list_users(state: State<'_, AppState>) -> Result<Vec<UserMemoOutput>, AppError> {
     vrcx_0_persistence::memos::memo_list_users(state.db.as_ref()).map_err(AppError::from)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_save_avatar(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -58,6 +64,7 @@ pub fn app__memo_save_avatar(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_save_user(
     state: State<'_, AppState>,
     user_id: String,
@@ -68,6 +75,7 @@ pub fn app__memo_save_user(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__memo_save_world(
     state: State<'_, AppState>,
     world_id: String,

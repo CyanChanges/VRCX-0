@@ -10,6 +10,7 @@ use vrcx_0_application::save_ugc_image_to_file;
 use vrcx_0_media::{image_processing, media_files};
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__save_image_file(
     app_handle: AppHandle,
     default_name: String,
@@ -40,6 +41,7 @@ pub async fn app__save_image_file(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__get_image(
     state: State<'_, AppState>,
     url: String,
@@ -53,6 +55,7 @@ pub async fn app__get_image(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__resize_image_to_fit_limits(base64data: String) -> Result<String, AppError> {
     Ok(image_processing::resize_image_to_fit_limits_base64(
         &base64data,
@@ -60,11 +63,13 @@ pub fn app__resize_image_to_fit_limits(base64data: String) -> Result<String, App
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__sign_file(blob: String) -> Result<String, AppError> {
     Ok(media_files::sign_file_base64(&blob)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__crop_all_prints(
     state: State<'_, AppState>,
     ugc_folder_path: String,
@@ -76,6 +81,7 @@ pub fn app__crop_all_prints(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__crop_print_image(state: State<'_, AppState>, path: String) -> Result<bool, AppError> {
     state
         .host_file_access
@@ -85,6 +91,7 @@ pub fn app__crop_print_image(state: State<'_, AppState>, path: String) -> Result
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__save_print_to_file(
     state: State<'_, AppState>,
     url: String,
@@ -106,6 +113,7 @@ pub async fn app__save_print_to_file(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__save_sticker_to_file(
     state: State<'_, AppState>,
     url: String,
@@ -127,6 +135,7 @@ pub async fn app__save_sticker_to_file(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__save_emoji_to_file(
     state: State<'_, AppState>,
     url: String,

@@ -42,6 +42,7 @@ async fn execute_favorite_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_limits_get(
     state: State<'_, AppState>,
     input: VrchatFavoriteEndpointInput,
@@ -56,6 +57,7 @@ pub async fn app__vrchat_favorite_limits_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorites_get(
     state: State<'_, AppState>,
     input: VrchatFavoritePagedInput,
@@ -70,6 +72,7 @@ pub async fn app__vrchat_favorites_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_worlds_get(
     state: State<'_, AppState>,
     input: VrchatFavoriteWorldsInput,
@@ -91,6 +94,7 @@ pub async fn app__vrchat_favorite_worlds_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_avatars_get(
     state: State<'_, AppState>,
     input: VrchatFavoriteAvatarsInput,
@@ -105,6 +109,7 @@ pub async fn app__vrchat_favorite_avatars_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_groups_get(
     state: State<'_, AppState>,
     input: VrchatFavoriteGroupsInput,
@@ -174,6 +179,7 @@ fn add_group_value(groups: &mut Vec<String>, group_name: String) {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_add(
     state: State<'_, AppState>,
     input: VrchatFavoriteAddInput,
@@ -194,6 +200,7 @@ pub async fn app__vrchat_favorite_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_delete(
     state: State<'_, AppState>,
     input: VrchatFavoriteDeleteInput,
@@ -209,6 +216,7 @@ pub async fn app__vrchat_favorite_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_group_save(
     state: State<'_, AppState>,
     input: VrchatFavoriteGroupSaveInput,
@@ -231,6 +239,7 @@ pub async fn app__vrchat_favorite_group_save(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_favorite_group_clear(
     state: State<'_, AppState>,
     input: VrchatFavoriteGroupClearInput,
@@ -247,6 +256,7 @@ pub async fn app__vrchat_favorite_group_clear(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_favorite_add(
     state: State<'_, AppState>,
     input: LocalFavoriteInput,
@@ -258,6 +268,7 @@ pub fn app__local_favorite_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_favorite_remove(
     state: State<'_, AppState>,
     input: LocalFavoriteInput,
@@ -269,6 +280,7 @@ pub fn app__local_favorite_remove(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_favorite_group_create(
     state: State<'_, AppState>,
     input: LocalFavoriteGroupInput,
@@ -285,6 +297,7 @@ pub fn app__local_favorite_group_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_favorite_group_rename(
     state: State<'_, AppState>,
     input: LocalFavoriteGroupRenameInput,
@@ -315,6 +328,7 @@ pub fn app__local_favorite_group_rename(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_favorite_group_delete(
     state: State<'_, AppState>,
     input: LocalFavoriteGroupInput,

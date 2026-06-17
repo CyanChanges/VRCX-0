@@ -1,17 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriApp = vi.hoisted(() => ({
-    VrchatInstanceCreate: vi.fn()
+    appVrchatInstanceCreate: vi.fn()
 }));
 
 const tauriMock = vi.hoisted(() => ({
-    app: tauriApp
+    commands: tauriApp
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: tauriMock.commands }));
 
 import vrchatInstanceRepository from './vrchatInstanceRepository';
 
@@ -41,7 +38,7 @@ describe('InstanceRepository', () => {
             status: 200
         });
 
-        expect(tauriApp.VrchatInstanceCreate).toHaveBeenCalledWith({
+        expect(tauriApp.appVrchatInstanceCreate).toHaveBeenCalledWith({
             endpoint: 'https://api.example.test/api/1',
             params: {
                 type: 'private',
@@ -66,7 +63,7 @@ describe('InstanceRepository', () => {
             region: 'Japan'
         });
 
-        expect(tauriApp.VrchatInstanceCreate.mock.calls[0][0].params).toEqual({
+        expect(tauriApp.appVrchatInstanceCreate.mock.calls[0][0].params).toEqual({
             type: 'group',
             canRequestInvite: false,
             worldId: 'wrld_group',
@@ -89,7 +86,7 @@ describe('InstanceRepository', () => {
         });
 
         expect(
-            tauriApp.VrchatInstanceCreate.mock.calls[0][0].params
+            tauriApp.appVrchatInstanceCreate.mock.calls[0][0].params
         ).toMatchObject(
             {
                 groupAccessType: 'members',
@@ -106,11 +103,11 @@ describe('InstanceRepository', () => {
             })
         ).rejects.toThrow('requires an owner id');
 
-        expect(tauriApp.VrchatInstanceCreate).not.toHaveBeenCalled();
+        expect(tauriApp.appVrchatInstanceCreate).not.toHaveBeenCalled();
     });
 
     it('throws request errors with status, endpoint, and parsed payload details', async () => {
-        tauriApp.VrchatInstanceCreate.mockResolvedValue({
+        tauriApp.appVrchatInstanceCreate.mockResolvedValue({
             status: 403,
             data: JSON.stringify({
                 error: {

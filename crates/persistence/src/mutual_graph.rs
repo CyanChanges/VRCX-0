@@ -10,7 +10,7 @@ use crate::database::{
 use crate::realtime::normalize_user_table_prefix;
 use crate::Error;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphSnapshotEntryInput {
     pub friend_id: String,
@@ -18,7 +18,7 @@ pub struct MutualGraphSnapshotEntryInput {
     pub mutual_ids: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphMetaInput {
     pub friend_id: String,
@@ -28,14 +28,14 @@ pub struct MutualGraphMetaInput {
     pub opted_out: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphLinkOutput {
     pub friend_id: String,
     pub mutual_id: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphMetaOutput {
     pub friend_id: String,
@@ -43,7 +43,7 @@ pub struct MutualGraphMetaOutput {
     pub opted_out: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphSnapshotOutput {
     pub friend_ids: Vec<String>,

@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import { tauriClient } from '@/platform/tauri/client';
 import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint';
 import { useNotificationStore } from '@/state/notificationStore';
@@ -479,7 +480,7 @@ function requestGameRunningStateRefresh(source: string): void {
         return;
     }
 
-    tauriClient.app.CheckGameRunning().catch((error: any) => {
+    commands.appCheckGameRunning().catch((error: any) => {
         console.warn(
             `Game process state refresh failed during ${source}:`,
             error
@@ -488,7 +489,7 @@ function requestGameRunningStateRefresh(source: string): void {
 }
 
 function requestGroupInstancesRefresh(source: string): void {
-    tauriClient.app.RuntimeGroupInstancesRefresh().catch((error: any) => {
+    commands.appRuntimeGroupInstancesRefresh().catch((error: any) => {
         console.warn(
             `Runtime group instances refresh failed during ${source}:`,
             error
@@ -742,7 +743,7 @@ export async function bindRuntimeEvents(): Promise<() => void> {
 
     useSessionStore.getState().setTransportStatus('runtime-subscribed');
     try {
-        const snapshot: any = await tauriClient.app.GetBackendRuntimeSnapshot();
+        const snapshot: any = await commands.appGetBackendRuntimeSnapshot();
         await hydrateBackendRuntimeSnapshot(snapshot);
     } catch (error) {
         useRuntimeStore.getState().setShellState({

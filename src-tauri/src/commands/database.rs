@@ -7,6 +7,7 @@ use crate::state::AppState;
 use vrcx_0_persistence::DatabaseUpgradeStatus;
 
 #[tauri::command]
+#[specta::specta]
 pub fn sqlite__begin_upgrade(
     from_version: i64,
     to_version: i64,
@@ -16,16 +17,19 @@ pub fn sqlite__begin_upgrade(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn sqlite__commit_upgrade(state: State<'_, AppState>) -> Result<(), AppError> {
     Ok(state.db.commit_upgrade()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn sqlite__fail_upgrade(reason: String, state: State<'_, AppState>) -> Result<(), AppError> {
     Ok(state.db.fail_upgrade(reason)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn sqlite__get_failed_upgrade(
     state: State<'_, AppState>,
 ) -> Result<Option<DatabaseUpgradeStatus>, AppError> {

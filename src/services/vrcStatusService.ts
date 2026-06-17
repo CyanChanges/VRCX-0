@@ -1,5 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
 import externalApiRepository from '@/repositories/externalApiRepository';
-import { tauriClient } from '@/platform/tauri/client';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
 const OK_POLL_MS = 5 * 60 * 1000;
@@ -196,8 +196,7 @@ export function refreshVrcStatus(): Promise<void> {
 
 async function deferNextVrcStatusRefresh(): Promise<void> {
     const interval = useRuntimeStore.getState().vrcStatus.pollingIntervalMs;
-    await tauriClient.app
-        .RuntimeFrontendScheduleJobDefer({
+    await commands.appRuntimeFrontendScheduleJobDefer({
             name: VRC_STATUS_REFRESH_JOB,
             delaySeconds: pollingCadenceSeconds(interval)
         })
@@ -208,8 +207,7 @@ async function deferNextVrcStatusRefresh(): Promise<void> {
 
 async function claimVrcStatusRefreshDue(): Promise<boolean> {
     const interval = useRuntimeStore.getState().vrcStatus.pollingIntervalMs;
-    return tauriClient.app
-        .RuntimeFrontendScheduleJobDueClaim({
+    return commands.appRuntimeFrontendScheduleJobDueClaim({
             name: VRC_STATUS_REFRESH_JOB,
             cadenceSeconds: pollingCadenceSeconds(interval),
             initialDelaySeconds: 0

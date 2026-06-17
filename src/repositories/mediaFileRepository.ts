@@ -1,5 +1,4 @@
-import { normalizePlatformError } from '@/platform/tauri/errors';
-import { tauriClient } from '@/platform/tauri/client';
+import { invokeAppCommand } from '@/platform/tauri/dynamicCommand';
 import { safeJsonParse } from '@/repositories/baseRepository';
 
 type AppCommandName = string;
@@ -27,14 +26,7 @@ async function invokeApp<TReturn = unknown>(
     methodName: AppCommandName,
     ...args: unknown[]
 ): Promise<TReturn> {
-    try {
-        return (await tauriClient.app[methodName](...args)) as TReturn;
-    } catch (error) {
-        throw normalizePlatformError(
-            error,
-            `App command failed: ${methodName}`
-        );
-    }
+    return invokeAppCommand<TReturn>(methodName, ...args);
 }
 
 async function resizeImageToFitLimits(base64Body: string): Promise<string> {
@@ -86,7 +78,10 @@ async function findScreenshotsBySearch(
 async function startScreenshotLibraryScan(
     force = false
 ): Promise<ScreenshotLibraryStatus> {
-    return invokeApp<ScreenshotLibraryStatus>('StartScreenshotLibraryScan', force);
+    return invokeApp<ScreenshotLibraryStatus>(
+        'StartScreenshotLibraryScan',
+        force
+    );
 }
 
 async function getScreenshotLibraryStatus(): Promise<ScreenshotLibraryStatus> {

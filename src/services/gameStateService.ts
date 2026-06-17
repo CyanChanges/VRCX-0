@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import gameLogRepository from '@/repositories/gameLogRepository';
 import {
@@ -89,11 +89,11 @@ async function launchVrchat(location: any, desktopMode: any) {
 
     const argumentString = args.join(' ');
     const launched = launchPathOverride
-        ? await tauriClient.app.StartGameFromPath(
+        ? await commands.appStartGameFromPath(
               String(launchPathOverride),
               argumentString
           )
-        : await tauriClient.app.StartGame(argumentString);
+        : await commands.appStartGame(argumentString);
     if (!launched) {
         throw new Error(
             launchPathOverride
@@ -139,7 +139,7 @@ async function sweepVrchatCacheIfEnabled() {
     }
 
     try {
-        const removedPaths = await tauriClient.assetBundle.SweepCache();
+        const removedPaths = await commands.assetBundleSweepCache();
         const removedCount = Array.isArray(removedPaths)
             ? removedPaths.length
             : 0;
@@ -178,8 +178,7 @@ async function scheduleCrashRelaunchIfNeeded(previousGameState: any) {
         return;
     }
 
-    const closedGracefully = await tauriClient.logWatcher
-        .VrcClosedGracefully()
+    const closedGracefully = await commands.logWatcherVrcClosedGracefully()
         .catch(() => true);
     if (closedGracefully) {
         return;
@@ -204,8 +203,7 @@ async function scheduleCrashRelaunchIfNeeded(previousGameState: any) {
                 }
 
                 if (!previousGameState.isGameNoVR) {
-                    const steamVrRunning = await tauriClient.app
-                        .IsSteamVRRunning()
+                    const steamVrRunning = await commands.appIsSteamvrRunning()
                         .catch(
                             () =>
                                 useRuntimeStore.getState().gameState
@@ -219,7 +217,7 @@ async function scheduleCrashRelaunchIfNeeded(previousGameState: any) {
                     }
                 }
 
-                await tauriClient.app.FocusWindow().catch(() => {});
+                await commands.appFocusWindow().catch(() => {});
                 const message =
                     'VRChat crashed, attempting to rejoin last instance.';
                 await gameLogRepository.addGamelogEventToDatabase({
@@ -372,7 +370,7 @@ export async function checkVRChatDebugLogging() {
     let loggingEnabled;
     try {
         loggingEnabled =
-            await tauriClient.app.GetVRChatRegistryKey('LOGGING_ENABLED');
+            await commands.appGetVrchatRegistryKey('LOGGING_ENABLED');
     } catch (error) {
         console.warn(
             'Unable to read VRChat debug logging registry key:',
@@ -394,7 +392,7 @@ export async function checkVRChatDebugLogging() {
     }
 
     try {
-        const result = await tauriClient.app.SetVRChatRegistryKey(
+        const result = await commands.appSetVrchatRegistryKey(
             'LOGGING_ENABLED',
             1,
             4

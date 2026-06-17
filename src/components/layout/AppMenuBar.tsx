@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -5,7 +6,6 @@ import { toast } from 'sonner';
 
 import { SupportVrcxDialog } from '@/components/support/SupportVrcxDialog';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog';
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import { logoutFromReactShell } from '@/services/authExecutionService';
 import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
@@ -229,7 +229,7 @@ export function AppMenuBar({
 
     async function runOpenDevtools() {
         try {
-            await tauriClient.app.OpenDevtools();
+            await commands.appOpenDevtools();
         } catch (error) {
             toast.error(
                 error instanceof Error

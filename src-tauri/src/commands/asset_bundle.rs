@@ -5,6 +5,7 @@ use crate::error::AppError;
 use vrcx_0_host::asset_bundle_cache::{self, CacheCheckResult};
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__get_vrchat_cache_full_location(
     file_id: String,
     file_version: i32,
@@ -21,6 +22,7 @@ pub fn asset_bundle__get_vrchat_cache_full_location(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__check_vrchat_cache(
     file_id: String,
     file_version: i32,
@@ -37,6 +39,7 @@ pub fn asset_bundle__check_vrchat_cache(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__delete_cache(
     file_id: String,
     file_version: i32,
@@ -49,6 +52,7 @@ pub fn asset_bundle__delete_cache(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__delete_all_cache() -> Result<(), AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     asset_bundle_cache::delete_all_cache();
@@ -56,12 +60,14 @@ pub fn asset_bundle__delete_all_cache() -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__sweep_cache() -> Result<Vec<String>, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(asset_bundle_cache::sweep_cache())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn asset_bundle__get_cache_size() -> Result<i64, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(asset_bundle_cache::cache_size())

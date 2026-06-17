@@ -7,18 +7,21 @@ const runtimeState = vi.hoisted(() => ({
         runtimeRealtimeTransport: true,
         ipc: false
     },
-    app: {
-        IPCAnnounceStart: vi.fn(),
-        StartRealtimeTransport: vi.fn(),
-        SyncRealtimeFriendSnapshot: vi.fn(),
-        StopRealtimeTransport: vi.fn()
+    commands: {
+        appIpcAnnounceStart: vi.fn(),
+        appStartRealtimeTransport: vi.fn(),
+        appSyncRealtimeFriendSnapshot: vi.fn(),
+        appStopRealtimeTransport: vi.fn()
     },
     eventHandlers: new Map<string, Set<(payload: unknown) => void>>()
 }));
 
+vi.mock('@/platform/tauri/bindings', () => ({
+    commands: runtimeState.commands
+}));
+
 vi.mock('@/platform/tauri/client', () => ({
     tauriClient: {
-        app: runtimeState.app,
         events: {
             subscribe: vi.fn(
                 async (name: string, handler: (payload: unknown) => void) => {
@@ -86,8 +89,7 @@ function emitTauriEvent(name: string, payload: unknown) {
 }
 
 async function prepareReadySession(websocket: any = '') {
-    const { useFriendRosterStore } =
-        await import('@/state/friendRosterStore');
+    const { useFriendRosterStore } = await import('@/state/friendRosterStore');
     const { useRuntimeStore } = await import('@/state/runtimeStore');
     const { useSessionStore } = await import('@/state/sessionStore');
 
@@ -125,11 +127,11 @@ describe('realtime transport runtime routing', () => {
         vi.resetModules();
         runtimeState.capabilities.runtimeRealtimeTransport = true;
         runtimeState.capabilities.ipc = false;
-        runtimeState.app.IPCAnnounceStart.mockReset();
-        runtimeState.app.StartRealtimeTransport.mockReset();
-        runtimeState.app.SyncRealtimeFriendSnapshot.mockReset();
-        runtimeState.app.StopRealtimeTransport.mockReset();
-        runtimeState.app.StartRealtimeTransport.mockImplementation(
+        runtimeState.commands.appIpcAnnounceStart.mockReset();
+        runtimeState.commands.appStartRealtimeTransport.mockReset();
+        runtimeState.commands.appSyncRealtimeFriendSnapshot.mockReset();
+        runtimeState.commands.appStopRealtimeTransport.mockReset();
+        runtimeState.commands.appStartRealtimeTransport.mockImplementation(
             async (
                 _userId: string,
                 _endpoint: string,
@@ -141,13 +143,13 @@ describe('realtime transport runtime routing', () => {
                 sessionGeneration: 1
             })
         );
-        runtimeState.app.SyncRealtimeFriendSnapshot.mockResolvedValue({
+        runtimeState.commands.appSyncRealtimeFriendSnapshot.mockResolvedValue({
             accepted: true,
             generation: 1,
             baselineRevision: 1,
             friendCount: 1
         });
-        runtimeState.app.StopRealtimeTransport.mockResolvedValue(undefined);
+        runtimeState.commands.appStopRealtimeTransport.mockResolvedValue(undefined);
         backgroundState.refreshFriendAndFavoriteSnapshots.mockReset();
         backgroundState.refreshFriendAndFavoriteSnapshots.mockResolvedValue(
             undefined
@@ -188,7 +190,7 @@ describe('realtime transport runtime routing', () => {
             });
 
             expect(
-                runtimeState.app.StartRealtimeTransport
+                runtimeState.commands.appStartRealtimeTransport
             ).toHaveBeenCalledWith(
                 'usr_1',
                 '',
@@ -248,7 +250,7 @@ describe('realtime transport runtime routing', () => {
             currentUserSnapshot: { id: 'usr_1' }
         });
 
-        expect(runtimeState.app.StartRealtimeTransport).not.toHaveBeenCalled();
+        expect(runtimeState.commands.appStartRealtimeTransport).not.toHaveBeenCalled();
     });
 
     it('routes only typed runtime projections', async () => {
@@ -354,7 +356,7 @@ describe('realtime transport runtime routing', () => {
                   sessionGeneration: number;
               }) => void)
             | null = null;
-        runtimeState.app.StartRealtimeTransport.mockReturnValue(
+        runtimeState.commands.appStartRealtimeTransport.mockReturnValue(
             new Promise((resolve: any) => {
                 resolveStart = resolve;
             })
@@ -370,7 +372,7 @@ describe('realtime transport runtime routing', () => {
             currentUserSnapshot: { id: 'usr_1' }
         });
         await vi.waitFor(() => {
-            expect(runtimeState.app.StartRealtimeTransport).toHaveBeenCalled();
+            expect(runtimeState.commands.appStartRealtimeTransport).toHaveBeenCalled();
         });
 
         emitTauriEvent('realtimeFriendProjection', {
@@ -386,7 +388,7 @@ describe('realtime transport runtime routing', () => {
         ).not.toHaveBeenCalled();
 
         const clientRunId =
-            runtimeState.app.StartRealtimeTransport.mock.calls[0][3];
+            runtimeState.commands.appStartRealtimeTransport.mock.calls[0][3];
         resolveStart?.({
             generation: 1,
             clientRunId,
@@ -425,7 +427,7 @@ describe('realtime transport runtime routing', () => {
                 backgroundState.refreshFriendAndFavoriteSnapshots
             ).not.toHaveBeenCalled();
             expect(
-                runtimeState.app.SyncRealtimeFriendSnapshot
+                runtimeState.commands.appSyncRealtimeFriendSnapshot
             ).not.toHaveBeenCalled();
         });
         emitTauriEvent('realtimeFriendProjection', {
@@ -442,7 +444,7 @@ describe('realtime transport runtime routing', () => {
     });
 
     it('does not fall back to browser WebSocket when runtime start fails', async () => {
-        runtimeState.app.StartRealtimeTransport.mockRejectedValue(
+        runtimeState.commands.appStartRealtimeTransport.mockRejectedValue(
             new Error('runtime unavailable')
         );
         await prepareReadySession();
@@ -458,7 +460,7 @@ describe('realtime transport runtime routing', () => {
             })
         ).rejects.toThrow('runtime unavailable');
 
-        expect(runtimeState.app.StartRealtimeTransport).toHaveBeenCalled();
+        expect(runtimeState.commands.appStartRealtimeTransport).toHaveBeenCalled();
         expect(globalThis.WebSocket).not.toHaveBeenCalled();
     });
 
@@ -470,7 +472,7 @@ describe('realtime transport runtime routing', () => {
                   sessionGeneration: number;
               }) => void)
             | null = null;
-        runtimeState.app.StartRealtimeTransport.mockReturnValue(
+        runtimeState.commands.appStartRealtimeTransport.mockReturnValue(
             new Promise((resolve: any) => {
                 resolveStart = resolve;
             })
@@ -486,21 +488,21 @@ describe('realtime transport runtime routing', () => {
             currentUserSnapshot: { id: 'usr_1' }
         });
         await vi.waitFor(() => {
-            expect(runtimeState.app.StartRealtimeTransport).toHaveBeenCalled();
+            expect(runtimeState.commands.appStartRealtimeTransport).toHaveBeenCalled();
         });
 
         stopRealtimeTransport();
-        expect(runtimeState.app.StopRealtimeTransport).toHaveBeenCalled();
+        expect(runtimeState.commands.appStopRealtimeTransport).toHaveBeenCalled();
 
         const clientRunId =
-            runtimeState.app.StartRealtimeTransport.mock.calls[0][3];
+            runtimeState.commands.appStartRealtimeTransport.mock.calls[0][3];
         resolveStart?.({
             generation: 1,
             clientRunId,
             sessionGeneration: 1
         });
         await startPromise;
-        expect(runtimeState.app.StopRealtimeTransport).toHaveBeenCalledTimes(2);
+        expect(runtimeState.commands.appStopRealtimeTransport).toHaveBeenCalledTimes(2);
         expect(globalThis.WebSocket).not.toHaveBeenCalled();
     });
 
@@ -513,7 +515,7 @@ describe('realtime transport runtime routing', () => {
                 sessionGeneration: number;
             }) => void;
         }> = [];
-        runtimeState.app.StartRealtimeTransport.mockImplementation(
+        runtimeState.commands.appStartRealtimeTransport.mockImplementation(
             async (
                 _userId: string,
                 _endpoint: string,
@@ -537,7 +539,7 @@ describe('realtime transport runtime routing', () => {
         });
         await vi.waitFor(() => {
             expect(
-                runtimeState.app.StartRealtimeTransport
+                runtimeState.commands.appStartRealtimeTransport
             ).toHaveBeenCalledTimes(1);
         });
 
@@ -553,7 +555,7 @@ describe('realtime transport runtime routing', () => {
         });
         await vi.waitFor(() => {
             expect(
-                runtimeState.app.StartRealtimeTransport
+                runtimeState.commands.appStartRealtimeTransport
             ).toHaveBeenCalledTimes(2);
         });
 
@@ -573,14 +575,14 @@ describe('realtime transport runtime routing', () => {
         });
         await startOnePromise;
 
-        expect(runtimeState.app.StopRealtimeTransport).toHaveBeenCalledWith(
+        expect(runtimeState.commands.appStopRealtimeTransport).toHaveBeenCalledWith(
             'usr_1',
             '',
             'wss://one',
             runOne,
             1
         );
-        expect(runtimeState.app.StopRealtimeTransport.mock.calls).not.toEqual(
+        expect(runtimeState.commands.appStopRealtimeTransport.mock.calls).not.toEqual(
             expect.arrayContaining([['usr_1', '', 'wss://two', runTwo, 2]])
         );
     });

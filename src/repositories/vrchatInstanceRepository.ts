@@ -1,9 +1,9 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 
 import {
     createRequestError,
@@ -183,7 +183,7 @@ async function createInstance({
     }
 
     return unwrapVrchatInstanceResponse(
-        await tauriClient.app.VrchatInstanceCreate({
+        await commands.appVrchatInstanceCreate({
             endpoint,
             params
         }),
@@ -219,7 +219,7 @@ async function getInstance({
         force,
         queryFn: async () => {
             const response = unwrapVrchatInstanceResponse(
-                await tauriClient.app.VrchatInstanceGet({
+                await commands.appVrchatInstanceGet({
                     endpoint,
                     worldId: normalizedWorldId,
                     instanceId: normalizedInstanceId
@@ -265,7 +265,7 @@ async function getInstanceShortName({
         force,
         queryFn: async () => {
             const response = unwrapVrchatInstanceResponse(
-                await tauriClient.app.VrchatInstanceShortNameGet({
+                await commands.appVrchatInstanceShortNameGet({
                     endpoint,
                     worldId: normalizedWorldId,
                     instanceId: normalizedInstanceId,
@@ -302,7 +302,7 @@ async function selfInvite({
     const locationPath = `${encodeURIComponent(normalizedWorldId)}:${encodeURIComponent(normalizedInstanceId)}`;
     const params = shortName ? { shortName } : {};
     return unwrapVrchatInstanceResponse(
-        await tauriClient.app.VrchatInstanceSelfInvite({
+        await commands.appVrchatInstanceSelfInvite({
             endpoint,
             worldId: normalizedWorldId,
             instanceId: normalizedInstanceId,
@@ -328,7 +328,7 @@ async function closeInstance({
         hardClose: Boolean(hardClose)
     };
     return unwrapVrchatInstanceResponse(
-        await tauriClient.app.VrchatInstanceClose({
+        await commands.appVrchatInstanceClose({
             endpoint,
             location: normalizedLocation,
             hardClose: Boolean(hardClose)

@@ -1,3 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
+import type { FriendRecord as BackendFriendRecord } from '@/platform/tauri/bindings';
 import { tauriClient } from '@/platform/tauri/client';
 import { DEFAULT_WEBSOCKET_DOMAIN } from '@/repositories/vrchatAuthRepository';
 import { useFriendRosterStore } from '@/state/friendRosterStore';
@@ -7,15 +9,13 @@ import { useSessionStore } from '@/state/sessionStore';
 
 import { handleRuntimeAuthFailure } from './authSessionRecoveryService';
 import { isHostCapabilityAvailable } from './hostCapabilityService';
+import { handleRealtimeInstanceQueueProjection } from './realtimeInstanceQueueService';
 import {
     handleRealtimeCurrentUserProjection,
     handleRealtimeFriendProjection,
     handleRealtimeInstanceClosedProjection,
     handleRealtimeNotificationProjection
 } from './realtimePresenceService';
-import {
-    handleRealtimeInstanceQueueProjection
-} from './realtimeInstanceQueueService';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService';
 import { syncStartupServicesTask } from './startupServicesStatus';
 
@@ -184,8 +184,8 @@ function transportStopScopeForRun(
 }
 
 function requestRuntimeRealtimeStop(scope: any = runtimeTransportStopScope()) {
-    tauriClient.app
-        .StopRealtimeTransport(
+    commands
+        .appStopRealtimeTransport(
             scope.userId,
             scope.endpoint,
             scope.websocket,
@@ -259,10 +259,7 @@ function handleRealtimeAuthFailure(payload: Record<string, any>) {
     });
 }
 
-function handleRealtimeStatus(
-    payload: unknown,
-    context: Record<string, any>
-) {
+function handleRealtimeStatus(payload: unknown, context: Record<string, any>) {
     useRuntimeStore.getState().recordRuntimeEvent('realtimeWsStatus', payload);
     const statusPayload = isRecord(payload) ? payload : {};
     const status = String(statusPayload.status || '');
@@ -353,9 +350,7 @@ function handleRealtimeStatus(
     }
 }
 
-async function subscribeRuntimeRealtimeEvents(
-    context: Record<string, any>
-) {
+async function subscribeRuntimeRealtimeEvents(context: Record<string, any>) {
     const unsubscribers = await Promise.all([
         tauriClient.events.subscribe('realtimeWsStatus', (payload: any) => {
             handleRealtimeStatus(payload, context);
@@ -443,9 +438,7 @@ async function subscribeRuntimeRealtimeEvents(
     };
 }
 
-async function startRuntimeRealtimeTransport(
-    context: Record<string, any>
-) {
+async function startRuntimeRealtimeTransport(context: Record<string, any>) {
     const runId = ++runtimeTransportRunId;
     cleanupRuntimeRealtimeSubscription();
     runtimeTransportStarting = true;
@@ -481,13 +474,16 @@ async function startRuntimeRealtimeTransport(
     let startResult: Record<string, any>;
     let startGeneration: number | null = null;
     try {
-        startResult = (await tauriClient.app.StartRealtimeTransport(
+        startResult = (await commands.appStartRealtimeTransport(
             context.userId,
             context.endpoint,
             context.websocket,
             runId,
             context.currentUserSnapshot,
-            useFriendRosterStore.getState().friendsById
+            useFriendRosterStore.getState().friendsById as unknown as Record<
+                string,
+                BackendFriendRecord
+            >
         )) as Record<string, any>;
         startGeneration = Number(startResult?.generation) || null;
         if (runId === runtimeTransportRunId) {
@@ -572,7 +568,7 @@ async function connectRealtimeTransport({
     ) {
         useSessionStore.getState().setTransportStatus('announcing-ipc');
         try {
-            await tauriClient.app.IPCAnnounceStart();
+            await commands.appIpcAnnounceStart();
             ipcAnnouncedForActiveSession = true;
             useRuntimeStore.getState().setTransportState({
                 ipcAnnounced: true,
@@ -670,12 +666,15 @@ export async function syncRuntimeRealtimeFriendSnapshot({
         return null;
     }
 
-    return tauriClient.app.SyncRealtimeFriendSnapshot(
+    return commands.appSyncRealtimeFriendSnapshot(
         context.userId,
         context.endpoint,
         context.websocket,
         runtimeTransportGeneration,
-        useFriendRosterStore.getState().friendsById
+        useFriendRosterStore.getState().friendsById as unknown as Record<
+            string,
+            BackendFriendRecord
+        >
     );
 }
 
@@ -695,7 +694,7 @@ export async function syncRuntimeRealtimeCurrentUserSnapshot(
         return null;
     }
 
-    return tauriClient.app.SyncRealtimeCurrentUserSnapshot(
+    return commands.appSyncRealtimeCurrentUserSnapshot(
         context.userId,
         context.endpoint,
         context.websocket,

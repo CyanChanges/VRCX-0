@@ -39,11 +39,13 @@ async fn execute_auth_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_auth_saved_snapshot_get(state: State<'_, AppState>) -> Result<Value, AppError> {
     vrcx_0_application::saved_snapshot(&state.runtime_context.config).map_err(AppError::from)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_auth_saved_credential_delete(
     state: State<'_, AppState>,
     input: VrchatAuthSavedCredentialDeleteInput,
@@ -53,6 +55,7 @@ pub fn app__vrchat_auth_saved_credential_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_saved_credential_login_start(
     state: State<'_, AppState>,
     input: VrchatAuthSavedCredentialLoginStartInput,
@@ -90,6 +93,7 @@ pub async fn app__vrchat_auth_saved_credential_login_start(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_auth_login_success_record(
     state: State<'_, AppState>,
     input: VrchatAuthLoginSuccessRecordInput,
@@ -108,6 +112,7 @@ pub fn app__vrchat_auth_login_success_record(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_auth_logout_record(
     state: State<'_, AppState>,
     input: VrchatAuthLogoutRecordInput,
@@ -125,6 +130,7 @@ pub fn app__vrchat_auth_logout_record(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_config_get(
     state: State<'_, AppState>,
     input: VrchatAuthEndpointInput,
@@ -139,6 +145,7 @@ pub async fn app__vrchat_auth_config_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_current_user_get(
     state: State<'_, AppState>,
     input: VrchatAuthEndpointInput,
@@ -153,6 +160,7 @@ pub async fn app__vrchat_auth_current_user_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_session_get(
     state: State<'_, AppState>,
     input: VrchatAuthEndpointInput,
@@ -167,6 +175,7 @@ pub async fn app__vrchat_auth_session_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_login_basic(
     state: State<'_, AppState>,
     input: VrchatAuthLoginBasicInput,
@@ -188,6 +197,7 @@ pub async fn app__vrchat_auth_login_basic(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_cookie_session_restore(
     state: State<'_, AppState>,
     input: VrchatAuthEndpointInput,
@@ -214,6 +224,7 @@ pub async fn app__vrchat_auth_cookie_session_restore(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_login_basic_start(
     state: State<'_, AppState>,
     input: VrchatAuthLoginBasicInput,
@@ -246,6 +257,7 @@ pub async fn app__vrchat_auth_login_basic_start(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_totp_verify(
     state: State<'_, AppState>,
     input: VrchatAuthCodeInput,
@@ -260,6 +272,7 @@ pub async fn app__vrchat_auth_totp_verify(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_otp_verify(
     state: State<'_, AppState>,
     input: VrchatAuthCodeInput,
@@ -274,6 +287,7 @@ pub async fn app__vrchat_auth_otp_verify(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_email_otp_verify(
     state: State<'_, AppState>,
     input: VrchatAuthCodeInput,
@@ -288,6 +302,7 @@ pub async fn app__vrchat_auth_email_otp_verify(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_visits_get(
     state: State<'_, AppState>,
     input: VrchatAuthEndpointInput,
@@ -302,6 +317,7 @@ pub async fn app__vrchat_auth_visits_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_auth_file_analysis_get(
     state: State<'_, AppState>,
     input: VrchatAuthFileAnalysisInput,

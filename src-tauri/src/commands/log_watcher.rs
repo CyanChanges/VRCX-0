@@ -9,12 +9,14 @@ use crate::state::AppState;
 use crate::commands::host::host_capabilities::{require_host_capability, HostCapability};
 
 #[tauri::command]
+#[specta::specta]
 pub fn log_watcher__get(state: State<'_, AppState>) -> Result<Vec<Vec<String>>, AppError> {
     require_host_capability(HostCapability::GameLogWatcher)?;
     Ok(state.log_watcher.get())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn log_watcher__set_date_till(
     date: String,
     state: State<'_, AppState>,
@@ -25,6 +27,7 @@ pub fn log_watcher__set_date_till(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn log_watcher__reset(state: State<'_, AppState>) -> Result<(), AppError> {
     require_host_capability(HostCapability::GameLogWatcher)?;
     state.log_watcher.reset();
@@ -32,12 +35,14 @@ pub fn log_watcher__reset(state: State<'_, AppState>) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn log_watcher__vrc_closed_gracefully(state: State<'_, AppState>) -> Result<bool, AppError> {
     require_host_capability(HostCapability::GameLogWatcher)?;
     Ok(state.log_watcher.vrc_closed_gracefully())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn log_watcher__get_current_location(
     state: State<'_, AppState>,
 ) -> Result<Option<LogLocationSnapshot>, AppError> {

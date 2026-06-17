@@ -9,6 +9,7 @@ use vrcx_0_persistence::cache_entities::CacheEntityInput;
 use vrcx_0_persistence::worlds::WorldSummaryOutput;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__world_cache_get(
     state: State<'_, AppState>,
     world_id: String,
@@ -17,6 +18,7 @@ pub fn app__world_cache_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__world_cache_list(
     state: State<'_, AppState>,
 ) -> Result<Vec<WorldSummaryOutput>, AppError> {
@@ -24,6 +26,7 @@ pub fn app__world_cache_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__world_cache_remove(
     state: State<'_, AppState>,
     world_id: String,
@@ -33,6 +36,7 @@ pub fn app__world_cache_remove(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__world_cache_upsert(
     state: State<'_, AppState>,
     entry: CacheEntityInput,

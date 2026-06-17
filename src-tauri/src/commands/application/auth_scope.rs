@@ -6,7 +6,7 @@ use tauri::State;
 use crate::state::AppState;
 use vrcx_0_application::RuntimeAuthScopeSnapshot;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeAuthScopeSetInput {
     #[serde(default)]
@@ -16,6 +16,7 @@ pub struct RuntimeAuthScopeSetInput {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_auth_scope_set(
     state: State<'_, AppState>,
     input: RuntimeAuthScopeSetInput,
@@ -36,6 +37,7 @@ pub fn app__runtime_auth_scope_set(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_auth_scope_get(state: State<'_, AppState>) -> RuntimeAuthScopeSnapshot {
     state.runtime_context.auth_scope.snapshot()
 }

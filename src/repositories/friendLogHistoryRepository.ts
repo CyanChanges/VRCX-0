@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 const FRIEND_LOG_TYPES = Object.freeze([
     'Friend',
@@ -135,13 +135,11 @@ async function getFriendLogHistory(
               )
         : [];
 
-    const rows = (await tauriClient.app.FriendLogHistoryQuery({
-        query: {
+    const rows = (await commands.appFriendLogHistoryQuery({
             userId: normalizedUserId,
             targetUserId: normalizedTargetUserId,
             types: normalizedTypes
-        }
-    })) as FriendLogHistorySourceRow[];
+        })) as FriendLogHistorySourceRow[];
 
     if (!Array.isArray(rows)) {
         return [];
@@ -156,41 +154,29 @@ async function addFriendLogHistory(
     userId: unknown,
     entry: FriendLogHistoryEntry | null | undefined
 ) {
-    await tauriClient.app.FriendLogHistoryAdd({
-        userId:
-            typeof userId === 'string'
+    await commands.appFriendLogHistoryAdd(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entries: [normalizeFriendLogHistoryEntryForRuntime(entry)]
-    });
+                : String(userId ?? '').trim(), [normalizeFriendLogHistoryEntryForRuntime(entry)]);
 }
 
 async function addFriendLogHistoryArray(
     userId: unknown,
     entries: FriendLogHistoryEntry[] = []
 ) {
-    await tauriClient.app.FriendLogHistoryAdd({
-        userId:
-            typeof userId === 'string'
+    await commands.appFriendLogHistoryAdd(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entries: (Array.isArray(entries) ? entries : []).map(
+                : String(userId ?? '').trim(), (Array.isArray(entries) ? entries : []).map(
             normalizeFriendLogHistoryEntryForRuntime
-        )
-    });
+        ));
 }
 
 async function deleteFriendLogHistory(
     userId: unknown,
     entry: FriendLogHistoryEntry | null | undefined
 ) {
-    return tauriClient.app.FriendLogHistoryDelete({
-        userId:
-            typeof userId === 'string'
+    return commands.appFriendLogHistoryDelete(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entry: normalizeFriendLogHistoryEntryForRuntime(entry)
-    });
+                : String(userId ?? '').trim(), normalizeFriendLogHistoryEntryForRuntime(entry));
 }
 
 const friendLogHistoryRepository = {

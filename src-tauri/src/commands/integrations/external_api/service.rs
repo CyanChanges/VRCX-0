@@ -133,6 +133,7 @@ fn external_api_policy(_state: &AppState, _scope: ExternalApiScope) -> ExternalA
 macro_rules! external_command {
     ($name:ident, $input_ty:ty, $builder:ident, $scope:expr, $detail:expr) => {
         #[tauri::command]
+        #[specta::specta]
         pub async fn $name(
             state: State<'_, AppState>,
             input: $input_ty,

@@ -35,7 +35,7 @@ fn future_iso(seconds: u64) -> String {
         .to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeBackgroundJobSnapshot {
     pub name: String,

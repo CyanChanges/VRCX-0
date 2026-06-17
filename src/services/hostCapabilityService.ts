@@ -1,8 +1,8 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import type {
-    HostCapabilities,
-    HostCapabilityStatus
-} from '@/platform/tauri/client';
+    CapabilityStatus as HostCapabilityStatus,
+    HostCapabilities
+} from '@/platform/tauri/bindings';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
 const HOST_CAPABILITY_KEYS = Object.freeze([
@@ -80,7 +80,11 @@ function createCapabilitiesBase(
 }
 
 function createUnavailableCapabilities(reason: unknown): HostCapabilities {
-    const capabilities = createCapabilitiesBase('unknown', 'unknown', 'unknown');
+    const capabilities = createCapabilitiesBase(
+        'unknown',
+        'unknown',
+        'unknown'
+    );
     for (const key of HOST_CAPABILITY_KEYS) {
         capabilities[key] = normalizeCapabilityStatus(null, reason);
     }
@@ -98,7 +102,11 @@ function normalizeHostCapabilities(payload: unknown): HostCapabilities {
     const linuxPackageKind = LINUX_PACKAGE_KINDS.has(record.linuxPackageKind)
         ? (record.linuxPackageKind as LinuxPackageKind)
         : 'unknown';
-    const capabilities = createCapabilitiesBase(platform, arch, linuxPackageKind);
+    const capabilities = createCapabilitiesBase(
+        platform,
+        arch,
+        linuxPackageKind
+    );
     for (const key of HOST_CAPABILITY_KEYS) {
         capabilities[key] = normalizeCapabilityStatus(
             record[key],
@@ -118,7 +126,7 @@ export async function initializeHostCapabilities(): Promise<HostCapabilities> {
 
     try {
         const capabilities = normalizeHostCapabilities(
-            await tauriClient.app.GetHostCapabilities()
+            await commands.appGetHostCapabilities()
         );
         useRuntimeStore
             .getState()
@@ -150,7 +158,7 @@ export async function initializeHostCapabilities(): Promise<HostCapabilities> {
 
 export async function refreshHostCapabilities(): Promise<HostCapabilities> {
     const capabilities = normalizeHostCapabilities(
-        await tauriClient.app.GetHostCapabilities()
+        await commands.appGetHostCapabilities()
     );
     useRuntimeStore
         .getState()
@@ -164,9 +172,10 @@ export function getHostCapabilityStatus(
     key: string
 ): HostCapabilityStatus | null {
     return (
-        (useRuntimeStore.getState().hostCapabilities?.[
-            key
-        ] as HostCapabilityStatus | null | undefined) || null
+        (useRuntimeStore.getState().hostCapabilities?.[key] as
+            | HostCapabilityStatus
+            | null
+            | undefined) || null
     );
 }
 

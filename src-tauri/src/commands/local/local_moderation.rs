@@ -8,6 +8,7 @@ use crate::state::AppState;
 use vrcx_0_persistence::local_moderation::LocalModerationOutput;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_moderation_get(
     state: State<'_, AppState>,
     owner_user_id: String,
@@ -22,6 +23,7 @@ pub fn app__local_moderation_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__local_moderation_list(
     state: State<'_, AppState>,
     owner_user_id: String,

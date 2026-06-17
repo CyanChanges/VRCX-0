@@ -23,7 +23,7 @@ pub enum ApiScope {
     VrchatMedia,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ApiResponsePolicy {
     pub class: String,
@@ -33,7 +33,7 @@ pub struct ApiResponsePolicy {
     pub session_recovery_required: bool,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct HttpApiRequestInput {
     pub url: Option<String>,
@@ -66,7 +66,7 @@ pub struct HttpApiRequestInput {
     pub file_md5: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 pub struct HttpApiExecuteResponse {
     pub status: i32,
     pub data: String,

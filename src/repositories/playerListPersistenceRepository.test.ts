@@ -1,50 +1,50 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import { getCurrentInstanceSnapshot } from './playerListPersistenceRepository';
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: {
-        app: {
-            PlayerListLocationGet: vi.fn(),
-            PlayerListLatestLocationGet: vi.fn(),
-            PlayerListJoinLeaveRows: vi.fn()
-        }
+vi.mock('@/platform/tauri/bindings', () => ({
+    commands: {
+        appPlayerListLocationGet: vi.fn(),
+        appPlayerListLatestLocationGet: vi.fn(),
+        appPlayerListJoinLeaveRows: vi.fn()
     }
 }));
 
 describe('playerListPersistenceRepository', () => {
     beforeEach(() => {
-        vi.mocked(tauriClient.app.PlayerListLocationGet).mockReset();
-        vi.mocked(tauriClient.app.PlayerListLatestLocationGet).mockReset();
-        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows).mockReset();
+        vi.mocked(commands.appPlayerListLocationGet).mockReset();
+        vi.mocked(commands.appPlayerListLatestLocationGet).mockReset();
+        vi.mocked(commands.appPlayerListJoinLeaveRows).mockReset();
     });
 
     it('does not include join rows from earlier visits to the same instance', async () => {
-        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
-            created_at: '2026-04-30T10:00:00.000Z',
+        vi.mocked(commands.appPlayerListLocationGet).mockResolvedValueOnce({
+            createdAt: '2026-04-30T10:00:00.000Z',
             location: 'wrld_live:123',
-            world_id: 'wrld_live',
-            world_name: 'Live World',
+            worldId: 'wrld_live',
+            worldName: 'Live World',
             time: 0,
-            group_name: ''
+            groupName: ''
         });
-        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows).mockResolvedValueOnce([
+        vi.mocked(
+            commands.appPlayerListJoinLeaveRows
+        ).mockResolvedValueOnce([
             {
-                id: '1',
-                created_at: '2026-01-01T10:00:00.000Z',
+                id: 1,
+                createdAt: '2026-01-01T10:00:00.000Z',
                 type: 'OnPlayerJoined',
-                display_name: 'Old Player',
-                user_id: 'usr_old',
+                displayName: 'Old Player',
+                userId: 'usr_old',
                 time: 0
             },
             {
-                id: '2',
-                created_at: '2026-04-30T10:01:00.000Z',
+                id: 2,
+                createdAt: '2026-04-30T10:01:00.000Z',
                 type: 'OnPlayerJoined',
-                display_name: 'Current Player',
-                user_id: 'usr_current',
+                displayName: 'Current Player',
+                userId: 'usr_current',
                 time: 0
             }
         ]);
@@ -64,29 +64,31 @@ describe('playerListPersistenceRepository', () => {
     });
 
     it('uses the runtime location start time over stale database location rows', async () => {
-        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
-            created_at: '2026-01-01T10:00:00.000Z',
+        vi.mocked(commands.appPlayerListLocationGet).mockResolvedValueOnce({
+            createdAt: '2026-01-01T10:00:00.000Z',
             location: 'wrld_live:123',
-            world_id: 'wrld_live',
-            world_name: 'Live World',
+            worldId: 'wrld_live',
+            worldName: 'Live World',
             time: 0,
-            group_name: ''
+            groupName: ''
         });
-        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows).mockResolvedValueOnce([
+        vi.mocked(
+            commands.appPlayerListJoinLeaveRows
+        ).mockResolvedValueOnce([
             {
-                id: '1',
-                created_at: '2026-01-01T10:01:00.000Z',
+                id: 1,
+                createdAt: '2026-01-01T10:01:00.000Z',
                 type: 'OnPlayerJoined',
-                display_name: 'Old Player',
-                user_id: 'usr_old',
+                displayName: 'Old Player',
+                userId: 'usr_old',
                 time: 0
             },
             {
-                id: '2',
-                created_at: '2026-04-30T10:01:00.000Z',
+                id: 2,
+                createdAt: '2026-04-30T10:01:00.000Z',
                 type: 'OnPlayerJoined',
-                display_name: 'Current Player',
-                user_id: 'usr_current',
+                displayName: 'Current Player',
+                userId: 'usr_current',
                 time: 0
             }
         ]);
@@ -106,29 +108,31 @@ describe('playerListPersistenceRepository', () => {
     });
 
     it('removes a joined row by unique display name when the leave row has a different id key', async () => {
-        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
-            created_at: '2026-04-30T10:00:00.000Z',
+        vi.mocked(commands.appPlayerListLocationGet).mockResolvedValueOnce({
+            createdAt: '2026-04-30T10:00:00.000Z',
             location: 'wrld_live:123',
-            world_id: 'wrld_live',
-            world_name: 'Live World',
+            worldId: 'wrld_live',
+            worldName: 'Live World',
             time: 0,
-            group_name: ''
+            groupName: ''
         });
-        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows).mockResolvedValueOnce([
+        vi.mocked(
+            commands.appPlayerListJoinLeaveRows
+        ).mockResolvedValueOnce([
             {
-                id: '1',
-                created_at: '2026-04-30T10:01:00.000Z',
+                id: 1,
+                createdAt: '2026-04-30T10:01:00.000Z',
                 type: 'OnPlayerJoined',
-                display_name: 'Left Player',
-                user_id: '',
+                displayName: 'Left Player',
+                userId: '',
                 time: 0
             },
             {
-                id: '2',
-                created_at: '2026-04-30T10:02:00.000Z',
+                id: 2,
+                createdAt: '2026-04-30T10:02:00.000Z',
                 type: 'OnPlayerLeft',
-                display_name: 'Left Player',
-                user_id: 'usr_left',
+                displayName: 'Left Player',
+                userId: 'usr_left',
                 time: 60000
             }
         ]);
@@ -143,23 +147,23 @@ describe('playerListPersistenceRepository', () => {
     });
 
     it('falls back to the database enter time when a stale runtime start filters the roster out', async () => {
-        vi.mocked(tauriClient.app.PlayerListLocationGet).mockResolvedValueOnce({
-            created_at: '2026-06-09T12:26:31.000Z',
+        vi.mocked(commands.appPlayerListLocationGet).mockResolvedValueOnce({
+            createdAt: '2026-06-09T12:26:31.000Z',
             location: 'wrld_live:83220',
-            world_id: 'wrld_live',
-            world_name: 'Live World',
+            worldId: 'wrld_live',
+            worldName: 'Live World',
             time: 0,
-            group_name: ''
+            groupName: ''
         });
         const joinRow = {
-            id: '1',
-            created_at: '2026-06-09T12:26:59.000Z',
+            id: 1,
+            createdAt: '2026-06-09T12:26:59.000Z',
             type: 'OnPlayerJoined',
-            display_name: 'CyanChanges',
-            user_id: 'usr_cyan',
+            displayName: 'CyanChanges',
+            userId: 'usr_cyan',
             time: 0
         };
-        vi.mocked(tauriClient.app.PlayerListJoinLeaveRows)
+        vi.mocked(commands.appPlayerListJoinLeaveRows)
             .mockResolvedValueOnce([joinRow])
             .mockResolvedValueOnce([joinRow]);
 

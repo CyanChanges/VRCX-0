@@ -20,12 +20,11 @@ vi.mock('@/repositories/vrchatAuthRepository', () => ({
     }
 }));
 
+import { assetBundleRepository } from '@/repositories/assetBundleRepository';
 import vrchatAuthRepository from '@/repositories/vrchatAuthRepository';
 
 import { defaultAvatarSideData } from './avatarAssets';
 import { readAvatarCacheInfo } from './avatarCacheAdapter';
-import { assetBundleRepository } from '@/repositories/assetBundleRepository';
-
 
 describe('avatarCacheAdapter', () => {
     beforeEach(() => {
@@ -91,9 +90,9 @@ describe('avatarCacheAdapter', () => {
             new Error('offline')
         );
         vi.mocked(assetBundleRepository.checkVRChatCache).mockResolvedValue({
-            item1: 1048576,
-            item2: false,
-            item3: 'C:/cache/fallback'
+            Item1: 1048576,
+            Item2: false,
+            Item3: 'C:/cache/fallback'
         });
 
         await expect(

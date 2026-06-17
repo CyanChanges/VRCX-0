@@ -7,6 +7,7 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vr_overlay_status_get(
     state: State<'_, AppState>,
 ) -> Result<VrOverlayRuntimeSnapshot, AppError> {
@@ -14,6 +15,7 @@ pub fn app__vr_overlay_status_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vr_overlay_enabled_set(
     state: State<'_, AppState>,
     enabled: bool,
@@ -22,6 +24,7 @@ pub fn app__vr_overlay_enabled_set(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vr_overlay_config_reload(
     state: State<'_, AppState>,
 ) -> Result<VrOverlayRuntimeSnapshot, AppError> {

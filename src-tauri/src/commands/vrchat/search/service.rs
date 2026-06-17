@@ -31,6 +31,7 @@ async fn execute_search_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_config_get(
     state: State<'_, AppState>,
     input: VrchatSearchParamsInput,
@@ -45,6 +46,7 @@ pub async fn app__vrchat_search_config_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_worlds_get(
     state: State<'_, AppState>,
     input: VrchatSearchWorldsInput,
@@ -59,6 +61,7 @@ pub async fn app__vrchat_search_worlds_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_users_get(
     state: State<'_, AppState>,
     input: VrchatSearchParamsInput,
@@ -73,6 +76,7 @@ pub async fn app__vrchat_search_users_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_groups_get(
     state: State<'_, AppState>,
     input: VrchatSearchParamsInput,
@@ -87,6 +91,7 @@ pub async fn app__vrchat_search_groups_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_groups_strict_get(
     state: State<'_, AppState>,
     input: VrchatSearchParamsInput,
@@ -101,6 +106,7 @@ pub async fn app__vrchat_search_groups_strict_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_search_instance_short_name_get(
     state: State<'_, AppState>,
     input: VrchatSearchShortNameInput,

@@ -64,7 +64,7 @@ impl WebExecuteRequest {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, specta::Type)]
 #[serde(rename_all = "PascalCase")]
 struct CookieEntry {
     name: String,

@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import databaseMaintenanceRepository from '@/repositories/databaseMaintenanceRepository';
 import gameLogRepository from '@/repositories/gameLogRepository';
@@ -554,7 +554,7 @@ async function persistGameLog(gameLog: GameLogRow, options: GameLogRow = {}) {
             ) {
                 const bias = Date.parse(gameLog.dt) + 3000;
                 if (bias >= Date.now()) {
-                    await tauriClient.app.QuitGame().catch((error: any) => {
+                    await commands.appQuitGame().catch((error: any) => {
                         console.warn(
                             'QuitGame failed during vrc-quit handling:',
                             error
@@ -649,7 +649,7 @@ export async function initializeGameLogIngest() {
             return;
         }
         const dateTill = await gameLogRepository.getLastDateGameLogDatabase();
-        await tauriClient.logWatcher.SetDateTill(dateTill);
+        await commands.logWatcherSetDateTill(dateTill);
         ingestState.tailCaughtUp = false;
         ingestState.initialized = true;
         ingestState.watcherInitialized = true;
@@ -799,7 +799,7 @@ export async function syncGameLogTail() {
         await initializeGameLogIngest();
 
         for (let i = 0; i < GAME_LOG_BATCH_LIMIT; i += 1) {
-            const rows = await tauriClient.logWatcher.Get();
+            const rows = await commands.logWatcherGet();
             if (!Array.isArray(rows) || rows.length === 0) {
                 ingestState.tailCaughtUp = true;
                 break;

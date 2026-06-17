@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import {
     createRequestError,
@@ -74,7 +74,7 @@ async function getFriends({
     n = PAGE_SIZE,
     offset = 0
 }: FriendsPageInput = {}) {
-    const response = await tauriClient.app.VrchatFriendsGet({
+    const response = await commands.appVrchatFriendsGet({
         endpoint,
         offline: Boolean(offline),
         n,
@@ -125,7 +125,7 @@ async function getUser({
         throw new Error('VrchatFriendRepository.getUser requires a user id.');
     }
 
-    const response = await tauriClient.app.VrchatUserGet({
+    const response = await commands.appVrchatUserGet({
         userId: normalizedUserId,
         endpoint,
         isFriend
@@ -147,7 +147,7 @@ async function deleteFriend({ userId, endpoint = '' }: FriendEndpointInput) {
         );
     }
 
-    const response = await tauriClient.app.VrchatFriendDelete({
+    const response = await commands.appVrchatFriendDelete({
         userId: normalizedUserId,
         endpoint
     });
@@ -168,7 +168,7 @@ async function getFriendStatus({ userId, endpoint = '' }: FriendEndpointInput) {
         );
     }
 
-    const response = await tauriClient.app.VrchatFriendStatusGet({
+    const response = await commands.appVrchatFriendStatusGet({
         userId: normalizedUserId,
         endpoint
     });
@@ -192,7 +192,7 @@ async function sendFriendRequest({
         );
     }
 
-    const response = await tauriClient.app.VrchatFriendRequestSend({
+    const response = await commands.appVrchatFriendRequestSend({
         userId: normalizedUserId,
         endpoint
     });
@@ -222,7 +222,7 @@ async function cancelFriendRequest({
             ? { notificationId: notificationId.trim() }
             : null;
 
-    const response = await tauriClient.app.VrchatFriendRequestCancel({
+    const response = await commands.appVrchatFriendRequestCancel({
         userId: normalizedUserId,
         notificationId: params?.notificationId || '',
         endpoint

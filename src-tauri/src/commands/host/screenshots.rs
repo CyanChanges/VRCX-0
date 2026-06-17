@@ -36,6 +36,7 @@ fn ensure_screenshot_write_allowed(state: &AppState, path: &str) -> Result<(), A
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_extra_screenshot_data(
     state: State<'_, AppState>,
     path: String,
@@ -47,6 +48,7 @@ pub fn app__get_extra_screenshot_data(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_screenshot_metadata(
     state: State<'_, AppState>,
     path: String,
@@ -57,6 +59,7 @@ pub fn app__get_screenshot_metadata(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__find_screenshots_by_search(
     state: State<'_, AppState>,
     search_query: String,
@@ -72,6 +75,7 @@ pub fn app__find_screenshots_by_search(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__start_screenshot_library_scan(
     state: State<'_, AppState>,
     force: Option<bool>,
@@ -87,6 +91,7 @@ pub fn app__start_screenshot_library_scan(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_screenshot_library_status(
     state: State<'_, AppState>,
 ) -> Result<screenshot::ScreenshotLibraryScanStatus, AppError> {
@@ -95,6 +100,7 @@ pub fn app__get_screenshot_library_status(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_screenshot_folder_tree(
     state: State<'_, AppState>,
 ) -> Result<screenshot::ScreenshotFolderTree, AppError> {
@@ -106,6 +112,7 @@ pub fn app__get_screenshot_folder_tree(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_screenshot_folder_images(
     state: State<'_, AppState>,
     folder_path: String,
@@ -119,6 +126,7 @@ pub fn app__get_screenshot_folder_images(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_world_screenshots(
     state: State<'_, AppState>,
     world_id: String,
@@ -132,6 +140,7 @@ pub fn app__get_world_screenshots(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__ensure_screenshot_thumbnail(
     state: State<'_, AppState>,
     path: String,
@@ -153,6 +162,7 @@ pub async fn app__ensure_screenshot_thumbnail(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_last_screenshot() -> Result<String, AppError> {
     require_host_capability(HostCapability::ScreenshotCache)?;
     Ok(screenshot::last_screenshot(
@@ -161,6 +171,7 @@ pub fn app__get_last_screenshot() -> Result<String, AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__delete_screenshot_metadata(
     state: State<'_, AppState>,
     path: String,
@@ -171,6 +182,7 @@ pub fn app__delete_screenshot_metadata(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) -> Result<(), AppError> {
     require_host_capability(HostCapability::ScreenshotCache)?;
     screenshot::delete_all_screenshot_metadata(
@@ -182,6 +194,7 @@ pub fn app__delete_all_screenshot_metadata(state: State<'_, AppState>) -> Result
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__add_screenshot_metadata(
     state: State<'_, AppState>,
     path: String,

@@ -9,7 +9,7 @@ use crate::database::schema::ensure_global_store_tables;
 use crate::database::DatabaseService;
 use crate::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldSummaryOutput {
     pub id: String,

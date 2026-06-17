@@ -1,5 +1,5 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 export async function getCurrentLogLocation(): Promise<unknown> {
-    return tauriClient.logWatcher.GetCurrentLocation();
+    return commands.logWatcherGetCurrentLocation();
 }

@@ -1,5 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
 import { normalizeLanguageCode } from '@/localization/locales';
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import databaseMaintenanceRepository from '@/repositories/databaseMaintenanceRepository';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -113,7 +113,7 @@ export async function initializeReactRuntime() {
         );
 
         try {
-            await tauriClient.app.SetUserAgent();
+            await commands.appSetUserAgent();
         } catch (error) {
             console.warn(
                 'SetUserAgent is unavailable during application bootstrap:',

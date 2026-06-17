@@ -12,6 +12,7 @@ use vrcx_0_persistence::notifications::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_add_v1(
     state: State<'_, AppState>,
     user_id: String,
@@ -22,6 +23,7 @@ pub fn app__notification_add_v1(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_add_v2(
     state: State<'_, AppState>,
     user_id: String,
@@ -32,6 +34,7 @@ pub fn app__notification_add_v2(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_delete(
     state: State<'_, AppState>,
     user_id: String,
@@ -42,6 +45,7 @@ pub fn app__notification_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_expire(
     state: State<'_, AppState>,
     user_id: String,
@@ -52,6 +56,7 @@ pub fn app__notification_expire(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_list_query(
     state: State<'_, AppState>,
     query: NotificationListQueryInput,
@@ -61,6 +66,7 @@ pub fn app__notification_list_query(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_mark_seen_local_bulk(
     state: State<'_, AppState>,
     user_id: String,
@@ -75,6 +81,7 @@ pub fn app__notification_mark_seen_local_bulk(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_rows_query(
     state: State<'_, AppState>,
     query: NotificationRowsQueryInput,
@@ -84,6 +91,7 @@ pub fn app__notification_rows_query(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_update_expired(
     state: State<'_, AppState>,
     user_id: String,
@@ -100,6 +108,7 @@ pub fn app__notification_update_expired(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_v2_expire(
     state: State<'_, AppState>,
     user_id: String,
@@ -110,6 +119,7 @@ pub fn app__notification_v2_expire(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__notification_v2_mark_seen(
     state: State<'_, AppState>,
     user_id: String,

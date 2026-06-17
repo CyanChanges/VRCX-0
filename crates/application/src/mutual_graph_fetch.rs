@@ -21,7 +21,7 @@ const MUTUAL_GRAPH_REQUEST_INTERVAL_MS: u64 = 200;
 const MUTUAL_GRAPH_MAX_RETRIES: usize = 4;
 const MUTUAL_GRAPH_EMPTY_USER_ID: &str = "usr_00000000-0000-0000-0000-000000000000";
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphFetchStartInput {
     pub owner_user_id: String,
@@ -31,14 +31,14 @@ pub struct MutualGraphFetchStartInput {
     pub friend_ids: Vec<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphFetchCancelInput {
     #[serde(default)]
     pub owner_user_id: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MutualGraphFetchStatus {
     pub run_id: u64,

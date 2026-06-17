@@ -1,8 +1,8 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import type {
-    ModerationSyncRefreshResult,
-    ModerationSyncUpdateResult
-} from '@/platform/tauri/client';
+    ModerationSyncMutationOutput as ModerationSyncUpdateResult,
+    ModerationSyncRefreshOutput as ModerationSyncRefreshResult
+} from '@/platform/tauri/bindings';
 import { createRequestError } from '@/repositories/vrchatRequest';
 
 import { handleRuntimeAuthFailure } from './authSessionRecoveryService';
@@ -51,7 +51,7 @@ export async function refreshModerationSync(
     input: ModerationSyncRefreshInput
 ): Promise<ModerationSyncRefreshResult> {
     try {
-        return await tauriClient.app.ModerationSyncRefresh(input);
+        return await commands.appModerationSyncRefresh(input);
     } catch (error) {
         return routeModerationAuthFailure(error, 'auth/user/playermoderations');
     }
@@ -61,7 +61,7 @@ export async function updateModerationSync(
     input: ModerationSyncUpdateInput
 ): Promise<ModerationSyncUpdateResult> {
     try {
-        return await tauriClient.app.ModerationSyncUpdate(input);
+        return await commands.appModerationSyncUpdate(input);
     } catch (error) {
         return routeModerationAuthFailure(
             error,

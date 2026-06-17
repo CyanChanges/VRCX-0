@@ -1,15 +1,15 @@
-import { tauriClient } from '../platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 async function clearCookies(): Promise<unknown> {
-    return tauriClient.web.clearCookies();
+    return commands.webClearCookies();
 }
 
 async function getCookies(): Promise<unknown> {
-    return tauriClient.web.getCookies();
+    return commands.webGetCookies();
 }
 
 async function setCookies(cookie: unknown): Promise<unknown> {
-    return tauriClient.web.setCookies(cookie);
+    return commands.webSetCookies(cookie as string);
 }
 
 const webRepository = Object.freeze({

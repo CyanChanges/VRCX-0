@@ -15,6 +15,7 @@ use vrcx_0_persistence::activity::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_bucket_cache_get(
     state: State<'_, AppState>,
     query: ActivityBucketCacheQueryInput,
@@ -24,6 +25,7 @@ pub fn app__activity_bucket_cache_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_bucket_cache_upsert(
     state: State<'_, AppState>,
     entry: ActivityBucketCacheInput,
@@ -33,6 +35,7 @@ pub fn app__activity_bucket_cache_upsert(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_friend_presence_after(
     state: State<'_, AppState>,
     query: ActivityFriendPresenceAfterInput,
@@ -42,6 +45,7 @@ pub fn app__activity_friend_presence_after(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_friend_presence_slice(
     state: State<'_, AppState>,
     query: ActivityFriendPresenceSliceInput,
@@ -51,6 +55,7 @@ pub fn app__activity_friend_presence_slice(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_self_sessions_refresh(
     state: State<'_, AppState>,
     input: ActivitySelfSessionsRefreshInput,
@@ -60,6 +65,7 @@ pub fn app__activity_self_sessions_refresh(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_self_source_after(
     state: State<'_, AppState>,
     query: ActivitySelfSourceAfterInput,
@@ -69,6 +75,7 @@ pub fn app__activity_self_source_after(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_self_source_bounds(
     state: State<'_, AppState>,
 ) -> Result<ActivitySelfSourceBoundsOutput, AppError> {
@@ -77,6 +84,7 @@ pub fn app__activity_self_source_bounds(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_self_source_slice(
     state: State<'_, AppState>,
     query: ActivitySelfSourceSliceInput,
@@ -86,6 +94,7 @@ pub fn app__activity_self_source_slice(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_sessions_append(
     state: State<'_, AppState>,
     user_id: String,
@@ -102,6 +111,7 @@ pub fn app__activity_sessions_append(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_sessions_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -111,6 +121,7 @@ pub fn app__activity_sessions_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_sessions_replace(
     state: State<'_, AppState>,
     user_id: String,
@@ -121,6 +132,7 @@ pub fn app__activity_sessions_replace(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_sync_state_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -130,6 +142,7 @@ pub fn app__activity_sync_state_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__activity_sync_state_upsert(
     state: State<'_, AppState>,
     entry: ActivitySyncStateInput,

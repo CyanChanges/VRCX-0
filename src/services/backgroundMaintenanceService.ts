@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import vrchatAuthRepository from '@/repositories/vrchatAuthRepository';
 import { clearFavoriteRemoteDetailsCache } from '@/services/favoriteRemoteDetailsCacheService';
@@ -35,8 +35,7 @@ const APP_UPDATE_CHECK_INTERVAL_SECONDS = 3 * 3600;
 let running = false;
 
 function resetTimers() {
-    tauriClient.app
-        .RuntimeFrontendScheduleSchedulesReset()
+    commands.appRuntimeFrontendScheduleSchedulesReset()
         .catch((error: any) => {
             console.warn(
                 'Failed to reset runtime maintenance scheduler:',
@@ -453,7 +452,7 @@ async function runRegistryBackupMaintenance(reason: string) {
 
     let result: any;
     try {
-        result = await tauriClient.app.RegistryBackupMaintenanceRun(reason);
+        result = await commands.appRegistryBackupMaintenanceRun(reason);
     } catch (error) {
         console.warn(
             'Failed to run VRChat registry backup maintenance:',
@@ -466,9 +465,8 @@ async function runRegistryBackupMaintenance(reason: string) {
         return;
     }
 
-    await tauriClient.app
-        .EnsureMainWindow()
-        .catch(() => tauriClient.app.FocusWindow().catch(() => {}));
+    await commands.appEnsureMainWindow()
+        .catch(() => commands.appFocusWindow().catch(() => {}));
     await useModalStore.getState().alert({
         title: i18n.t(
             'service.background_maintenance.label.vrchat_registry_backup'
@@ -478,7 +476,7 @@ async function runRegistryBackupMaintenance(reason: string) {
         )
     });
     useRuntimeStore.getState().setSystemHostOpen('registryBackupOpen', true);
-    await tauriClient.app.FocusWindow().catch(() => {});
+    await commands.appFocusWindow().catch(() => {});
     if (result.restorePromptBackupDate) {
         await configRepository.setString(
             'VRChatRegistryLastRestoreCheck',
@@ -622,8 +620,7 @@ async function deferRuntimeScheduledFrontendJob(
     timerName: any,
     delaySeconds: any
 ) {
-    await tauriClient.app
-        .RuntimeFrontendScheduleJobDefer({
+    await commands.appRuntimeFrontendScheduleJobDefer({
             name: timerName,
             delaySeconds
         })
@@ -636,8 +633,7 @@ async function deferRuntimeScheduledFrontendJob(
 }
 
 async function getDueRuntimeScheduledFrontendJobs() {
-    const dueJobs = await tauriClient.app
-        .RuntimeFrontendScheduleDueJobsGet()
+    const dueJobs = await commands.appRuntimeFrontendScheduleDueJobsGet()
         .catch((error: any) => {
             console.warn('Failed to read runtime maintenance due jobs:', error);
             return [];

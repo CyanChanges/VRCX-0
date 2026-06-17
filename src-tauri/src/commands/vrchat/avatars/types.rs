@@ -1,14 +1,14 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarEndpointInput {
     #[serde(default)]
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarIdInput {
     #[serde(default)]
@@ -17,7 +17,7 @@ pub struct VrchatAvatarIdInput {
     pub(crate) avatar_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarListByUserInput {
     #[serde(default)]
@@ -38,7 +38,7 @@ pub struct VrchatAvatarListByUserInput {
     pub(crate) release_status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarFileInput {
     #[serde(default)]
@@ -47,7 +47,7 @@ pub struct VrchatAvatarFileInput {
     pub(crate) file_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarSaveInput {
     #[serde(default)]
@@ -57,7 +57,7 @@ pub struct VrchatAvatarSaveInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarImpostorCreateInput {
     #[serde(default)]
@@ -68,7 +68,7 @@ pub struct VrchatAvatarImpostorCreateInput {
     pub(crate) empty_body: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAvatarModerationInput {
     #[serde(default)]

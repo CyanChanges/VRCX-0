@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 const DEFAULT_MAX_TABLE_SIZE = 500;
 const DEFAULT_SEARCH_TABLE_SIZE = 50000;
@@ -69,18 +69,16 @@ function addGameLogEntries(
     kind: GameLogKind,
     entries: GameLogEntry | GameLogEntry[]
 ) {
-    return tauriClient.app.GameLogEntriesAdd({
+    return commands.appGameLogEntriesAdd(
         kind,
-        entries: Array.isArray(entries) ? entries : [entries]
-    });
+        Array.isArray(entries) ? entries : [entries]
+    );
 }
 
 async function queryGameLog(kind: string, params: GameLogParams = {}) {
-    return tauriClient.app.GameLogQuery({
-        query: {
-            kind,
-            params
-        }
+    return commands.appGameLogQuery({
+        kind,
+        params
     });
 }
 
@@ -631,9 +629,9 @@ const gameLog = {
     },
 
     deleteGameLogInstanceByInstanceId(input: GameLogInstanceDeleteInput) {
-        return tauriClient.app.GameLogInstanceDeleteByLocation({
-            location: input.location
-        });
+        return commands.appGameLogInstanceDeleteByLocation(
+            input.location as string
+        );
     },
 
     deleteGameLogInstance(input: GameLogInstanceDeleteInput) {
@@ -645,10 +643,10 @@ const gameLog = {
         if (!eventIds.length) {
             return Promise.resolve();
         }
-        return tauriClient.app.GameLogInstanceDelete({
-            location: input.location,
+        return commands.appGameLogInstanceDelete(
+            input.location as string,
             eventIds
-        });
+        );
     },
 
     async deleteGameLogEntry(input: GameLogEntry) {
@@ -670,31 +668,22 @@ const gameLog = {
     },
 
     async deleteGameLogVideoPlay(input: GameLogEntry) {
-        await tauriClient.app.GameLogEntryDelete({
-            kind: 'VideoPlay',
-            entry: input
-        });
+        await commands.appGameLogEntryDelete('VideoPlay', input);
     },
 
     async deleteGameLogEvent(input: GameLogEntry) {
-        await tauriClient.app.GameLogEntryDelete({
-            kind: 'Event',
-            entry: input
-        });
+        await commands.appGameLogEntryDelete('Event', input);
     },
 
     async deleteGameLogExternal(input: GameLogEntry) {
-        await tauriClient.app.GameLogEntryDelete({
-            kind: 'External',
-            entry: input
-        });
+        await commands.appGameLogEntryDelete('External', input);
     },
 
     async deleteGameLogResourceLoad(input: GameLogEntry) {
-        await tauriClient.app.GameLogEntryDelete({
-            kind: normalizeGameLogIdentifier(input.type) || 'ResourceLoad',
-            entry: input
-        });
+        await commands.appGameLogEntryDelete(
+            normalizeGameLogIdentifier(input.type) || 'ResourceLoad',
+            input
+        );
     },
 
     async getSessionsLocationSegments(beforeId: unknown, limit: number) {

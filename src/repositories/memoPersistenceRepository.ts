@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 interface SaveUserMemoInput {
     userId?: unknown;
@@ -76,14 +76,12 @@ async function getUserMemo(userId: unknown) {
     }
 
     return (
-        ((await tauriClient.app.MemoGetUser({
-            userId: normalizedUserId
-        })) as UserMemoEntry | null) ?? createEmptyUserMemo(normalizedUserId)
+        ((await commands.appMemoGetUser(normalizedUserId)) as UserMemoEntry | null) ?? createEmptyUserMemo(normalizedUserId)
     );
 }
 
 async function getAllUserMemos() {
-    const rows = (await tauriClient.app.MemoListUsers()) as UserMemoEntry[];
+    const rows = (await commands.appMemoListUsers()) as UserMemoEntry[];
     return Array.isArray(rows)
         ? rows.map((row) => ({
               userId: row.userId,
@@ -98,9 +96,7 @@ async function getAllUserNotes(ownerUserId: unknown = '') {
         return [];
     }
 
-    const rows = (await tauriClient.app.MemoListUserNotes({
-        ownerUserId: normalizedOwnerUserId
-    })) as Array<{
+    const rows = (await commands.appMemoListUserNotes(normalizedOwnerUserId)) as Array<{
         userId: unknown;
         displayName: unknown;
         note: unknown;
@@ -117,17 +113,11 @@ async function saveUserMemo({ userId, memo }: SaveUserMemoInput) {
 
     const nextMemo = typeof memo === 'string' ? memo : '';
     if (!nextMemo) {
-        await tauriClient.app.MemoSaveUser({
-            userId: normalizedUserId,
-            memo: ''
-        });
+        await commands.appMemoSaveUser(normalizedUserId, '');
         return createEmptyUserMemo(normalizedUserId);
     }
 
-    const entry = (await tauriClient.app.MemoSaveUser({
-        userId: normalizedUserId,
-        memo: nextMemo
-    })) as LocalMemoSaveResult;
+    const entry = (await commands.appMemoSaveUser(normalizedUserId, nextMemo)) as LocalMemoSaveResult;
     return {
         userId: entry.entityId,
         editedAt: entry.editedAt,
@@ -142,9 +132,7 @@ async function getWorldMemo(worldId: unknown) {
     }
 
     return (
-        ((await tauriClient.app.MemoGetWorld({
-            worldId: normalizedWorldId
-        })) as WorldMemoEntry | null) ?? createEmptyWorldMemo(normalizedWorldId)
+        ((await commands.appMemoGetWorld(normalizedWorldId)) as WorldMemoEntry | null) ?? createEmptyWorldMemo(normalizedWorldId)
     );
 }
 
@@ -156,17 +144,11 @@ async function saveWorldMemo({ worldId, memo }: SaveWorldMemoInput) {
 
     const nextMemo = typeof memo === 'string' ? memo : '';
     if (!nextMemo) {
-        await tauriClient.app.MemoSaveWorld({
-            worldId: normalizedWorldId,
-            memo: ''
-        });
+        await commands.appMemoSaveWorld(normalizedWorldId, '');
         return createEmptyWorldMemo(normalizedWorldId);
     }
 
-    const entry = (await tauriClient.app.MemoSaveWorld({
-        worldId: normalizedWorldId,
-        memo: nextMemo
-    })) as LocalMemoSaveResult;
+    const entry = (await commands.appMemoSaveWorld(normalizedWorldId, nextMemo)) as LocalMemoSaveResult;
     return {
         worldId: entry.entityId,
         editedAt: entry.editedAt,
@@ -181,9 +163,7 @@ async function getAvatarMemo(avatarId: unknown) {
     }
 
     return (
-        ((await tauriClient.app.MemoGetAvatar({
-            avatarId: normalizedAvatarId
-        })) as AvatarMemoEntry | null) ??
+        ((await commands.appMemoGetAvatar(normalizedAvatarId)) as AvatarMemoEntry | null) ??
         createEmptyAvatarMemo(normalizedAvatarId)
     );
 }
@@ -196,17 +176,11 @@ async function saveAvatarMemo({ avatarId, memo }: SaveAvatarMemoInput) {
 
     const nextMemo = typeof memo === 'string' ? memo : '';
     if (!nextMemo) {
-        await tauriClient.app.MemoSaveAvatar({
-            avatarId: normalizedAvatarId,
-            memo: ''
-        });
+        await commands.appMemoSaveAvatar(normalizedAvatarId, '');
         return createEmptyAvatarMemo(normalizedAvatarId);
     }
 
-    const entry = (await tauriClient.app.MemoSaveAvatar({
-        avatarId: normalizedAvatarId,
-        memo: nextMemo
-    })) as LocalMemoSaveResult;
+    const entry = (await commands.appMemoSaveAvatar(normalizedAvatarId, nextMemo)) as LocalMemoSaveResult;
     return {
         avatarId: entry.entityId,
         editedAt: entry.editedAt,

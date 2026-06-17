@@ -20,9 +20,11 @@ pub(crate) fn stop_runtime_services(app_handle: &AppHandle) {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_user_agent() {}
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__focus_window(app_handle: AppHandle) -> Result<(), AppError> {
     use tauri::Manager;
     if let Some(window) = app_handle.get_webview_window("main") {
@@ -32,6 +34,7 @@ pub fn app__focus_window(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__flash_window(app_handle: AppHandle) -> Result<(), AppError> {
     use tauri::Manager;
     if let Some(window) = app_handle.get_webview_window("main") {
@@ -41,6 +44,7 @@ pub fn app__flash_window(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__change_theme(app_handle: AppHandle, value: i32) -> Result<(), AppError> {
     use tauri::Manager;
     if let Some(window) = app_handle.get_webview_window("main") {
@@ -55,9 +59,11 @@ pub fn app__change_theme(app_handle: AppHandle, value: i32) -> Result<(), AppErr
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__do_funny() {}
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_tray_icon_notification(app_handle: AppHandle, notify: Option<bool>) {
     let notify = notify.unwrap_or(false);
     if let Some(tray) = app_handle.tray_by_id("main") {
@@ -79,6 +85,7 @@ pub fn app__set_tray_icon_notification(app_handle: AppHandle, notify: Option<boo
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__refresh_tray_menu(app_handle: AppHandle) -> Result<(), AppError> {
     use tauri::Manager;
     if let Some(state) = app_handle.try_state::<AppState>() {
@@ -89,6 +96,7 @@ pub fn app__refresh_tray_menu(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_devtools(app_handle: AppHandle) -> Result<(), AppError> {
     #[cfg(feature = "devtools")]
     {
@@ -111,6 +119,7 @@ pub fn app__open_devtools(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__restart_application(app_handle: AppHandle) -> Result<(), AppError> {
     #[cfg(debug_assertions)]
     {
@@ -133,6 +142,7 @@ pub fn app__restart_application(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__exit_application(app_handle: AppHandle) -> Result<(), AppError> {
     stop_runtime_services(&app_handle);
     app_handle.exit(0);
@@ -140,6 +150,7 @@ pub fn app__exit_application(app_handle: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_startup(app_handle: AppHandle, _enabled: bool) -> Result<(), AppError> {
     if !(cfg!(target_os = "windows") || cfg!(target_os = "linux")) {
         return Err(AppError::Custom(format!(
@@ -162,6 +173,7 @@ pub fn app__set_startup(app_handle: AppHandle, _enabled: bool) -> Result<(), App
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__desktop_notification(
     app_handle: AppHandle,
     bold_text: String,
@@ -188,6 +200,7 @@ pub fn app__desktop_notification(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__auth_failure_notification_show(
     app_handle: AppHandle,
     state: State<'_, AppState>,

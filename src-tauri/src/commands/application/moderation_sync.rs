@@ -19,6 +19,7 @@ fn deps<'a>(state: &'a State<'_, AppState>) -> ModerationSyncDeps<'a> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__moderation_sync_refresh(
     state: State<'_, AppState>,
     input: ModerationSyncRefreshInput,
@@ -59,6 +60,7 @@ pub async fn app__moderation_sync_refresh(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__moderation_sync_update(
     state: State<'_, AppState>,
     input: ModerationSyncMutationInput,

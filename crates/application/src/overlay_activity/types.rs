@@ -8,7 +8,7 @@ use super::definitions::{
     migrate_legacy_shared_feed_wrist_filters, normalize_filters, normalize_surface,
 };
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayActivityCategory {
     #[default]
@@ -21,7 +21,7 @@ pub enum OverlayActivityCategory {
     Media,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayActivityScope {
     #[default]
@@ -33,7 +33,7 @@ pub enum OverlayActivityScope {
     EveryoneInInstance,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityTypeDefinition {
     pub key: String,
@@ -89,7 +89,23 @@ impl<'de> Deserialize<'de> for OverlayActivityFavoriteGroupKeys {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, specta::Type)]
+#[serde(untagged)]
+enum FavoriteGroupKeysShape {
+    All(String),
+    Selected(Vec<String>),
+}
+
+impl specta::Type for OverlayActivityFavoriteGroupKeys {
+    fn inline(
+        type_map: &mut specta::TypeCollection,
+        generics: specta::Generics,
+    ) -> specta::DataType {
+        FavoriteGroupKeysShape::inline(type_map, generics)
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityRule {
     pub scope: OverlayActivityScope,
@@ -103,7 +119,7 @@ pub enum OverlayActivitySurface {
     Vr,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityFilters {
     pub version: u32,
@@ -114,7 +130,7 @@ pub struct OverlayActivityFilters {
     pub vr: OverlayActivitySurfaceFilters,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivitySurfaceFilters {
     pub types: BTreeMap<String, OverlayActivityRule>,
@@ -180,7 +196,7 @@ impl OverlayActivityFilters {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityCandidate {
     pub source_id: String,
@@ -193,7 +209,7 @@ pub struct OverlayActivityCandidate {
     pub payload: Value,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityText {
     pub key: String,
@@ -202,7 +218,7 @@ pub struct OverlayActivityText {
     pub params: Value,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityContent {
     pub icon: String,
@@ -219,7 +235,7 @@ pub struct OverlayActivityContent {
     pub image_url: String,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayActivityActorRelation {
     #[default]
@@ -228,7 +244,7 @@ pub enum OverlayActivityActorRelation {
     Favorite,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityEntry {
     pub sequence: u64,
@@ -245,13 +261,13 @@ pub struct OverlayActivityEntry {
     pub payload: Value,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivitySnapshot {
     pub entries: Vec<OverlayActivityEntry>,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct OverlayActivityDelivery {
     pub entry: OverlayActivityEntry,

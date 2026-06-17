@@ -1,4 +1,4 @@
-import type { BackendRuntimeMode } from '@/platform/tauri/appCommandTypes';
+import type { BackendRuntimeMode } from '@/platform/tauri/bindings';
 
 export type TelemetryRuntimeMode = BackendRuntimeMode;
 

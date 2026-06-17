@@ -11,6 +11,7 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__start_realtime_transport(
     state: State<'_, AppState>,
     user_id: String,
@@ -33,6 +34,7 @@ pub fn app__start_realtime_transport(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__sync_realtime_friend_snapshot(
     state: State<'_, AppState>,
     user_id: String,
@@ -51,6 +53,7 @@ pub fn app__sync_realtime_friend_snapshot(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__sync_realtime_current_user_snapshot(
     state: State<'_, AppState>,
     user_id: String,
@@ -71,6 +74,7 @@ pub fn app__sync_realtime_current_user_snapshot(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__expire_realtime_notification(
     state: State<'_, AppState>,
     user_id: String,
@@ -82,6 +86,7 @@ pub fn app__expire_realtime_notification(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__stop_realtime_transport(
     state: State<'_, AppState>,
     user_id: Option<String>,
@@ -100,6 +105,7 @@ pub fn app__stop_realtime_transport(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__ingest_user_facts(
     state: State<'_, AppState>,
     entries: Vec<Value>,

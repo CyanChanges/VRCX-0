@@ -12,6 +12,7 @@ use vrcx_0_persistence::player_list::{
 use vrcx_0_persistence::worlds::WorldSummaryOutput;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__instance_activity_dates_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -21,6 +22,7 @@ pub fn app__instance_activity_dates_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__instance_activity_rows_get(
     state: State<'_, AppState>,
     start_date: String,
@@ -35,6 +37,7 @@ pub fn app__instance_activity_rows_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__player_list_join_leave_rows(
     state: State<'_, AppState>,
     location: String,
@@ -49,6 +52,7 @@ pub fn app__player_list_join_leave_rows(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__player_list_latest_location_get(
     state: State<'_, AppState>,
 ) -> Result<Option<PlayerLocationOutput>, AppError> {
@@ -57,6 +61,7 @@ pub fn app__player_list_latest_location_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__player_list_location_get(
     state: State<'_, AppState>,
     location: String,
@@ -66,6 +71,7 @@ pub fn app__player_list_location_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__world_summaries_get(
     state: State<'_, AppState>,
     world_ids: Vec<String>,

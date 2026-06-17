@@ -12,7 +12,9 @@ use super::super::localization::{OverlayLocale, OverlayLocalizer};
 
 const MAX_FEED_ROWS: usize = 24;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, specta::Type,
+)]
 #[serde(rename_all = "camelCase")]
 pub enum WristOverlaySizePreset {
     Compact,
@@ -55,7 +57,7 @@ impl WristOverlaySizePreset {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WristOverlayRenderOptions {
     pub size: WristOverlaySizePreset,
@@ -77,7 +79,7 @@ impl Default for WristOverlayRenderOptions {
     }
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WristOverlayFrameInput {
     pub activity: OverlayActivitySnapshot,
@@ -88,7 +90,9 @@ pub struct WristOverlayFrameInput {
     pub captured_at_ms: i64,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize, specta::Type,
+)]
 #[serde(rename_all = "camelCase")]
 pub struct WristRuntimeFooter {
     pub player_count: u32,

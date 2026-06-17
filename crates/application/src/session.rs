@@ -40,7 +40,7 @@ pub struct HostSessionSnapshot {
     pub realtime_context: Option<RealtimeSessionContext>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct HostSessionProjection {
     pub is_game_running: bool,

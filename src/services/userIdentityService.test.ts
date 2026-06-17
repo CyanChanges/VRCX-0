@@ -1,15 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriMock = vi.hoisted(() => ({
-    app: {
-        IngestUserFacts: vi.fn()
+    commands: {
+        appIngestUserFacts: vi.fn()
     }
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: tauriMock.commands }));
 
 import { useFriendRosterStore } from '@/state/friendRosterStore';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -18,15 +15,15 @@ import { useUserFactsStore } from '@/state/userFactsStore';
 import { resolveUserByDisplayName } from './userIdentityService';
 
 function ingestedEntryFor(userId: string) {
-    return tauriMock.app.IngestUserFacts.mock.calls
+    return tauriMock.commands.appIngestUserFacts.mock.calls
         .flatMap((call) => (Array.isArray(call[0]) ? call[0] : []))
         .find((entry: any) => entry?.user?.id === userId);
 }
 
 describe('userIdentityService', () => {
     beforeEach(() => {
-        tauriMock.app.IngestUserFacts.mockReset();
-        tauriMock.app.IngestUserFacts.mockResolvedValue(undefined);
+        tauriMock.commands.appIngestUserFacts.mockReset();
+        tauriMock.commands.appIngestUserFacts.mockResolvedValue(undefined);
         useRuntimeStore.getState().resetRuntimeState();
         useFriendRosterStore.getState().resetRoster();
         useUserFactsStore.getState().resetUserFacts();

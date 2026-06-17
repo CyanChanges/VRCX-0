@@ -1,5 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
 import { normalizeLanguageCode } from '@/localization/locales';
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import storageRepository from '@/repositories/storageRepository';
 import {
@@ -144,7 +144,7 @@ async function reloadWristOverlayRuntimeConfigIfNeeded(key: any) {
     if (!WRIST_OVERLAY_RUNTIME_CONFIG_KEYS.has(normalizedKey)) {
         return;
     }
-    await tauriClient.app.VrOverlayConfigReload().catch((error: any) => {
+    await commands.appVrOverlayConfigReload().catch((error: any) => {
         console.warn('Failed to reload wrist overlay runtime config:', error);
     });
 }
@@ -371,8 +371,7 @@ export async function loadPreferenceSnapshot() {
         configRepository.getBool('dtIsoFormat', false),
         configRepository.getBool('dtHour12', false),
         configRepository.getObject('VRCX_trustColor', null),
-        tauriClient.app
-            .CurrentCulture()
+        commands.appCurrentCulture()
             .catch(() => navigator.language || 'en-gb'),
         storageRepository.getString('VRCX_ProxyServer', ''),
         configRepository.getInt('VRCX_tablePageSize', DEFAULT_TABLE_PAGE_SIZE),
@@ -781,12 +780,11 @@ export async function setStartAtWindowsStartupPreference(value: any) {
     const previousEnabled = Boolean(
         await configRepository.getBool('StartAtWindowsStartup', false)
     );
-    await tauriClient.app.SetStartup(enabled);
+    await commands.appSetStartup(enabled);
     try {
         await configRepository.setBool('StartAtWindowsStartup', enabled);
     } catch (error) {
-        await tauriClient.app
-            .SetStartup(previousEnabled)
+        await commands.appSetStartup(previousEnabled)
             .catch((rollbackError: any) => {
                 console.warn(
                     'Failed to roll back Windows startup setting:',
@@ -886,7 +884,7 @@ export async function setProxyServerPreference(
     patchPreferences({ proxyServer: nextProxyServer });
     publishPreferenceChanged('VRCX_ProxyServer', nextProxyServer);
     if (restart) {
-        await tauriClient.app.RestartApplication();
+        await commands.appRestartApplication();
     }
     return nextProxyServer;
 }
@@ -1013,8 +1011,7 @@ export async function setSharedFeedFiltersPreference(value: any) {
 }
 
 async function loadOverlayActivityTypeDefinitionsForSave() {
-    return tauriClient.app
-        .OverlayActivityDefinitionsGet()
+    return commands.appOverlayActivityDefinitionsGet()
         .catch((error: any) => {
             console.warn(
                 'Failed to load overlay activity definitions for save:',
@@ -1040,7 +1037,7 @@ export async function setOverlayActivityFiltersPreference(
         'overlayActivityFilters',
         JSON.stringify(overlayActivityFilters)
     );
-    await tauriClient.app.OverlayActivityFiltersReload();
+    await commands.appOverlayActivityFiltersReload();
     patchPreferences({ overlayActivityFilters });
     publishPreferenceChanged('overlayActivityFilters', overlayActivityFilters);
     return overlayActivityFilters;
@@ -1052,7 +1049,7 @@ async function setNotificationActivityFilterSurfacePreference(
 ) {
     const normalized = normalizeOverlayActivityFilterProfile(value);
     await configRepository.setString(key, JSON.stringify(normalized));
-    await tauriClient.app.OverlayActivityFiltersReload();
+    await commands.appOverlayActivityFiltersReload();
     patchPreferences({ [key]: normalized });
     publishPreferenceChanged(key, normalized);
     return normalized;
@@ -1073,7 +1070,7 @@ export function setDesktopNotificationActivityFiltersPreference(value: any) {
 }
 
 export async function setWristOverlayEnabledPreference(value: any) {
-    const snapshot = await tauriClient.app.VrOverlayEnabledSet(Boolean(value));
+    const snapshot = await commands.appVrOverlayEnabledSet(Boolean(value));
     const wristOverlayEnabled = Boolean(snapshot.enabled);
     patchPreferences({ wristOverlayEnabled });
     publishPreferenceChanged('wristOverlayEnabled', wristOverlayEnabled);
@@ -1189,13 +1186,13 @@ export async function setDiscordBoolPreference(key: string, value: any) {
 }
 
 async function disableVrchatRichPresence() {
-    const rawConfig = await tauriClient.app.ReadConfigFile();
+    const rawConfig = await commands.appReadConfigFile();
     const config = rawConfig ? JSON.parse(String(rawConfig)) : {};
     if (config?.[VRCHAT_RICH_PRESENCE_CONFIG_KEY] === true) {
         return;
     }
 
-    await tauriClient.app.WriteConfigFile(
+    await commands.appWriteConfigFile(
         JSON.stringify(
             {
                 ...config,

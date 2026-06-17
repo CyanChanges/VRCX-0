@@ -2,6 +2,7 @@
 name = "vrcx-0"
 version = "2.6.0"
 edition = "2021"
+default-run = "vrcx-0"
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-ico", "macos-proxy"] }
@@ -39,6 +40,9 @@ vrcx-0-media = { path = "../crates/media" }
 vrcx-0-application = { path = "../crates/application" }
 vrcx-0-runtime-host = { path = "../crates/runtime-host" }
 vrcx-0-vrchat-client = { path = "../crates/vrchat-client" }
+specta-typescript = "0.0.9"
+specta = { workspace = true }
+tauri-specta = { version = "=2.0.0-rc.21", features = ["derive", "typescript"] }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

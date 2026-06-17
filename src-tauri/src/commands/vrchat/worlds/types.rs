@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatWorldIdInput {
     #[serde(default)]
@@ -10,7 +10,7 @@ pub struct VrchatWorldIdInput {
     pub(crate) world_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatWorldListByUserInput {
     #[serde(default)]
@@ -29,7 +29,7 @@ pub struct VrchatWorldListByUserInput {
     pub(crate) release_status: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatWorldSaveInput {
     #[serde(default)]
@@ -39,7 +39,7 @@ pub struct VrchatWorldSaveInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatWorldPersistentDataDeleteInput {
     #[serde(default)]

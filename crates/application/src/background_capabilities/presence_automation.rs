@@ -28,7 +28,7 @@ pub struct BackgroundPresenceAutomationState {
     time_restore_snapshots: HashMap<String, TimeRestoreSnapshot>,
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackgroundPresenceAutomationResult {
     pub applied: bool,

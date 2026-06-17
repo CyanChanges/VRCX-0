@@ -6,7 +6,7 @@ use crate::database::schema::ensure_global_store_tables;
 use crate::database::DatabaseService;
 use crate::Error;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct CacheEntityInput {
     #[serde(default)]

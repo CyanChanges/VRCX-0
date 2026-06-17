@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import {
     ConfigKeys,
     type ConfigDefaultValue
@@ -43,9 +43,9 @@ class ConfigRepository {
             return;
         }
 
-        await tauriClient.app.ConfigSetValues({ entries: [] });
+        await commands.appConfigSetValues([]);
 
-        const rows = (await tauriClient.app.ConfigListValues()) as ConfigRow[];
+        const rows = (await commands.appConfigListValues()) as ConfigRow[];
         if (Array.isArray(rows)) {
             for (const row of rows) {
                 if (Array.isArray(row) && row[0] != null && row[1] != null) {
@@ -191,9 +191,7 @@ class ConfigRepository {
         await this.#ensureReady();
         const dbKey = this.#resolveKey(key);
         const stringValue = String(value);
-        const result = await tauriClient.app.ConfigSetValues({
-            entries: [{ key: dbKey, value: stringValue }]
-        });
+        const result = await commands.appConfigSetValues([{ key: dbKey, value: stringValue }]);
         this.#cache.set(dbKey, stringValue);
         return result;
     }
@@ -225,12 +223,10 @@ class ConfigRepository {
             String(value)
         ] satisfies [string, string]);
 
-        await tauriClient.app.ConfigSetValues({
-            entries: normalizedEntries.map(([key, value]) => ({
+        await commands.appConfigSetValues(normalizedEntries.map(([key, value]) => ({
                 key,
                 value
-            }))
-        });
+            })));
 
         for (const [dbKey, stringValue] of normalizedEntries) {
             this.#cache.set(dbKey, stringValue);
@@ -244,7 +240,7 @@ class ConfigRepository {
     async remove(key: string): Promise<unknown> {
         await this.#ensureReady();
         const dbKey = this.#resolveKey(key);
-        const result = await tauriClient.app.ConfigRemoveValue({ key: dbKey });
+        const result = await commands.appConfigRemoveValue(dbKey);
         this.#cache.delete(dbKey);
         return result;
     }

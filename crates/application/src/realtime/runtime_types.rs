@@ -18,7 +18,7 @@ pub struct RealtimeFriendSnapshot {
     pub friends_by_id: HashMap<String, FriendRecord>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendBaselineResult {
     pub accepted: bool,
@@ -27,7 +27,7 @@ pub struct FriendBaselineResult {
     pub friend_count: usize,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeTransportStartResult {
     pub generation: u64,

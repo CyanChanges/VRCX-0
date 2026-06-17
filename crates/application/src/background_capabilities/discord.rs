@@ -37,7 +37,7 @@ impl BackgroundDiscordPresenceState {
     }
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackgroundDiscordActivityPayload {
     pub app_id: String,
@@ -45,7 +45,7 @@ pub struct BackgroundDiscordActivityPayload {
     pub detail: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase", tag = "kind")]
 pub enum BackgroundDiscordPresenceCommand {
     Noop {

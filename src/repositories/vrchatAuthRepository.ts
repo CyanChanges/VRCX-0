@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import {
     DEFAULT_VRCHAT_API_ENDPOINT,
     normalizeVrchatEndpoint
@@ -73,28 +73,28 @@ interface FileAnalysisInput extends EndpointOptions {
 }
 
 async function getConfig({ endpoint = '' }: EndpointOptions = {}) {
-    const response = await tauriClient.app.VrchatAuthConfigGet({
+    const response = await commands.appVrchatAuthConfigGet({
         endpoint: normalizeVrchatEndpoint(endpoint)
     });
     return unwrapVrchatAuthResponse<AuthRecord>(response, 'config', endpoint);
 }
 
 async function getCurrentUser({ endpoint = '' }: EndpointOptions = {}) {
-    const response = await tauriClient.app.VrchatAuthCurrentUserGet({
+    const response = await commands.appVrchatAuthCurrentUserGet({
         endpoint: normalizeVrchatEndpoint(endpoint)
     });
     return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
 }
 
 async function getAuthSession({ endpoint = '' }: EndpointOptions = {}) {
-    const response = await tauriClient.app.VrchatAuthSessionGet({
+    const response = await commands.appVrchatAuthSessionGet({
         endpoint: normalizeVrchatEndpoint(endpoint)
     });
     return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth', endpoint);
 }
 
 async function restoreCookieSession({ endpoint = '' }: EndpointOptions = {}) {
-    const response = await tauriClient.app.VrchatAuthCookieSessionRestore({
+    const response = await commands.appVrchatAuthCookieSessionRestore({
         endpoint: normalizeVrchatEndpoint(endpoint)
     });
     return unwrapVrchatAuthResponse<AuthRecord>(response, 'auth/user', endpoint);
@@ -105,7 +105,7 @@ async function loginWithBasicAuth({
     password,
     endpoint = ''
 }: BasicAuthInput) {
-    const response = await tauriClient.app.VrchatAuthLoginBasicStart({
+    const response = await commands.appVrchatAuthLoginBasicStart({
         endpoint: normalizeVrchatEndpoint(endpoint),
         username: typeof username === 'string' ? username : String(username ?? ''),
         password: typeof password === 'string' ? password : String(password ?? '')
@@ -117,7 +117,7 @@ async function loginWithSavedCredential({
     userId,
     endpoint = ''
 }: EndpointOptions & { userId?: unknown }) {
-    const response = await tauriClient.app.VrchatAuthSavedCredentialLoginStart({
+    const response = await commands.appVrchatAuthSavedCredentialLoginStart({
         endpoint: normalizeVrchatEndpoint(endpoint),
         userId: typeof userId === 'string' ? userId : String(userId ?? '')
     });
@@ -125,7 +125,7 @@ async function loginWithSavedCredential({
 }
 
 async function verifyTOTP({ code, endpoint = '' }: AuthCodeInput) {
-    const response = await tauriClient.app.VrchatAuthTotpVerify({
+    const response = await commands.appVrchatAuthTotpVerify({
         endpoint: normalizeVrchatEndpoint(endpoint),
         code: typeof code === 'string' ? code : String(code ?? '')
     });
@@ -137,7 +137,7 @@ async function verifyTOTP({ code, endpoint = '' }: AuthCodeInput) {
 }
 
 async function verifyOTP({ code, endpoint = '' }: AuthCodeInput) {
-    const response = await tauriClient.app.VrchatAuthOtpVerify({
+    const response = await commands.appVrchatAuthOtpVerify({
         endpoint: normalizeVrchatEndpoint(endpoint),
         code: typeof code === 'string' ? code : String(code ?? '')
     });
@@ -149,7 +149,7 @@ async function verifyOTP({ code, endpoint = '' }: AuthCodeInput) {
 }
 
 async function verifyEmailOTP({ code, endpoint = '' }: AuthCodeInput) {
-    const response = await tauriClient.app.VrchatAuthEmailOtpVerify({
+    const response = await commands.appVrchatAuthEmailOtpVerify({
         endpoint: normalizeVrchatEndpoint(endpoint),
         code: typeof code === 'string' ? code : String(code ?? '')
     });
@@ -161,7 +161,7 @@ async function verifyEmailOTP({ code, endpoint = '' }: AuthCodeInput) {
 }
 
 async function getOnlineVisits({ endpoint = '' }: EndpointOptions = {}) {
-    const response = await tauriClient.app.VrchatAuthVisitsGet({
+    const response = await commands.appVrchatAuthVisitsGet({
         endpoint: normalizeVrchatEndpoint(endpoint)
     });
     return unwrapVrchatAuthResponse<unknown[]>(response, 'visits', endpoint);
@@ -173,7 +173,7 @@ async function getFileAnalysis({
     version,
     variant
 }: FileAnalysisInput) {
-    const response = await tauriClient.app.VrchatAuthFileAnalysisGet({
+    const response = await commands.appVrchatAuthFileAnalysisGet({
         endpoint: normalizeVrchatEndpoint(endpoint),
         fileId: typeof fileId === 'string' ? fileId : String(fileId ?? ''),
         version: Number(version) || 0,

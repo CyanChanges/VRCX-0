@@ -1,6 +1,6 @@
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
+import { invokeAppCommand } from '@/platform/tauri/dynamicCommand';
 import {
     getHostCapabilityUnavailableReason,
     isHostCapabilityAvailable,
@@ -113,7 +113,7 @@ export async function triggerToolByKey(
 
     if (action.type === 'app-api') {
         try {
-            const result = await tauriClient.app[action.method]();
+            const result = await invokeAppCommand(action.method);
             toast[result ? 'success' : 'error'](
                 t(result ? action.successMessageKey : action.errorMessageKey)
             );

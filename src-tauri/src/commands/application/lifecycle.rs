@@ -11,7 +11,7 @@ use vrcx_0_application::RuntimeLifecycleSnapshot;
 use vrcx_0_application::RuntimeSyncSnapshot;
 use vrcx_0_application::{PlayerState, RuntimeSnapshot as GameLogRuntimeSnapshot};
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeAppSnapshot {
     pub runtime: RuntimeLifecycleSnapshot,
@@ -21,7 +21,7 @@ pub struct RuntimeAppSnapshot {
     pub game_log: GameLogRuntimeSnapshotDto,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeJobRecordInput {
     pub name: String,
@@ -34,14 +34,14 @@ pub struct RuntimeJobRecordInput {
     pub detail: String,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeFrontendScheduleJobDeferInput {
     pub name: String,
     pub delay_seconds: u64,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeFrontendScheduleJobDueClaimInput {
     pub name: String,
@@ -54,7 +54,7 @@ fn default_frontend_owner() -> String {
     "frontend".into()
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct GameLogRuntimeSnapshotDto {
     pub location: String,
@@ -75,11 +75,13 @@ impl From<GameLogRuntimeSnapshot> for GameLogRuntimeSnapshotDto {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_lifecycle_snapshot_get(state: State<'_, AppState>) -> RuntimeLifecycleSnapshot {
     state.runtime_context.runtime.snapshot()
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_background_jobs_snapshot_get(
     state: State<'_, AppState>,
 ) -> Vec<RuntimeBackgroundJobSnapshot> {
@@ -87,11 +89,13 @@ pub fn app__runtime_background_jobs_snapshot_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_frontend_schedule_due_jobs_get(state: State<'_, AppState>) -> Vec<String> {
     state.runtime_context.background_jobs.due_frontend_jobs()
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_frontend_schedule_job_defer(
     state: State<'_, AppState>,
     input: RuntimeFrontendScheduleJobDeferInput,
@@ -103,6 +107,7 @@ pub fn app__runtime_frontend_schedule_job_defer(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_frontend_schedule_job_due_claim(
     state: State<'_, AppState>,
     input: RuntimeFrontendScheduleJobDueClaimInput,
@@ -118,6 +123,7 @@ pub fn app__runtime_frontend_schedule_job_due_claim(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_frontend_schedule_schedules_reset(state: State<'_, AppState>) {
     state
         .runtime_context
@@ -126,6 +132,7 @@ pub fn app__runtime_frontend_schedule_schedules_reset(state: State<'_, AppState>
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__runtime_group_instances_refresh(
     state: State<'_, AppState>,
 ) -> Result<(), AppError> {
@@ -134,16 +141,19 @@ pub async fn app__runtime_group_instances_refresh(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_sync_snapshot_get(state: State<'_, AppState>) -> RuntimeSyncSnapshot {
     state.runtime_context.sync.snapshot()
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_diagnostics_get(state: State<'_, AppState>) -> RuntimeDiagnosticsSnapshot {
     state.runtime_context.diagnostics.snapshot()
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_app_snapshot_get(state: State<'_, AppState>) -> RuntimeAppSnapshot {
     RuntimeAppSnapshot {
         runtime: state.runtime_context.runtime.snapshot(),
@@ -155,6 +165,7 @@ pub fn app__runtime_app_snapshot_get(state: State<'_, AppState>) -> RuntimeAppSn
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__runtime_background_job_record(
     state: State<'_, AppState>,
     input: RuntimeJobRecordInput,

@@ -1,9 +1,9 @@
+import { commands } from '@/platform/tauri/bindings';
 import { ChevronDownIcon, ChevronRightIcon, RotateCcwIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { buildFeedFavoriteGroupOptions } from '@/features/feed/feedColumnScope';
-import { tauriClient } from '@/platform/tauri/client';
 import {
     DEFAULT_OVERLAY_ACTIVITY_FILTER_PROFILE,
     defaultOverlayActivityFilterProfileFromDefinitions,
@@ -231,8 +231,7 @@ function OverlayActivityFilterDialog({
             return;
         }
         let cancelled = false;
-        tauriClient.app
-            .OverlayActivityDefinitionsGet()
+        commands.appOverlayActivityDefinitionsGet()
             .then((definitions) => {
                 if (!cancelled) {
                     setActivityDefinitions(definitions);

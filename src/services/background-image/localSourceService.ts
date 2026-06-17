@@ -1,5 +1,6 @@
 import { convertFileSrc } from '@/platform/tauri/assets';
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
+import type { BackgroundImageFilesResolveInput } from '@/platform/tauri/bindings';
 
 import type {
     BackgroundImageCustomSource,
@@ -41,10 +42,12 @@ function stableHash(value: string): number {
 }
 
 function fileNameFromPath(path: string): string {
-    return String(path || '')
-        .split(/[\\/]/)
-        .filter(Boolean)
-        .pop() || path;
+    return (
+        String(path || '')
+            .split(/[\\/]/)
+            .filter(Boolean)
+            .pop() || path
+    );
 }
 
 function uniquePaths(paths: string[]): string[] {
@@ -54,7 +57,9 @@ function uniquePaths(paths: string[]): string[] {
 }
 
 function pathKey(path: string): string {
-    return String(path || '').trim().toLowerCase();
+    return String(path || '')
+        .trim()
+        .toLowerCase();
 }
 
 function rotationKey(interval: BackgroundImageRotationInterval): string {
@@ -143,7 +148,7 @@ export function createBackgroundImageFolderSource(
 export async function pickBackgroundImageFiles(
     defaultPath?: string | null
 ): Promise<string[]> {
-    return tauriClient.app.OpenBackgroundImageFilesSelectorDialog(
+    return commands.appOpenBackgroundImageFilesSelectorDialog(
         defaultPath || null
     );
 }
@@ -155,7 +160,9 @@ async function resolveCustomSourceFiles(
         source.kind === 'folder'
             ? { folderPath: source.folderPath }
             : { paths: source.paths };
-    const files = await tauriClient.app.BackgroundImageFilesResolve(input);
+    const files = await commands.appBackgroundImageFilesResolve(
+        input as BackgroundImageFilesResolveInput
+    );
     return uniquePaths(files);
 }
 
@@ -196,9 +203,9 @@ function assertPreviousImageStillAvailable(
 export async function resolveBackgroundImageFolderFiles(
     folderPath: string
 ): Promise<string[]> {
-    return tauriClient.app.BackgroundImageFilesResolve({
+    return commands.appBackgroundImageFilesResolve({
         folderPath
-    });
+    } as BackgroundImageFilesResolveInput);
 }
 
 export async function resolveBackgroundImageCustomSnapshot(
@@ -212,9 +219,15 @@ export async function resolveBackgroundImageCustomSnapshot(
 
     const files = await resolveCustomSourceFiles(normalizedSource);
     assertSelectedFilesStillAvailable(normalizedSource, files);
-    assertPreviousImageStillAvailable(normalizedSource, files, previousSnapshot);
+    assertPreviousImageStillAvailable(
+        normalizedSource,
+        files,
+        previousSnapshot
+    );
     if (!files.length) {
-        throw new Error('No supported images were found in the selected source.');
+        throw new Error(
+            'No supported images were found in the selected source.'
+        );
     }
 
     const key =

@@ -8,7 +8,7 @@ use crate::error::AppError;
 use vrcx_0_host::host_capabilities::{current_arch, current_host_capabilities, current_platform};
 use vrcx_0_host::proxy::normalize_proxy_url;
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, specta::Type)]
 #[serde(tag = "event", content = "data")]
 pub enum TauriDownloadEvent {
     #[serde(rename_all = "camelCase")]
@@ -22,7 +22,7 @@ pub enum TauriDownloadEvent {
     Finished,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct TauriUpdateMetadata {
     current_version: String,
@@ -154,6 +154,7 @@ async fn find_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__check_tauri_update(
     app_handle: AppHandle,
     manifest_url: String,
@@ -170,6 +171,7 @@ pub async fn app__check_tauri_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__download_and_install_tauri_update(
     app_handle: AppHandle,
     manifest_url: String,

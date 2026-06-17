@@ -8,10 +8,8 @@ const serviceMocks = vi.hoisted(() => ({
         hideRemoteNotification: vi.fn(),
         sendInvite: vi.fn()
     },
-    tauriClient: {
-        app: {
-            ExpireRealtimeNotification: vi.fn()
-        }
+    commands: {
+        appExpireRealtimeNotification: vi.fn()
     },
     vrchatSearchRepository: {
         getWorlds: vi.fn()
@@ -30,17 +28,18 @@ vi.mock('@/repositories/vrchatSearchRepository', () => ({
     default: serviceMocks.vrchatSearchRepository
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: serviceMocks.tauriClient
+vi.mock('@/platform/tauri/bindings', () => ({
+    commands: serviceMocks.commands
 }));
+
+import { useFavoriteStore } from '@/state/favoriteStore';
+import { useRuntimeStore } from '@/state/runtimeStore';
+import { useVrcNotificationStore } from '@/state/vrcNotificationStore';
 
 import {
     handleInviteAutomationNotification,
     resetInviteAutomationService
 } from './inviteAutomationService';
-import { useFavoriteStore } from '@/state/favoriteStore';
-import { useRuntimeStore } from '@/state/runtimeStore';
-import { useVrcNotificationStore } from '@/state/vrcNotificationStore';
 
 const API_ENDPOINT = 'https://api.vrchat.cloud';
 const SELECTED_GROUPS = JSON.stringify(['friend:group_0']);
@@ -131,7 +130,7 @@ describe('inviteAutomationService', () => {
         serviceMocks.notificationPersistenceRepository.hideRemoteNotification.mockResolvedValue(
             { json: {} }
         );
-        serviceMocks.tauriClient.app.ExpireRealtimeNotification.mockResolvedValue(
+        serviceMocks.commands.appExpireRealtimeNotification.mockResolvedValue(
             undefined
         );
     });

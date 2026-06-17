@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
@@ -5,7 +6,6 @@ import {
     queryKeys,
     setCachedQueryData
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 import { storeAvatarImage } from '@/shared/utils/avatar';
 import { extractFileId } from '@/shared/utils/fileUtils';
 import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint';
@@ -347,7 +347,7 @@ async function getAvatarProfile({
                 force,
                 queryFn: async () => {
                     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-                        await tauriClient.app.VrchatAvatarGet({
+                        await commands.appVrchatAvatarGet({
                             avatarId: normalizedAvatarId,
                             endpoint
                         }),
@@ -394,7 +394,7 @@ async function getAvatarGallery({
             const response = unwrapVrchatAvatarResponse<
                 AvatarRecord[] | { files?: AvatarRecord[] }
             >(
-                await tauriClient.app.VrchatAvatarGalleryGet({
+                await commands.appVrchatAvatarGalleryGet({
                     avatarId: normalizedAvatarId,
                     endpoint
                 }),
@@ -433,7 +433,7 @@ async function getAvatarsByUser({
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord[]>(
-        await tauriClient.app.VrchatAvatarListByUserGet({
+        await commands.appVrchatAvatarListByUserGet({
             endpoint,
             userId: normalizedUserId,
             user,
@@ -481,7 +481,7 @@ async function selectAvatar({ avatarId, endpoint = '' }: AvatarIdInput) {
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarSelect({
+        await commands.appVrchatAvatarSelect({
             avatarId: normalizedAvatarId,
             endpoint
         }),
@@ -508,7 +508,7 @@ async function selectFallbackAvatar({
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarSelectFallback({
+        await commands.appVrchatAvatarSelectFallback({
             avatarId: normalizedAvatarId,
             endpoint
         }),
@@ -536,7 +536,7 @@ async function saveAvatar({
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarSave({
+        await commands.appVrchatAvatarSave({
             avatarId: normalizedAvatarId,
             endpoint,
             params
@@ -562,7 +562,7 @@ async function getAvatarStyles({
         force,
         queryFn: async () => {
             const response = unwrapVrchatAvatarResponse(
-                await tauriClient.app.VrchatAvatarStylesGet({ endpoint }),
+                await commands.appVrchatAvatarStylesGet({ endpoint }),
                 'avatarStyles'
             );
             return Array.isArray(response.json) ? response.json : [];
@@ -579,7 +579,7 @@ async function deleteAvatar({ avatarId, endpoint = '' }: AvatarIdInput) {
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarDelete({
+        await commands.appVrchatAvatarDelete({
             avatarId: normalizedAvatarId,
             endpoint
         }),
@@ -603,7 +603,7 @@ async function createImposter({ avatarId, endpoint = '' }: AvatarIdInput) {
     }
 
     return unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarImpostorCreate({
+        await commands.appVrchatAvatarImpostorCreate({
             avatarId: normalizedAvatarId,
             endpoint,
             emptyBody: true
@@ -621,7 +621,7 @@ async function deleteImposter({ avatarId, endpoint = '' }: AvatarIdInput) {
     }
 
     return unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarImpostorDelete({
+        await commands.appVrchatAvatarImpostorDelete({
             avatarId: normalizedAvatarId,
             endpoint
         }),
@@ -631,7 +631,7 @@ async function deleteImposter({ avatarId, endpoint = '' }: AvatarIdInput) {
 
 async function getAvatarModerations({ endpoint = '' }: AvatarRequestOptions = {}) {
     return unwrapVrchatAvatarResponse(
-        await tauriClient.app.VrchatAvatarModerationsGet({ endpoint }),
+        await commands.appVrchatAvatarModerationsGet({ endpoint }),
         'auth/user/avatarmoderations'
     );
 }
@@ -650,7 +650,7 @@ async function sendAvatarModeration({
     }
 
     return unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarModerationSend({
+        await commands.appVrchatAvatarModerationSend({
             avatarId: normalizedAvatarId,
             type: normalizedType,
             endpoint
@@ -673,7 +673,7 @@ async function deleteAvatarModeration({
     }
 
     return unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarModerationDelete({
+        await commands.appVrchatAvatarModerationDelete({
             avatarId: normalizedAvatarId,
             type: normalizedType,
             endpoint
@@ -705,7 +705,7 @@ async function getAvatarNameFromImageUrl(
             policy: entityQueryPolicies.fileObject,
             queryFn: async () =>
                 unwrapVrchatAvatarResponse(
-                    await tauriClient.app.VrchatAvatarFileGet({
+                    await commands.appVrchatAvatarFileGet({
                         fileId,
                         endpoint
                     }),

@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupIdInput {
     #[serde(default)]
@@ -10,7 +10,7 @@ pub struct VrchatGroupIdInput {
     pub(crate) group_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupProfileInput {
     #[serde(default)]
@@ -21,7 +21,7 @@ pub struct VrchatGroupProfileInput {
     pub(crate) include_roles: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupUserGroupsInput {
     #[serde(default)]
@@ -30,7 +30,7 @@ pub struct VrchatGroupUserGroupsInput {
     pub(crate) user_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupPagedInput {
     #[serde(default)]
@@ -43,7 +43,7 @@ pub struct VrchatGroupPagedInput {
     pub(crate) offset: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupMembersInput {
     #[serde(default)]
@@ -60,7 +60,7 @@ pub struct VrchatGroupMembersInput {
     pub(crate) role_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupMembersSearchInput {
     #[serde(default)]
@@ -75,7 +75,7 @@ pub struct VrchatGroupMembersSearchInput {
     pub(crate) query: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupGalleryInput {
     #[serde(default)]
@@ -90,7 +90,7 @@ pub struct VrchatGroupGalleryInput {
     pub(crate) offset: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupJoinRequestsInput {
     #[serde(default)]
@@ -105,7 +105,7 @@ pub struct VrchatGroupJoinRequestsInput {
     pub(crate) blocked: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupLogsInput {
     #[serde(default)]
@@ -120,7 +120,7 @@ pub struct VrchatGroupLogsInput {
     pub(crate) event_types: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupPostCreateInput {
     #[serde(default)]
@@ -130,7 +130,7 @@ pub struct VrchatGroupPostCreateInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupPostEditInput {
     #[serde(default)]
@@ -142,7 +142,7 @@ pub struct VrchatGroupPostEditInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupPostDeleteInput {
     #[serde(default)]
@@ -153,7 +153,7 @@ pub struct VrchatGroupPostDeleteInput {
     pub(crate) post_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupUserInput {
     #[serde(default)]
@@ -164,7 +164,7 @@ pub struct VrchatGroupUserInput {
     pub(crate) user_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupJoinRequestRespondInput {
     #[serde(default)]
@@ -179,7 +179,7 @@ pub struct VrchatGroupJoinRequestRespondInput {
     pub(crate) block: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupRepresentationInput {
     #[serde(default)]
@@ -190,7 +190,7 @@ pub struct VrchatGroupRepresentationInput {
     pub(crate) is_representing: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatGroupMemberPropsInput {
     #[serde(default)]

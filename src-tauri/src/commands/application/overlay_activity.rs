@@ -9,6 +9,7 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__overlay_activity_snapshot_get(
     state: State<'_, AppState>,
 ) -> Result<OverlayActivitySnapshot, AppError> {
@@ -16,12 +17,14 @@ pub fn app__overlay_activity_snapshot_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__overlay_activity_definitions_get(
 ) -> Result<Vec<OverlayActivityTypeDefinition>, AppError> {
     Ok(overlay_activity_type_definitions())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__overlay_activity_filters_reload(state: State<'_, AppState>) -> Result<(), AppError> {
     state.reload_overlay_activity_filters();
     Ok(())

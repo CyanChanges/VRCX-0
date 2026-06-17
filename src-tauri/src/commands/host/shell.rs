@@ -16,7 +16,7 @@ use vrcx_0_host::host_capabilities::{require_host_capability, HostCapability};
 
 const BACKGROUND_IMAGE_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp"];
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackgroundImageFilesResolveInput {
     paths: Option<Vec<String>>,
@@ -68,16 +68,19 @@ fn background_image_files_from_paths(paths: Vec<String>) -> Vec<String> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_link(url: String) -> Result<(), AppError> {
     Ok(shell_actions::open_link(&url)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_discord_profile(discord_id: String) -> Result<(), AppError> {
     Ok(shell_actions::open_discord_profile(&discord_id)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_file_base64(state: State<'_, AppState>, path: String) -> Result<String, AppError> {
     state
         .host_file_access
@@ -86,6 +89,7 @@ pub fn app__get_file_base64(state: State<'_, AppState>, path: String) -> Result<
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_file_bytes(state: State<'_, AppState>, path: String) -> Result<Vec<u8>, AppError> {
     state
         .host_file_access
@@ -94,18 +98,21 @@ pub fn app__get_file_bytes(state: State<'_, AppState>, path: String) -> Result<V
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__read_config_file() -> Result<String, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(shell_actions::read_config_file()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__read_config_file_safe() -> Result<String, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(shell_actions::read_config_file_safe()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__write_config_file(json: String) -> Result<(), AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     let normalized_json = shell_actions::normalize_config_file_json(&json)?;
@@ -113,23 +120,27 @@ pub fn app__write_config_file(json: String) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_vrcx_app_data_folder(state: State<'_, AppState>) -> Result<bool, AppError> {
     Ok(shell_actions::open_existing_folder(&state.paths.app_data)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_vrc_app_data_folder() -> Result<bool, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(shell_actions::open_vrc_app_data_folder()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_vrc_photos_folder() -> Result<bool, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(shell_actions::open_vrc_photos_folder()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_ugc_photos_folder(
     state: State<'_, AppState>,
     ugc_path: Option<String>,
@@ -145,18 +156,21 @@ pub fn app__open_ugc_photos_folder(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_vrc_screenshots_folder() -> Result<bool, AppError> {
     require_host_capability(HostCapability::ScreenshotCache)?;
     Ok(shell_actions::open_vrc_screenshots_folder()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_crash_vrc_crash_dumps() -> Result<bool, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     Ok(shell_actions::open_crash_dumps_folder()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__open_folder_and_select_item(
     state: State<'_, AppState>,
     path: String,
@@ -172,6 +186,7 @@ pub fn app__open_folder_and_select_item(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__open_file_selector_dialog(
     state: State<'_, AppState>,
     app_handle: AppHandle,
@@ -226,6 +241,7 @@ pub async fn app__open_file_selector_dialog(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__open_background_image_files_selector_dialog(
     state: State<'_, AppState>,
     app_handle: AppHandle,
@@ -270,6 +286,7 @@ pub async fn app__open_background_image_files_selector_dialog(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__background_image_files_resolve(
     state: State<'_, AppState>,
     input: BackgroundImageFilesResolveInput,
@@ -290,6 +307,7 @@ pub fn app__background_image_files_resolve(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__open_folder_selector_dialog(
     state: State<'_, AppState>,
     app_handle: AppHandle,
@@ -326,6 +344,7 @@ pub async fn app__open_folder_selector_dialog(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__save_vrc_reg_json_file(
     state: State<'_, AppState>,
     app_handle: AppHandle,

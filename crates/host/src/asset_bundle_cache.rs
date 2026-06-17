@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::vrchat_paths;
 
-#[derive(Serialize)]
+#[derive(Serialize, specta::Type)]
 pub struct CacheCheckResult {
     #[serde(rename = "Item1")]
     item1: i64,

@@ -23,6 +23,7 @@ vrcx-0-integrations = { path = "../integrations" }
 vrcx-0-media = { path = "../media" }
 vrcx-0-persistence = { path = "../persistence" }
 vrcx-0-vrchat-client = { path = "../vrchat-client" }
+specta.workspace = true
 
 [dev-dependencies]
 image = { workspace = true }

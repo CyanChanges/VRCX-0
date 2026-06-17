@@ -18,7 +18,7 @@ impl RealtimeSessionContext {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeWsMessagePayload {
     pub json: Value,
@@ -26,7 +26,7 @@ pub struct RealtimeWsMessagePayload {
     pub received_at: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeWsStatusPayload {
     pub status: String,

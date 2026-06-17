@@ -9,6 +9,7 @@ use vrcx_0_application::{BackendRuntimeMode, BackendRuntimePhase, BackendRuntime
 use vrcx_0_runtime_host::BackendRuntimeFrontendSessionSnapshot;
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__start_background_mode(
     app_handle: AppHandle,
     state: State<'_, AppState>,
@@ -42,6 +43,7 @@ pub async fn app__start_background_mode(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__stop_background_mode(
     app_handle: AppHandle,
     state: State<'_, AppState>,
@@ -61,6 +63,7 @@ pub fn app__stop_background_mode(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_backend_runtime_snapshot(
     state: State<'_, AppState>,
 ) -> Result<BackendRuntimeSnapshot, AppError> {
@@ -68,6 +71,7 @@ pub fn app__get_backend_runtime_snapshot(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_backend_runtime_frontend_session_snapshot(
     state: State<'_, AppState>,
 ) -> Result<Option<BackendRuntimeFrontendSessionSnapshot>, AppError> {
@@ -75,6 +79,7 @@ pub fn app__get_backend_runtime_frontend_session_snapshot(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__ensure_main_window(app_handle: AppHandle) -> Result<(), AppError> {
     bootstrap::ensure_main_window(&app_handle)
         .map_err(|error| AppError::Custom(format!("ensure main window: {error}")))

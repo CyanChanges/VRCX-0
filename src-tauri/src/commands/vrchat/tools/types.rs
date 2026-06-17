@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsCalendarListInput {
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct VrchatToolsCalendarListInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsCalendarGroupInput {
     #[serde(default)]
@@ -21,7 +21,7 @@ pub struct VrchatToolsCalendarGroupInput {
     pub(crate) group_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsCalendarEventInput {
     #[serde(default)]
@@ -32,7 +32,7 @@ pub struct VrchatToolsCalendarEventInput {
     pub(crate) event_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsFollowGroupEventInput {
     #[serde(default)]
@@ -45,7 +45,7 @@ pub struct VrchatToolsFollowGroupEventInput {
     pub(crate) is_following: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsUserNoteSaveInput {
     #[serde(default)]
@@ -56,7 +56,7 @@ pub struct VrchatToolsUserNoteSaveInput {
     pub(crate) note: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsUserReportInput {
     #[serde(default)]
@@ -71,7 +71,7 @@ pub struct VrchatToolsUserReportInput {
     pub(crate) type_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsInviteMessagesInput {
     #[serde(default)]
@@ -82,7 +82,7 @@ pub struct VrchatToolsInviteMessagesInput {
     pub(crate) message_type: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatToolsInviteMessageEditInput {
     #[serde(default)]

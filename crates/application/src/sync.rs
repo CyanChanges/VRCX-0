@@ -8,7 +8,7 @@ fn now_iso() -> String {
     Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeSyncDomainSnapshot {
     pub domain: String,
@@ -20,7 +20,7 @@ pub struct RuntimeSyncDomainSnapshot {
     pub failure_count: u64,
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeSyncSnapshot {
     pub domains: Vec<RuntimeSyncDomainSnapshot>,

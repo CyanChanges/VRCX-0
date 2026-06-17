@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import configRepository from './configRepository';
 import {
@@ -124,15 +124,13 @@ async function queryNotifications({
         : normalizeNotificationLimit(maxTableSize, 500);
     const perTableLimit = isSearchOrFiltered ? limit : limit * 2;
     const isDefaultList = !normalizedSearch && normalizedFilters.length === 0;
-    const rows = await tauriClient.app.NotificationListQuery({
-        query: {
-            userId: normalizedUserId,
-            search: normalizedSearch,
-            filters: normalizedFilters,
-            perTableLimit,
-            limit,
-            includeUnseen: isDefaultList
-        }
+    const rows = await commands.appNotificationListQuery({
+        userId: normalizedUserId,
+        search: normalizedSearch,
+        filters: normalizedFilters,
+        perTableLimit,
+        limit,
+        includeUnseen: isDefaultList
     });
     return Array.isArray(rows) ? rows.map((row) => ({ ...row })) : [];
 }
@@ -175,10 +173,7 @@ async function addNotificationToDatabase({
         throw new Error('Notification is missing required field');
     }
 
-    await tauriClient.app.NotificationAddV1({
-        userId: normalizedUserId,
-        notification: entry
-    });
+    await commands.appNotificationAddV1(normalizedUserId, entry);
 }
 
 async function addNotificationV2ToDatabase({
@@ -190,10 +185,7 @@ async function addNotificationV2ToDatabase({
         return;
     }
 
-    await tauriClient.app.NotificationAddV2({
-        userId: normalizedUserId,
-        notification
-    });
+    await commands.appNotificationAddV2(normalizedUserId, notification);
 }
 
 async function expireNotificationV2({
@@ -206,10 +198,7 @@ async function expireNotificationV2({
         return;
     }
 
-    await tauriClient.app.NotificationV2Expire({
-        userId: normalizedUserId,
-        id: normalizedId
-    });
+    await commands.appNotificationV2Expire(normalizedUserId, normalizedId);
 }
 
 async function seenNotificationV2({
@@ -222,10 +211,7 @@ async function seenNotificationV2({
         return;
     }
 
-    await tauriClient.app.NotificationV2MarkSeen({
-        userId: normalizedUserId,
-        id: normalizedId
-    });
+    await commands.appNotificationV2MarkSeen(normalizedUserId, normalizedId);
 }
 
 async function updateNotificationExpired({
@@ -237,11 +223,11 @@ async function updateNotificationExpired({
         return;
     }
 
-    await tauriClient.app.NotificationUpdateExpired({
-        userId: normalizedUserId,
-        id: notification.id,
-        expired: Boolean(notification.$isExpired)
-    });
+    await commands.appNotificationUpdateExpired(
+        normalizedUserId,
+        notification.id as string,
+        Boolean(notification.$isExpired)
+    );
 }
 
 async function deleteNotification({
@@ -255,10 +241,7 @@ async function deleteNotification({
         return;
     }
 
-    await tauriClient.app.NotificationDelete({
-        userId: normalizedUserId,
-        id: normalizedId
-    });
+    await commands.appNotificationDelete(normalizedUserId, normalizedId);
 }
 
 async function expireNotification({
@@ -272,10 +255,7 @@ async function expireNotification({
         return;
     }
 
-    await tauriClient.app.NotificationExpire({
-        userId: normalizedUserId,
-        id: normalizedId
-    });
+    await commands.appNotificationExpire(normalizedUserId, normalizedId);
 }
 
 async function markSeen({
@@ -292,7 +272,7 @@ async function markSeen({
     }
 
     const numericVersion = Number(version) || 0;
-    const response = await tauriClient.app.VrchatNotificationMarkSeen({
+    const response = await commands.appVrchatNotificationMarkSeen({
         userId: normalizedUserId,
         id: normalizedId,
         version: numericVersion,
@@ -319,10 +299,10 @@ async function markSeenLocalBulk({
         return;
     }
 
-    await tauriClient.app.NotificationMarkSeenLocalBulk({
-        userId: normalizedUserId,
-        ids: normalizedIds
-    });
+    await commands.appNotificationMarkSeenLocalBulk(
+        normalizedUserId,
+        normalizedIds
+    );
 }
 
 async function acceptFriendRequest({
@@ -335,7 +315,7 @@ async function acceptFriendRequest({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatNotificationAcceptFriendRequest({
+    const response = await commands.appVrchatNotificationAcceptFriendRequest({
         id: normalizedId,
         endpoint
     });
@@ -366,7 +346,7 @@ async function hideRemoteNotification({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatNotificationHideRemote({
+    const response = await commands.appVrchatNotificationHideRemote({
         id: normalizedId,
         version: Number(version) || 0,
         type,
@@ -398,7 +378,7 @@ async function sendNotificationResponse({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatNotificationRespond({
+    const response = await commands.appVrchatNotificationRespond({
         id: normalizedId,
         responseType: normalizedResponseType,
         responseData: responseData ?? '',
@@ -422,7 +402,7 @@ async function sendInviteResponse({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatInviteResponseSend({
+    const response = await commands.appVrchatInviteResponseSend({
         id: normalizedId,
         responseSlot: normalizedSlot,
         endpoint
@@ -455,7 +435,7 @@ async function sendInviteResponsePhoto({
     }
 
     const path = `invite/${encodeURIComponent(normalizedId)}/response/photo`;
-    const response = await tauriClient.app.VrchatInviteResponsePhotoSend({
+    const response = await commands.appVrchatInviteResponsePhotoSend({
         id: normalizedId,
         responseSlot: normalizedSlot,
         imageData: normalizedImageData,
@@ -477,7 +457,7 @@ async function sendInvite({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatInviteSend({
+    const response = await commands.appVrchatInviteSend({
         receiverUserId: normalizedReceiverUserId,
         params,
         endpoint
@@ -506,7 +486,7 @@ async function sendInvitePhoto({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatInvitePhotoSend({
+    const response = await commands.appVrchatInvitePhotoSend({
         receiverUserId: normalizedReceiverUserId,
         params,
         imageData: normalizedImageData,
@@ -531,7 +511,7 @@ async function sendRequestInvite({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatRequestInviteSend({
+    const response = await commands.appVrchatRequestInviteSend({
         receiverUserId: normalizedReceiverUserId,
         params,
         endpoint
@@ -560,7 +540,7 @@ async function sendRequestInvitePhoto({
         return null;
     }
 
-    const response = await tauriClient.app.VrchatRequestInvitePhotoSend({
+    const response = await commands.appVrchatRequestInvitePhotoSend({
         receiverUserId: normalizedReceiverUserId,
         params,
         imageData: normalizedImageData,
@@ -589,7 +569,7 @@ async function sendBoop({
         typeof emojiId === 'string'
             ? emojiId.trim()
             : String(emojiId ?? '').trim();
-    const response = await tauriClient.app.VrchatBoopSend({
+    const response = await commands.appVrchatBoopSend({
         userId: normalizedUserId,
         emojiId: normalizedEmojiId,
         endpoint

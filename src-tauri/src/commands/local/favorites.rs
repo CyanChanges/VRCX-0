@@ -8,6 +8,7 @@ use crate::state::AppState;
 use serde_json::Value;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__favorite_add(
     state: State<'_, AppState>,
     kind: String,
@@ -19,6 +20,7 @@ pub fn app__favorite_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__favorite_group_delete(
     state: State<'_, AppState>,
     kind: String,
@@ -29,6 +31,7 @@ pub fn app__favorite_group_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__favorite_group_rename(
     state: State<'_, AppState>,
     kind: String,
@@ -45,6 +48,7 @@ pub fn app__favorite_group_rename(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__favorite_list(
     state: State<'_, AppState>,
     kind: String,
@@ -53,6 +57,7 @@ pub fn app__favorite_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__favorite_remove(
     state: State<'_, AppState>,
     kind: String,

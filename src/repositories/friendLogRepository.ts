@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import type { FriendLogHistoryEntry } from './friendLogHistoryRepository';
 
@@ -74,12 +74,9 @@ function normalizeFriendLogRow(row: FriendLogSourceRow): FriendLogCurrentRow {
 async function getFriendLogCurrent(
     userId: unknown
 ): Promise<FriendLogCurrentRow[]> {
-    const rows = (await tauriClient.app.FriendLogCurrentList({
-        userId:
-            typeof userId === 'string'
+    const rows = (await commands.appFriendLogCurrentList(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim()
-    })) as FriendLogSourceRow[];
+                : String(userId ?? '').trim())) as FriendLogSourceRow[];
 
     if (!Array.isArray(rows)) {
         return [];
@@ -128,21 +125,16 @@ async function replaceFriendLogCurrent(
         ? options.addedHistoryEntries
         : [];
 
-    return tauriClient.app.FriendLogReplaceCurrent({
-        userId:
-            typeof userId === 'string'
+    return commands.appFriendLogReplaceCurrent(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entries: (Array.isArray(entries) ? entries : []).map(
+                : String(userId ?? '').trim(), (Array.isArray(entries) ? entries : []).map(
             normalizeCurrentEntryForRuntime
-        ),
-        options: {
+        ), {
             historyEntries: historyEntries.map(normalizeHistoryEntryForRuntime),
             addedHistoryEntries: addedHistoryEntries.map(
                 normalizeHistoryEntryForRuntime
             )
-        }
-    }) as Promise<FriendLogMutationResult>;
+        }) as Promise<FriendLogMutationResult>;
 }
 
 async function deleteFriendLogCurrentArray(
@@ -174,16 +166,11 @@ async function deleteFriendLogCurrentArray(
         ? options.historyEntries
         : [];
 
-    return tauriClient.app.FriendLogDeleteCurrentArray({
-        userId:
-            typeof userId === 'string'
+    return commands.appFriendLogDeleteCurrentArray(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        targetUserIds: normalizedTargetUserIds,
-        options: {
+                : String(userId ?? '').trim(), normalizedTargetUserIds, {
             historyEntries: historyEntries.map(normalizeHistoryEntryForRuntime)
-        }
-    }) as Promise<FriendLogMutationResult>;
+        }) as Promise<FriendLogMutationResult>;
 }
 
 async function upsertFriendLogCurrent(
@@ -223,16 +210,12 @@ async function upsertFriendLogCurrent(
 
     const historyEntry = options?.historyEntry;
 
-    return tauriClient.app.FriendLogUpsertCurrent({
-        userId:
-            typeof userId === 'string'
+    return commands.appFriendLogUpsertCurrent(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entry: normalizeCurrentEntryForRuntime({
+                : String(userId ?? '').trim(), normalizeCurrentEntryForRuntime({
             ...entry,
             userId: targetUserId
-        }),
-        options: {
+        }), {
             historyEntry: historyEntry
                 ? normalizeHistoryEntryForRuntime({
                       ...historyEntry,
@@ -240,18 +223,13 @@ async function upsertFriendLogCurrent(
                   })
                 : null,
             forceHistory: Boolean(options?.forceHistory)
-        }
-    }) as Promise<FriendLogMutationResult>;
+        }) as Promise<FriendLogMutationResult>;
 }
 
 async function deleteFriendLogCurrent(userId: unknown, targetUserId: string) {
-    await tauriClient.app.FriendLogDeleteCurrent({
-        userId:
-            typeof userId === 'string'
+    await commands.appFriendLogDeleteCurrent(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        targetUserId
-    });
+                : String(userId ?? '').trim(), targetUserId);
 }
 
 const friendLogRepository = {

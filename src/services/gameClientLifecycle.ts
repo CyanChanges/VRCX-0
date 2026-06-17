@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useSessionStore } from '@/state/sessionStore';
 
@@ -131,7 +131,7 @@ export async function syncRuntimeGameClientState(): Promise<void> {
     lastRuntimeStateSignature = signature;
 
     try {
-        await tauriClient.app.SetGameClientRuntimeState(
+        await commands.appSetGameClientRuntimeState(
             sessionActive,
             currentLocation
         );

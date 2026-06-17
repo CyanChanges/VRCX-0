@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import { useFavoriteStore } from '@/state/favoriteStore';
 import { useFriendRosterStore } from '@/state/friendRosterStore';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -65,8 +65,7 @@ async function runFavoriteBootstrap({
             `Loading favorites baseline for ${displayName}.`
         );
 
-    const result = await tauriClient.app
-        .SocialFavoritesBaselineGet({
+    const result = await commands.appSocialFavoritesBaselineGet({
             userId: normalizedUserId,
             endpoint,
             currentUserSnapshot,

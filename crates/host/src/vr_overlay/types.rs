@@ -29,7 +29,7 @@ impl std::fmt::Display for BackendStartError {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 pub struct OverlaySurfaceConfig {
     pub surface_id: OverlaySurfaceId,
     pub size: OverlaySize,
@@ -39,13 +39,13 @@ pub struct OverlaySurfaceConfig {
     pub activation_button: OverlayActivationButton,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayPlacement {
     TrackedDeviceRelative { device_hint: String },
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum OverlayActivationButton {
     #[default]
@@ -53,7 +53,7 @@ pub enum OverlayActivationButton {
     Menu,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, specta::Type)]
 pub struct VrDeviceSnapshot {
     pub label: String,
     pub serial: Option<String>,
@@ -61,7 +61,7 @@ pub struct VrDeviceSnapshot {
     pub battery_percent: Option<u8>,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum VrDeviceStatus {
     Normal,

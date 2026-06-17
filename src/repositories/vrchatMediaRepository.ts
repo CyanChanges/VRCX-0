@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
@@ -6,7 +7,6 @@ import {
 import { normalizeVrchatEndpointDomain } from '@/shared/vrchatEndpoint';
 
 import { normalizePlatformError } from '../platform/tauri/errors';
-import { tauriClient } from '../platform/tauri/client';
 import {
     parseJsonResponse,
     type QueryParams,
@@ -121,7 +121,7 @@ async function getFiles(
     const normalizedParams = normalizeParams(params);
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaFilesGet({
+            commands.appVrchatMediaFilesGet({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 params: normalizedParams
             }),
@@ -149,7 +149,7 @@ async function deleteFile(fileId: unknown, options: MediaApiOptions = {}) {
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaFileDelete({
+            commands.appVrchatMediaFileDelete({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 fileId: normalizedFileId
             }),
@@ -170,7 +170,7 @@ async function uploadGalleryImage(
     };
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaGalleryImageUpload({
+            commands.appVrchatMediaGalleryImageUpload({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 imageData
             }),
@@ -191,7 +191,7 @@ async function uploadAvatarGalleryImage(
     };
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaAvatarGalleryImageUpload({
+            commands.appVrchatMediaAvatarGalleryImageUpload({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 imageData,
                 avatarId
@@ -211,7 +211,7 @@ async function uploadVrcPlusIcon(
     };
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaVrcPlusIconUpload({
+            commands.appVrchatMediaVrcPlusIconUpload({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 imageData
             }),
@@ -229,7 +229,7 @@ async function uploadEmoji(
     const normalizedParams = normalizeParams(params);
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaEmojiUpload({
+            commands.appVrchatMediaEmojiUpload({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 imageData,
                 params: normalizedParams
@@ -247,7 +247,7 @@ async function uploadSticker(imageData: string, options: MediaApiOptions = {}) {
     };
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaStickerUpload({
+            commands.appVrchatMediaStickerUpload({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 imageData
             }),
@@ -272,7 +272,7 @@ async function uploadPrint(
     const normalizedParams = normalizeParams(params);
     const response = await executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaPrintUpload({
+            commands.appVrchatMediaPrintUpload({
                 endpoint: resolveMediaEndpoint(endpoint),
                 imageData,
                 cropWhiteBorder: Boolean(cropWhiteBorder),
@@ -301,7 +301,7 @@ async function uploadAssetImage(
     const normalizedParams = normalizeParams(params);
     const response = await executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaAssetUpload({
+            commands.appVrchatMediaAssetUpload({
                 endpoint: resolveMediaEndpoint(endpoint),
                 assetKind,
                 imageData,
@@ -333,7 +333,7 @@ async function getPrints(
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaPrintsGet({
+            commands.appVrchatMediaPrintsGet({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 userId: normalizedUserId,
                 n
@@ -360,7 +360,7 @@ async function getPrint(printId: unknown, options: MediaApiOptions = {}) {
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaPrintGet({
+            commands.appVrchatMediaPrintGet({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 printId: normalizedPrintId
             }),
@@ -383,7 +383,7 @@ async function deletePrint(printId: unknown, options: MediaApiOptions = {}) {
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaPrintDelete({
+            commands.appVrchatMediaPrintDelete({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 printId: normalizedPrintId
             }),
@@ -402,7 +402,7 @@ async function getInventoryItems(
     const normalizedParams = normalizeParams(params);
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaInventoryItemsGet({
+            commands.appVrchatMediaInventoryItemsGet({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 params: normalizedParams
             }),
@@ -443,7 +443,7 @@ async function getUserInventoryItem(
         queryFn: () =>
             executeMediaCommand(
                 () =>
-                    tauriClient.app.VrchatMediaUserInventoryItemGet({
+                    commands.appVrchatMediaUserInventoryItemGet({
                         endpoint: resolveMediaEndpoint(options.endpoint),
                         userId: normalizedUserId,
                         inventoryId: normalizedInventoryId
@@ -476,7 +476,7 @@ async function updateInventoryItem(
     const normalizedParams = normalizeParams(params);
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaInventoryItemUpdate({
+            commands.appVrchatMediaInventoryItemUpdate({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 inventoryId: normalizedInventoryId,
                 params: normalizedParams
@@ -503,7 +503,7 @@ async function consumeInventoryBundle(
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaInventoryBundleConsume({
+            commands.appVrchatMediaInventoryBundleConsume({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 inventoryId: normalizedInventoryId
             }),
@@ -524,7 +524,7 @@ async function redeemReward(code: unknown, options: MediaApiOptions = {}) {
 
     return executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaRewardRedeem({
+            commands.appVrchatMediaRewardRedeem({
                 endpoint: resolveMediaEndpoint(options.endpoint),
                 code: normalizedCode
             }),
@@ -555,7 +555,7 @@ async function uploadAvatarImageLegacy({
 
     const response = await executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaAvatarImageUploadLegacy({
+            commands.appVrchatMediaAvatarImageUploadLegacy({
                 endpoint: resolveMediaEndpoint(endpoint),
                 entityId: normalizedAvatarId,
                 imageUrl,
@@ -594,7 +594,7 @@ async function uploadWorldImageLegacy({
 
     const response = await executeMediaCommand(
         () =>
-            tauriClient.app.VrchatMediaWorldImageUploadLegacy({
+            commands.appVrchatMediaWorldImageUploadLegacy({
                 endpoint: resolveMediaEndpoint(endpoint),
                 entityId: normalizedWorldId,
                 imageUrl,

@@ -13,6 +13,7 @@ use vrcx_0_host::host_capabilities::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__check_game_running(state: State<'_, AppState>) -> Result<(), AppError> {
     require_host_capability(HostCapability::GameProcessMonitor)?;
     let status = process_status::detect_process_status();
@@ -36,18 +37,21 @@ pub fn app__check_game_running(state: State<'_, AppState>) -> Result<(), AppErro
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__is_game_running(state: State<'_, AppState>) -> Result<bool, AppError> {
     require_host_capability(HostCapability::GameProcessMonitor)?;
     Ok(state.process_monitor.is_game_running())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__is_steamvr_running(state: State<'_, AppState>) -> Result<bool, AppError> {
     require_host_capability(HostCapability::GameProcessMonitor)?;
     Ok(state.process_monitor.is_steamvr_running())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_game_client_runtime_state(
     state: State<'_, AppState>,
     session_active: bool,
@@ -59,24 +63,27 @@ pub fn app__set_game_client_runtime_state(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__quit_game() -> Result<i32, AppError> {
     require_host_capability_supported(HostCapability::GameLaunch)?;
     Ok(game_launch::quit_game())
 }
 
 #[tauri::command]
-pub fn app__start_game(arguments: String) -> Result<bool, AppError> {
+#[specta::specta]
+pub fn app__start_game(launch_arguments: String) -> Result<bool, AppError> {
     require_host_capability(HostCapability::GameLaunch)?;
-    Ok(game_launch::start_game(&arguments)?)
+    Ok(game_launch::start_game(&launch_arguments)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__start_game_from_path(
     state: State<'_, AppState>,
     path: String,
-    arguments: String,
+    launch_arguments: String,
 ) -> Result<bool, AppError> {
     require_host_capability_supported(HostCapability::GameLaunch)?;
     let path = ensure_vrchat_launch_path_allowed(&state.host_file_access, &state.paths, &path)?;
-    Ok(game_launch::start_game_from_path(&path, &arguments)?)
+    Ok(game_launch::start_game_from_path(&path, &launch_arguments)?)
 }

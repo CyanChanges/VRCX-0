@@ -73,6 +73,7 @@ async fn execute_current_user_api_then_invalidate(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_user_get(
     state: State<'_, AppState>,
     input: VrchatUserInput,
@@ -107,6 +108,7 @@ pub async fn app__vrchat_user_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_user_mutual_counts_get(
     state: State<'_, AppState>,
     input: VrchatUserInput,
@@ -122,6 +124,7 @@ pub async fn app__vrchat_user_mutual_counts_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_user_groups_get(
     state: State<'_, AppState>,
     input: VrchatUserInput,
@@ -137,6 +140,7 @@ pub async fn app__vrchat_user_groups_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_user_represented_group_get(
     state: State<'_, AppState>,
     input: VrchatUserInput,
@@ -152,6 +156,7 @@ pub async fn app__vrchat_user_represented_group_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_user_mutual_friends_get(
     state: State<'_, AppState>,
     input: VrchatUserMutualFriendsInput,
@@ -176,6 +181,7 @@ pub async fn app__vrchat_user_mutual_friends_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_current_user_update(
     state: State<'_, AppState>,
     input: VrchatCurrentUserUpdateInput,
@@ -195,6 +201,7 @@ pub async fn app__vrchat_current_user_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_current_user_badge_update(
     state: State<'_, AppState>,
     input: VrchatCurrentUserBadgeInput,
@@ -216,6 +223,7 @@ pub async fn app__vrchat_current_user_badge_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_current_user_tags_add(
     state: State<'_, AppState>,
     input: VrchatCurrentUserTagsInput,
@@ -235,6 +243,7 @@ pub async fn app__vrchat_current_user_tags_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_current_user_tags_remove(
     state: State<'_, AppState>,
     input: VrchatCurrentUserTagsInput,

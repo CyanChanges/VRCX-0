@@ -1,10 +1,10 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     invalidateEntityQueries,
     queryKeys
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 
 import {
     createRequestError,
@@ -116,7 +116,7 @@ async function getGroupCalendars(
         policy: entityQueryPolicies.groupCollection,
         force,
         queryFn: async () => {
-            const response = await tauriClient.app.VrchatToolsCalendarsGet({
+            const response = await commands.appVrchatToolsCalendarsGet({
                 endpoint,
                 params
             });
@@ -134,7 +134,7 @@ async function getGroupCalendar(
         policy: entityQueryPolicies.groupCollection,
         force,
         queryFn: async () => {
-            const response = await tauriClient.app.VrchatToolsGroupCalendarGet({
+            const response = await commands.appVrchatToolsGroupCalendarGet({
                 endpoint,
                 groupId
             });
@@ -156,7 +156,7 @@ async function getFollowingGroupCalendars(
         force,
         queryFn: async () => {
             const response =
-                await tauriClient.app.VrchatToolsFollowingCalendarsGet({
+                await commands.appVrchatToolsFollowingCalendarsGet({
                     endpoint,
                     params
                 });
@@ -176,7 +176,7 @@ async function getFeaturedGroupCalendars(
         force,
         queryFn: async () => {
             const response =
-                await tauriClient.app.VrchatToolsFeaturedCalendarsGet({
+                await commands.appVrchatToolsFeaturedCalendarsGet({
                     endpoint,
                     params
                 });
@@ -227,7 +227,7 @@ async function followGroupEvent(
     }: GroupCalendarEventIdentity & { isFollowing: boolean },
     { endpoint = '' }: RepositoryOptions = {}
 ) {
-    const response = await tauriClient.app.VrchatToolsGroupEventFollow({
+    const response = await commands.appVrchatToolsGroupEventFollow({
         endpoint,
         groupId,
         eventId,
@@ -250,7 +250,7 @@ async function getGroupCalendarIcs(
         force,
         queryFn: async () => {
             const response =
-                await tauriClient.app.VrchatToolsGroupCalendarIcsGet({
+                await commands.appVrchatToolsGroupCalendarIcsGet({
                     endpoint,
                     groupId,
                     eventId
@@ -267,7 +267,7 @@ async function saveUserNote(
     { targetUserId, note }: { targetUserId: string; note: string },
     { endpoint = '' }: RepositoryOptions = {}
 ) {
-    const response = await tauriClient.app.VrchatToolsUserNoteSave({
+    const response = await commands.appVrchatToolsUserNoteSave({
         endpoint,
         targetUserId,
         note
@@ -289,7 +289,7 @@ async function reportUser(
     },
     { endpoint = '' }: RepositoryOptions = {}
 ) {
-    const response = await tauriClient.app.VrchatToolsUserReport({
+    const response = await commands.appVrchatToolsUserReport({
         endpoint,
         userId,
         contentType,
@@ -309,7 +309,7 @@ async function getInviteMessages(
     }: { currentUserId: string; messageType: string },
     { endpoint = '' }: RepositoryOptions = {}
 ) {
-    const response = await tauriClient.app.VrchatToolsInviteMessagesGet({
+    const response = await commands.appVrchatToolsInviteMessagesGet({
         endpoint,
         currentUserId,
         messageType
@@ -334,7 +334,7 @@ async function editInviteMessage(
     },
     { endpoint = '' }: RepositoryOptions = {}
 ) {
-    const response = await tauriClient.app.VrchatToolsInviteMessageEdit({
+    const response = await commands.appVrchatToolsInviteMessageEdit({
         endpoint,
         currentUserId,
         messageType,

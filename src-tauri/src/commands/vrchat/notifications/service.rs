@@ -65,6 +65,7 @@ async fn execute_media_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_notification_mark_seen(
     state: State<'_, AppState>,
     input: VrchatNotificationMarkSeenInput,
@@ -88,6 +89,7 @@ pub async fn app__vrchat_notification_mark_seen(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_notification_accept_friend_request(
     state: State<'_, AppState>,
     input: VrchatNotificationIdInput,
@@ -103,6 +105,7 @@ pub async fn app__vrchat_notification_accept_friend_request(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_notification_hide_remote(
     state: State<'_, AppState>,
     input: VrchatNotificationHideInput,
@@ -124,6 +127,7 @@ pub async fn app__vrchat_notification_hide_remote(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_notification_respond(
     state: State<'_, AppState>,
     input: VrchatNotificationRespondInput,
@@ -144,6 +148,7 @@ pub async fn app__vrchat_notification_respond(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_invite_response_send(
     state: State<'_, AppState>,
     input: VrchatInviteResponseInput,
@@ -159,6 +164,7 @@ pub async fn app__vrchat_invite_response_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_invite_response_photo_send(
     state: State<'_, AppState>,
     input: VrchatInviteResponsePhotoInput,
@@ -179,6 +185,7 @@ pub async fn app__vrchat_invite_response_photo_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_invite_send(
     state: State<'_, AppState>,
     input: VrchatNotificationSendInput,
@@ -195,6 +202,7 @@ pub async fn app__vrchat_invite_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_invite_photo_send(
     state: State<'_, AppState>,
     input: VrchatNotificationPhotoSendInput,
@@ -215,6 +223,7 @@ pub async fn app__vrchat_invite_photo_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_request_invite_send(
     state: State<'_, AppState>,
     input: VrchatNotificationSendInput,
@@ -231,6 +240,7 @@ pub async fn app__vrchat_request_invite_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_request_invite_photo_send(
     state: State<'_, AppState>,
     input: VrchatNotificationPhotoSendInput,
@@ -251,6 +261,7 @@ pub async fn app__vrchat_request_invite_photo_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_boop_send(
     state: State<'_, AppState>,
     input: VrchatBoopInput,

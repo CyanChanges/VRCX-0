@@ -34,6 +34,7 @@ async fn execute_instance_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_instance_get(
     state: State<'_, AppState>,
     input: VrchatInstanceIdentityInput,
@@ -50,6 +51,7 @@ pub async fn app__vrchat_instance_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_instance_short_name_get(
     state: State<'_, AppState>,
     input: VrchatInstanceShortNameInput,
@@ -70,6 +72,7 @@ pub async fn app__vrchat_instance_short_name_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_instance_create(
     state: State<'_, AppState>,
     input: VrchatInstanceCreateInput,
@@ -84,6 +87,7 @@ pub async fn app__vrchat_instance_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_instance_self_invite(
     state: State<'_, AppState>,
     input: VrchatInstanceSelfInviteInput,
@@ -104,6 +108,7 @@ pub async fn app__vrchat_instance_self_invite(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_instance_close(
     state: State<'_, AppState>,
     input: VrchatInstanceCloseInput,

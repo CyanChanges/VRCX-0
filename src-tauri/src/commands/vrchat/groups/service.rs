@@ -43,6 +43,7 @@ async fn execute_group_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_get(
     state: State<'_, AppState>,
     input: VrchatGroupProfileInput,
@@ -59,6 +60,7 @@ pub async fn app__vrchat_group_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_user_groups_get(
     state: State<'_, AppState>,
     input: VrchatGroupUserGroupsInput,
@@ -74,6 +76,7 @@ pub async fn app__vrchat_group_user_groups_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_posts_get(
     state: State<'_, AppState>,
     input: VrchatGroupPagedInput,
@@ -96,6 +99,7 @@ pub async fn app__vrchat_group_posts_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_members_get(
     state: State<'_, AppState>,
     input: VrchatGroupMembersInput,
@@ -118,6 +122,7 @@ pub async fn app__vrchat_group_members_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_members_search(
     state: State<'_, AppState>,
     input: VrchatGroupMembersSearchInput,
@@ -139,6 +144,7 @@ pub async fn app__vrchat_group_members_search(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_gallery_get(
     state: State<'_, AppState>,
     input: VrchatGroupGalleryInput,
@@ -160,6 +166,7 @@ pub async fn app__vrchat_group_gallery_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_instances_get(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -176,6 +183,7 @@ pub async fn app__vrchat_group_instances_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_bans_get(
     state: State<'_, AppState>,
     input: VrchatGroupPagedInput,
@@ -198,6 +206,7 @@ pub async fn app__vrchat_group_bans_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_invites_get(
     state: State<'_, AppState>,
     input: VrchatGroupPagedInput,
@@ -220,6 +229,7 @@ pub async fn app__vrchat_group_invites_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_join_requests_get(
     state: State<'_, AppState>,
     input: VrchatGroupJoinRequestsInput,
@@ -241,6 +251,7 @@ pub async fn app__vrchat_group_join_requests_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_audit_log_types_get(
     state: State<'_, AppState>,
     input: VrchatGroupIdInput,
@@ -261,6 +272,7 @@ pub async fn app__vrchat_group_audit_log_types_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_logs_get(
     state: State<'_, AppState>,
     input: VrchatGroupLogsInput,
@@ -282,6 +294,7 @@ pub async fn app__vrchat_group_logs_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_user_instances_get(
     state: State<'_, AppState>,
     input: VrchatGroupUserGroupsInput,
@@ -297,6 +310,7 @@ pub async fn app__vrchat_group_user_instances_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_post_create(
     state: State<'_, AppState>,
     input: VrchatGroupPostCreateInput,
@@ -312,6 +326,7 @@ pub async fn app__vrchat_group_post_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_post_edit(
     state: State<'_, AppState>,
     input: VrchatGroupPostEditInput,
@@ -328,6 +343,7 @@ pub async fn app__vrchat_group_post_edit(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_post_delete(
     state: State<'_, AppState>,
     input: VrchatGroupPostDeleteInput,
@@ -344,6 +360,7 @@ pub async fn app__vrchat_group_post_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_join(
     state: State<'_, AppState>,
     input: VrchatGroupIdInput,
@@ -359,6 +376,7 @@ pub async fn app__vrchat_group_join(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_leave(
     state: State<'_, AppState>,
     input: VrchatGroupIdInput,
@@ -374,6 +392,7 @@ pub async fn app__vrchat_group_leave(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_request_cancel(
     state: State<'_, AppState>,
     input: VrchatGroupIdInput,
@@ -389,6 +408,7 @@ pub async fn app__vrchat_group_request_cancel(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_invite_send(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -405,6 +425,7 @@ pub async fn app__vrchat_group_invite_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_member_kick(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -421,6 +442,7 @@ pub async fn app__vrchat_group_member_kick(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_member_ban(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -437,6 +459,7 @@ pub async fn app__vrchat_group_member_ban(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_member_unban(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -453,6 +476,7 @@ pub async fn app__vrchat_group_member_unban(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_invite_delete(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,
@@ -469,6 +493,7 @@ pub async fn app__vrchat_group_invite_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_join_request_respond(
     state: State<'_, AppState>,
     input: VrchatGroupJoinRequestRespondInput,
@@ -490,6 +515,7 @@ pub async fn app__vrchat_group_join_request_respond(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_representation_set(
     state: State<'_, AppState>,
     input: VrchatGroupRepresentationInput,
@@ -506,6 +532,7 @@ pub async fn app__vrchat_group_representation_set(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_member_props_set(
     state: State<'_, AppState>,
     input: VrchatGroupMemberPropsInput,
@@ -522,6 +549,7 @@ pub async fn app__vrchat_group_member_props_set(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_block(
     state: State<'_, AppState>,
     input: VrchatGroupIdInput,
@@ -537,6 +565,7 @@ pub async fn app__vrchat_group_block(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_group_unblock(
     state: State<'_, AppState>,
     input: VrchatGroupUserInput,

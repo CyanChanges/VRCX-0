@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFriendsGetInput {
     #[serde(default)]
@@ -13,7 +13,7 @@ pub struct VrchatFriendsGetInput {
     pub(crate) offset: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFriendUserInput {
     #[serde(default)]
@@ -22,7 +22,7 @@ pub struct VrchatFriendUserInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFriendCancelRequestInput {
     #[serde(default)]

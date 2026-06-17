@@ -87,6 +87,7 @@ async fn run_legacy_entity_image_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_files_get(
     state: State<'_, AppState>,
     input: VrchatMediaParamsInput,
@@ -101,6 +102,7 @@ pub async fn app__vrchat_media_files_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_file_delete(
     state: State<'_, AppState>,
     input: VrchatMediaFileIdInput,
@@ -116,6 +118,7 @@ pub async fn app__vrchat_media_file_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_gallery_image_upload(
     state: State<'_, AppState>,
     input: VrchatMediaImageUploadInput,
@@ -135,6 +138,7 @@ pub async fn app__vrchat_media_gallery_image_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_avatar_gallery_image_upload(
     state: State<'_, AppState>,
     input: VrchatMediaAvatarGalleryImageUploadInput,
@@ -153,6 +157,7 @@ pub async fn app__vrchat_media_avatar_gallery_image_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_vrc_plus_icon_upload(
     state: State<'_, AppState>,
     input: VrchatMediaImageUploadInput,
@@ -172,6 +177,7 @@ pub async fn app__vrchat_media_vrc_plus_icon_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_emoji_upload(
     state: State<'_, AppState>,
     input: VrchatMediaImageUploadInput,
@@ -192,6 +198,7 @@ pub async fn app__vrchat_media_emoji_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_sticker_upload(
     state: State<'_, AppState>,
     input: VrchatMediaImageUploadInput,
@@ -206,6 +213,7 @@ pub async fn app__vrchat_media_sticker_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_print_upload(
     state: State<'_, AppState>,
     input: VrchatMediaPrintUploadInput,
@@ -225,6 +233,7 @@ pub async fn app__vrchat_media_print_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_asset_upload(
     state: State<'_, AppState>,
     input: VrchatMediaAssetUploadInput,
@@ -248,6 +257,7 @@ pub async fn app__vrchat_media_asset_upload(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_prints_get(
     state: State<'_, AppState>,
     input: VrchatMediaPrintsInput,
@@ -263,6 +273,7 @@ pub async fn app__vrchat_media_prints_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_print_get(
     state: State<'_, AppState>,
     input: VrchatMediaPrintIdInput,
@@ -278,6 +289,7 @@ pub async fn app__vrchat_media_print_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_print_delete(
     state: State<'_, AppState>,
     input: VrchatMediaPrintIdInput,
@@ -293,6 +305,7 @@ pub async fn app__vrchat_media_print_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_inventory_items_get(
     state: State<'_, AppState>,
     input: VrchatMediaParamsInput,
@@ -307,6 +320,7 @@ pub async fn app__vrchat_media_inventory_items_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_user_inventory_item_get(
     state: State<'_, AppState>,
     input: VrchatMediaUserInventoryItemInput,
@@ -322,6 +336,7 @@ pub async fn app__vrchat_media_user_inventory_item_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_inventory_item_update(
     state: State<'_, AppState>,
     input: VrchatMediaInventoryItemInput,
@@ -337,6 +352,7 @@ pub async fn app__vrchat_media_inventory_item_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_inventory_bundle_consume(
     state: State<'_, AppState>,
     input: VrchatMediaInventoryItemInput,
@@ -352,6 +368,7 @@ pub async fn app__vrchat_media_inventory_bundle_consume(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_reward_redeem(
     state: State<'_, AppState>,
     input: VrchatMediaRewardRedeemInput,
@@ -366,6 +383,7 @@ pub async fn app__vrchat_media_reward_redeem(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_file_version_create(
     state: State<'_, AppState>,
     input: VrchatMediaFileVersionCreateInput,
@@ -388,6 +406,7 @@ pub async fn app__vrchat_media_file_version_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_file_upload_start(
     state: State<'_, AppState>,
     input: VrchatMediaFileUploadStageInput,
@@ -404,6 +423,7 @@ pub async fn app__vrchat_media_file_upload_start(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_file_upload_finish(
     state: State<'_, AppState>,
     input: VrchatMediaFileUploadStageInput,
@@ -420,6 +440,7 @@ pub async fn app__vrchat_media_file_upload_finish(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_file_put(
     state: State<'_, AppState>,
     input: VrchatMediaFilePutInput,
@@ -434,6 +455,7 @@ pub async fn app__vrchat_media_file_put(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_avatar_image_upload_legacy(
     state: State<'_, AppState>,
     input: VrchatMediaLegacyImageUploadInput,
@@ -448,6 +470,7 @@ pub async fn app__vrchat_media_avatar_image_upload_legacy(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_world_image_upload_legacy(
     state: State<'_, AppState>,
     input: VrchatMediaLegacyImageUploadInput,
@@ -462,6 +485,7 @@ pub async fn app__vrchat_media_world_image_upload_legacy(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_avatar_image_set(
     state: State<'_, AppState>,
     input: VrchatMediaEntityImageInput,
@@ -477,6 +501,7 @@ pub async fn app__vrchat_media_avatar_image_set(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_media_world_image_set(
     state: State<'_, AppState>,
     input: VrchatMediaEntityImageInput,

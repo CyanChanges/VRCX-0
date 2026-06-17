@@ -1,13 +1,13 @@
 use serde::Deserialize;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteEndpointInput {
     #[serde(default)]
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoritePagedInput {
     #[serde(default)]
@@ -18,7 +18,7 @@ pub struct VrchatFavoritePagedInput {
     pub(crate) offset: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteWorldsInput {
     #[serde(default)]
@@ -35,7 +35,7 @@ pub struct VrchatFavoriteWorldsInput {
     pub(crate) tag: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteAvatarsInput {
     #[serde(default)]
@@ -48,7 +48,7 @@ pub struct VrchatFavoriteAvatarsInput {
     pub(crate) tag: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteGroupsInput {
     #[serde(default)]
@@ -61,7 +61,7 @@ pub struct VrchatFavoriteGroupsInput {
     pub(crate) owner_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteAddInput {
     #[serde(default)]
@@ -74,7 +74,7 @@ pub struct VrchatFavoriteAddInput {
     pub(crate) tags: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteDeleteInput {
     #[serde(default)]
@@ -83,7 +83,7 @@ pub struct VrchatFavoriteDeleteInput {
     pub(crate) object_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteGroupSaveInput {
     #[serde(default)]
@@ -98,7 +98,7 @@ pub struct VrchatFavoriteGroupSaveInput {
     pub(crate) visibility: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatFavoriteGroupClearInput {
     #[serde(default)]
@@ -111,7 +111,7 @@ pub struct VrchatFavoriteGroupClearInput {
     pub(crate) group: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalFavoriteInput {
     #[serde(default)]
@@ -122,7 +122,7 @@ pub struct LocalFavoriteInput {
     pub(crate) group_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalFavoriteGroupInput {
     #[serde(default)]
@@ -131,7 +131,7 @@ pub struct LocalFavoriteGroupInput {
     pub(crate) group_name: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct LocalFavoriteGroupRenameInput {
     #[serde(default)]

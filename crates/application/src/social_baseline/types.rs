@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use vrcx_0_core::json::RawJson;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SocialFavoritesBaselineInput {
     #[serde(default)]
@@ -14,7 +14,7 @@ pub struct SocialFavoritesBaselineInput {
     pub friend_roster_by_id: RawJson,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SocialFavoritesBaselineOutput {
     pub user_id: String,
@@ -23,7 +23,7 @@ pub struct SocialFavoritesBaselineOutput {
     pub snapshot: Option<RawJson>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SocialFriendRosterBaselineInput {
     #[serde(default)]
@@ -36,7 +36,7 @@ pub struct SocialFriendRosterBaselineInput {
     pub current_user_snapshot: RawJson,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct SocialFriendRosterBaselineOutput {
     pub user_id: String,

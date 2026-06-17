@@ -18,7 +18,7 @@ pub struct GameLogRuntimeState {
     pub is_steamvr_running: bool,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerState {
     pub user_id: String,
@@ -35,7 +35,7 @@ pub struct RuntimeSnapshot {
     pub players: Vec<PlayerState>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct GameLogProjection {
     pub current_location: String,

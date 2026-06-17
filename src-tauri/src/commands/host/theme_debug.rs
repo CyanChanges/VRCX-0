@@ -5,7 +5,7 @@ use tauri::State;
 use crate::error::AppError;
 use crate::state::AppState;
 
-#[derive(serde::Serialize)]
+#[derive(serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct CommunityThemeDebugLocalThemeOutput {
     folder_path: String,
@@ -19,6 +19,7 @@ pub struct CommunityThemeDebugLocalThemeOutput {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__community_theme_debug_load_local_theme(
     state: State<'_, AppState>,
     folder_path: String,

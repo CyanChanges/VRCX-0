@@ -10,7 +10,7 @@ use crate::database::DatabaseService;
 use crate::realtime::normalize_user_table_prefix;
 use crate::Error;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarTagInput {
     #[serde(default)]
@@ -19,7 +19,7 @@ pub struct AvatarTagInput {
     pub color: Value,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarCacheOutput {
     pub id: String,
@@ -37,14 +37,14 @@ pub struct AvatarCacheOutput {
     pub version: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarTimeSpentOutput {
     pub avatar_id: String,
     pub time_spent: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarTagOutput {
     pub avatar_id: String,
@@ -52,7 +52,7 @@ pub struct AvatarTagOutput {
     pub color: Value,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarTagsPatchInput {
     #[serde(default)]

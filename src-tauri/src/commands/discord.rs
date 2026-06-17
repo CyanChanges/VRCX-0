@@ -7,11 +7,13 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn discord__set_active(state: State<'_, AppState>, active: bool) -> Result<bool, AppError> {
     Ok(state.discord_rpc.set_active(active)?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn discord__set_assets(state: State<'_, AppState>, payload: Value) -> Result<bool, AppError> {
     Ok(state.discord_rpc.set_assets(payload)?)
 }

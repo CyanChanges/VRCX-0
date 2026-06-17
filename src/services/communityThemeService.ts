@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import type {
     CommunityThemeCatalog,
     CommunityThemeInstallMetadata,
@@ -5,7 +6,6 @@ import type {
     CommunityThemeManifest
 } from '@/features/themes/communityThemeTypes';
 import { convertFileSrc } from '@/platform/tauri/assets';
-import { tauriClient } from '@/platform/tauri/client';
 import {
     COMMUNITY_THEME_CATALOG_URL,
     COMMUNITY_THEME_CSS_FILE_NAME,
@@ -70,7 +70,7 @@ let localPreviewWatchGeneration = 0;
 
 async function refreshCommunityThemeTrayMenu(): Promise<void> {
     try {
-        await tauriClient.app.RefreshTrayMenu();
+        await commands.appRefreshTrayMenu();
     } catch (error) {
         console.warn('Unable to refresh community theme tray menu:', error);
     }
@@ -673,7 +673,7 @@ export async function loadLocalCommunityThemePreview(
     }
 
     const output =
-        await tauriClient.app.CommunityThemeDebugLoadLocalTheme(folderPath);
+        await commands.appCommunityThemeDebugLoadLocalTheme(folderPath);
     if (shouldApply && !shouldApply()) {
         throw new Error('Local theme preview load was cancelled.');
     }

@@ -1,15 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriMock = vi.hoisted(() => ({
-    app: {
-        IngestUserFacts: vi.fn()
+    commands: {
+        appIngestUserFacts: vi.fn()
     }
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: tauriMock.commands }));
 
 import { useInstancePresenceStore } from '@/state/instancePresenceStore';
 import { useLocationHintStore } from '@/state/locationHintStore';
@@ -24,7 +21,7 @@ import {
 } from './domainIngestionService';
 
 function ingestedEntryFor(userId: string, source?: string) {
-    return tauriMock.app.IngestUserFacts.mock.calls
+    return tauriMock.commands.appIngestUserFacts.mock.calls
         .flatMap((call) => (Array.isArray(call[0]) ? call[0] : []))
         .filter(
             (entry: any) =>
@@ -36,8 +33,8 @@ function ingestedEntryFor(userId: string, source?: string) {
 
 describe('domainIngestionService', () => {
     beforeEach(() => {
-        tauriMock.app.IngestUserFacts.mockReset();
-        tauriMock.app.IngestUserFacts.mockResolvedValue(undefined);
+        tauriMock.commands.appIngestUserFacts.mockReset();
+        tauriMock.commands.appIngestUserFacts.mockResolvedValue(undefined);
         resetDomainFacts();
     });
 
@@ -61,7 +58,7 @@ describe('domainIngestionService', () => {
             }
         });
 
-        expect(tauriMock.app.IngestUserFacts).toHaveBeenCalled();
+        expect(tauriMock.commands.appIngestUserFacts).toHaveBeenCalled();
 
         expect(ingestedEntryFor('usr_self')).toMatchObject({
             user: {

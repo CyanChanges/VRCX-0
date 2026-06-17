@@ -1,25 +1,25 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import type {
     AppLauncherEntry,
     AppLauncherPickedTarget,
     AppLauncherSnapshot
-} from '@/platform/tauri/appCommandTypes';
+} from '@/platform/tauri/bindings';
 
 const appLauncherRepository = {
     snapshot(): Promise<AppLauncherSnapshot> {
-        return tauriClient.app.AppLauncherSnapshotGet();
+        return commands.appAppLauncherSnapshotGet();
     },
 
     setEnabled(enabled: boolean): Promise<AppLauncherSnapshot> {
-        return tauriClient.app.AppLauncherEnabledSet(enabled);
+        return commands.appAppLauncherEnabledSet(enabled);
     },
 
     setEntries(entries: AppLauncherEntry[]): Promise<AppLauncherSnapshot> {
-        return tauriClient.app.AppLauncherEntriesSet(entries);
+        return commands.appAppLauncherEntriesSet(entries);
     },
 
     pickTarget(): Promise<AppLauncherPickedTarget | null> {
-        return tauriClient.app.AppLauncherTargetPick('auto');
+        return commands.appAppLauncherTargetPick('auto');
     }
 };
 

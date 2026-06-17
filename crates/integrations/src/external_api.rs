@@ -24,7 +24,7 @@ pub enum ExternalApiScope {
     Image,
 }
 
-#[derive(Debug, Serialize, PartialEq, Eq)]
+#[derive(Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiResponsePolicy {
     pub class: String,
@@ -34,7 +34,7 @@ pub struct ExternalApiResponsePolicy {
     pub session_recovery_required: bool,
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalHttpRequestInput {
     pub url: Option<String>,
@@ -64,7 +64,7 @@ impl ExternalApiPolicy {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 pub struct ExternalApiExecuteResponse {
     pub status: i32,
     pub data: String,

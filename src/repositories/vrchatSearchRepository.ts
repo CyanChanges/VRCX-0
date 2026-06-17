@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     createRequestError,
     notifyVrchatAuthFailure,
@@ -6,7 +7,6 @@ import {
     type VrchatRequestResponse,
     unwrapErrorMessage
 } from './vrchatRequest';
-import { tauriClient } from '@/platform/tauri/client';
 import { normalizeVrchatEndpoint } from '@/shared/vrchatEndpoint';
 
 interface SearchRequestOptions {
@@ -66,7 +66,7 @@ function unwrapVrchatSearchResponse<TJson = unknown>(
 
 async function getConfig(params: QueryParams = {}) {
     const normalizedParams = normalizeParams(params);
-    const response = await tauriClient.app.VrchatSearchConfigGet({
+    const response = await commands.appVrchatSearchConfigGet({
         endpoint: normalizeVrchatEndpoint('', { allowDebugEndpoint: true }),
         params: normalizedParams,
     });
@@ -83,7 +83,7 @@ async function getWorlds(
         typeof option === 'undefined' || option === null
             ? ''
             : String(option);
-    const response = await tauriClient.app.VrchatSearchWorldsGet({
+    const response = await commands.appVrchatSearchWorldsGet({
         endpoint: normalizeVrchatEndpoint(options.endpoint, {
             allowDebugEndpoint: true
         }),
@@ -108,7 +108,7 @@ async function getUsers(
     options: SearchRequestOptions = {}
 ) {
     const normalizedParams = normalizeParams(params);
-    const response = await tauriClient.app.VrchatSearchUsersGet({
+    const response = await commands.appVrchatSearchUsersGet({
         endpoint: normalizeVrchatEndpoint(options.endpoint, {
             allowDebugEndpoint: true
         }),
@@ -119,7 +119,7 @@ async function getUsers(
 
 async function getGroups(params: QueryParams = {}) {
     const normalizedParams = normalizeParams(params);
-    const response = await tauriClient.app.VrchatSearchGroupsGet({
+    const response = await commands.appVrchatSearchGroupsGet({
         endpoint: normalizeVrchatEndpoint('', { allowDebugEndpoint: true }),
         params: normalizedParams
     });
@@ -131,7 +131,7 @@ async function getGroupsStrictSearch(
     options: SearchRequestOptions = {}
 ) {
     const normalizedParams = normalizeParams(params);
-    const response = await tauriClient.app.VrchatSearchGroupsStrictGet({
+    const response = await commands.appVrchatSearchGroupsStrictGet({
         endpoint: normalizeVrchatEndpoint(options.endpoint, {
             allowDebugEndpoint: true
         }),
@@ -149,7 +149,7 @@ async function getInstanceFromShortName(
     options: SearchRequestOptions = {}
 ) {
     const normalizedShortName = String(shortName || '').trim();
-    const response = await tauriClient.app.VrchatSearchInstanceShortNameGet({
+    const response = await commands.appVrchatSearchInstanceShortNameGet({
         endpoint: normalizeVrchatEndpoint(options.endpoint, {
             allowDebugEndpoint: true
         }),

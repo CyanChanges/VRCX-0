@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     useCallback,
     useEffect,
@@ -9,12 +10,11 @@ import {
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
 import type {
     VrchatLogEntriesReadOutput,
     VrchatLogEntryOutput,
     VrchatLogFileOutput
-} from '@/platform/tauri/client';
+} from '@/platform/tauri/bindings';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
 import {
@@ -251,7 +251,7 @@ export function useVrchatLogController() {
             }
             setIsFilesLoading(true);
             try {
-                const nextFiles = await tauriClient.app.VrchatLogFilesList();
+                const nextFiles = await commands.appVrchatLogFilesList();
                 if (!mountedRef.current) {
                     return '';
                 }
@@ -319,7 +319,7 @@ export function useVrchatLogController() {
             try {
                 let response: VrchatLogEntriesReadOutput;
                 if (reset) {
-                    const summary = await tauriClient.app.VrchatLogEntriesRead(
+                    const summary = await commands.appVrchatLogEntriesRead(
                         buildReadInput(0, 1)
                     );
                     if (
@@ -333,7 +333,7 @@ export function useVrchatLogController() {
                         0
                     );
                     response = summary.totalEntries
-                        ? await tauriClient.app.VrchatLogEntriesRead(
+                        ? await commands.appVrchatLogEntriesRead(
                               buildReadInput(startOffset, PAGE_LIMIT)
                           )
                         : summary;
@@ -360,7 +360,7 @@ export function useVrchatLogController() {
                         setOlderOffset(null);
                         return;
                     }
-                    response = await tauriClient.app.VrchatLogEntriesRead(
+                    response = await commands.appVrchatLogEntriesRead(
                         buildReadInput(pageOffset, pageLimit)
                     );
                     if (
@@ -520,7 +520,7 @@ export function useVrchatLogController() {
             Promise.resolve()
                 .then(async () => {
                     const nextFiles =
-                        await tauriClient.app.VrchatLogFilesList();
+                        await commands.appVrchatLogFilesList();
                     if (!active) {
                         return;
                     }
@@ -553,7 +553,7 @@ export function useVrchatLogController() {
                         return;
                     }
 
-                    const response = await tauriClient.app.VrchatLogTailRead({
+                    const response = await commands.appVrchatLogTailRead({
                         fileName: selectedFileName,
                         afterLineNumber: lastLineNumberRef.current,
                         fileSize: lastFileSizeRef.current,

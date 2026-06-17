@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatSearchParamsInput {
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct VrchatSearchParamsInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatSearchWorldsInput {
     #[serde(default)]
@@ -22,7 +22,7 @@ pub struct VrchatSearchWorldsInput {
     pub(crate) option: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatSearchShortNameInput {
     #[serde(default)]

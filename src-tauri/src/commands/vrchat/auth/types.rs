@@ -1,14 +1,14 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthEndpointInput {
     #[serde(default)]
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthLoginBasicInput {
     #[serde(default)]
@@ -19,7 +19,7 @@ pub struct VrchatAuthLoginBasicInput {
     pub(crate) password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthCodeInput {
     #[serde(default)]
@@ -28,7 +28,7 @@ pub struct VrchatAuthCodeInput {
     pub(crate) code: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthFileAnalysisInput {
     #[serde(default)]
@@ -41,14 +41,14 @@ pub struct VrchatAuthFileAnalysisInput {
     pub(crate) variant: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthSavedCredentialDeleteInput {
     #[serde(default)]
     pub(crate) user_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthSavedCredentialLoginStartInput {
     #[serde(default)]
@@ -57,7 +57,7 @@ pub struct VrchatAuthSavedCredentialLoginStartInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthLoginSuccessRecordInput {
     #[serde(default)]
@@ -70,7 +70,7 @@ pub struct VrchatAuthLoginSuccessRecordInput {
     pub(crate) save_credentials: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatAuthLogoutRecordInput {
     #[serde(default)]

@@ -12,6 +12,7 @@ use vrcx_0_persistence::feed::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__feed_add_entry(
     state: State<'_, AppState>,
     user_id: String,
@@ -22,6 +23,7 @@ pub fn app__feed_add_entry(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__feed_avatar_purge(
     state: State<'_, AppState>,
     user_id: String,
@@ -32,11 +34,13 @@ pub fn app__feed_avatar_purge(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__feed_live_rows_merge(query: FeedLiveRowsMergeInput) -> FeedReadModelOutput {
     vrcx_0_persistence::feed::feed_live_rows_merge(query)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__feed_read_model_query(
     state: State<'_, AppState>,
     query: FeedReadModelQueryInput,
@@ -46,6 +50,7 @@ pub fn app__feed_read_model_query(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__feed_rows_query(
     state: State<'_, AppState>,
     query: FeedRowsQueryInput,

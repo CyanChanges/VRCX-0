@@ -17,7 +17,7 @@ const DEFAULT_ENTRY_LIMIT: usize = 300;
 const MAX_ENTRY_LIMIT: usize = 1000;
 const LOG_LEVELS: [&str; 3] = ["Debug", "Warning", "Error"];
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatLogFileOutput {
     pub file_name: String,
@@ -26,7 +26,7 @@ pub struct VrchatLogFileOutput {
     pub latest: bool,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatLogEntryOutput {
     pub timestamp: String,
@@ -40,7 +40,7 @@ pub struct VrchatLogEntryOutput {
     pub continuation_lines: Vec<String>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatLogEntriesReadInput {
     pub file_name: String,
@@ -51,7 +51,7 @@ pub struct VrchatLogEntriesReadInput {
     pub categories: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatLogTailReadInput {
     pub file_name: Option<String>,
@@ -63,7 +63,7 @@ pub struct VrchatLogTailReadInput {
     pub categories: Option<Vec<String>>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatLogEntriesReadOutput {
     pub file_name: String,
@@ -95,12 +95,14 @@ struct LogFileState {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_log_files_list() -> Result<Vec<VrchatLogFileOutput>, AppError> {
     require_host_capability(HostCapability::VrchatPathDiscovery)?;
     list_log_files(&vrchat_paths::vrchat_app_data())
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_log_entries_read(
     input: VrchatLogEntriesReadInput,
 ) -> Result<VrchatLogEntriesReadOutput, AppError> {
@@ -139,6 +141,7 @@ pub fn app__vrchat_log_entries_read(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__vrchat_log_tail_read(
     input: VrchatLogTailReadInput,
 ) -> Result<VrchatLogEntriesReadOutput, AppError> {

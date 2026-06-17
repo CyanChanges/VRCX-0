@@ -12,6 +12,7 @@ use vrcx_0_persistence::avatars::{
 use vrcx_0_persistence::cache_entities::CacheEntityInput;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_cache_get(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -21,6 +22,7 @@ pub fn app__avatar_cache_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_cache_list(
     state: State<'_, AppState>,
 ) -> Result<Vec<AvatarCacheOutput>, AppError> {
@@ -28,6 +30,7 @@ pub fn app__avatar_cache_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_cache_remove(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -37,6 +40,7 @@ pub fn app__avatar_cache_remove(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_cache_upsert(
     state: State<'_, AppState>,
     entry: CacheEntityInput,
@@ -46,6 +50,7 @@ pub fn app__avatar_cache_upsert(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_history_add(
     state: State<'_, AppState>,
     user_id: String,
@@ -56,6 +61,7 @@ pub fn app__avatar_history_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_history_clear(
     state: State<'_, AppState>,
     user_id: String,
@@ -65,6 +71,7 @@ pub fn app__avatar_history_clear(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_history_list(
     state: State<'_, AppState>,
     user_id: String,
@@ -75,6 +82,7 @@ pub fn app__avatar_history_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tag_add(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -86,6 +94,7 @@ pub fn app__avatar_tag_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tag_remove(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -96,6 +105,7 @@ pub fn app__avatar_tag_remove(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tag_update_color(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -107,11 +117,13 @@ pub fn app__avatar_tag_update_color(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_distinct(state: State<'_, AppState>) -> Result<Vec<String>, AppError> {
     vrcx_0_persistence::avatars::avatar_tags_distinct(state.db.as_ref()).map_err(AppError::from)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_get(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -121,11 +133,13 @@ pub fn app__avatar_tags_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_list(state: State<'_, AppState>) -> Result<Vec<AvatarTagOutput>, AppError> {
     vrcx_0_persistence::avatars::avatar_tags_list(state.db.as_ref()).map_err(AppError::from)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_patch(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -136,6 +150,7 @@ pub fn app__avatar_tags_patch(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_remove_all(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -145,6 +160,7 @@ pub fn app__avatar_tags_remove_all(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_tags_replace(
     state: State<'_, AppState>,
     avatar_id: String,
@@ -155,6 +171,7 @@ pub fn app__avatar_tags_replace(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_time_spent_add(
     state: State<'_, AppState>,
     user_id: String,
@@ -171,6 +188,7 @@ pub fn app__avatar_time_spent_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_time_spent_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -181,6 +199,7 @@ pub fn app__avatar_time_spent_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__avatar_time_spent_list(
     state: State<'_, AppState>,
     user_id: String,

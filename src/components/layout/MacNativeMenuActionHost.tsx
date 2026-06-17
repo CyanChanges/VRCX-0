@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -8,7 +9,6 @@ import { useRightSidePanelVisibility } from '@/components/layout/useRightSidePan
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { SupportVrcxDialog } from '@/components/support/SupportVrcxDialog';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog';
-import { tauriClient } from '@/platform/tauri/client';
 import { tauriEvents } from '@/platform/tauri/events';
 import { logoutFromReactShell } from '@/services/authExecutionService';
 import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
@@ -136,7 +136,7 @@ export function MacNativeMenuActionHost() {
 
     const runOpenDevtools = useCallback(async () => {
         try {
-            await tauriClient.app.OpenDevtools();
+            await commands.appOpenDevtools();
         } catch (error) {
             toast.error(
                 error instanceof Error

@@ -12,7 +12,7 @@ use crate::database::{DatabaseService, DatabaseWriteTransaction};
 use crate::realtime::{ensure_realtime_tables, normalize_user_table_prefix};
 use crate::Error;
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogHistoryEntryInput {
     #[serde(default)]
@@ -35,7 +35,7 @@ pub struct FriendLogHistoryEntryInput {
     pub friend_number: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogCurrentEntryInput {
     #[serde(default)]
@@ -48,7 +48,7 @@ pub struct FriendLogCurrentEntryInput {
     pub friend_number: Value,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogReplaceOptionsInput {
     #[serde(default)]
@@ -57,14 +57,14 @@ pub struct FriendLogReplaceOptionsInput {
     pub added_history_entries: Vec<FriendLogHistoryEntryInput>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogDeleteOptionsInput {
     #[serde(default)]
     pub history_entries: Vec<FriendLogHistoryEntryInput>,
 }
 
-#[derive(Debug, Deserialize, Default)]
+#[derive(Debug, Deserialize, Default, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogUpsertOptionsInput {
     #[serde(default)]
@@ -73,7 +73,7 @@ pub struct FriendLogUpsertOptionsInput {
     pub force_history: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogMutationResult {
     pub user_id: String,
@@ -85,7 +85,7 @@ pub struct FriendLogMutationResult {
     pub history_count: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogCurrentOutput {
     pub user_id: String,
@@ -94,7 +94,7 @@ pub struct FriendLogCurrentOutput {
     pub friend_number: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogHistoryQueryInput {
     pub user_id: String,
@@ -104,7 +104,7 @@ pub struct FriendLogHistoryQueryInput {
     pub types: Vec<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendLogHistoryOutput {
     pub row_id: i64,

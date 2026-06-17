@@ -9,6 +9,7 @@ use serde_json::Value;
 use vrcx_0_persistence::game_log::GameLogQueryInput;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__game_log_entries_add(
     state: State<'_, AppState>,
     kind: String,
@@ -25,6 +26,7 @@ pub fn app__game_log_entries_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__game_log_entry_delete(
     state: State<'_, AppState>,
     kind: String,
@@ -35,6 +37,7 @@ pub fn app__game_log_entry_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__game_log_instance_delete(
     state: State<'_, AppState>,
     location: String,
@@ -45,6 +48,7 @@ pub fn app__game_log_instance_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__game_log_instance_delete_by_location(
     state: State<'_, AppState>,
     location: String,
@@ -54,6 +58,7 @@ pub fn app__game_log_instance_delete_by_location(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__game_log_query(
     state: State<'_, AppState>,
     query: GameLogQueryInput,

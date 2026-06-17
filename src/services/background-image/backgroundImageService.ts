@@ -1,5 +1,5 @@
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
-import { tauriClient } from '@/platform/tauri/client';
 import {
     disableInstalledCommunityTheme,
     stopLocalCommunityThemePreview
@@ -712,7 +712,7 @@ export async function chooseBackgroundImageFolder(): Promise<boolean> {
         state.customSource?.kind === 'folder'
             ? state.customSource.folderPath
             : state.customSource?.paths[0];
-    const folderPath = await tauriClient.app.OpenFolderSelectorDialog(
+    const folderPath = await commands.appOpenFolderSelectorDialog(
         defaultPath || null
     );
     if (!folderPath) {

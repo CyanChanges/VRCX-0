@@ -10,7 +10,7 @@ import type {
     AppLauncherEntryKind,
     AppLauncherPickedTarget,
     AppLauncherSnapshot
-} from '@/platform/tauri/appCommandTypes';
+} from '@/platform/tauri/bindings';
 import appLauncherRepository from '@/repositories/appLauncherRepository';
 import { Button } from '@/ui/shadcn/button';
 import {

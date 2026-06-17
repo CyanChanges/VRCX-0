@@ -1,5 +1,5 @@
-import { tauriClient } from '@/platform/tauri/client';
-import type { MutualGraphFetchStatus } from '@/platform/tauri/appCommandTypes';
+import { commands } from '@/platform/tauri/bindings';
+import type { MutualGraphFetchStatus } from '@/platform/tauri/bindings';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
 type StartMutualGraphFetchInput = {
@@ -84,7 +84,7 @@ function applyStatus(status: Partial<MutualGraphFetchStatus> | null | undefined)
 }
 
 export async function refreshMutualGraphFetchStatus() {
-    const status = await tauriClient.app.MutualGraphFetchStatusGet();
+    const status = await commands.appMutualGraphFetchStatusGet();
     return applyStatus(status);
 }
 
@@ -112,7 +112,7 @@ export async function startMutualGraphFetch({
     endpoint = '',
     friendIds
 }: StartMutualGraphFetchInput) {
-    const status = await tauriClient.app.MutualGraphFetchStart({
+    const status = await commands.appMutualGraphFetchStart({
         ownerUserId,
         endpoint,
         friendIds
@@ -125,7 +125,7 @@ export async function startMutualGraphFetch({
 }
 
 export async function cancelMutualGraphFetch(ownerUserId: string) {
-    const status = await tauriClient.app.MutualGraphFetchCancel({
+    const status = await commands.appMutualGraphFetchCancel({
         ownerUserId
     });
     return applyStatus(status);

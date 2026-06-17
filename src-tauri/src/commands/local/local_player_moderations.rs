@@ -8,6 +8,7 @@ use vrcx_0_host::host_capabilities::{require_host_capability, HostCapability};
 use vrcx_0_host::local_player_moderations;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_vrchat_moderations(
     current_user_id: String,
 ) -> Result<HashMap<String, i16>, AppError> {
@@ -18,6 +19,7 @@ pub fn app__get_vrchat_moderations(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_vrchat_user_moderation(
     current_user_id: String,
     user_id: String,
@@ -30,6 +32,7 @@ pub fn app__get_vrchat_user_moderation(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_vrchat_user_moderation(
     current_user_id: String,
     user_id: String,

@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 export interface UserTableContext {
     userId: string;
@@ -50,9 +50,7 @@ async function ensureUserTables(userId: unknown): Promise<UserTableContext> {
     }
 
     const promise = (async () => {
-        const context = (await tauriClient.app.UserTablesEnsure({
-            userId: normalizeUserId(userId)
-        })) as UserTableContext;
+        const context = (await commands.appUserTablesEnsure(normalizeUserId(userId))) as UserTableContext;
 
         return {
             userId: context.userId || normalizeUserId(userId),
@@ -81,9 +79,7 @@ async function initUserTablesUncached(
     userId: unknown
 ): Promise<UserTableContext> {
     const userPrefix = normalizeUserTablePrefix(userId);
-    const context = (await tauriClient.app.UserTablesEnsure({
-        userId: normalizeUserId(userId)
-    })) as UserTableContext;
+    const context = (await commands.appUserTablesEnsure(normalizeUserId(userId))) as UserTableContext;
 
     return {
         userId: context.userId || normalizeUserId(userId),
@@ -95,10 +91,7 @@ async function purgeAvatarFeedData(
     userId: unknown,
     cutoffDate: string | null = null
 ): Promise<void> {
-    await tauriClient.app.FeedAvatarPurge({
-        userId: normalizeUserId(userId),
-        cutoffDate: cutoffDate || null
-    });
+    await commands.appFeedAvatarPurge(normalizeUserId(userId), cutoffDate || null);
 }
 
 const userSessionRepository: UserSessionRepository = {

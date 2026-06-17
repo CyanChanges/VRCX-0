@@ -1,4 +1,4 @@
-import { tauriClient } from '../platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import {
     asString,
     safeJsonParse,
@@ -21,7 +21,7 @@ export class StorageRepository {
     }
 
     async getString(key: string, defaultValue: string | null = null) {
-        const value = await tauriClient.storage.get(this.key(key));
+        const value = await commands.storageGet(this.key(key));
         if (value === null || value === undefined || value === 'undefined') {
             return defaultValue;
         }
@@ -38,7 +38,7 @@ export class StorageRepository {
     }
 
     async setString(key: string, value: unknown) {
-        return tauriClient.storage.set(this.key(key), String(value));
+        return commands.storageSet(this.key(key), String(value));
     }
 
     async set(key: string, value: unknown) {
@@ -50,24 +50,24 @@ export class StorageRepository {
     }
 
     async remove(key: string) {
-        return tauriClient.storage.remove(this.key(key));
+        return commands.storageRemove(this.key(key));
     }
 
     async has(key: string): Promise<boolean> {
-        const value = await tauriClient.storage.get(this.key(key));
+        const value = await commands.storageGet(this.key(key));
         return value !== null && value !== undefined && value !== 'undefined';
     }
 
     async clear(): Promise<void> {
-        const entries = (await tauriClient.storage.getAll()) as Record<
+        const entries = (await commands.storageGetAll()) as Record<
             string,
             unknown
         >;
         const keys = Object.keys(entries || {}).filter((key) =>
             this.#prefix ? key.startsWith(this.#prefix) : true
         );
-        await Promise.all(keys.map((key) => tauriClient.storage.remove(key)));
-        await tauriClient.storage.flush();
+        await Promise.all(keys.map((key) => commands.storageRemove(key)));
+        await commands.storageFlush();
     }
 }
 

@@ -1,21 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriMock = vi.hoisted(() => ({
-    app: {
-        VrchatGroupGet: vi.fn()
+    commands: {
+        appVrchatGroupGet: vi.fn()
     }
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: tauriMock.commands }));
 
 import groupProfileRepository, { normalize } from './groupProfileRepository';
 
 describe('GroupProfileRepository', () => {
     beforeEach(() => {
-        for (const command of Object.values(tauriMock.app)) {
+        for (const command of Object.values(tauriMock.commands)) {
             command.mockReset();
             command.mockResolvedValue({
                 status: 200,
@@ -84,7 +81,7 @@ describe('GroupProfileRepository', () => {
     });
 
     it('unwraps string error bodies from failed group requests', async () => {
-        tauriMock.app.VrchatGroupGet.mockResolvedValue({
+        tauriMock.commands.appVrchatGroupGet.mockResolvedValue({
             status: 403,
             data: '"Forbidden"',
             raw: {}

@@ -1,21 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriMock = vi.hoisted(() => ({
-    app: {
-        VrchatWorldGet: vi.fn()
+    commands: {
+        appVrchatWorldGet: vi.fn()
     }
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
+vi.mock('@/platform/tauri/bindings', () => ({
+    commands: tauriMock.commands
 }));
 
 import worldProfileRepository from './worldProfileRepository';
 
 describe('WorldProfileRepository', () => {
     beforeEach(() => {
-        for (const command of Object.values(tauriMock.app)) {
+        for (const command of Object.values(tauriMock.commands)) {
             command.mockReset();
             command.mockResolvedValue({
                 status: 200,
@@ -78,7 +77,7 @@ describe('WorldProfileRepository', () => {
     });
 
     it('throws request errors with status, endpoint, and parsed payload details', async () => {
-        tauriMock.app.VrchatWorldGet.mockResolvedValue({
+        tauriMock.commands.appVrchatWorldGet.mockResolvedValue({
             status: 404,
             data: JSON.stringify({
                 error: {

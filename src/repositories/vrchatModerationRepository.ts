@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 interface LocalModerationRow {
     userId?: unknown;
@@ -25,9 +25,7 @@ async function getAllLocalModerations(ownerUserId: unknown) {
         return [];
     }
 
-    const rows = (await tauriClient.app.LocalModerationList({
-        ownerUserId: normalizedOwnerUserId
-    })) as LocalModerationRow[];
+    const rows = (await commands.appLocalModerationList(normalizedOwnerUserId)) as LocalModerationRow[];
     return Array.isArray(rows)
         ? rows.map((row) => ({
               userId: row.userId,
@@ -46,10 +44,7 @@ async function getLocalModerationRow(ownerUserId: unknown, userId: unknown) {
         return {};
     }
 
-    const row = (await tauriClient.app.LocalModerationGet({
-        ownerUserId: normalizedOwnerUserId,
-        userId: normalizedUserId
-    })) as LocalModerationRow | null;
+    const row = (await commands.appLocalModerationGet(normalizedOwnerUserId, normalizedUserId)) as LocalModerationRow | null;
     if (!row) {
         return {};
     }

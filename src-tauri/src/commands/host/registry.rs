@@ -24,6 +24,7 @@ const ALLOWED_REGISTRY_KEY_PREFIXES: [&str; 8] = [
 ];
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_vrchat_registry_key(key: String) -> Result<serde_json::Value, AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
     validate_registry_key(&key)?;
@@ -31,6 +32,7 @@ pub fn app__get_vrchat_registry_key(key: String) -> Result<serde_json::Value, Ap
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_vrchat_registry_key_string(key: String) -> Result<String, AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
     validate_registry_key(&key)?;
@@ -38,12 +40,14 @@ pub fn app__get_vrchat_registry_key_string(key: String) -> Result<String, AppErr
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__has_vrchat_registry_folder() -> Result<bool, AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
     Ok(vrchat_registry::has_registry_folder()?)
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__delete_vrchat_registry_folder(app_handle: AppHandle) -> Result<(), AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
     let confirmed = app_handle
@@ -65,6 +69,7 @@ pub fn app__delete_vrchat_registry_folder(app_handle: AppHandle) -> Result<(), A
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_vrchat_registry_key(
     key: String,
     value: serde_json::Value,
@@ -76,6 +81,7 @@ pub fn app__set_vrchat_registry_key(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_vrchat_registry(
 ) -> Result<HashMap<String, HashMap<String, serde_json::Value>>, AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
@@ -83,6 +89,7 @@ pub fn app__get_vrchat_registry(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__set_vrchat_registry(json: String) -> Result<(), AppError> {
     require_host_capability(HostCapability::RegistryPrefs)?;
     validate_registry_json(&json)?;
@@ -90,6 +97,7 @@ pub fn app__set_vrchat_registry(json: String) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__read_vrc_reg_json_file(
     state: State<'_, AppState>,
     filepath: String,

@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import friendLogRepository from '@/repositories/friendLogRepository';
 import {
@@ -658,7 +658,7 @@ async function fetchSupplementalFriendProfile({
     stateBucket: string;
     detail: string;
 }) {
-    const response = await tauriClient.app.VrchatUserGet({
+    const response = await commands.appVrchatUserGet({
         endpoint,
         userId
     });
@@ -745,7 +745,7 @@ async function confirmRemovedFriend({
     endpoint: string;
     userId: string;
 }) {
-    const response = await tauriClient.app.VrchatFriendStatusGet({
+    const response = await commands.appVrchatFriendStatusGet({
         endpoint,
         userId
     });
@@ -1047,8 +1047,7 @@ async function runFriendBootstrap({
         });
     }
 
-    const bootstrapResult = await tauriClient.app
-        .SocialFriendRosterBaselineGet({
+    const bootstrapResult = await commands.appSocialFriendRosterBaselineGet({
             userId: normalizedUserId,
             endpoint,
             websocket: realtimeWebsocket,

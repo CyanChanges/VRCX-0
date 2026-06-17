@@ -74,7 +74,7 @@ impl OverlayLocalizer {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 struct OverlayLocaleCatalog {
     fallback_locale: String,

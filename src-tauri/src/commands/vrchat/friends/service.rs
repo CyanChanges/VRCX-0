@@ -31,6 +31,7 @@ async fn execute_friend_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_friends_get(
     state: State<'_, AppState>,
     input: VrchatFriendsGetInput,
@@ -45,6 +46,7 @@ pub async fn app__vrchat_friends_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_friend_status_get(
     state: State<'_, AppState>,
     input: VrchatFriendUserInput,
@@ -60,6 +62,7 @@ pub async fn app__vrchat_friend_status_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_friend_delete(
     state: State<'_, AppState>,
     input: VrchatFriendUserInput,
@@ -75,6 +78,7 @@ pub async fn app__vrchat_friend_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_friend_request_send(
     state: State<'_, AppState>,
     input: VrchatFriendUserInput,
@@ -90,6 +94,7 @@ pub async fn app__vrchat_friend_request_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_friend_request_cancel(
     state: State<'_, AppState>,
     input: VrchatFriendCancelRequestInput,

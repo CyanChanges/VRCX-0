@@ -11,14 +11,14 @@ pub const APP_LAUNCHER_ENABLED_CONFIG_KEY: &str = "VRCX_appLauncherEnabledV2";
 pub const APP_LAUNCHER_ENTRIES_CONFIG_KEY: &str = "VRCX_appLauncherEntriesV2";
 const UNTRACKED_CLOSE_PROCESS_DENYLIST: &[&str] = &["steam", "steam.sh"];
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppLauncherEntryKind {
     LocalApp,
     SteamApp,
 }
 
-#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppLauncherScope {
     All,
@@ -26,21 +26,21 @@ pub enum AppLauncherScope {
     Vr,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppLauncherRunPolicy {
     Always,
     SkipIfRunning,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppLauncherStopPolicy {
     KeepRunning,
     CloseByVrcx,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppLauncherEntry {
     pub id: String,
@@ -60,7 +60,7 @@ pub struct AppLauncherEntry {
     pub working_directory: Option<String>,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppLauncherRunStatus {
     Waiting,
@@ -71,7 +71,7 @@ pub enum AppLauncherRunStatus {
     Completed,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppLauncherRun {
     pub id: String,
@@ -92,7 +92,7 @@ pub struct AppLauncherRun {
     entry_signature: String,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppLauncherSession {
     pub id: String,
@@ -101,7 +101,7 @@ pub struct AppLauncherSession {
     pub runs: Vec<AppLauncherRun>,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppLauncherSnapshot {
     pub enabled: bool,
@@ -110,7 +110,7 @@ pub struct AppLauncherSnapshot {
     pub test_runs: Vec<AppLauncherRun>,
 }
 
-#[derive(Clone, Debug, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppLauncherPickedTarget {
     pub kind: AppLauncherEntryKind,

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaParamsInput {
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct VrchatMediaParamsInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaFileIdInput {
     #[serde(default)]
@@ -21,7 +21,7 @@ pub struct VrchatMediaFileIdInput {
     pub(crate) file_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaImageUploadInput {
     #[serde(default)]
@@ -32,7 +32,7 @@ pub struct VrchatMediaImageUploadInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaAvatarGalleryImageUploadInput {
     #[serde(default)]
@@ -42,7 +42,7 @@ pub struct VrchatMediaAvatarGalleryImageUploadInput {
     pub(crate) avatar_id: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaPrintUploadInput {
     #[serde(default)]
@@ -55,7 +55,7 @@ pub struct VrchatMediaPrintUploadInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaAssetUploadInput {
     #[serde(default)]
@@ -70,7 +70,7 @@ pub struct VrchatMediaAssetUploadInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaPrintsInput {
     #[serde(default)]
@@ -81,7 +81,7 @@ pub struct VrchatMediaPrintsInput {
     pub(crate) n: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaPrintIdInput {
     #[serde(default)]
@@ -90,7 +90,7 @@ pub struct VrchatMediaPrintIdInput {
     pub(crate) print_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaUserInventoryItemInput {
     #[serde(default)]
@@ -101,7 +101,7 @@ pub struct VrchatMediaUserInventoryItemInput {
     pub(crate) inventory_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaInventoryItemInput {
     #[serde(default)]
@@ -112,7 +112,7 @@ pub struct VrchatMediaInventoryItemInput {
     pub(crate) params: HashMap<String, Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaRewardRedeemInput {
     #[serde(default)]
@@ -121,7 +121,7 @@ pub struct VrchatMediaRewardRedeemInput {
     pub(crate) code: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaFileVersionCreateInput {
     #[serde(default)]
@@ -138,7 +138,7 @@ pub struct VrchatMediaFileVersionCreateInput {
     pub(crate) signature_size_in_bytes: i64,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaFileUploadStageInput {
     #[serde(default)]
@@ -151,7 +151,7 @@ pub struct VrchatMediaFileUploadStageInput {
     pub(crate) kind: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaFilePutInput {
     #[serde(default)]
@@ -164,7 +164,7 @@ pub struct VrchatMediaFilePutInput {
     pub(crate) file_md5: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaEntityImageInput {
     #[serde(default)]
@@ -175,7 +175,7 @@ pub struct VrchatMediaEntityImageInput {
     pub(crate) image_url: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatMediaLegacyImageUploadInput {
     #[serde(default)]

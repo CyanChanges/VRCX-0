@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatUserInput {
     #[serde(default)]
@@ -16,7 +16,7 @@ pub struct VrchatUserInput {
     pub(crate) is_friend: Option<bool>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatUserMutualFriendsInput {
     #[serde(default)]
@@ -31,7 +31,7 @@ pub struct VrchatUserMutualFriendsInput {
     pub(crate) include_user_id_param: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatCurrentUserUpdateInput {
     #[serde(default)]
@@ -41,7 +41,7 @@ pub struct VrchatCurrentUserUpdateInput {
     pub(crate) params: Option<Value>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatCurrentUserBadgeInput {
     #[serde(default)]
@@ -56,7 +56,7 @@ pub struct VrchatCurrentUserBadgeInput {
     pub(crate) showcased: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatCurrentUserTagsInput {
     #[serde(default)]

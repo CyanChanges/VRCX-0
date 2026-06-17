@@ -10,6 +10,7 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_list(
     state: State<'_, AppState>,
 ) -> Result<Vec<RegistryBackupSnapshot>, AppError> {
@@ -18,6 +19,7 @@ pub fn app__registry_backup_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_create(
     state: State<'_, AppState>,
     name: String,
@@ -27,6 +29,7 @@ pub fn app__registry_backup_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_restore(
     state: State<'_, AppState>,
     key: String,
@@ -36,6 +39,7 @@ pub fn app__registry_backup_restore(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_delete(
     state: State<'_, AppState>,
     key: String,
@@ -45,6 +49,7 @@ pub fn app__registry_backup_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_export_json(
     state: State<'_, AppState>,
     key: String,
@@ -54,6 +59,7 @@ pub fn app__registry_backup_export_json(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_import_json(
     state: State<'_, AppState>,
     json: String,
@@ -63,6 +69,7 @@ pub fn app__registry_backup_import_json(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__registry_backup_maintenance_run(
     state: State<'_, AppState>,
     reason: String,

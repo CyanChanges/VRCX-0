@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 type ExternalHeaders = Record<string, string>;
 
@@ -22,7 +22,7 @@ async function searchAvatarProvider({
     url: string;
     vrcxId: string;
 }) {
-    return tauriClient.app.ExternalApiAvatarSearchGet({ url, vrcxId });
+    return commands.appExternalApiAvatarSearchGet({ url, vrcxId });
 }
 
 async function executeTranslationRequest({
@@ -31,7 +31,7 @@ async function executeTranslationRequest({
     headers = {},
     body = null
 }: ExternalRequestInput) {
-    return tauriClient.app.ExternalApiTranslationRequest({
+    return commands.appExternalApiTranslationRequest({
         url,
         method,
         headers,
@@ -48,14 +48,14 @@ async function fetchYoutubeVideoMetadata({
 }) {
     const normalizedVideoId = normalizeString(videoId);
     const normalizedApiKey = normalizeString(apiKey);
-    return tauriClient.app.ExternalApiYoutubeVideoMetadataGet({
+    return commands.appExternalApiYoutubeVideoMetadataGet({
         videoId: normalizedVideoId,
         apiKey: normalizedApiKey
     });
 }
 
 async function fetchVrcStatusJson(path: string) {
-    return tauriClient.app.ExternalApiVrcStatusJsonGet({ path });
+    return commands.appExternalApiVrcStatusJsonGet({ path });
 }
 
 async function fetchGithubReleases({
@@ -65,14 +65,14 @@ async function fetchGithubReleases({
     url: string;
     headers?: ExternalHeaders;
 }) {
-    return tauriClient.app.ExternalApiGithubReleasesGet({
+    return commands.appExternalApiGithubReleasesGet({
         url,
         headers
     });
 }
 
 async function fetchImageDataUrl(url: string) {
-    return tauriClient.app.ExternalApiImageDataUrlGet({ url });
+    return commands.appExternalApiImageDataUrlGet({ url });
 }
 
 const externalApiRepository = Object.freeze({

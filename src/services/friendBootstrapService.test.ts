@@ -14,16 +14,12 @@ const serviceMocks = vi.hoisted(() => ({
     notifyRuntimeVrchatAuthFailure: vi.fn()
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: {
-        app: {
-            SocialFriendRosterBaselineGet:
-                serviceMocks.socialFriendRosterBaselineGet,
-            VrchatUserGet: serviceMocks.vrchatUserGet,
-            VrchatFriendStatusGet: serviceMocks.vrchatFriendStatusGet
-        }
-    }
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: {
+                appSocialFriendRosterBaselineGet:
+                    serviceMocks.socialFriendRosterBaselineGet,
+                appVrchatUserGet: serviceMocks.vrchatUserGet,
+                appVrchatFriendStatusGet: serviceMocks.vrchatFriendStatusGet
+            } }));
 
 vi.mock('@/repositories/friendLogRepository', () => ({
     default: {

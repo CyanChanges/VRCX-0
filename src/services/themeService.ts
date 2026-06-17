@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import { tauriClient } from '@/platform/tauri/client';
 import {
     DEFAULT_THEME_COLOR_KEY,
@@ -444,7 +445,7 @@ export async function syncNativeTheme(themeMode: unknown): Promise<void> {
     const resolvedTheme = getResolvedThemeMode(themeMode);
     const nativeTheme = resolvedTheme === 'dark' ? 1 : 0;
 
-    await tauriClient.app.ChangeTheme(nativeTheme);
+    await commands.appChangeTheme(nativeTheme);
 }
 
 export async function applyThemeMode(themeMode: unknown): Promise<void> {

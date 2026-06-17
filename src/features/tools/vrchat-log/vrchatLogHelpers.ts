@@ -1,9 +1,10 @@
 import type {
     VrchatLogEntryOutput,
-    VrchatLogFileOutput,
-    VrchatLogLevel
-} from '@/platform/tauri/client';
+    VrchatLogFileOutput
+} from '@/platform/tauri/bindings';
 import storageRepository from '@/repositories/storageRepository';
+
+export type VrchatLogLevel = 'Debug' | 'Warning' | 'Error';
 
 export const LOG_LEVELS: VrchatLogLevel[] = ['Debug', 'Warning', 'Error'];
 export const ALL_CATEGORY_VALUE = '__all__';

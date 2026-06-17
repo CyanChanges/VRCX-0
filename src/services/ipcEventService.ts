@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import avatarProfileRepository from '@/repositories/avatarProfileRepository';
 import avatarSearchProviderRepository from '@/repositories/avatarSearchProviderRepository';
 import configRepository from '@/repositories/configRepository';
@@ -245,7 +245,7 @@ async function handleLaunchCommand(input: unknown) {
     }
 
     if (shouldFocusWindow) {
-        await tauriClient.app.FocusWindow().catch(() => {});
+        await commands.appFocusWindow().catch(() => {});
     }
 }
 

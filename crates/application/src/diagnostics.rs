@@ -10,7 +10,7 @@ fn now_iso() -> String {
     Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeCommandGroupSnapshot {
     pub name: String,
@@ -19,7 +19,7 @@ pub struct RuntimeCommandGroupSnapshot {
     pub examples: Vec<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeCommandObservation {
     pub command: String,
@@ -28,7 +28,7 @@ pub struct RuntimeCommandObservation {
     pub observed_at: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeDiagnosticsSnapshot {
     pub generic_sql_enabled: bool,

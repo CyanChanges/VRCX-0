@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
 const runtimeState = vi.hoisted(() => ({
-    app: {
-        ModerationSyncRefresh: vi.fn(),
-        ModerationSyncUpdate: vi.fn()
+    commands: {
+        appModerationSyncRefresh: vi.fn(),
+        appModerationSyncUpdate: vi.fn()
     }
 }));
 
@@ -11,10 +11,8 @@ const authRecoveryState = vi.hoisted(() => ({
     handleRuntimeAuthFailure: vi.fn()
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: {
-        app: runtimeState.app
-    }
+vi.mock('@/platform/tauri/bindings', () => ({
+    commands: runtimeState.commands
 }));
 
 vi.mock('./authSessionRecoveryService', () => ({
@@ -23,12 +21,11 @@ vi.mock('./authSessionRecoveryService', () => ({
 
 describe('moderationSyncService', () => {
     it('routes refresh missing credentials through runtime auth recovery', async () => {
-        runtimeState.app.ModerationSyncRefresh.mockRejectedValueOnce(
+        runtimeState.commands.appModerationSyncRefresh.mockRejectedValueOnce(
             new Error('Missing Credentials')
         );
-        const { refreshModerationSync } = await import(
-            './moderationSyncService'
-        );
+        const { refreshModerationSync } =
+            await import('./moderationSyncService');
 
         await expect(
             refreshModerationSync({ userId: 'usr_current', endpoint: '' })
@@ -45,12 +42,11 @@ describe('moderationSyncService', () => {
     });
 
     it('routes mutation missing credentials through runtime auth recovery', async () => {
-        runtimeState.app.ModerationSyncUpdate.mockRejectedValueOnce(
+        runtimeState.commands.appModerationSyncUpdate.mockRejectedValueOnce(
             new Error('Missing Credentials')
         );
-        const { updateModerationSync } = await import(
-            './moderationSyncService'
-        );
+        const { updateModerationSync } =
+            await import('./moderationSyncService');
 
         await expect(
             updateModerationSync({

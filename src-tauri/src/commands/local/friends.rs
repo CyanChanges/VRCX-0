@@ -12,6 +12,7 @@ use vrcx_0_persistence::friends::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_current_list(
     state: State<'_, AppState>,
     user_id: String,
@@ -21,6 +22,7 @@ pub fn app__friend_log_current_list(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_delete_current(
     state: State<'_, AppState>,
     user_id: String,
@@ -35,6 +37,7 @@ pub fn app__friend_log_delete_current(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_delete_current_array(
     state: State<'_, AppState>,
     user_id: String,
@@ -51,6 +54,7 @@ pub fn app__friend_log_delete_current_array(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_history_add(
     state: State<'_, AppState>,
     user_id: String,
@@ -61,6 +65,7 @@ pub fn app__friend_log_history_add(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_history_delete(
     state: State<'_, AppState>,
     user_id: String,
@@ -71,6 +76,7 @@ pub fn app__friend_log_history_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_history_query(
     state: State<'_, AppState>,
     query: FriendLogHistoryQueryInput,
@@ -80,6 +86,7 @@ pub fn app__friend_log_history_query(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_replace_current(
     state: State<'_, AppState>,
     user_id: String,
@@ -96,6 +103,7 @@ pub fn app__friend_log_replace_current(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__friend_log_upsert_current(
     state: State<'_, AppState>,
     user_id: String,

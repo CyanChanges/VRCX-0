@@ -1,48 +1,47 @@
-import {
-    tauriClient,
-    type AppDataDirState,
-    type AppDataDirValidation
-} from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
+import type {
+    AppDataDirState,
+    AppDataDirValidation
+} from '@/platform/tauri/bindings';
+import { tauriClient } from '@/platform/tauri/client';
 
 export async function openExternalLink(url: string): Promise<void> {
-    await tauriClient.app.OpenLink(url);
+    await commands.appOpenLink(url);
 }
 
 export async function exitApplication(): Promise<void> {
-    await tauriClient.app.ExitApplication();
+    await commands.appExitApplication();
 }
 
 export async function restartApplication(): Promise<void> {
-    await tauriClient.app.RestartApplication();
+    await commands.appRestartApplication();
 }
 
 export async function getAppDataDirState(): Promise<AppDataDirState> {
-    return tauriClient.app.GetAppDataDirState();
+    return commands.appGetAppDataDirState();
 }
 
 export async function validateAppDataDir(
     path: string
 ): Promise<AppDataDirValidation> {
-    return tauriClient.app.ValidateAppDataDir(path);
+    return commands.appValidateAppDataDir(path);
 }
 
 export async function setAppDataDir(path: string): Promise<AppDataDirState> {
-    return tauriClient.app.SetAppDataDir(path);
+    return commands.appSetAppDataDir(path);
 }
 
 export async function clearAppDataDir(): Promise<AppDataDirState> {
-    return tauriClient.app.ClearAppDataDir();
+    return commands.appClearAppDataDir();
 }
 
 export async function getClipboardText(): Promise<string> {
-    const value = await tauriClient.app.GetClipboard().catch(() => '');
+    const value = await commands.appGetClipboard().catch(() => '');
     return typeof value === 'string' ? value : '';
 }
 
-export async function setTrayIconNotification(
-    notify: boolean
-): Promise<void> {
-    await tauriClient.app.SetTrayIconNotification(notify);
+export async function setTrayIconNotification(notify: boolean): Promise<void> {
+    await commands.appSetTrayIconNotification(notify);
 }
 
 export async function showDesktopNotification(
@@ -51,29 +50,24 @@ export async function showDesktopNotification(
     image: string = '',
     playSound: boolean = false
 ): Promise<void> {
-    await tauriClient.app.DesktopNotification(
-        boldText,
-        text,
-        image,
-        playSound
-    );
+    await commands.appDesktopNotification(boldText, text, image, playSound);
 }
 
 export async function openUGCPhotosFolder(ugcPath: string): Promise<void> {
-    await tauriClient.app.OpenUGCPhotosFolder(ugcPath);
+    await commands.appOpenUgcPhotosFolder(ugcPath);
 }
 
 export async function openFolderAndSelectItem(
     path: string,
     isFolder: boolean
 ): Promise<void> {
-    await tauriClient.app.OpenFolderAndSelectItem(path, isFolder);
+    await commands.appOpenFolderAndSelectItem(path, isFolder);
 }
 
 export async function openFolderSelectorDialog(
     defaultPath: string
 ): Promise<string> {
-    const selected = await tauriClient.app.OpenFolderSelectorDialog(defaultPath);
+    const selected = await commands.appOpenFolderSelectorDialog(defaultPath);
     return typeof selected === 'string' ? selected : '';
 }
 
@@ -82,7 +76,7 @@ export async function openFileSelectorDialog(
     defaultExt: string,
     defaultFilter: string
 ): Promise<string> {
-    const selected = await tauriClient.app.OpenFileSelectorDialog(
+    const selected = await commands.appOpenFileSelectorDialog(
         defaultPath,
         defaultExt,
         defaultFilter
@@ -91,23 +85,23 @@ export async function openFileSelectorDialog(
 }
 
 export async function openCalendarFile(icsContent: string): Promise<void> {
-    await tauriClient.app.OpenCalendarFile(icsContent);
+    await commands.appOpenCalendarFile(icsContent);
 }
 
 export async function saveCalendarFile(
     defaultName: string,
     icsContent: string
 ): Promise<void> {
-    await tauriClient.app.SaveCalendarFile(defaultName, icsContent);
+    await commands.appSaveCalendarFile(defaultName, icsContent);
 }
 
 export async function readVrchatConfigFileSafe(): Promise<string> {
-    const config = await tauriClient.app.ReadConfigFileSafe();
+    const config = await commands.appReadConfigFileSafe();
     return typeof config === 'string' ? config : '';
 }
 
 export async function writeVrchatConfigFile(json: string): Promise<void> {
-    await tauriClient.app.WriteConfigFile(json);
+    await commands.appWriteConfigFile(json);
 }
 
 export async function setVrchatRegistryKey(
@@ -115,14 +109,14 @@ export async function setVrchatRegistryKey(
     value: unknown,
     typeInt: number
 ): Promise<void> {
-    await tauriClient.app.SetVRChatRegistryKey(key, value, typeInt);
+    await commands.appSetVrchatRegistryKey(key, value, typeInt);
 }
 
 export async function getVrchatUserModeration(
     currentUserId: string,
     userId: string
 ): Promise<unknown> {
-    return tauriClient.app.GetVRChatUserModeration(currentUserId, userId);
+    return commands.appGetVrchatUserModeration(currentUserId, userId);
 }
 
 export async function setVrchatUserModeration(
@@ -130,19 +124,19 @@ export async function setVrchatUserModeration(
     userId: string,
     moderationType: string | number
 ): Promise<any> {
-    return tauriClient.app.SetVRChatUserModeration(
+    return commands.appSetVrchatUserModeration(
         currentUserId,
         userId,
-        moderationType
+        Number(moderationType)
     );
 }
 
 export async function openDiscordProfile(discordId: string): Promise<void> {
-    await tauriClient.discord.OpenDiscordProfile(discordId);
+    await commands.appOpenDiscordProfile(discordId);
 }
 
 export async function deleteAllScreenshotMetadata(): Promise<void> {
-    await tauriClient.app.DeleteAllScreenshotMetadata();
+    await commands.appDeleteAllScreenshotMetadata();
 }
 
 export async function isWindowMaximized(): Promise<boolean> {

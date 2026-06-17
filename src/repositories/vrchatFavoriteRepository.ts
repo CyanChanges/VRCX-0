@@ -1,9 +1,9 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 
 import {
     createRequestError,
@@ -103,7 +103,7 @@ async function getFavoriteLimits({
         policy: entityQueryPolicies.favoriteLimits,
         force,
         queryFn: async () => {
-            const response = await tauriClient.app.VrchatFavoriteLimitsGet({
+            const response = await commands.appVrchatFavoriteLimitsGet({
                 endpoint
             });
             return unwrapVrchatFavoriteResponse(
@@ -120,7 +120,7 @@ async function getFavorites({
     n = FAVORITES_PAGE_SIZE,
     offset = 0
 }: FavoritePagingInput = {}) {
-    const response = await tauriClient.app.VrchatFavoritesGet({
+    const response = await commands.appVrchatFavoritesGet({
         endpoint,
         n,
         offset
@@ -158,7 +158,7 @@ async function addFavorite({
     favoriteId,
     tags
 }: FavoriteMutationInput = {}) {
-    const response = await tauriClient.app.VrchatFavoriteAdd({
+    const response = await commands.appVrchatFavoriteAdd({
         endpoint,
         type: typeof type === 'string' ? type : String(type ?? ''),
         favoriteId:
@@ -188,7 +188,7 @@ async function deleteFavorite({
         );
     }
 
-    const response = await tauriClient.app.VrchatFavoriteDelete({
+    const response = await commands.appVrchatFavoriteDelete({
         endpoint,
         objectId: normalizedObjectId
     });
@@ -207,7 +207,7 @@ async function getFavoriteWorlds({
     userId = '',
     tag = ''
 }: FavoriteWorldsInput = {}) {
-    const response = await tauriClient.app.VrchatFavoriteWorldsGet({
+    const response = await commands.appVrchatFavoriteWorldsGet({
         endpoint,
         n,
         offset,
@@ -256,7 +256,7 @@ async function getFavoriteAvatars({
     offset = 0,
     tag
 }: FavoriteAvatarsInput = {}) {
-    const response = await tauriClient.app.VrchatFavoriteAvatarsGet({
+    const response = await commands.appVrchatFavoriteAvatarsGet({
         endpoint,
         n,
         offset,
@@ -321,7 +321,7 @@ async function getFavoriteGroups({
     offset = 0,
     ownerId = ''
 }: FavoriteGroupsInput = {}) {
-    const response = await tauriClient.app.VrchatFavoriteGroupsGet({
+    const response = await commands.appVrchatFavoriteGroupsGet({
         endpoint,
         n,
         offset,
@@ -392,7 +392,7 @@ async function saveFavoriteGroup({
         payload.visibility = visibility;
     }
 
-    const response = await tauriClient.app.VrchatFavoriteGroupSave({
+    const response = await commands.appVrchatFavoriteGroupSave({
         endpoint,
         ownerId: normalizedOwnerId,
         type: normalizedType,
@@ -428,7 +428,7 @@ async function clearFavoriteGroup({
         );
     }
 
-    const response = await tauriClient.app.VrchatFavoriteGroupClear({
+    const response = await commands.appVrchatFavoriteGroupClear({
         endpoint,
         ownerId: normalizedOwnerId,
         type: normalizedType,

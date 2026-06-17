@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import { normalizeUserTablePrefix } from './userSessionRepository';
 import {
@@ -57,12 +57,9 @@ function unwrapRuntimeMutualResponse(
 
 async function ensureTables(userId: unknown): Promise<string> {
     const userPrefix = normalizeUserTablePrefix(userId);
-    await tauriClient.app.MutualGraphTablesEnsure({
-        userId:
-            typeof userId === 'string'
+    await commands.appMutualGraphTablesEnsure(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim()
-    });
+                : String(userId ?? '').trim());
     return userPrefix;
 }
 
@@ -75,12 +72,9 @@ async function getSnapshot(userId: unknown): Promise<{
         friendIds = [],
         links = [],
         meta: metaRows = []
-    } = (await tauriClient.app.MutualGraphSnapshotGet({
-        userId:
-            typeof userId === 'string'
+    } = (await commands.appMutualGraphSnapshotGet(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim()
-    })) as {
+                : String(userId ?? '').trim())) as {
         friendIds?: unknown[];
         links?: Array<{ friendId?: unknown; mutualId?: unknown }>;
         meta?: Array<{
@@ -146,7 +140,7 @@ async function getMutualFriends({
         );
     }
 
-    const response = await tauriClient.app.VrchatUserMutualFriendsGet({
+    const response = await commands.appVrchatUserMutualFriendsGet({
         userId: normalizedFriendId,
         offset,
         n,
@@ -174,13 +168,9 @@ async function saveSnapshot(userId: unknown, entries: MutualGraphEntryMap) {
                 .filter(Boolean)
         });
     });
-    await tauriClient.app.MutualGraphSnapshotSave({
-        userId:
-            typeof userId === 'string'
+    await commands.appMutualGraphSnapshotSave(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entries: normalizedEntries
-    });
+                : String(userId ?? '').trim(), normalizedEntries);
 }
 
 async function updateMutualsForFriend(
@@ -200,14 +190,9 @@ async function updateMutualsForFriend(
         ? mutualIds.filter(Boolean)
         : [];
 
-    await tauriClient.app.MutualGraphFriendUpdate({
-        userId:
-            typeof userId === 'string'
+    await commands.appMutualGraphFriendUpdate(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        friendId: normalizedFriendId,
-        mutualIds: collection.map(String)
-    });
+                : String(userId ?? '').trim(), normalizedFriendId, collection.map(String));
 }
 
 async function upsertMeta(
@@ -223,17 +208,13 @@ async function upsertMeta(
         return;
     }
 
-    await tauriClient.app.MutualGraphMetaUpsert({
-        userId:
-            typeof userId === 'string'
+    await commands.appMutualGraphMetaUpsert(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entry: {
+                : String(userId ?? '').trim(), {
             friendId: normalizedFriendId,
             lastFetchedAt: lastFetchedAt || new Date().toISOString(),
             optedOut: Boolean(optedOut)
-        }
-    });
+        });
 }
 
 async function bulkUpsertMeta(userId: unknown, entries: MutualGraphMetaMap) {
@@ -256,13 +237,9 @@ async function bulkUpsertMeta(userId: unknown, entries: MutualGraphMetaMap) {
             });
         }
     });
-    await tauriClient.app.MutualGraphMetaBulkUpsert({
-        userId:
-            typeof userId === 'string'
+    await commands.appMutualGraphMetaBulkUpsert(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim(),
-        entries: rows
-    });
+                : String(userId ?? '').trim(), rows);
 }
 
 const mutualGraphPersistenceRepository = Object.freeze({

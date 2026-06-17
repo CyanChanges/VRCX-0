@@ -18,14 +18,14 @@ use crate::Error;
 
 use super::DatabaseService;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct UserTableContextOutput {
     pub user_id: String,
     pub user_prefix: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MaintenanceTableSizesOutput {
     pub gps: i64,
@@ -44,7 +44,7 @@ pub struct MaintenanceTableSizesOutput {
     pub resource_load: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BrokenGameLogDisplayNameOutput {
     pub id: Value,

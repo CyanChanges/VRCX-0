@@ -1,10 +1,10 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys,
     setCachedQueryData
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 
 import {
     createRequestError,
@@ -286,7 +286,7 @@ async function fetchWorldProfile({ worldId, endpoint = '' }: WorldIdInput) {
     }
 
     const response = unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldGet({
+        await commands.appVrchatWorldGet({
             worldId: normalizedWorldId,
             endpoint
         }),
@@ -355,7 +355,7 @@ async function getWorldsByUser({
         force,
         queryFn: async () => {
             const response = unwrapVrchatWorldResponse(
-                await tauriClient.app.VrchatWorldListByUserGet({
+                await commands.appVrchatWorldListByUserGet({
                     endpoint,
                     userId: normalizedUserId,
                     n,
@@ -386,7 +386,7 @@ async function saveWorld({
     }
 
     const response = unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldSave({
+        await commands.appVrchatWorldSave({
             worldId: normalizedWorldId,
             params,
             endpoint
@@ -411,7 +411,7 @@ async function deleteWorld({ worldId, endpoint = '' }: WorldIdInput) {
     }
 
     return unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldDelete({
+        await commands.appVrchatWorldDelete({
             worldId: normalizedWorldId,
             endpoint
         }),
@@ -428,7 +428,7 @@ async function publishWorld({ worldId, endpoint = '' }: WorldIdInput) {
     }
 
     const response = unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldPublish({
+        await commands.appVrchatWorldPublish({
             worldId: normalizedWorldId,
             endpoint
         }),
@@ -452,7 +452,7 @@ async function unpublishWorld({ worldId, endpoint = '' }: WorldIdInput) {
     }
 
     const response = unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldUnpublish({
+        await commands.appVrchatWorldUnpublish({
             worldId: normalizedWorldId,
             endpoint
         }),
@@ -481,7 +481,7 @@ async function deleteWorldPersistentData({
     }
 
     const response = unwrapVrchatWorldResponse(
-        await tauriClient.app.VrchatWorldPersistentDataDelete({
+        await commands.appVrchatWorldPersistentDataDelete({
             userId: normalizedUserId,
             worldId: normalizedWorldId,
             endpoint
@@ -519,7 +519,7 @@ async function hasWorldPersistentData({
         force,
         queryFn: async () => {
             const response = unwrapVrchatWorldResponse(
-                await tauriClient.app.VrchatWorldPersistentDataExists({
+                await commands.appVrchatWorldPersistentDataExists({
                     userId: normalizedUserId,
                     worldId: normalizedWorldId,
                     endpoint

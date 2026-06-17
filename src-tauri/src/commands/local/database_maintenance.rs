@@ -12,6 +12,7 @@ use vrcx_0_persistence::maintenance::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__database_maintenance_broken_game_log_display_names_get(
     state: State<'_, AppState>,
 ) -> Result<Vec<BrokenGameLogDisplayNameOutput>, AppError> {
@@ -22,6 +23,7 @@ pub fn app__database_maintenance_broken_game_log_display_names_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__database_maintenance_broken_leave_entries_get(
     state: State<'_, AppState>,
 ) -> Result<Vec<Value>, AppError> {
@@ -32,6 +34,7 @@ pub fn app__database_maintenance_broken_leave_entries_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__database_maintenance_max_friend_log_number_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -44,6 +47,7 @@ pub fn app__database_maintenance_max_friend_log_number_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__database_maintenance_run(
     state: State<'_, AppState>,
     task: String,
@@ -94,6 +98,7 @@ pub fn app__database_maintenance_run(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__database_maintenance_table_sizes_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -106,6 +111,7 @@ pub fn app__database_maintenance_table_sizes_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__user_tables_ensure(
     state: State<'_, AppState>,
     user_id: String,

@@ -19,7 +19,7 @@ pub struct AppPaths {
     pub screenshot_thumbs: PathBuf,
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppDataDirResolution {
     pub current_dir: PathBuf,
@@ -29,7 +29,7 @@ pub struct AppDataDirResolution {
     pub source: AppDataDirSource,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum AppDataDirSource {
     Cli,
@@ -37,7 +37,7 @@ pub enum AppDataDirSource {
     Default,
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppDataDirState {
     pub current_dir: String,
@@ -48,7 +48,7 @@ pub struct AppDataDirState {
     pub cli_override: bool,
 }
 
-#[derive(Clone, Debug, serde::Serialize)]
+#[derive(Clone, Debug, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AppDataDirValidation {
     pub path: String,
@@ -60,7 +60,7 @@ pub struct AppDataDirValidation {
     pub warning: Option<String>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 struct AppDataDirPointer {
     data_dir: String,

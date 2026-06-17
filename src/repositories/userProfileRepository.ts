@@ -1,3 +1,4 @@
+import { commands } from '@/platform/tauri/bindings';
 import { recordUserProfile } from '@/domain/users/userFactAccess';
 import {
     entityQueryPolicies,
@@ -6,7 +7,6 @@ import {
     queryKeys,
     setCachedQueryData
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 import { stripDefaultAvatarImage } from '@/shared/utils/avatar';
 import {
     computeTrustLevel,
@@ -242,7 +242,7 @@ async function getUserProfile({
         );
     }
 
-    const response = await tauriClient.app.VrchatUserGet({
+    const response = await commands.appVrchatUserGet({
         userId: normalizedUserId,
         endpoint,
         force,
@@ -271,7 +271,7 @@ async function getMutualCounts({ userId, endpoint = '' }: UserEndpointInput) {
         queryKey: queryKeys.mutualCounts(normalizedUserId, endpoint),
         policy: entityQueryPolicies.mutualCounts,
         queryFn: async () => {
-            const response = await tauriClient.app.VrchatUserMutualCountsGet({
+            const response = await commands.appVrchatUserMutualCountsGet({
                 userId: normalizedUserId,
                 endpoint
             });
@@ -299,7 +299,7 @@ async function getUserGroups({ userId, endpoint = '' }: UserEndpointInput) {
         queryKey: queryKeys.userGroups(normalizedUserId, endpoint),
         policy: entityQueryPolicies.groupCollection,
         queryFn: async () => {
-            const response = await tauriClient.app.VrchatUserGroupsGet({
+            const response = await commands.appVrchatUserGroupsGet({
                 userId: normalizedUserId,
                 endpoint
             });
@@ -333,7 +333,7 @@ async function getRepresentedGroup({
         force,
         queryFn: async () => {
             const response =
-                await tauriClient.app.VrchatUserRepresentedGroupGet({
+                await commands.appVrchatUserRepresentedGroupGet({
                     userId: normalizedUserId,
                     endpoint
                 });
@@ -362,7 +362,7 @@ async function getMutualFriends({
         );
     }
 
-    const response = await tauriClient.app.VrchatUserMutualFriendsGet({
+    const response = await commands.appVrchatUserMutualFriendsGet({
         userId: normalizedUserId,
         endpoint,
         n,
@@ -401,7 +401,7 @@ async function updateCurrentUser({
 
     const queryKey = queryKeys.user(normalizedUserId, endpoint);
     const cachedUser = getCachedQueryData(queryKey);
-    const response = await tauriClient.app.VrchatCurrentUserUpdate({
+    const response = await commands.appVrchatCurrentUserUpdate({
         userId: normalizedUserId,
         endpoint,
         params
@@ -442,7 +442,7 @@ async function updateCurrentUserBadge({
         );
     }
 
-    const response = await tauriClient.app.VrchatCurrentUserBadgeUpdate({
+    const response = await commands.appVrchatCurrentUserBadgeUpdate({
         userId: normalizedUserId,
         badgeId: normalizedBadgeId,
         endpoint,
@@ -472,7 +472,7 @@ async function addCurrentUserTags({
         );
     }
 
-    const response = await tauriClient.app.VrchatCurrentUserTagsAdd({
+    const response = await commands.appVrchatCurrentUserTagsAdd({
         userId: normalizedUserId,
         endpoint,
         tags: Array.isArray(tags) ? tags.map(String) : []
@@ -505,7 +505,7 @@ async function removeCurrentUserTags({
         );
     }
 
-    const response = await tauriClient.app.VrchatCurrentUserTagsRemove({
+    const response = await commands.appVrchatCurrentUserTagsRemove({
         userId: normalizedUserId,
         endpoint,
         tags: Array.isArray(tags) ? tags.map(String) : []

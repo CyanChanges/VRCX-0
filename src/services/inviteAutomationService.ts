@@ -1,7 +1,7 @@
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import notificationPersistenceRepository from '@/repositories/notificationPersistenceRepository';
 import vrchatSearchRepository from '@/repositories/vrchatSearchRepository';
-import { tauriClient } from '@/platform/tauri/client';
 import { checkCanInvite } from '@/shared/utils/invite';
 import { parseLocation } from '@/shared/utils/locationParser';
 import { useFavoriteStore } from '@/state/favoriteStore';
@@ -211,7 +211,7 @@ async function expireNotificationLocally({ userId, notification }: any) {
     if (!userId || !notification?.id) {
         return;
     }
-    await tauriClient.app.ExpireRealtimeNotification(userId, notification.id);
+    await commands.appExpireRealtimeNotification(userId, notification.id);
     const store = useVrcNotificationStore.getState();
     store.expireNotifications(notification.id);
     store.markNotificationsSeen(notification.id);

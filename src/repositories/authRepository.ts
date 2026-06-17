@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import { normalizePlatformError } from '@/platform/tauri/errors';
 
 type GenericRecord = Record<string, unknown>;
@@ -39,7 +39,7 @@ async function runAuthSavedCommand<T>(
 async function getSavedAuthSnapshot(): Promise<SavedAuthSnapshot> {
     return runAuthSavedCommand(
         () =>
-            tauriClient.app.VrchatAuthSavedSnapshotGet() as Promise<SavedAuthSnapshot>,
+            commands.appVrchatAuthSavedSnapshotGet() as Promise<SavedAuthSnapshot>,
         'Auth saved snapshot failed'
     );
 }
@@ -64,7 +64,7 @@ async function getSavedCredential(userId: string) {
 async function deleteSavedCredential(userId: string): Promise<SavedAuthSnapshot> {
     return runAuthSavedCommand(
         () =>
-            tauriClient.app.VrchatAuthSavedCredentialDelete({
+            commands.appVrchatAuthSavedCredentialDelete({
                 userId: typeof userId === 'string' ? userId : String(userId ?? '')
             }) as Promise<SavedAuthSnapshot>,
         'Saved credential delete failed'
@@ -79,7 +79,7 @@ async function recordLoginSuccess({
 }: RecordLoginSuccessInput): Promise<SavedAuthSnapshot> {
     return runAuthSavedCommand(
         () =>
-            tauriClient.app.VrchatAuthLoginSuccessRecord({
+            commands.appVrchatAuthLoginSuccessRecord({
                 user,
                 loginParams,
                 storedLoginParams,
@@ -95,7 +95,7 @@ async function recordLogout(
 ): Promise<SavedAuthSnapshot> {
     return runAuthSavedCommand(
         () =>
-            tauriClient.app.VrchatAuthLogoutRecord({
+            commands.appVrchatAuthLogoutRecord({
                 userOrUserId,
                 clearLastUserLoggedIn:
                     options.clearLastUserLoggedIn === undefined

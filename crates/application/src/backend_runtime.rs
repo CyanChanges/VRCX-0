@@ -5,7 +5,7 @@ use chrono::{SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum BackendRuntimeMode {
     #[default]
@@ -14,7 +14,7 @@ pub enum BackendRuntimeMode {
     Headless,
 }
 
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub enum BackendRuntimePhase {
     #[default]
@@ -26,7 +26,7 @@ pub enum BackendRuntimePhase {
     Error,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackendRuntimeSnapshot {
     pub mode: BackendRuntimeMode,
@@ -44,7 +44,7 @@ pub struct BackendRuntimeSnapshot {
     pub updated_at: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackendRuntimeTelemetry {
     pub kind: String,

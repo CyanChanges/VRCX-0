@@ -1,5 +1,5 @@
-import { tauriClient } from '@/platform/tauri/client';
-import type { AssetBundleCacheCheckResult } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
+import type { CacheCheckResult } from '@/platform/tauri/bindings';
 
 export async function getVRChatCacheFullLocation(
     fileId: string,
@@ -7,7 +7,7 @@ export async function getVRChatCacheFullLocation(
     variant: string,
     variantVersion: number
 ): Promise<string> {
-    return tauriClient.assetBundle.GetVRChatCacheFullLocation(
+    return commands.assetBundleGetVrchatCacheFullLocation(
         fileId,
         fileVersion,
         variant,
@@ -20,8 +20,8 @@ export async function checkVRChatCache(
     fileVersion: number,
     variant: string,
     variantVersion: number
-): Promise<AssetBundleCacheCheckResult> {
-    return tauriClient.assetBundle.CheckVRChatCache(
+): Promise<CacheCheckResult> {
+    return commands.assetBundleCheckVrchatCache(
         fileId,
         fileVersion,
         variant,
@@ -35,7 +35,7 @@ export async function deleteCache(
     variant: string,
     variantVersion: number
 ): Promise<void> {
-    await tauriClient.assetBundle.DeleteCache(
+    await commands.assetBundleDeleteCache(
         fileId,
         fileVersion,
         variant,
@@ -44,15 +44,15 @@ export async function deleteCache(
 }
 
 export async function deleteAllCache(): Promise<void> {
-    await tauriClient.assetBundle.DeleteAllCache();
+    await commands.assetBundleDeleteAllCache();
 }
 
 export async function sweepCache(): Promise<string[]> {
-    return tauriClient.assetBundle.SweepCache();
+    return commands.assetBundleSweepCache();
 }
 
 export async function getCacheSize(): Promise<number> {
-    return Number(await tauriClient.assetBundle.GetCacheSize()) || 0;
+    return Number(await commands.assetBundleGetCacheSize()) || 0;
 }
 
 export const assetBundleRepository = Object.freeze({

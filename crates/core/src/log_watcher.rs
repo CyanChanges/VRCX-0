@@ -5,7 +5,7 @@ pub struct GameLogEvent {
     pub kind: GameLogEventKind,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct LogLocationSnapshot {
     pub location: String,

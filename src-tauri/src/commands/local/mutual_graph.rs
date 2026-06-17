@@ -14,6 +14,7 @@ use vrcx_0_persistence::mutual_graph::{
 };
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_friend_update(
     state: State<'_, AppState>,
     user_id: String,
@@ -30,6 +31,7 @@ pub fn app__mutual_graph_friend_update(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_meta_bulk_upsert(
     state: State<'_, AppState>,
     user_id: String,
@@ -44,6 +46,7 @@ pub fn app__mutual_graph_meta_bulk_upsert(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_meta_upsert(
     state: State<'_, AppState>,
     user_id: String,
@@ -54,6 +57,7 @@ pub fn app__mutual_graph_meta_upsert(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_snapshot_get(
     state: State<'_, AppState>,
     user_id: String,
@@ -63,6 +67,7 @@ pub fn app__mutual_graph_snapshot_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_snapshot_save(
     state: State<'_, AppState>,
     user_id: String,
@@ -77,6 +82,7 @@ pub fn app__mutual_graph_snapshot_save(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_tables_ensure(
     state: State<'_, AppState>,
     user_id: String,
@@ -86,11 +92,13 @@ pub fn app__mutual_graph_tables_ensure(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_fetch_status_get(state: State<'_, AppState>) -> MutualGraphFetchStatus {
     state.runtime_context.mutual_graph_fetch.status()
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_fetch_cancel(
     state: State<'_, AppState>,
     input: MutualGraphFetchCancelInput,
@@ -103,6 +111,7 @@ pub fn app__mutual_graph_fetch_cancel(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__mutual_graph_fetch_start(
     state: State<'_, AppState>,
     input: MutualGraphFetchStartInput,

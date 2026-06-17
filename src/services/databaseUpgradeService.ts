@@ -1,6 +1,6 @@
+import { commands } from '@/platform/tauri/bindings';
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import databaseMaintenanceRepository from '@/repositories/databaseMaintenanceRepository';
 import i18n from '@/services/i18nService';
@@ -107,7 +107,7 @@ async function runFullDatabaseUpgrade(): Promise<boolean> {
     let upgradeCommitted = false;
     try {
         const failedUpgrade =
-            (await tauriClient.sqlite.GetFailedUpgrade()) as FailedUpgrade | null;
+            (await commands.sqliteGetFailedUpgrade()) as FailedUpgrade | null;
         if (failedUpgrade) {
             return blockOnFailedUpgrade(failedUpgrade);
         }
@@ -144,7 +144,7 @@ async function runFullDatabaseUpgrade(): Promise<boolean> {
             legacyMigrationAvailable: false
         });
 
-        await tauriClient.sqlite.BeginUpgrade(currentVersion, DATABASE_VERSION);
+        await commands.sqliteBeginUpgrade(currentVersion, DATABASE_VERSION);
         upgradeStarted = true;
 
         if (currentVersion < LEGACY_SCHEMA_VERSION) {
@@ -155,7 +155,7 @@ async function runFullDatabaseUpgrade(): Promise<boolean> {
         }
         await databaseMaintenanceRepository.optimize();
         await writeUpgradeDatabaseVersion();
-        await tauriClient.sqlite.CommitUpgrade();
+        await commands.sqliteCommitUpgrade();
         upgradeCommitted = true;
         await configRepository.reload();
 
@@ -176,9 +176,9 @@ async function runFullDatabaseUpgrade(): Promise<boolean> {
         let failedUpgrade: FailedUpgrade | null = null;
         if (upgradeStarted && !upgradeCommitted) {
             try {
-                await tauriClient.sqlite.FailUpgrade(reason);
+                await commands.sqliteFailUpgrade(reason);
                 failedUpgrade =
-                    (await tauriClient.sqlite.GetFailedUpgrade()) as FailedUpgrade | null;
+                    (await commands.sqliteGetFailedUpgrade()) as FailedUpgrade | null;
             } catch (failError) {
                 console.error(
                     'Failed to preserve database upgrade work copy:',
@@ -215,7 +215,7 @@ async function runFullDatabaseUpgrade(): Promise<boolean> {
 
 async function getLegacyMigrationStatus(): Promise<LegacyMigrationStatus> {
     try {
-        const status = await tauriClient.app.GetLegacyVrcxMigrationStatus();
+        const status = await commands.appGetLegacyVrcxMigrationStatus();
         return status as LegacyMigrationStatus;
     } catch (error) {
         console.warn('Legacy VRCX migration status check failed:', error);
@@ -223,7 +223,7 @@ async function getLegacyMigrationStatus(): Promise<LegacyMigrationStatus> {
 
     try {
         const available = Boolean(
-            await tauriClient.app.CheckLegacyVrcxAvailable()
+            await commands.appCheckLegacyVrcxAvailable()
         );
         return {
             detected: available,
@@ -240,7 +240,7 @@ async function getLegacyMigrationStatus(): Promise<LegacyMigrationStatus> {
 
 export async function initializeDatabaseUpgradeFlow(): Promise<boolean> {
     const failedUpgrade =
-        (await tauriClient.sqlite.GetFailedUpgrade()) as FailedUpgrade | null;
+        (await commands.sqliteGetFailedUpgrade()) as FailedUpgrade | null;
     if (failedUpgrade) {
         return blockOnFailedUpgrade(failedUpgrade);
     }
@@ -275,7 +275,7 @@ export async function confirmLegacyDatabaseMigration(): Promise<void> {
     });
 
     try {
-        const willRestart = await tauriClient.app.RequestLegacyMigration();
+        const willRestart = await commands.appRequestLegacyMigration();
         if (willRestart) {
             return;
         }

@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationMarkSeenInput {
     #[serde(default)]
@@ -14,7 +14,7 @@ pub struct VrchatNotificationMarkSeenInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationIdInput {
     #[serde(default)]
@@ -23,7 +23,7 @@ pub struct VrchatNotificationIdInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationHideInput {
     #[serde(default)]
@@ -38,7 +38,7 @@ pub struct VrchatNotificationHideInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationRespondInput {
     #[serde(default)]
@@ -51,7 +51,7 @@ pub struct VrchatNotificationRespondInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInviteResponseInput {
     #[serde(default)]
@@ -62,7 +62,7 @@ pub struct VrchatInviteResponseInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatInviteResponsePhotoInput {
     #[serde(default)]
@@ -75,7 +75,7 @@ pub struct VrchatInviteResponsePhotoInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationSendInput {
     #[serde(default)]
@@ -86,7 +86,7 @@ pub struct VrchatNotificationSendInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatNotificationPhotoSendInput {
     #[serde(default)]
@@ -99,7 +99,7 @@ pub struct VrchatNotificationPhotoSendInput {
     pub(crate) endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct VrchatBoopInput {
     #[serde(default)]

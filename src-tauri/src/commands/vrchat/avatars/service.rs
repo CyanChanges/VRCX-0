@@ -38,6 +38,7 @@ async fn execute_avatar_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_get(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -53,6 +54,7 @@ pub async fn app__vrchat_avatar_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_gallery_get(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -68,6 +70,7 @@ pub async fn app__vrchat_avatar_gallery_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_list_by_user_get(
     state: State<'_, AppState>,
     input: VrchatAvatarListByUserInput,
@@ -92,6 +95,7 @@ pub async fn app__vrchat_avatar_list_by_user_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_styles_get(
     state: State<'_, AppState>,
     input: VrchatAvatarEndpointInput,
@@ -106,6 +110,7 @@ pub async fn app__vrchat_avatar_styles_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_moderations_get(
     state: State<'_, AppState>,
     input: VrchatAvatarEndpointInput,
@@ -120,6 +125,7 @@ pub async fn app__vrchat_avatar_moderations_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_file_get(
     state: State<'_, AppState>,
     input: VrchatAvatarFileInput,
@@ -135,6 +141,7 @@ pub async fn app__vrchat_avatar_file_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_select(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -150,6 +157,7 @@ pub async fn app__vrchat_avatar_select(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_select_fallback(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -165,6 +173,7 @@ pub async fn app__vrchat_avatar_select_fallback(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_save(
     state: State<'_, AppState>,
     input: VrchatAvatarSaveInput,
@@ -180,6 +189,7 @@ pub async fn app__vrchat_avatar_save(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_delete(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -195,6 +205,7 @@ pub async fn app__vrchat_avatar_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_impostor_create(
     state: State<'_, AppState>,
     input: VrchatAvatarImpostorCreateInput,
@@ -211,6 +222,7 @@ pub async fn app__vrchat_avatar_impostor_create(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_impostor_delete(
     state: State<'_, AppState>,
     input: VrchatAvatarIdInput,
@@ -226,6 +238,7 @@ pub async fn app__vrchat_avatar_impostor_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_moderation_send(
     state: State<'_, AppState>,
     input: VrchatAvatarModerationInput,
@@ -242,6 +255,7 @@ pub async fn app__vrchat_avatar_moderation_send(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_avatar_moderation_delete(
     state: State<'_, AppState>,
     input: VrchatAvatarModerationInput,

@@ -1,4 +1,8 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
+import type {
+    ActivityFriendPresenceAfterInput,
+    ActivityFriendPresenceSliceInput
+} from '@/platform/tauri/bindings';
 import type { ActivitySession } from '@/shared/utils/activityEngine';
 
 type ActivityViewKind =
@@ -219,7 +223,9 @@ function normalizeLocationRow(
     };
 }
 
-function normalizePresenceRow(row: PresenceRow | null): NormalizedPresence | null {
+function normalizePresenceRow(
+    row: PresenceRow | null
+): NormalizedPresence | null {
     if (!row || typeof row !== 'object') {
         return null;
     }
@@ -247,11 +253,9 @@ async function getSelfActivitySourceSlice({
             ? new Date(Date.now() - toDays * 86400000).toISOString()
             : '';
 
-    const rows = (await tauriClient.app.ActivitySelfSourceSlice({
-        query: {
-            fromDateIso,
-            toDateIso
-        }
+    const rows = (await commands.appActivitySelfSourceSlice({
+        fromDateIso,
+        toDateIso
     })) as ActivityLocationRow[];
 
     if (!Array.isArray(rows)) {
@@ -265,11 +269,9 @@ async function getSelfActivitySourceAfter({
     afterCreatedAt,
     inclusive = false
 }: ActivitySelfSourceAfterInput) {
-    const rows = (await tauriClient.app.ActivitySelfSourceAfter({
-        query: {
-            afterCreatedAt,
-            inclusive
-        }
+    const rows = (await commands.appActivitySelfSourceAfter({
+        afterCreatedAt,
+        inclusive
     })) as ActivityLocationRow[];
 
     if (!Array.isArray(rows)) {
@@ -281,10 +283,12 @@ async function getSelfActivitySourceAfter({
 
 async function getSelfActivitySourceBounds() {
     const row =
-        ((await tauriClient.app.ActivitySelfSourceBounds()) as ActivitySourceBoundsRow | null) ||
+        ((await commands.appActivitySelfSourceBounds()) as ActivitySourceBoundsRow | null) ||
         {};
     return {
-        firstCreatedAt: String(row.firstCreatedAt ?? row.first_created_at ?? ''),
+        firstCreatedAt: String(
+            row.firstCreatedAt ?? row.first_created_at ?? ''
+        ),
         lastCreatedAt: String(row.lastCreatedAt ?? row.last_created_at ?? ''),
         count: Number.parseInt(String(row.count ?? 0), 10) || 0
     };
@@ -296,14 +300,12 @@ async function getFriendPresenceSlice({
     toDateIso = '',
     ownerUserId
 }: FriendPresenceSliceInput) {
-    const rows = (await tauriClient.app.ActivityFriendPresenceSlice({
-        query: {
-            ownerUserId,
-            userId,
-            fromDateIso,
-            toDateIso
-        }
-    })) as PresenceRow[];
+    const rows = (await commands.appActivityFriendPresenceSlice({
+        ownerUserId,
+        userId,
+        fromDateIso,
+        toDateIso
+    } as ActivityFriendPresenceSliceInput)) as PresenceRow[];
 
     const output = Array.isArray(rows)
         ? rows.map(normalizePresenceRow).filter(hasCreatedAt)
@@ -321,14 +323,14 @@ async function getFriendPresenceAfter({
     afterCreatedAt,
     ownerUserId
 }: FriendPresenceAfterInput) {
-    const rows = (await tauriClient.app.ActivityFriendPresenceAfter({
-        query: {
-            ownerUserId,
-            userId,
-            afterCreatedAt
-        }
-    })) as PresenceRow[];
-    return Array.isArray(rows) ? rows.map(normalizePresenceRow).filter(hasCreatedAt) : [];
+    const rows = (await commands.appActivityFriendPresenceAfter({
+        ownerUserId,
+        userId,
+        afterCreatedAt
+    } as ActivityFriendPresenceAfterInput)) as PresenceRow[];
+    return Array.isArray(rows)
+        ? rows.map(normalizePresenceRow).filter(hasCreatedAt)
+        : [];
 }
 
 async function getActivitySourceSlice({
@@ -382,9 +384,9 @@ async function getActivitySyncState(userId: unknown) {
         return null;
     }
 
-    const row = (await tauriClient.app.ActivitySyncStateGet({
-        userId: normalizedUserId
-    })) as ActivitySyncStateRow | null;
+    const row = (await commands.appActivitySyncStateGet(
+        normalizedUserId
+    )) as ActivitySyncStateRow | null;
 
     if (!row) {
         return null;
@@ -404,16 +406,14 @@ async function upsertActivitySyncState(entry: ActivitySyncStateInput) {
         );
     }
 
-    await tauriClient.app.ActivitySyncStateUpsert({
-        entry: {
-            userId: normalizedUserId,
-            updatedAt: entry.updatedAt || '',
-            isSelf: Boolean(entry.isSelf),
-            sourceLastCreatedAt: entry.sourceLastCreatedAt || '',
-            pendingSessionStartAt: entry.pendingSessionStartAt ?? null,
-            cachedRangeDays:
-                Number.parseInt(String(entry.cachedRangeDays ?? 0), 10) || 0
-        }
+    await commands.appActivitySyncStateUpsert({
+        userId: normalizedUserId,
+        updatedAt: entry.updatedAt || '',
+        isSelf: Boolean(entry.isSelf),
+        sourceLastCreatedAt: entry.sourceLastCreatedAt || '',
+        pendingSessionStartAt: entry.pendingSessionStartAt ?? null,
+        cachedRangeDays:
+            Number.parseInt(String(entry.cachedRangeDays ?? 0), 10) || 0
     });
 }
 
@@ -433,7 +433,7 @@ async function refreshSelfActivitySessions({
         );
     }
 
-    const result = (await tauriClient.app.ActivitySelfSessionsRefresh({
+    const result = (await commands.appActivitySelfSessionsRefresh({
         userId: normalizedUserId,
         mode,
         rangeDays,
@@ -448,16 +448,13 @@ async function refreshSelfActivitySessions({
               .map(normalizeActivitySessionRow)
               .filter(
                   (row): row is NormalizedActivitySession =>
-                      Number.isFinite(row?.start) &&
-                      Number.isFinite(row?.end)
+                      Number.isFinite(row?.start) && Number.isFinite(row?.end)
               )
         : [];
 
     return {
-        sync:
-            sync ||
-            normalizeActivitySyncStateRow(null, normalizedUserId) ||
-            {
+        sync: sync ||
+            normalizeActivitySyncStateRow(null, normalizedUserId) || {
                 userId: normalizedUserId,
                 updatedAt: '',
                 isSelf: true,
@@ -483,9 +480,9 @@ async function getActivitySessions(userId: unknown) {
         return [];
     }
 
-    const rows = (await tauriClient.app.ActivitySessionsGet({
-        userId: normalizedUserId
-    })) as ActivitySessionRow[];
+    const rows = (await commands.appActivitySessionsGet(
+        normalizedUserId
+    )) as ActivitySessionRow[];
 
     if (!Array.isArray(rows)) {
         return [];
@@ -508,10 +505,10 @@ async function replaceActivitySessions(
             ? userId.trim()
             : String(userId ?? '').trim();
 
-    await tauriClient.app.ActivitySessionsReplace({
-        userId: normalizedUserId,
-        sessions: Array.isArray(sessions) ? sessions : []
-    });
+    await commands.appActivitySessionsReplace(
+        normalizedUserId,
+        Array.isArray(sessions) ? sessions : []
+    );
 }
 
 async function appendActivitySessions({
@@ -524,14 +521,13 @@ async function appendActivitySessions({
             ? userId.trim()
             : String(userId ?? '').trim();
 
-    await tauriClient.app.ActivitySessionsAppend({
-        userId: normalizedUserId,
-        sessions: Array.isArray(sessions) ? sessions : [],
-        replaceFromStartAt:
-            replaceFromStartAt !== null && replaceFromStartAt !== undefined
-                ? replaceFromStartAt
-                : null
-    });
+    await commands.appActivitySessionsAppend(
+        normalizedUserId,
+        Array.isArray(sessions) ? sessions : [],
+        replaceFromStartAt !== null && replaceFromStartAt !== undefined
+            ? replaceFromStartAt
+            : null
+    );
 }
 
 async function getActivityBucketCache({
@@ -541,14 +537,12 @@ async function getActivityBucketCache({
     viewKind,
     excludeKey = ''
 }: ActivityBucketCacheQuery) {
-    const row = (await tauriClient.app.ActivityBucketCacheGet({
-        query: {
-            ownerUserId,
-            targetUserId,
-            rangeDays,
-            viewKind,
-            excludeKey
-        }
+    const row = (await commands.appActivityBucketCacheGet({
+        ownerUserId,
+        targetUserId,
+        rangeDays,
+        viewKind,
+        excludeKey
     })) as
         | (ActivityBucketCacheRow & {
               ownerUserId?: unknown;
@@ -577,20 +571,18 @@ async function getActivityBucketCache({
 }
 
 async function upsertActivityBucketCache(entry: ActivityBucketCacheInput) {
-    await tauriClient.app.ActivityBucketCacheUpsert({
-        entry: {
-            ownerUserId: entry.ownerUserId,
-            targetUserId: entry.targetUserId || '',
-            rangeDays: entry.rangeDays,
-            viewKind: entry.viewKind,
-            excludeKey: entry.excludeKey || '',
-            bucketVersion: entry.bucketVersion || 1,
-            builtFromCursor: entry.builtFromCursor || '',
-            rawBuckets: entry.rawBuckets || [],
-            normalizedBuckets: entry.normalizedBuckets || [],
-            summary: entry.summary || {},
-            builtAt: entry.builtAt || ''
-        }
+    await commands.appActivityBucketCacheUpsert({
+        ownerUserId: entry.ownerUserId,
+        targetUserId: entry.targetUserId || '',
+        rangeDays: entry.rangeDays,
+        viewKind: entry.viewKind,
+        excludeKey: entry.excludeKey || '',
+        bucketVersion: entry.bucketVersion || 1,
+        builtFromCursor: entry.builtFromCursor || '',
+        rawBuckets: entry.rawBuckets || [],
+        normalizedBuckets: entry.normalizedBuckets || [],
+        summary: entry.summary || {},
+        builtAt: entry.builtAt || ''
     });
 }
 

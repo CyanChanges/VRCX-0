@@ -9,7 +9,7 @@
 use serde::Serialize;
 use serde_json::{json, Value};
 
-#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, Serialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ParsedLocation {
     pub tag: String,

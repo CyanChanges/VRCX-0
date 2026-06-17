@@ -1,9 +1,9 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 import { replaceBioSymbols } from '@/shared/utils/string';
 import { createDefaultGroupRef } from '@/shared/utils/groupTransforms';
 
@@ -345,7 +345,7 @@ async function fetchGroupProfile({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupGet({
+        await commands.appVrchatGroupGet({
             groupId: normalizedGroupId,
             includeRoles: Boolean(includeRoles),
             endpoint
@@ -371,7 +371,7 @@ async function getUserGroups({
         policy: entityQueryPolicies.groupCollection,
         queryFn: async () => {
             const response = unwrapVrchatGroupResponse(
-                await tauriClient.app.VrchatGroupUserGroupsGet({
+                await commands.appVrchatGroupUserGroupsGet({
                     userId: normalizedUserId,
                     endpoint
                 }),
@@ -397,7 +397,7 @@ async function getGroupPosts({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupPostsGet({
+        await commands.appVrchatGroupPostsGet({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -427,7 +427,7 @@ async function createGroupPost({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupPostCreate({
+        await commands.appVrchatGroupPostCreate({
             groupId: normalizedGroupId,
             params,
             endpoint
@@ -451,7 +451,7 @@ async function editGroupPost({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupPostEdit({
+        await commands.appVrchatGroupPostEdit({
             groupId: normalizedGroupId,
             postId: normalizedPostId,
             params,
@@ -475,7 +475,7 @@ async function deleteGroupPost({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupPostDelete({
+        await commands.appVrchatGroupPostDelete({
             groupId: normalizedGroupId,
             postId: normalizedPostId,
             endpoint
@@ -514,7 +514,7 @@ async function getGroupMembers({
         force,
         queryFn: async () => {
             const response = unwrapVrchatGroupResponse(
-                await tauriClient.app.VrchatGroupMembersGet({
+                await commands.appVrchatGroupMembersGet({
                     groupId: normalizedGroupId,
                     n,
                     offset,
@@ -545,7 +545,7 @@ async function getGroupMembersSearch({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupMembersSearch({
+        await commands.appVrchatGroupMembersSearch({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -599,7 +599,7 @@ async function getGroupGallery({
         force,
         queryFn: async () => {
             const response = unwrapVrchatGroupResponse(
-                await tauriClient.app.VrchatGroupGalleryGet({
+                await commands.appVrchatGroupGalleryGet({
                     groupId: normalizedGroupId,
                     galleryId: normalizedGalleryId,
                     n,
@@ -633,7 +633,7 @@ async function joinGroup({ groupId, endpoint = '' }: GroupIdInput) {
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupJoin({
+        await commands.appVrchatGroupJoin({
             groupId: normalizedGroupId,
             endpoint
         }),
@@ -650,7 +650,7 @@ async function leaveGroup({ groupId, endpoint = '' }: GroupIdInput) {
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupLeave({
+        await commands.appVrchatGroupLeave({
             groupId: normalizedGroupId,
             endpoint
         }),
@@ -667,7 +667,7 @@ async function cancelGroupRequest({ groupId, endpoint = '' }: GroupIdInput) {
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupRequestCancel({
+        await commands.appVrchatGroupRequestCancel({
             groupId: normalizedGroupId,
             endpoint
         }),
@@ -689,7 +689,7 @@ async function sendGroupInvite({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupInviteSend({
+        await commands.appVrchatGroupInviteSend({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -712,7 +712,7 @@ async function kickGroupMember({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupMemberKick({
+        await commands.appVrchatGroupMemberKick({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -735,7 +735,7 @@ async function banGroupMember({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupMemberBan({
+        await commands.appVrchatGroupMemberBan({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -758,7 +758,7 @@ async function unbanGroupMember({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupMemberUnban({
+        await commands.appVrchatGroupMemberUnban({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -781,7 +781,7 @@ async function deleteSentGroupInvite({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupInviteDelete({
+        await commands.appVrchatGroupInviteDelete({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -807,7 +807,7 @@ async function respondGroupJoinRequest({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupJoinRequestRespond({
+        await commands.appVrchatGroupJoinRequestRespond({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             action: normalizedAction,
@@ -840,7 +840,7 @@ async function getGroupInstances({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupInstancesGet({
+        await commands.appVrchatGroupInstancesGet({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -863,7 +863,7 @@ async function getGroupBans({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupBansGet({
+        await commands.appVrchatGroupBansGet({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -894,7 +894,7 @@ async function getGroupInvites({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupInvitesGet({
+        await commands.appVrchatGroupInvitesGet({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -926,7 +926,7 @@ async function getGroupJoinRequests({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupJoinRequestsGet({
+        await commands.appVrchatGroupJoinRequestsGet({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -957,7 +957,7 @@ async function getGroupAuditLogTypes({ groupId, endpoint = '' }: GroupIdInput) {
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupAuditLogTypesGet({
+        await commands.appVrchatGroupAuditLogTypesGet({
             groupId: normalizedGroupId,
             endpoint
         }),
@@ -986,7 +986,7 @@ async function getGroupLogs({
     }
 
     const response = unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupLogsGet({
+        await commands.appVrchatGroupLogsGet({
             groupId: normalizedGroupId,
             n,
             offset,
@@ -1024,7 +1024,7 @@ async function setGroupRepresentation({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupRepresentationSet({
+        await commands.appVrchatGroupRepresentationSet({
             groupId: normalizedGroupId,
             isRepresenting: Boolean(isRepresenting),
             endpoint
@@ -1048,7 +1048,7 @@ async function setGroupMemberProps({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupMemberPropsSet({
+        await commands.appVrchatGroupMemberPropsSet({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             params,
@@ -1067,7 +1067,7 @@ async function blockGroup({ groupId, endpoint = '' }: GroupIdInput) {
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupBlock({
+        await commands.appVrchatGroupBlock({
             groupId: normalizedGroupId,
             endpoint
         }),
@@ -1089,7 +1089,7 @@ async function unblockGroup({
     }
 
     return unwrapVrchatGroupResponse(
-        await tauriClient.app.VrchatGroupUnblock({
+        await commands.appVrchatGroupUnblock({
             groupId: normalizedGroupId,
             userId: normalizedUserId,
             endpoint
@@ -1114,7 +1114,7 @@ async function getUsersGroupInstances({
         fetchedAt?: unknown;
         [key: string]: unknown;
     }>(
-        await tauriClient.app.VrchatGroupUserInstancesGet({
+        await commands.appVrchatGroupUserInstancesGet({
             userId: normalizedUserId,
             endpoint
         }),

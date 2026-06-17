@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import vrchatInstanceRepository from '@/repositories/vrchatInstanceRepository';
 import vrchatSearchRepository from '@/repositories/vrchatSearchRepository';
 import {
@@ -129,7 +129,7 @@ export async function tryOpenLaunchLocation(
 
     try {
         return Boolean(
-            await tauriClient.app.TryOpenInstanceInVrc(
+            await commands.appTryOpenInstanceInVrc(
                 await resolveVrcLaunchUrl(
                     normalizedLocation,
                     shortName,

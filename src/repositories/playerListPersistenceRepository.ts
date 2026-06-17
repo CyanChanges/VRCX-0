@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import { parseLocation } from '@/shared/utils/locationParser';
 
 type RowRecord = Record<string, unknown>;
@@ -228,9 +228,7 @@ async function resolveCurrentLocationContext(
     const normalizedLocation = normalizeString(currentLocation);
 
     if (isLiveLocation(normalizedLocation)) {
-        const exactRow = await tauriClient.app.PlayerListLocationGet({
-            location: normalizedLocation
-        });
+        const exactRow = await commands.appPlayerListLocationGet(normalizedLocation);
 
         if (exactRow) {
             return {
@@ -263,7 +261,7 @@ async function resolveCurrentLocationContext(
         };
     }
 
-    const latestRow = await tauriClient.app.PlayerListLatestLocationGet();
+    const latestRow = await commands.appPlayerListLatestLocationGet();
 
     if (latestRow) {
         return {
@@ -289,10 +287,7 @@ async function rebuildInstanceRoster(
     normalizedCurrentUserId: string
 ) {
     const startedAtMs = parseDateMs(startedAt);
-    const rows = await tauriClient.app.PlayerListJoinLeaveRows({
-        location,
-        startedAt: startedAtMs ? startedAt : ''
-    });
+    const rows = await commands.appPlayerListJoinLeaveRows(location, startedAtMs ? startedAt : '');
 
     const playersByKey = new Map<string, PlayerListPlayer>();
     let observedPlayerEventCount = 0;

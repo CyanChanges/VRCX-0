@@ -13,6 +13,7 @@
     },
     "scripts": {
         "generate:overlay-locales": "node ./scripts/extract-overlay-locales.mjs",
+        "generate:tauri-bindings": "cargo run --manifest-path src-tauri/Cargo.toml --bin export-bindings",
         "predev": "npm run generate:overlay-locales",
         "dev": "vite",
         "tauri": "tauri",

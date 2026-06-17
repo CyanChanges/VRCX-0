@@ -2,7 +2,7 @@ use serde::Serialize;
 
 use crate::error::Error;
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct CapabilityStatus {
     pub supported: bool,
@@ -12,7 +12,7 @@ pub struct CapabilityStatus {
     pub reason: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct HostCapabilities {
     pub platform: String,

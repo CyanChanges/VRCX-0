@@ -4,7 +4,7 @@ pub enum IpcEventDisposition {
     Handled,
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct IpcPacket {
     #[serde(rename = "Type")]
     pub type_field: String,

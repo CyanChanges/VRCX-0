@@ -1,6 +1,6 @@
+import { commands } from '@/platform/tauri/bindings';
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
 import configRepository from '@/repositories/configRepository';
 import vrchatInstanceRepository from '@/repositories/vrchatInstanceRepository';
 import {
@@ -203,11 +203,11 @@ export async function launchVrchat(
 
     const argumentString = args.join(' ');
     const launched = launchPathOverride
-        ? await tauriClient.app.StartGameFromPath(
+        ? await commands.appStartGameFromPath(
               launchPathOverride,
               argumentString
           )
-        : await tauriClient.app.StartGame(argumentString);
+        : await commands.appStartGame(argumentString);
     if (!launched) {
         throw new Error(
             launchPathOverride

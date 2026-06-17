@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import configRepository from './configRepository';
 
@@ -177,7 +177,7 @@ async function createLocalFavoriteGroup({
         throw new Error('Local favorite kind is invalid.');
     }
 
-    await tauriClient.app.LocalFavoriteGroupCreate({
+    await commands.appLocalFavoriteGroupCreate({
         kind,
         groupName: normalizedGroupName
     });
@@ -185,39 +185,32 @@ async function createLocalFavoriteGroup({
 }
 
 async function getWorldFavorites() {
-    const rows = (await tauriClient.app.FavoriteList({
-        kind: 'world'
-    })) as ObjectRow[];
+    const rows = (await commands.appFavoriteList('world')) as ObjectRow[];
     return Array.isArray(rows) ? rows.map(normalizeWorldFavoriteRow) : [];
 }
 
 async function getAvatarFavorites() {
-    const rows = (await tauriClient.app.FavoriteList({
-        kind: 'avatar'
-    })) as ObjectRow[];
+    const rows = (await commands.appFavoriteList('avatar')) as ObjectRow[];
     return Array.isArray(rows) ? rows.map(normalizeAvatarFavoriteRow) : [];
 }
 
 async function getFriendFavorites() {
-    const rows = (await tauriClient.app.FavoriteList({
-        kind: 'friend'
-    })) as ObjectRow[];
+    const rows = (await commands.appFavoriteList('friend')) as ObjectRow[];
     return Array.isArray(rows) ? rows.map(normalizeFriendFavoriteRow) : [];
 }
 
 async function getWorldCache() {
-    const rows = (await tauriClient.app.WorldCacheList()) as ObjectRow[];
+    const rows = (await commands.appWorldCacheList()) as ObjectRow[];
     return Array.isArray(rows) ? rows.map(normalizeCacheRow) : [];
 }
 
 async function getAvatarCache() {
-    const rows = (await tauriClient.app.AvatarCacheList()) as ObjectRow[];
+    const rows = (await commands.appAvatarCacheList()) as ObjectRow[];
     return Array.isArray(rows) ? rows.map(normalizeCacheRow) : [];
 }
 
 async function addWorldToCache(entry: CacheEntryInput) {
-    return tauriClient.app.WorldCacheUpsert({
-        entry: {
+    return commands.appWorldCacheUpsert({
             id: entry.id,
             authorId: entry.authorId,
             authorName: entry.authorName,
@@ -229,8 +222,7 @@ async function addWorldToCache(entry: CacheEntryInput) {
             thumbnailImageUrl: entry.thumbnailImageUrl,
             updatedAt: entry.updated_at,
             version: entry.version
-        }
-    });
+        });
 }
 
 async function getCachedWorldById(id: unknown) {
@@ -238,9 +230,7 @@ async function getCachedWorldById(id: unknown) {
     if (!normalizedId) {
         return null;
     }
-    const row = (await tauriClient.app.WorldCacheGet({
-        worldId: normalizedId
-    })) as ObjectRow | null;
+    const row = (await commands.appWorldCacheGet(normalizedId)) as ObjectRow | null;
     return row ? normalizeCacheRow(row) : null;
 }
 
@@ -249,7 +239,7 @@ async function removeWorldFromCache(worldId: unknown) {
     if (!normalizedWorldId) {
         return;
     }
-    await tauriClient.app.WorldCacheRemove({ worldId: normalizedWorldId });
+    await commands.appWorldCacheRemove(normalizedWorldId);
 }
 
 async function addLocalFavorite({
@@ -267,7 +257,7 @@ async function addLocalFavorite({
         );
     }
 
-    return tauriClient.app.LocalFavoriteAdd({
+    return commands.appLocalFavoriteAdd({
         kind,
         entityId: normalizedEntityId,
         groupName: normalizedGroupName
@@ -313,7 +303,7 @@ async function removeLocalFavorite({
         );
     }
 
-    return tauriClient.app.LocalFavoriteRemove({
+    return commands.appLocalFavoriteRemove({
         kind,
         entityId: normalizedEntityId,
         groupName: normalizedGroupName
@@ -335,7 +325,7 @@ async function renameLocalFavoriteGroup({
         );
     }
 
-    const result = await tauriClient.app.LocalFavoriteGroupRename({
+    const result = await commands.appLocalFavoriteGroupRename({
         kind,
         groupName: normalizedGroupName,
         newGroupName: normalizedNewGroupName
@@ -359,7 +349,7 @@ async function deleteLocalFavoriteGroup({
         );
     }
 
-    const result = await tauriClient.app.LocalFavoriteGroupDelete({
+    const result = await commands.appLocalFavoriteGroupDelete({
         kind,
         groupName: normalizedGroupName
     });

@@ -44,7 +44,7 @@ pub enum RegistryBackupMaintenanceMode {
     Silent,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RegistryBackupSnapshot {
     pub key: String,
@@ -53,7 +53,7 @@ pub struct RegistryBackupSnapshot {
     pub data: Value,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RegistryBackupMaintenanceResult {
     pub backups: Vec<RegistryBackupSnapshot>,
@@ -63,7 +63,7 @@ pub struct RegistryBackupMaintenanceResult {
     pub detail: String,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, specta::Type)]
 struct StoredRegistryBackup {
     #[serde(default)]
     name: String,

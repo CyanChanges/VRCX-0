@@ -13,7 +13,7 @@ pub struct ModerationSyncDeps<'a> {
     pub auth_scope: &'a RuntimeAuthScope,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ModerationSyncRefreshInput {
     pub user_id: String,
@@ -21,7 +21,7 @@ pub struct ModerationSyncRefreshInput {
     pub endpoint: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ModerationSyncMutationInput {
     #[serde(default)]
@@ -35,7 +35,7 @@ pub struct ModerationSyncMutationInput {
     pub(crate) enabled: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ModerationSyncRefreshOutput {
     pub accepted: bool,
@@ -45,7 +45,7 @@ pub struct ModerationSyncRefreshOutput {
     pub rows: Vec<RemoteModerationRow>,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoteModerationRow {
     pub(crate) id: String,
@@ -68,7 +68,7 @@ impl RemoteModerationRow {
     }
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ModerationSyncMutationOutput {
     pub target_user_id: String,

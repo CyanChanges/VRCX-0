@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 type LocalDbValue = unknown;
 
@@ -25,7 +25,7 @@ type BrokenGameLogDisplayNameEntry = {
 };
 
 function runMaintenanceTask(task: string): Promise<unknown> {
-    return tauriClient.app.DatabaseMaintenanceRun({ task });
+    return commands.appDatabaseMaintenanceRun(task);
 }
 
 async function initGlobalTables(): Promise<void> {
@@ -42,24 +42,18 @@ async function optimize(): Promise<void> {
 
 async function getMaxFriendLogNumber(userId: unknown): Promise<number> {
     return Number(
-        (await tauriClient.app.DatabaseMaintenanceMaxFriendLogNumberGet({
-            userId:
-                typeof userId === 'string'
+        (await commands.appDatabaseMaintenanceMaxFriendLogNumberGet(typeof userId === 'string'
                     ? userId.trim()
-                    : String(userId ?? '').trim()
-        })) ?? 0
+                    : String(userId ?? '').trim())) ?? 0
     );
 }
 
 async function getRuntimeTableSizes(
     userId: unknown = ''
 ): Promise<MaintenanceTableSizes> {
-    const sizes = (await tauriClient.app.DatabaseMaintenanceTableSizesGet({
-        userId:
-            typeof userId === 'string'
+    const sizes = (await commands.appDatabaseMaintenanceTableSizesGet(typeof userId === 'string'
                 ? userId.trim()
-                : String(userId ?? '').trim()
-    })) as MaintenanceTableSizes;
+                : String(userId ?? '').trim())) as MaintenanceTableSizes;
     return sizes;
 }
 
@@ -161,7 +155,7 @@ async function fixNegativeGPS(): Promise<void> {
 }
 
 async function getBrokenLeaveEntries(): Promise<LocalDbValue[]> {
-    const rows = await tauriClient.app.DatabaseMaintenanceBrokenLeaveEntriesGet();
+    const rows = await commands.appDatabaseMaintenanceBrokenLeaveEntriesGet();
     return Array.isArray(rows) ? (rows as LocalDbValue[]) : [];
 }
 
@@ -189,7 +183,7 @@ async function getBrokenGameLogDisplayNames(): Promise<
     BrokenGameLogDisplayNameEntry[]
 > {
     const rows =
-        (await tauriClient.app.DatabaseMaintenanceBrokenGameLogDisplayNamesGet()) as
+        (await commands.appDatabaseMaintenanceBrokenGameLogDisplayNamesGet()) as
             | Array<{ id?: LocalDbValue; displayName?: unknown }>
             | null;
     return (Array.isArray(rows) ? rows : []).map((row) => ({

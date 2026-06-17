@@ -21,7 +21,7 @@ pub struct BackgroundPresenceFactsInput {
     pub friends_by_id: HashMap<String, FriendRecord>,
     pub favorite_friend_groups_by_key: HashMap<String, Vec<String>>,
 }
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackgroundPresenceFacts {
     pub current_user_id: String,
@@ -48,7 +48,7 @@ pub struct BackgroundPresenceFacts {
     pub now_playing: Value,
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PresencePlayer {
     pub id: String,

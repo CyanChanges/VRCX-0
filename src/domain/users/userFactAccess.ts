@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import { useUserFactsStore } from '@/state/userFactsStore';
 
 import {
@@ -49,7 +49,7 @@ function ingestUserFactEntries(
     if (!valid.length) {
         return;
     }
-    tauriClient.app.IngestUserFacts(valid).catch((error: any) => {
+    commands.appIngestUserFacts(valid).catch((error: any) => {
         console.warn('Failed to ingest user facts:', error);
     });
 }

@@ -1,6 +1,6 @@
+import { commands } from '@/platform/tauri/bindings';
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
 import authRepository from '@/repositories/authRepository';
 import webRepository from '@/repositories/webRepository';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -171,7 +171,7 @@ async function applyAutoLoginDelay(
 
 async function flashWindowSafely() {
     try {
-        await tauriClient.app.FlashWindow();
+        await commands.appFlashWindow();
     } catch {
         // ignore host gaps during auth bootstrap
     }
@@ -179,7 +179,7 @@ async function flashWindowSafely() {
 
 async function showAuthFailureNotificationSafely(reason: string) {
     try {
-        await tauriClient.app.AuthFailureNotificationShow(reason);
+        await commands.appAuthFailureNotificationShow(reason);
     } catch (error) {
         console.warn('Failed to show auth failure notification:', error);
     }

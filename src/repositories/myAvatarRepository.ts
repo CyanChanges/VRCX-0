@@ -1,9 +1,9 @@
+import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys
 } from '@/lib/entityQueryCache';
-import { tauriClient } from '@/platform/tauri/client';
 
 import avatarCacheRepository from './avatarCacheRepository';
 import userSessionRepository from './userSessionRepository';
@@ -123,7 +123,7 @@ async function getAvatarsPage({
     n = PAGE_SIZE
 }: AvatarPageOptions = {}) {
     return unwrapVrchatAvatarResponse<AvatarRecord[]>(
-        await tauriClient.app.VrchatAvatarListByUserGet({
+        await commands.appVrchatAvatarListByUserGet({
             endpoint,
             user: 'me',
             n,
@@ -291,7 +291,7 @@ async function saveAvatar({
     }
 
     const response = unwrapVrchatAvatarResponse<AvatarRecord>(
-        await tauriClient.app.VrchatAvatarSave({
+        await commands.appVrchatAvatarSave({
             avatarId: normalizedAvatarId,
             endpoint,
             params: {
@@ -315,7 +315,7 @@ async function createImpostor({ avatarId, endpoint = '' }: AvatarIdInput = {}) {
     }
 
     const response = unwrapVrchatAvatarResponse(
-        await tauriClient.app.VrchatAvatarImpostorCreate({
+        await commands.appVrchatAvatarImpostorCreate({
             avatarId: normalizedAvatarId,
             endpoint,
             emptyBody: false
@@ -336,7 +336,7 @@ async function getAvailableAvatarStyles({
         force,
         queryFn: async () => {
             const response = unwrapVrchatAvatarResponse(
-                await tauriClient.app.VrchatAvatarStylesGet({ endpoint }),
+                await commands.appVrchatAvatarStylesGet({ endpoint }),
                 'avatarStyles'
             );
             return Array.isArray(response.json) ? response.json : [];

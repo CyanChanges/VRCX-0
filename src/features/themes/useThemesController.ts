@@ -1,8 +1,8 @@
+import { commands } from '@/platform/tauri/bindings';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
-import { tauriClient } from '@/platform/tauri/client';
 import type { CommunityThemeStatsById } from '@/repositories/communityThemeRepository';
 import {
     loadCommunityThemeStats,
@@ -337,7 +337,7 @@ export function useThemesController() {
 
     async function pickLocalThemeFolder() {
         try {
-            const folderPath = await tauriClient.app.OpenFolderSelectorDialog(
+            const folderPath = await commands.appOpenFolderSelectorDialog(
                 devFolderPath || localPreview?.folderPath || null
             );
             if (!folderPath) {

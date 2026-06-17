@@ -20,7 +20,7 @@ const PREVIEW_DIR_NAME: &str = "vrcx0-overlay-preview";
 const PREVIEW_FILE_NAME: &str = "wrist.json";
 const PREVIEW_WRITE_INTERVAL: Duration = Duration::from_millis(250);
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WristOverlayPreviewSnapshot {
     pub version: u32,

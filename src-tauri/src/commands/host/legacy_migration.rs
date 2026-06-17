@@ -8,11 +8,13 @@ use vrcx_0_persistence::legacy_migration::LegacyMigrationPaths;
 use vrcx_0_persistence::legacy_vrcx::LegacyVrcxMigrationStatus;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__check_legacy_vrcx_available(state: State<'_, AppState>) -> bool {
     state.legacy_vrcx_available
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_legacy_vrcx_migration_status(
     state: State<'_, AppState>,
 ) -> LegacyVrcxMigrationStatus {
@@ -20,6 +22,7 @@ pub fn app__get_legacy_vrcx_migration_status(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__get_legacy_vrcx_force_migration_status() -> LegacyVrcxMigrationStatus {
     let (_, status) = vrcx_0_persistence::legacy_vrcx::discover_supported_legacy_source();
     status
@@ -33,6 +36,7 @@ fn legacy_migration_unavailable_reason(status: &LegacyVrcxMigrationStatus) -> St
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__request_legacy_migration(
     app_handle: AppHandle,
     state: State<'_, AppState>,
@@ -62,6 +66,7 @@ pub fn app__request_legacy_migration(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__request_legacy_vrcx_force_migration(
     app_handle: AppHandle,
     state: State<'_, AppState>,

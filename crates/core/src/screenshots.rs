@@ -1,4 +1,4 @@
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ScreenshotMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -20,7 +20,7 @@ pub struct ScreenshotMetadata {
     pub error: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ScreenshotLibraryScanStatus {
     pub running: bool,
@@ -33,7 +33,7 @@ pub struct ScreenshotLibraryScanStatus {
     pub last_scan_at: Option<String>,
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ScreenshotFolderInfo {
     pub path: String,
@@ -44,14 +44,14 @@ pub struct ScreenshotFolderInfo {
     pub latest_modified_at: Option<i64>,
 }
 
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ScreenshotFolderTree {
     pub root_path: String,
     pub folders: Vec<ScreenshotFolderInfo>,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ScreenshotLibraryImage {
     pub path: String,
@@ -69,7 +69,7 @@ pub struct ScreenshotLibraryImage {
     pub error: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AuthorDetail {
     #[serde(default)]
@@ -78,7 +78,7 @@ pub struct AuthorDetail {
     pub display_name: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldDetail {
     #[serde(default)]
@@ -89,7 +89,7 @@ pub struct WorldDetail {
     pub instance_id: String,
 }
 
-#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct PlayerDetail {
     #[serde(default)]

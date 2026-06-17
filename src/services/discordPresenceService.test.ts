@@ -10,14 +10,10 @@ const mocks = vi.hoisted(() => ({
     t: vi.fn()
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: {
-        discord: {
-            SetActive: mocks.setActive,
-            SetAssets: mocks.setAssets
-        }
-    }
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: {
+                discordSetActive: mocks.setActive,
+                discordSetAssets: mocks.setAssets
+            } }));
 
 vi.mock('@/repositories/configRepository', () => ({
     default: {

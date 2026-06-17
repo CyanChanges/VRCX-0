@@ -6,6 +6,7 @@ use crate::error::AppError;
 use crate::state::AppState;
 
 #[tauri::command]
+#[specta::specta]
 pub fn app__xs_notification(
     title: String,
     content: String,
@@ -26,6 +27,7 @@ pub fn app__xs_notification(
 }
 
 #[tauri::command]
+#[specta::specta]
 #[allow(clippy::too_many_arguments)]
 pub async fn app__ovrt_notification(
     state: State<'_, AppState>,

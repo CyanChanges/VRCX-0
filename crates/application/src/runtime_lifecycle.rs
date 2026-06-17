@@ -8,7 +8,7 @@ fn now_iso() -> String {
     Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimePhaseSnapshot {
     pub name: String,
@@ -17,7 +17,7 @@ pub struct RuntimePhaseSnapshot {
     pub updated_at: String,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeLifecycleSnapshot {
     pub started_at: String,

@@ -8,7 +8,7 @@ use crate::database::DatabaseService;
 use crate::realtime::normalize_user_table_prefix;
 use crate::Error;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct MemoSaveResult {
     pub entity_id: String,
@@ -16,7 +16,7 @@ pub struct MemoSaveResult {
     pub memo: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct UserMemoOutput {
     pub user_id: String,
@@ -24,7 +24,7 @@ pub struct UserMemoOutput {
     pub memo: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct WorldMemoOutput {
     pub world_id: String,
@@ -32,7 +32,7 @@ pub struct WorldMemoOutput {
     pub memo: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct AvatarMemoOutput {
     pub avatar_id: String,
@@ -40,7 +40,7 @@ pub struct AvatarMemoOutput {
     pub memo: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct UserNoteOutput {
     pub user_id: String,

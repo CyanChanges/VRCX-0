@@ -1,5 +1,5 @@
-import { tauriClient } from '@/platform/tauri/client';
-import type { BackendRuntimeSnapshot } from '@/platform/tauri/appCommandTypes';
+import { commands } from '@/platform/tauri/bindings';
+import type { BackendRuntimeSnapshot } from '@/platform/tauri/bindings';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useSessionStore } from '@/state/sessionStore';
 
@@ -84,8 +84,7 @@ function buildMinimalCurrentUserSnapshot(
 }
 
 async function getBackendFrontendSessionSnapshot() {
-    return tauriClient.app
-        .GetBackendRuntimeFrontendSessionSnapshot()
+    return commands.appGetBackendRuntimeFrontendSessionSnapshot()
         .catch(() => null);
 }
 
@@ -138,7 +137,7 @@ export async function resumeFrontendSessionFromBackendRuntime(
 
     const userId = normalizeString(snapshot.authUserId);
     const [scope, frontendSessionSnapshot] = await Promise.all([
-        tauriClient.app.RuntimeAuthScopeGet().catch(() => null),
+        commands.appRuntimeAuthScopeGet().catch(() => null),
         getBackendFrontendSessionSnapshot()
     ]);
     const latestSessionState = useSessionStore.getState();

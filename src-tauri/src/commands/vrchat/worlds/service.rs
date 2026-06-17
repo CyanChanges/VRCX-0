@@ -35,6 +35,7 @@ async fn execute_world_api(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_get(
     state: State<'_, AppState>,
     input: VrchatWorldIdInput,
@@ -50,6 +51,7 @@ pub async fn app__vrchat_world_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_list_by_user_get(
     state: State<'_, AppState>,
     input: VrchatWorldListByUserInput,
@@ -73,6 +75,7 @@ pub async fn app__vrchat_world_list_by_user_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_persistent_data_exists(
     state: State<'_, AppState>,
     input: VrchatWorldPersistentDataDeleteInput,
@@ -89,6 +92,7 @@ pub async fn app__vrchat_world_persistent_data_exists(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_save(
     state: State<'_, AppState>,
     input: VrchatWorldSaveInput,
@@ -104,6 +108,7 @@ pub async fn app__vrchat_world_save(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_delete(
     state: State<'_, AppState>,
     input: VrchatWorldIdInput,
@@ -119,6 +124,7 @@ pub async fn app__vrchat_world_delete(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_publish(
     state: State<'_, AppState>,
     input: VrchatWorldIdInput,
@@ -134,6 +140,7 @@ pub async fn app__vrchat_world_publish(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_unpublish(
     state: State<'_, AppState>,
     input: VrchatWorldIdInput,
@@ -149,6 +156,7 @@ pub async fn app__vrchat_world_unpublish(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__vrchat_world_persistent_data_delete(
     state: State<'_, AppState>,
     input: VrchatWorldPersistentDataDeleteInput,

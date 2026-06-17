@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import userSessionRepository from '@/repositories/userSessionRepository';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -64,7 +64,7 @@ async function requestGameRunningStateRefresh(): Promise<boolean> {
     }
 
     try {
-        await tauriClient.app.CheckGameRunning();
+        await commands.appCheckGameRunning();
         return true;
     } catch (error) {
         console.warn(

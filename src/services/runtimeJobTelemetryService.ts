@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 type RuntimeJobStatus =
     | 'frontend-owned'
@@ -19,7 +19,7 @@ type RuntimeJobTelemetryRecord = {
 export async function recordRuntimeJobTelemetry(
     record: RuntimeJobTelemetryRecord
 ): Promise<void> {
-    await tauriClient.app.RuntimeBackgroundJobRecord({
+    await commands.appRuntimeBackgroundJobRecord({
         owner: 'frontend',
         detail: '',
         ...record

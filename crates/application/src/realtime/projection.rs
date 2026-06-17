@@ -1,7 +1,7 @@
 use serde::Serialize;
 use serde_json::{Map, Value};
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendProjectionPatch {
     pub user_id: String,
@@ -11,7 +11,7 @@ pub struct FriendProjectionPatch {
     pub state_bucket_authority: Option<String>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct FriendProjection {
     pub generation: u64,
@@ -25,7 +25,7 @@ pub struct FriendProjection {
     pub friend_log_changed: bool,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeNotificationUpsert {
     pub notification: Value,
@@ -36,7 +36,7 @@ pub struct RealtimeNotificationUpsert {
     pub run_automation: bool,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeNotificationProjection {
     pub generation: u64,
@@ -49,7 +49,7 @@ pub struct RealtimeNotificationProjection {
     pub clear_menu_if_no_unseen: bool,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeCurrentUserProjection {
     pub generation: u64,
@@ -59,7 +59,7 @@ pub struct RealtimeCurrentUserProjection {
     pub game_state_patch: Option<Map<String, Value>>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeInstanceClosedProjection {
     pub generation: u64,
@@ -67,7 +67,7 @@ pub struct RealtimeInstanceClosedProjection {
     pub feed_entry: Value,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeInstanceQueueProjection {
     pub generation: u64,

@@ -16,7 +16,7 @@ pub struct LegacyVrcxSource {
     pub version: i64,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct LegacyVrcxMigrationStatus {
     pub detected: bool,

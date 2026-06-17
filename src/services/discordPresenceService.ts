@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import groupProfileRepository from '@/repositories/groupProfileRepository';
 import playerListPersistenceRepository from '@/repositories/playerListPersistenceRepository';
@@ -226,7 +226,7 @@ async function setDiscordActiveState(active: boolean, { force = false }: any = {
         return isDiscordActive;
     }
     try {
-        isDiscordActive = Boolean(await tauriClient.discord.SetActive(active));
+        isDiscordActive = Boolean(await commands.discordSetActive(active));
         return isDiscordActive;
     } catch (error) {
         isDiscordActive = false;
@@ -381,7 +381,7 @@ async function publishDiscordActivity({
 }: Record<string, any>) {
     try {
         isDiscordActive = Boolean(
-            await tauriClient.discord.SetAssets({ appId, activity })
+            await commands.discordSetAssets({ appId, activity })
         );
         useRuntimeStore.getState().setUpdateLoopState({
             lastDiscordPresenceAt: new Date().toISOString(),

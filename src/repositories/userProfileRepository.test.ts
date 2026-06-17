@@ -1,21 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const tauriMock = vi.hoisted(() => ({
-    app: {
-        VrchatUserMutualFriendsGet: vi.fn()
+    commands: {
+        appVrchatUserMutualFriendsGet: vi.fn()
     }
 }));
 
-vi.mock('@/platform/tauri/client', () => ({
-    tauriClient: tauriMock,
-    default: tauriMock
-}));
+vi.mock('@/platform/tauri/bindings', () => ({ commands: tauriMock.commands }));
 
 import userProfileRepository from './userProfileRepository';
 
 describe('UserProfileRepository', () => {
     beforeEach(() => {
-        vi.mocked(tauriMock.app.VrchatUserMutualFriendsGet).mockReset();
+        vi.mocked(tauriMock.commands.appVrchatUserMutualFriendsGet).mockReset();
     });
 
     it('normalizes user profile defaults, trust metadata, moderator flags, and platform fallback', () => {
@@ -101,7 +98,7 @@ describe('UserProfileRepository', () => {
     });
 
     it('collects mutual friends until the first short page', async () => {
-        vi.mocked(tauriMock.app.VrchatUserMutualFriendsGet)
+        vi.mocked(tauriMock.commands.appVrchatUserMutualFriendsGet)
             .mockResolvedValueOnce({
                 status: 200,
                 data: Array.from({ length: 100 }, (_, index) => ({
@@ -121,7 +118,7 @@ describe('UserProfileRepository', () => {
         });
 
         expect(
-            tauriMock.app.VrchatUserMutualFriendsGet
+            tauriMock.commands.appVrchatUserMutualFriendsGet
         ).toHaveBeenNthCalledWith(1, {
             userId: 'usr_target',
             endpoint: 'https://api.example.test',
@@ -129,14 +126,14 @@ describe('UserProfileRepository', () => {
             offset: 0
         });
         expect(
-            tauriMock.app.VrchatUserMutualFriendsGet
+            tauriMock.commands.appVrchatUserMutualFriendsGet
         ).toHaveBeenNthCalledWith(2, {
             userId: 'usr_target',
             endpoint: 'https://api.example.test',
             n: 100,
             offset: 100
         });
-        expect(tauriMock.app.VrchatUserMutualFriendsGet).toHaveBeenCalledTimes(
+        expect(tauriMock.commands.appVrchatUserMutualFriendsGet).toHaveBeenCalledTimes(
             2
         );
         expect(rows).toHaveLength(101);

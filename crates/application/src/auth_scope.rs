@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use serde::Serialize;
 use vrcx_0_vrchat_client::http_api::normalize_vrchat_api_endpoint;
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RuntimeAuthScopeSnapshot {
     pub current_user_id: String,

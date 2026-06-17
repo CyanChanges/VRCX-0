@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 import { normalizeUserTablePrefix } from './userSessionRepository';
 
@@ -111,10 +111,7 @@ function ensureFeedTablesForUser(userId: unknown): Promise<void> {
         return existing;
     }
 
-    const promise = tauriClient.app
-        .UserTablesEnsure({
-            userId: normalizeString(userId)
-        })
+    const promise = commands.appUserTablesEnsure(normalizeString(userId))
         .then(() => undefined)
         .catch((error: unknown) => {
             if (ensuredFeedTablePrefixes.get(userPrefix) === promise) {
@@ -138,13 +135,10 @@ function addFeedEntry(
     type: unknown,
     entry: Record<string, unknown> = {}
 ) {
-    return tauriClient.app.FeedAddEntry({
-        userId: normalizeString(userId),
-        entry: {
+    return commands.appFeedAddEntry(normalizeString(userId), {
             ...entry,
             type
-        }
-    });
+        });
 }
 
 async function queryFeedRows({
@@ -160,8 +154,7 @@ async function queryFeedRows({
     cursor = null
 }: FeedRowsQueryOptions): Promise<FeedDatabaseRow[]> {
     await ensureFeedTablesForUser(userId);
-    const rows = (await tauriClient.app.FeedRowsQuery({
-        query: {
+    const rows = (await commands.appFeedRowsQuery({
             userId: normalizeString(userId),
             mode,
             search,
@@ -172,8 +165,7 @@ async function queryFeedRows({
             dateFrom,
             dateTo,
             cursor
-        }
-    })) as FeedDatabaseRow[];
+        })) as FeedDatabaseRow[];
     return Array.isArray(rows) ? rows : [];
 }
 
@@ -247,10 +239,7 @@ const feed = {
      * @param {string|null} cutoffDate - ISO date string. Deletes records older than this date. If null, deletes all records.
      */
     async purgeAvatarFeedData(userId: unknown, cutoffDate: unknown) {
-        await tauriClient.app.FeedAvatarPurge({
-            userId: normalizeString(userId),
-            cutoffDate: normalizeString(cutoffDate) || null
-        });
+        await commands.appFeedAvatarPurge(normalizeString(userId), normalizeString(cutoffDate) || null);
     },
 
     addOnlineOfflineToDatabase(
@@ -309,8 +298,7 @@ const feed = {
     }: FeedReadModelQueryOptions) {
         await ensureFeedTablesForUser(userId);
         return normalizeFeedReadModelResult(
-            await tauriClient.app.FeedReadModelQuery({
-                query: {
+            await commands.appFeedReadModelQuery({
                     userId: normalizeString(userId),
                     mode,
                     search,
@@ -328,8 +316,7 @@ const feed = {
                         : [],
                     excludedUserIds: normalizeStringList(excludedUserIds),
                     maxRows
-                }
-            })
+                })
         );
     },
 
@@ -348,8 +335,7 @@ const feed = {
         maxRows = DEFAULT_MAX_TABLE_SIZE
     }: FeedLiveRowsMergeOptions) {
         return normalizeFeedReadModelResult(
-            await tauriClient.app.FeedLiveRowsMerge({
-                query: {
+            await commands.appFeedLiveRowsMerge({
                     rows: Array.isArray(rows) ? rows : [],
                     currentUserId: normalizeString(currentUserId),
                     filters: normalizeStringList(filters),
@@ -364,8 +350,7 @@ const feed = {
                     liveEntries: Array.isArray(liveEntries) ? liveEntries : [],
                     minLiveSequence,
                     maxRows
-                }
-            })
+                })
         );
     },
 

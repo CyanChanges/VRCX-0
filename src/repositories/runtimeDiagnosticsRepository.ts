@@ -1,32 +1,32 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 import type {
     RuntimeAppSnapshot,
     RuntimeBackgroundJobSnapshot,
     RuntimeDiagnosticsSnapshot,
     RuntimeLifecycleSnapshot,
     RuntimeSyncSnapshot
-} from '@/platform/tauri/client';
+} from '@/platform/tauri/bindings';
 
 async function getAppSnapshot(): Promise<RuntimeAppSnapshot> {
-    return tauriClient.app.RuntimeAppSnapshotGet();
+    return commands.appRuntimeAppSnapshotGet();
 }
 
 async function getRuntimeSnapshot(): Promise<RuntimeLifecycleSnapshot> {
-    return tauriClient.app.RuntimeLifecycleSnapshotGet();
+    return commands.appRuntimeLifecycleSnapshotGet();
 }
 
 async function getBackgroundJobsSnapshot(): Promise<
     RuntimeBackgroundJobSnapshot[]
 > {
-    return tauriClient.app.RuntimeBackgroundJobsSnapshotGet();
+    return commands.appRuntimeBackgroundJobsSnapshotGet();
 }
 
 async function getSyncSnapshot(): Promise<RuntimeSyncSnapshot> {
-    return tauriClient.app.RuntimeSyncSnapshotGet();
+    return commands.appRuntimeSyncSnapshotGet();
 }
 
 async function getDiagnostics(): Promise<RuntimeDiagnosticsSnapshot> {
-    return tauriClient.app.RuntimeDiagnosticsGet();
+    return commands.appRuntimeDiagnosticsGet();
 }
 
 const runtimeDiagnosticsRepository = Object.freeze({

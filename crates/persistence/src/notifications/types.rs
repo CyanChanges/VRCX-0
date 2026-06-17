@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationRowsQueryInput {
     pub user_id: String,
@@ -12,7 +12,7 @@ pub struct NotificationRowsQueryInput {
     pub include_unseen: bool,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "snake_case")]
 pub struct NotificationV1RowOutput {
     pub id: String,
@@ -31,7 +31,7 @@ pub struct NotificationV1RowOutput {
     pub expired: i64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "snake_case")]
 pub struct NotificationV2RowOutput {
     pub id: String,
@@ -52,7 +52,7 @@ pub struct NotificationV2RowOutput {
     pub details: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationRowsOutput {
     pub v1_rows: Vec<NotificationV1RowOutput>,
@@ -60,7 +60,7 @@ pub struct NotificationRowsOutput {
     pub unseen_v2_rows: Vec<NotificationV2RowOutput>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationListQueryInput {
     pub user_id: String,
@@ -76,7 +76,7 @@ pub struct NotificationListQueryInput {
     pub include_unseen: bool,
 }
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct NotificationListItemOutput {
     pub id: String,

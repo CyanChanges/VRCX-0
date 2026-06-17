@@ -108,7 +108,7 @@ pub struct RuntimeHostOptions {
     pub app_data_dir: AppDataDirResolution,
 }
 
-#[derive(Clone, Debug, Default, Serialize)]
+#[derive(Clone, Debug, Default, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct BackendRuntimeFrontendSessionSnapshot {
     pub authenticated: bool,

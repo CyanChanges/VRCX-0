@@ -24,6 +24,7 @@ fn social_baseline_deps(state: &State<'_, AppState>) -> SocialBaselineDeps {
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__social_favorites_baseline_get(
     state: State<'_, AppState>,
     input: SocialFavoritesBaselineInput,
@@ -72,6 +73,7 @@ pub async fn app__social_favorites_baseline_get(
 }
 
 #[tauri::command]
+#[specta::specta]
 pub async fn app__social_friend_roster_baseline_get(
     state: State<'_, AppState>,
     input: SocialFriendRosterBaselineInput,

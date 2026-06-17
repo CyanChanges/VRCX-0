@@ -21,6 +21,15 @@ impl Serialize for AppError {
     }
 }
 
+impl specta::Type for AppError {
+    fn inline(
+        type_map: &mut specta::TypeCollection,
+        generics: specta::Generics,
+    ) -> specta::DataType {
+        String::inline(type_map, generics)
+    }
+}
+
 impl From<vrcx_0_persistence::Error> for AppError {
     fn from(value: vrcx_0_persistence::Error) -> Self {
         match value {

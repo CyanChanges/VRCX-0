@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use serde::Deserialize;
 use serde_json::Value;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiAvatarSearchInput {
     #[serde(default)]
@@ -12,7 +12,7 @@ pub struct ExternalApiAvatarSearchInput {
     pub(crate) vrcx_id: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiTranslationInput {
     #[serde(default)]
@@ -25,7 +25,7 @@ pub struct ExternalApiTranslationInput {
     pub(crate) body: Value,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiYoutubeVideoInput {
     #[serde(default)]
@@ -34,14 +34,14 @@ pub struct ExternalApiYoutubeVideoInput {
     pub(crate) api_key: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiVrcStatusInput {
     #[serde(default)]
     pub(crate) path: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiUrlInput {
     #[serde(default)]
@@ -50,7 +50,7 @@ pub struct ExternalApiUrlInput {
     pub(crate) headers: HashMap<String, String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct ExternalApiImageInput {
     #[serde(default)]

@@ -1,4 +1,4 @@
-import { tauriClient } from '@/platform/tauri/client';
+import { commands } from '@/platform/tauri/bindings';
 
 type SQLiteLikeRow = Record<string, unknown> | unknown[];
 
@@ -95,9 +95,7 @@ async function getAvailableDates(userId: unknown): Promise<unknown[]> {
         return [];
     }
 
-    const rows = await tauriClient.app.InstanceActivityDatesGet({
-        userId: normalizedUserId
-    });
+    const rows = await commands.appInstanceActivityDatesGet(normalizedUserId);
 
     return Array.isArray(rows) ? rows.filter(Boolean) : [];
 }
@@ -106,10 +104,7 @@ async function getInstanceActivityRows(
     startDate: string,
     endDate: string
 ): Promise<InstanceActivityRow[]> {
-    const rows = await tauriClient.app.InstanceActivityRowsGet({
-        startDate,
-        endDate
-    });
+    const rows = await commands.appInstanceActivityRowsGet(startDate, endDate);
 
     return Array.isArray(rows)
         ? rows.map((row) => normalizeInstanceActivityRow(row))
@@ -130,9 +125,7 @@ async function getWorldSummariesByIds(
         return {};
     }
 
-    const rows = (await tauriClient.app.WorldSummariesGet({
-        worldIds: ids
-    })) as Record<string, SQLiteLikeRow>;
+    const rows = (await commands.appWorldSummariesGet(ids)) as Record<string, SQLiteLikeRow>;
 
     const map: Record<string, WorldSummary> = {};
     for (const [worldId, row] of Object.entries(rows || {})) {
