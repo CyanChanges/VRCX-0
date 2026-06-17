@@ -1,5 +1,5 @@
-import { commands } from '@/platform/tauri/bindings';
 import { normalizeLanguageCode } from '@/localization/locales';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import databaseMaintenanceRepository from '@/repositories/databaseMaintenanceRepository';
 import { useRuntimeStore } from '@/state/runtimeStore';
@@ -7,6 +7,7 @@ import { useSessionStore } from '@/state/sessionStore';
 import { useShellStore } from '@/state/shellStore';
 
 import { refreshSavedAuthSnapshot } from './authSnapshotService';
+import { initializeBackgroundImage } from './background-image/backgroundImageService';
 import { runStartupMaintenance } from './backgroundMaintenanceService';
 import { initializeCommunityThemes } from './communityThemeService';
 import { initializeDatabaseUpgradeFlow } from './databaseUpgradeService';
@@ -16,7 +17,6 @@ import {
     isHostCapabilityAvailable
 } from './hostCapabilityService';
 import { loadPreferenceSnapshot } from './preferencesService';
-import { initializeBackgroundImage } from './background-image/backgroundImageService';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService';
 import {
     APP_CJK_FONT_PACK_DEFAULT_KEY,
@@ -56,7 +56,7 @@ export async function initializeReactRuntime() {
         await configRepository.init();
 
         const [
-            locale,
+            savedAppLanguage,
             themeMode,
             zoomLevel,
             themeColor,
@@ -64,7 +64,7 @@ export async function initializeReactRuntime() {
             customFontFamily,
             cjkFontPack
         ] = await Promise.all([
-            configRepository.getString('appLanguage', 'en'),
+            configRepository.getRawValue('appLanguage'),
             configRepository.getString('themeMode', 'system'),
             configRepository.getString('VRCX_ZoomLevel', null),
             configRepository.getString('VRCX_themeColor', 'default'),
@@ -76,11 +76,17 @@ export async function initializeReactRuntime() {
             )
         ]);
 
-        const normalizedLocale = normalizeLanguageCode(locale);
+        const trimmedSavedAppLanguage = String(savedAppLanguage ?? '').trim();
+        const localeSource = trimmedSavedAppLanguage
+            ? trimmedSavedAppLanguage
+            : await commands
+                  .appCurrentLanguage()
+                  .catch(() => navigator.language || null);
+        const normalizedLocale = normalizeLanguageCode(localeSource);
         shellStore.setLocale(normalizedLocale);
         if (
-            String(locale || '').trim() &&
-            String(locale).trim() !== normalizedLocale
+            trimmedSavedAppLanguage &&
+            trimmedSavedAppLanguage !== normalizedLocale
         ) {
             await configRepository.setString('appLanguage', normalizedLocale);
         }

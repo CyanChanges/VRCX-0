@@ -5945,13 +5945,16 @@
             "error": {
                 "failed_upgrade_description": "The previous database upgrade failed. This database cannot be used until it is repaired manually.\n\nWork database: {path}",
                 "failed_upgrade_description_with_reason": "The previous database upgrade failed. This database cannot be used until it is repaired manually.\n\nWork database: {path}\n\nReason: {reason}",
-                "apply_upgrade_failed": "VRCX-0 failed to apply a local database upgrade"
+                "apply_upgrade_failed": "VRCX-0 failed to apply a local database upgrade",
+                "legacy_migration_restart_failed": "VRCX-0 couldn't restart to migrate your existing VRCX data. You can try again, or skip to continue with the current database."
             },
             "success": {
                 "database_update_complete": "Database update complete"
             },
             "action": {
-                "refresh_config_failed_after_upgrade": "VRCX-0 upgraded the database, but failed to refresh local configuration. Please restart the application"
+                "refresh_config_failed_after_upgrade": "VRCX-0 upgraded the database, but failed to refresh local configuration. Please restart the application",
+                "requesting_legacy_migration": "Preparing to migrate your existing VRCX data...",
+                "skipping_legacy_migration": "Skipping migration and setting up your database..."
             },
             "dynamic": {
                 "updating_database_from_value_to_value": "Updating database from {value} to {value2}"

@@ -19,6 +19,29 @@ export const languageCodes = [
 ];
 
 export function normalizeLanguageCode(language: unknown) {
-    const candidate = typeof language === 'string' ? language.trim() : '';
-    return languageCodes.includes(candidate) ? candidate : DEFAULT_LANGUAGE_CODE;
+    const candidate =
+        typeof language === 'string' ? language.trim().replace(/_/g, '-') : '';
+    if (languageCodes.includes(candidate)) {
+        return candidate;
+    }
+
+    const parts = candidate.split('-').filter(Boolean);
+    const baseLanguage = parts[0]?.toLowerCase() || '';
+    if (!baseLanguage) {
+        return DEFAULT_LANGUAGE_CODE;
+    }
+
+    if (baseLanguage === 'zh') {
+        const detailParts = parts.slice(1).map((part) => part.toLowerCase());
+        const hasTraditionalScript = detailParts.includes('hant');
+        const hasTraditionalRegion = detailParts.some((part) =>
+            ['tw', 'hk', 'mo'].includes(part)
+        );
+        return hasTraditionalScript || hasTraditionalRegion ? 'zh-TW' : 'zh-CN';
+    }
+
+    const supportedBaseLanguage = languageCodes.find(
+        (code) => code.toLowerCase() === baseLanguage
+    );
+    return supportedBaseLanguage ?? DEFAULT_LANGUAGE_CODE;
 }

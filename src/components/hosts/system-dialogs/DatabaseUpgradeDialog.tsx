@@ -15,18 +15,18 @@ import {
     DialogTitle
 } from '@/ui/shadcn/dialog';
 
-function getDatabaseUpgradeTitle(phase: any) {
+function getDatabaseUpgradeTitleKey(phase: any) {
     switch (phase) {
         case 'confirm-legacy-migration':
-            return 'Legacy VRCX Migration';
+            return 'message.database.migration_found_title';
         case 'running':
-            return 'Database Upgrade Running';
+            return 'message.database.upgrade_in_progress_title';
         case 'restarting':
-            return 'Restarting for Migration';
+            return 'message.database.migration_restarting_title';
         case 'error':
-            return 'Database Upgrade Failed';
+            return 'message.database.upgrade_failed_title';
         default:
-            return 'Database Upgrade';
+            return 'message.database.upgrade_in_progress_title';
     }
 }
 
@@ -53,17 +53,22 @@ export function DatabaseUpgradeDialog({ open }: any) {
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
-                        {getDatabaseUpgradeTitle(databaseUpgrade.phase)}
+                        {t(getDatabaseUpgradeTitleKey(databaseUpgrade.phase))}
                     </DialogTitle>
                     <DialogDescription>
                         {databaseUpgrade.detail ||
-                            'Local database migration status.'}
+                            t(
+                                'message.database.upgrade_in_progress_initializing'
+                            )}
                     </DialogDescription>
                 </DialogHeader>
                 {databaseUpgrade.phase !== 'confirm-legacy-migration' &&
                 (databaseUpgrade.fromVersion || databaseUpgrade.toVersion) ? (
                     <div className="bg-muted/30 text-muted-foreground rounded-md border p-3 text-sm">
-                        {`Version ${databaseUpgrade.fromVersion || 0} -> ${databaseUpgrade.toVersion || 0}`}
+                        {t('message.database.upgrade_in_progress_description', {
+                            from: databaseUpgrade.fromVersion || 0,
+                            to: databaseUpgrade.toVersion || 0
+                        })}
                     </div>
                 ) : null}
                 <DialogFooter>

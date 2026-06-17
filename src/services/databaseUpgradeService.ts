@@ -1,6 +1,6 @@
-import { commands } from '@/platform/tauri/bindings';
 import { toast } from 'sonner';
 
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import databaseMaintenanceRepository from '@/repositories/databaseMaintenanceRepository';
 import i18n from '@/services/i18nService';
@@ -222,9 +222,7 @@ async function getLegacyMigrationStatus(): Promise<LegacyMigrationStatus> {
     }
 
     try {
-        const available = Boolean(
-            await commands.appCheckLegacyVrcxAvailable()
-        );
+        const available = Boolean(await commands.appCheckLegacyVrcxAvailable());
         return {
             detected: available,
             available
@@ -253,7 +251,7 @@ export async function initializeDatabaseUpgradeFlow(): Promise<boolean> {
             phase: 'confirm-legacy-migration',
             fromVersion: 0,
             toVersion: 0,
-            detail: 'A legacy VRCX installation was detected. Confirm migration to let the host copy legacy data and restart, or skip to continue with the current database.',
+            detail: i18n.t('message.database.migration_found_description'),
             legacyMigrationAvailable: true
         });
         useSessionStore.getState().setSessionState({ databaseReady: false });
@@ -271,7 +269,9 @@ export async function confirmLegacyDatabaseMigration(): Promise<void> {
     setUpgradeState({
         open: true,
         phase: 'restarting',
-        detail: 'Requesting legacy migration from the Tauri host.'
+        detail: i18n.t(
+            'service.database_upgrade_service.action.requesting_legacy_migration'
+        )
     });
 
     try {
@@ -286,7 +286,9 @@ export async function confirmLegacyDatabaseMigration(): Promise<void> {
     setUpgradeState({
         open: true,
         phase: 'confirm-legacy-migration',
-        detail: 'The host did not restart for legacy migration. You can try again or skip and continue with the current database.'
+        detail: i18n.t(
+            'service.database_upgrade_service.error.legacy_migration_restart_failed'
+        )
     });
 }
 
@@ -294,7 +296,9 @@ export async function skipLegacyDatabaseMigration(): Promise<boolean> {
     setUpgradeState({
         open: false,
         phase: 'running',
-        detail: 'Skipping legacy migration and continuing database initialization.',
+        detail: i18n.t(
+            'service.database_upgrade_service.action.skipping_legacy_migration'
+        ),
         legacyMigrationAvailable: false
     });
     return runFullDatabaseUpgrade();
