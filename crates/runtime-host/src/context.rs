@@ -23,29 +23,18 @@ use vrcx_0_persistence::config::ConfigRepository;
 use vrcx_0_persistence::DatabaseService;
 
 use crate::host_actions::RuntimeHost;
-use crate::vr_overlay::OverlayLocale;
-
-const APP_LANGUAGE_CONFIG_KEY: &str = "appLanguage";
+use crate::notification::{
+    DesktopNotifier, DesktopNotifierSlot, NotificationDispatcher, NotificationDispatcherDeps,
+};
 
 #[derive(Clone)]
 struct OverlayActivityRuntimeEventSink {
     event_bus: RuntimeEventBus,
-    config: ConfigRepository,
 }
 
 impl OverlayActivitySink for OverlayActivityRuntimeEventSink {
     fn emit_overlay_activity_snapshot(&self, snapshot: OverlayActivitySnapshot) {
         self.event_bus.emit_overlay_activity_snapshot(snapshot);
-    }
-
-    fn emit_overlay_activity_delivery(&self, delivery: OverlayActivityDelivery) {
-        let locale = self
-            .config
-            .get_string(APP_LANGUAGE_CONFIG_KEY, "en")
-            .map(|value| OverlayLocale::from_config(&value))
-            .unwrap_or_default();
-        let payload = crate::notification_delivery::build_delivery_payload(&delivery, locale);
-        self.event_bus.emit("notificationDelivery", payload);
     }
 }
 
@@ -90,6 +79,8 @@ pub struct RuntimeHostContext {
     pub mutual_graph_fetch: MutualGraphFetchRuntime,
     pub overlay_activity: OverlayActivityRuntime,
     pub config: ConfigRepository,
+    notification_desktop_notifier: DesktopNotifierSlot,
+    overlay_activity_extra_sinks: Arc<Mutex<Vec<Arc<dyn OverlayActivitySink>>>>,
     game_log_snapshot: Arc<Mutex<RuntimeSnapshot>>,
     now_playing: Arc<Mutex<Value>>,
 }
@@ -103,10 +94,27 @@ impl RuntimeHostContext {
         let config = ConfigRepository::new(Arc::clone(&db));
         let event_bus = RuntimeEventBus::new();
         let overlay_activity = OverlayActivityRuntime::new();
-        overlay_activity.set_sink(OverlayActivityRuntimeEventSink {
-            event_bus: event_bus.clone(),
-            config: config.clone(),
-        });
+        let diagnostics = RuntimeDiagnostics::new();
+        let tasks = TaskSupervisor::new();
+        let session = HostSessionRuntime::new();
+        let notification_desktop_notifier = DesktopNotifierSlot::default();
+        let notification_sink: Arc<dyn OverlayActivitySink> =
+            Arc::new(NotificationDispatcher::new(NotificationDispatcherDeps {
+                session: session.clone(),
+                config: config.clone(),
+                image_cache: Arc::clone(&image_cache),
+                web: Arc::clone(&web),
+                desktop: Arc::new(notification_desktop_notifier.clone()),
+                event_bus: event_bus.clone(),
+                diagnostics: diagnostics.clone(),
+                tasks: tasks.clone(),
+            }));
+        overlay_activity.set_sink(OverlayActivityFanoutSink::new(vec![
+            Arc::new(OverlayActivityRuntimeEventSink {
+                event_bus: event_bus.clone(),
+            }),
+            Arc::clone(&notification_sink),
+        ]));
         load_overlay_activity_filters(&config, &overlay_activity);
         Self {
             db,
@@ -117,13 +125,15 @@ impl RuntimeHostContext {
             runtime: RuntimeLifecycle::new(),
             background_jobs: RuntimeBackgroundJobs::new(),
             sync: RuntimeSyncEngine::new(),
-            diagnostics: RuntimeDiagnostics::new(),
-            tasks: TaskSupervisor::new(),
-            session: HostSessionRuntime::new(),
+            diagnostics,
+            tasks,
+            session,
             auth_scope: RuntimeAuthScope::new(),
             mutual_graph_fetch: MutualGraphFetchRuntime::new(),
             overlay_activity,
             config,
+            notification_desktop_notifier,
+            overlay_activity_extra_sinks: Arc::new(Mutex::new(vec![notification_sink])),
             game_log_snapshot: Arc::new(Mutex::new(RuntimeSnapshot::default())),
             now_playing: Arc::new(Mutex::new(default_now_playing_value())),
         }
@@ -138,14 +148,36 @@ impl RuntimeHostContext {
     }
 
     pub fn set_overlay_activity_extra_sink(&self, extra_sink: Arc<dyn OverlayActivitySink>) {
+        match self.overlay_activity_extra_sinks.lock() {
+            Ok(mut sinks) => sinks.push(extra_sink),
+            Err(error) => {
+                tracing::warn!("failed to lock overlay activity extra sinks: {error}");
+                return;
+            }
+        }
+        self.refresh_overlay_activity_sinks();
+    }
+
+    pub fn set_notification_desktop_notifier(&self, desktop: Arc<dyn DesktopNotifier>) {
+        self.notification_desktop_notifier.set(desktop);
+    }
+
+    fn refresh_overlay_activity_sinks(&self) {
+        let extra_sinks = match self.overlay_activity_extra_sinks.lock() {
+            Ok(sinks) => sinks.clone(),
+            Err(error) => {
+                tracing::warn!("failed to lock overlay activity extra sinks: {error}");
+                Vec::new()
+            }
+        };
+        let mut sinks: Vec<Arc<dyn OverlayActivitySink>> = vec![Arc::new(
+            OverlayActivityRuntimeEventSink {
+                event_bus: self.event_bus.clone(),
+            },
+        )];
+        sinks.extend(extra_sinks);
         self.overlay_activity
-            .set_sink(OverlayActivityFanoutSink::new(vec![
-                Arc::new(OverlayActivityRuntimeEventSink {
-                    event_bus: self.event_bus.clone(),
-                    config: self.config.clone(),
-                }),
-                extra_sink,
-            ]));
+            .set_sink(OverlayActivityFanoutSink::new(sinks));
     }
 
     pub fn game_log_snapshot_handle(&self) -> Arc<Mutex<RuntimeSnapshot>> {
@@ -254,6 +286,9 @@ fn load_overlay_activity_filters(config: &ConfigRepository, runtime: &OverlayAct
     }
     if let Some(vr) = load_types_key_surface(config, "vrNotificationActivityFilters") {
         filters.vr = vr;
+    }
+    if let Some(webhook) = load_types_key_surface(config, "webhookActivityFilters") {
+        filters.webhook = webhook;
     }
     runtime.set_filters(filters);
 }
@@ -435,6 +470,32 @@ mod tests {
         assert_eq!(
             filters.rule_for(OverlayActivitySurface::Vr, "invite").scope,
             OverlayActivityScope::Off
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn backend_load_reads_webhook_surface_key() -> Result<(), Box<dyn std::error::Error>> {
+        let dir = TestDir::new("overlay-activity-webhook-key");
+        let db = Arc::new(DatabaseService::new(&dir.path.join("VRCX-0.sqlite3"))?);
+        let config = ConfigRepository::new(db);
+        config.set_string(
+            "webhookActivityFilters",
+            &serde_json::to_string(&json!({
+                "version": 1,
+                "types": { "invite": { "scope": "on" } }
+            }))?,
+        )?;
+        let runtime = OverlayActivityRuntime::new();
+
+        load_overlay_activity_filters(&config, &runtime);
+
+        let filters = runtime.filters();
+        assert_eq!(
+            filters
+                .rule_for(OverlayActivitySurface::Webhook, "invite")
+                .scope,
+            OverlayActivityScope::On
         );
         Ok(())
     }

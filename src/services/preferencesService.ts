@@ -3,6 +3,7 @@ import { normalizeLanguageCode } from '@/localization/locales';
 import configRepository from '@/repositories/configRepository';
 import storageRepository from '@/repositories/storageRepository';
 import {
+    DEFAULT_WEBHOOK_ACTIVITY_FILTERS,
     normalizeOverlayActivityFilterProfile,
     normalizeOverlayActivityFiltersWithDefinitions,
     parseOverlayActivityFilterProfile,
@@ -242,6 +243,9 @@ export async function loadPreferenceSnapshot() {
         imageNotifications,
         notificationTimeout,
         notificationOpacity,
+        webhookEnabled,
+        webhookUrl,
+        webhookFormat,
         wristOverlayEnabled,
         wristOverlayStartMode,
         wristOverlayButton,
@@ -281,6 +285,7 @@ export async function loadPreferenceSnapshot() {
         overlayActivityFilters,
         vrNotificationActivityFilters,
         desktopNotificationActivityFilters,
+        webhookActivityFilters,
         feedTimeDisplayMode,
         youtubeAPI,
         translationAPI,
@@ -343,6 +348,9 @@ export async function loadPreferenceSnapshot() {
         getBoolConfigWithLegacy('imageNotifications', true),
         getIntConfigWithLegacy('notificationTimeout', 3000),
         getIntConfigWithLegacy('notificationOpacity', 100),
+        configRepository.getBool('webhookEnabled', false),
+        configRepository.getString('webhookUrl', ''),
+        configRepository.getString('webhookFormat', 'generic'),
         configRepository.getBool('wristOverlayEnabled', false),
         configRepository.getString('wristOverlayStartMode', 'vrchatVrMode'),
         configRepository.getString('wristOverlayButton', 'grip'),
@@ -395,6 +403,7 @@ export async function loadPreferenceSnapshot() {
         configRepository.getString('overlayActivityFilters', ''),
         configRepository.getString('vrNotificationActivityFilters', ''),
         configRepository.getString('desktopNotificationActivityFilters', ''),
+        configRepository.getString('webhookActivityFilters', ''),
         configRepository.getString('feedTimeDisplayMode', 'relative'),
         configRepository.getBool('youtubeAPI', false),
         configRepository.getBool('translationAPI', false),
@@ -509,6 +518,9 @@ export async function loadPreferenceSnapshot() {
         notificationOpacity: Number.isFinite(notificationOpacity)
             ? notificationOpacity
             : 100,
+        webhookEnabled: Boolean(webhookEnabled),
+        webhookUrl: String(webhookUrl || ''),
+        webhookFormat: webhookFormat === 'discord' ? 'discord' : 'generic',
         wristOverlayEnabled: Boolean(wristOverlayEnabled),
         wristOverlayStartMode: wristOverlayStartMode || 'vrchatVrMode',
         wristOverlayButton: wristOverlayButton || 'grip',
@@ -558,6 +570,9 @@ export async function loadPreferenceSnapshot() {
         ),
         desktopNotificationActivityFilters: parseOverlayActivityFilterProfile(
             desktopNotificationActivityFilters
+        ),
+        webhookActivityFilters: parseOverlayActivityFilterProfile(
+            webhookActivityFilters || DEFAULT_WEBHOOK_ACTIVITY_FILTERS
         ),
         feedTimeDisplayMode: normalizeFeedTimeDisplayMode(feedTimeDisplayMode),
         youtubeAPI: Boolean(youtubeAPI),
@@ -1044,7 +1059,10 @@ export async function setOverlayActivityFiltersPreference(
 }
 
 async function setNotificationActivityFilterSurfacePreference(
-    key: 'vrNotificationActivityFilters' | 'desktopNotificationActivityFilters',
+    key:
+        | 'vrNotificationActivityFilters'
+        | 'desktopNotificationActivityFilters'
+        | 'webhookActivityFilters',
     value: any
 ) {
     const normalized = normalizeOverlayActivityFilterProfile(value);
@@ -1065,6 +1083,13 @@ export function setVrNotificationActivityFiltersPreference(value: any) {
 export function setDesktopNotificationActivityFiltersPreference(value: any) {
     return setNotificationActivityFilterSurfacePreference(
         'desktopNotificationActivityFilters',
+        value
+    );
+}
+
+export function setWebhookActivityFiltersPreference(value: any) {
+    return setNotificationActivityFilterSurfacePreference(
+        'webhookActivityFilters',
         value
     );
 }

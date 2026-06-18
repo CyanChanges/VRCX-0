@@ -6,6 +6,7 @@ import { TableLimitsDialog } from './settings-dialogs/TableLimitsDialog';
 import { TranslationApiDialog } from './settings-dialogs/TranslationApiDialog';
 import {
     DesktopNotificationsDialog,
+    WebhookNotificationsDialog,
     VrNotificationsDialog,
     WristFeedNotificationsDialog
 } from './settings-dialogs/WristFeedNotificationsDialog';
@@ -23,7 +24,8 @@ export function SettingsDialogs({
     feedFilter,
     wristFeedNotifications,
     vrNotifications,
-    desktopNotifications
+    desktopNotifications,
+    webhookNotifications
 }: any) {
     return (
         <>
@@ -112,6 +114,12 @@ export function SettingsDialogs({
                 onOpenChange={desktopNotifications.setOpen}
                 value={desktopNotifications.value}
                 onSave={desktopNotifications.onSave}
+            />
+            <WebhookNotificationsDialog
+                open={webhookNotifications.open}
+                onOpenChange={webhookNotifications.setOpen}
+                value={webhookNotifications.value}
+                onSave={webhookNotifications.onSave}
             />
         </>
     );

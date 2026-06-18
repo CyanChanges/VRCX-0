@@ -27,6 +27,7 @@ import {
     setUserGeneratedContentPathPreference,
     setVrNotificationActivityFiltersPreference,
     setDesktopNotificationActivityFiltersPreference,
+    setWebhookActivityFiltersPreference,
     setWristOverlayEnabledPreference,
     loadTrustColorPreference,
     resetTrustColorsPreference
@@ -151,6 +152,7 @@ export function useSettingsActions(deps: any) {
         setUserGeneratedContentPathPreference,
         setVrNotificationActivityFiltersPreference,
         setDesktopNotificationActivityFiltersPreference,
+        setWebhookActivityFiltersPreference,
         setWristOverlayEnabledPreference,
         sharedFeedFiltersDefaults,
         t,

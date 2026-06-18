@@ -214,7 +214,7 @@ pub fn app__auth_failure_notification_show(
     Ok(())
 }
 
-fn default_desktop_notification_sound() -> &'static str {
+pub(crate) fn default_desktop_notification_sound() -> &'static str {
     #[cfg(target_os = "windows")]
     {
         "Default"

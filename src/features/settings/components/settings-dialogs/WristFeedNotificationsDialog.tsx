@@ -174,6 +174,24 @@ export function DesktopNotificationsDialog({
     );
 }
 
+export function WebhookNotificationsDialog({
+    open,
+    onOpenChange,
+    value,
+    onSave
+}: VrNotificationsDialogProps) {
+    return (
+        <OverlayActivityFilterDialog
+            open={open}
+            onOpenChange={onOpenChange}
+            titleKey="dialog.webhook_notifications.title"
+            descriptionKey="dialog.webhook_notifications.description"
+            value={value}
+            onSave={onSave}
+        />
+    );
+}
+
 function OverlayActivityFilterDialog({
     open,
     onOpenChange,

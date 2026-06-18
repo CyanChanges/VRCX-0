@@ -121,6 +121,8 @@ export function useSettingsPageState() {
         useState(false);
     const [desktopNotificationsDialogOpen, setDesktopNotificationsDialogOpen] =
         useState(false);
+    const [webhookNotificationsDialogOpen, setWebhookNotificationsDialogOpen] =
+        useState(false);
     const [sharedFeedFilters, setSharedFeedFilters] = useState(() =>
         normalizeSharedFeedFilters()
     );
@@ -217,6 +219,7 @@ export function useSettingsPageState() {
         saveOverlayActivityFilters,
         saveVrNotificationActivityFilters,
         saveDesktopNotificationActivityFilters,
+        saveWebhookActivityFilters,
         saveWristOverlayEnabled,
         refreshRuntimeAppSnapshot,
         searchLimitError,
@@ -690,6 +693,7 @@ export function useSettingsPageState() {
             setPrefs,
             setFeedFilterDialogOpen,
             setDesktopNotificationsDialogOpen,
+            setWebhookNotificationsDialogOpen,
             saveStringPreference,
             saveBoolPreference,
             saveNotificationTtsMode,
@@ -801,13 +805,17 @@ export function useSettingsPageState() {
             setVrNotificationsDialogOpen,
             desktopNotificationsDialogOpen,
             setDesktopNotificationsDialogOpen,
+            webhookNotificationsDialogOpen,
+            setWebhookNotificationsDialogOpen,
             overlayActivityFilters: prefs.overlayActivityFilters,
             saveOverlayActivityFilters,
             vrNotificationActivityFilters: prefs.vrNotificationActivityFilters,
             saveVrNotificationActivityFilters,
             desktopNotificationActivityFilters:
                 prefs.desktopNotificationActivityFilters,
-            saveDesktopNotificationActivityFilters
+            saveDesktopNotificationActivityFilters,
+            webhookActivityFilters: prefs.webhookActivityFilters,
+            saveWebhookActivityFilters
         }
     };
 }

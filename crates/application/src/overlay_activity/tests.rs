@@ -518,6 +518,24 @@ fn delivery_requires_armed_and_recent_event() {
 }
 
 #[test]
+fn default_webhook_surface_is_opt_in() {
+    let filters = OverlayActivityFilters::default();
+
+    assert_eq!(
+        filters
+            .rule_for(OverlayActivitySurface::Webhook, "friendRequest")
+            .scope,
+        OverlayActivityScope::Off
+    );
+    assert_eq!(
+        filters
+            .rule_for(OverlayActivitySurface::Webhook, "Online")
+            .scope,
+        OverlayActivityScope::Off
+    );
+}
+
+#[test]
 fn delivery_fires_for_desktop_only_without_wrist_entry() {
     let runtime = OverlayActivityRuntime::with_filters(OverlayActivityFilters::from_json(json!({
         "version": 1,
@@ -537,6 +555,30 @@ fn delivery_fires_for_desktop_only_without_wrist_entry() {
     assert_eq!(deliveries.len(), 1);
     assert!(deliveries[0].desktop);
     assert!(!deliveries[0].vr);
+}
+
+#[test]
+fn delivery_fires_for_webhook_only_without_wrist_entry() {
+    let runtime = OverlayActivityRuntime::with_filters(OverlayActivityFilters::from_json(json!({
+        "version": 1,
+        "wrist": { "types": { "invite": { "scope": "off", "favoriteGroupKeys": "all" } } },
+        "desktop": { "types": { "invite": { "scope": "off", "favoriteGroupKeys": "all" } } },
+        "vr": { "types": { "invite": { "scope": "off", "favoriteGroupKeys": "all" } } },
+        "webhook": { "types": { "invite": { "scope": "on", "favoriteGroupKeys": "all" } } }
+    })));
+    let sink = TestOverlayActivitySink::default();
+    runtime.set_sink(sink.clone());
+    runtime.set_delivery_armed(true);
+
+    let entry = runtime.ingest_candidate(recent_candidate("invite", "usr_sender"));
+
+    assert!(entry.is_some());
+    assert!(runtime.snapshot().entries.is_empty());
+    let deliveries = sink.take_deliveries();
+    assert_eq!(deliveries.len(), 1);
+    assert!(!deliveries[0].desktop);
+    assert!(!deliveries[0].vr);
+    assert!(deliveries[0].webhook);
 }
 
 #[test]

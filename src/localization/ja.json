@@ -2022,6 +2022,31 @@
                         "desktop_notification_while_afk": "AFK 中でもデスクトップに通知",
                         "notification_sound": "通知音"
                     },
+                    "webhook": {
+                        "header": "Webhook 通知",
+                        "enabled": "Webhook 配信を有効化",
+                        "url": "Webhook URL",
+                        "url_placeholder": "https://example.com/webhook",
+                        "format": "ペイロード形式",
+                        "format_generic": "汎用 JSON",
+                        "format_discord": "Discord",
+                        "notification_filters": "Webhook 通知フィルター",
+                        "send_test": "テスト Webhook を送信",
+                        "test_sent": "Webhook テストを送信しました（HTTP {status}）",
+                        "format_help": "JSON 例を見る",
+                        "examples_title": "Webhook JSON の例",
+                        "examples_description": "これらの例は、VRCX-0 が各 Webhook ペイロード形式で送信するリクエスト本文を示します。",
+                        "comments_note": "例はリクエスト本文の形を示します。ここにあるフィールド説明は注釈であり、実際のリクエストには送信されません。",
+                        "generic_example": "汎用 JSON の例",
+                        "discord_example": "Discord の例",
+                        "fields_title": "フィールドの用途",
+                        "field_event": "event と category は通知の種類と分類を示します。",
+                        "field_title_message": "title と message はローカライズ済みの通知テキストです。",
+                        "field_user": "user.id と user.displayName は関連する VRChat ユーザーを示します。関連ユーザーがない場合は空になることがあります。",
+                        "field_location": "location と worldName は関連するインスタンスまたはワールドを示します。ワールド情報がない場合は空になることがあります。",
+                        "field_timestamp": "timestamp は通知が作成された UTC 時刻です。",
+                        "field_discord": "Discord 形式では、同じデータを Discord Webhook の content と embeds に割り当てます。"
+                    },
                     "text_to_speech": {
                         "header": "テキスト読み上げ",
                         "when_to_play": "読み上げタイミング",
@@ -4501,6 +4526,10 @@
         "desktop_notifications": {
             "title": "デスクトップ通知フィルター",
             "description": "どのアクティビティでデスクトップ（OS）通知を表示するかを選択します。上記のデスクトップ通知の条件も引き続き適用されます。"
+        },
+        "webhook_notifications": {
+            "title": "Webhook 通知フィルター",
+            "description": "設定済みの Webhook に送信するランタイム通知を選択します。"
         },
         "wrist_feed_notifications": {
             "title": "手首オーバーレイ通知フィルター",

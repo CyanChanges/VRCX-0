@@ -1,4 +1,4 @@
-export type OverlayActivitySurface = 'wrist';
+export type OverlayActivitySurface = 'wrist' | 'desktop' | 'vr' | 'webhook';
 
 export type OverlayActivityCategory =
     | 'actionRequired'
@@ -283,6 +283,12 @@ export const DEFAULT_OVERLAY_ACTIVITY_FILTERS: OverlayActivityFiltersPreference 
 export const DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS =
     DEFAULT_OVERLAY_ACTIVITY_FILTER_PROFILE;
 
+export const DEFAULT_WEBHOOK_ACTIVITY_FILTERS: OverlayActivityFilterProfilePreference =
+    {
+        version: 1,
+        types: disabledOverlayActivityTypeRules(OVERLAY_ACTIVITY_TYPE_DEFINITIONS)
+    };
+
 export function overlayActivityCategoriesFromDefinitions(
     definitions: OverlayActivityTypeDefinition[]
 ): OverlayActivityCategory[] {
@@ -381,6 +387,20 @@ function cloneOverlayActivityTypeRules(
                 }
             ];
         })
+    );
+}
+
+function disabledOverlayActivityTypeRules(
+    definitions: OverlayActivityTypeDefinition[]
+): Record<string, OverlayActivityRule> {
+    return Object.fromEntries(
+        definitions.map((definition) => [
+            definition.key,
+            {
+                scope: 'off',
+                favoriteGroupKeys: 'all'
+            }
+        ])
     );
 }
 

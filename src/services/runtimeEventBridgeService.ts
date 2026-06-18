@@ -34,7 +34,7 @@ import {
     refreshHostCapabilities
 } from './hostCapabilityService';
 import { handleIpcEvent } from './ipcEventService';
-import { executeNotificationDelivery } from './notificationDeliveryService';
+import { executeNotificationTts } from './notificationDeliveryService';
 import { handleRealtimeInstanceQueueProjection } from './realtimeInstanceQueueService';
 import {
     handleRealtimeCurrentUserProjection,
@@ -57,7 +57,7 @@ type RuntimeEventName =
     | 'runtimeWorkerError'
     | 'runtimeGroupInstancesProjection'
     | 'overlayActivitySnapshot'
-    | 'notificationDelivery'
+    | 'notificationTts'
     | 'realtimeFriendProjection'
     | 'realtimeUserProjection'
     | 'realtimeNotificationProjection'
@@ -78,7 +78,7 @@ type RuntimeEventPayloadMap = {
     runtimeWorkerError: unknown;
     runtimeGroupInstancesProjection: unknown;
     overlayActivitySnapshot: OverlayActivitySnapshot;
-    notificationDelivery: Parameters<typeof executeNotificationDelivery>[0];
+    notificationTts: Parameters<typeof executeNotificationTts>[0];
     realtimeFriendProjection: FriendProjection;
     realtimeUserProjection: unknown;
     realtimeNotificationProjection: RealtimeNotificationProjection;
@@ -554,12 +554,12 @@ function handleRuntimeEvent(
         return;
     }
 
-    if (name === 'notificationDelivery') {
+    if (name === 'notificationTts') {
         runtimeStore.recordRuntimeEvent(name, payload);
-        executeNotificationDelivery(
-            payload as RuntimeEventPayloadMap['notificationDelivery']
+        executeNotificationTts(
+            payload as RuntimeEventPayloadMap['notificationTts']
         ).catch((error: unknown) => {
-            console.warn('Failed to execute notification delivery:', error);
+            console.warn('Failed to execute notification TTS:', error);
         });
         return;
     }
@@ -744,7 +744,7 @@ export async function bindRuntimeEvents(): Promise<() => void> {
         'gameLogSideEffect',
         'runtimeGroupInstancesProjection',
         'overlayActivitySnapshot',
-        'notificationDelivery',
+        'notificationTts',
         'gameClientEvent',
         'runtimeWorkerError',
         'realtimeFriendProjection',

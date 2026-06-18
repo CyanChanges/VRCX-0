@@ -1,5 +1,6 @@
 use std::borrow::Cow;
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Duration;
 
 use serde::Serialize;
@@ -19,6 +20,7 @@ use vrcx_0_application::{format_runtime_output_event, RuntimeOutputLevel, Runtim
 use vrcx_0_application::{BackendRuntimeMode, BackendRuntimePhase};
 use vrcx_0_application::{RuntimeTask, RuntimeTaskExecutor, RuntimeTaskHandle};
 use vrcx_0_host::host_capabilities::{is_host_capability_available, HostCapability};
+use vrcx_0_runtime_host::notification::DesktopNotifier;
 use vrcx_0_runtime_host::RuntimeHostActions;
 
 const AUTH_FAILURE_NOTIFICATION_COOLDOWN: Duration = Duration::from_secs(5);
@@ -43,6 +45,43 @@ impl RuntimeEventSink for TauriRuntimeEventSink {
             event => event,
         };
         emit_to_main_window_if_visible(&self.app_handle, frontend_event, payload);
+    }
+}
+
+#[derive(Clone)]
+struct TauriDesktopNotifier {
+    app_handle: tauri::AppHandle,
+}
+
+impl TauriDesktopNotifier {
+    fn new(app_handle: tauri::AppHandle) -> Self {
+        Self { app_handle }
+    }
+}
+
+impl DesktopNotifier for TauriDesktopNotifier {
+    fn show(
+        &self,
+        title: &str,
+        body: Option<&str>,
+        image: Option<&str>,
+        play_sound: bool,
+    ) -> Result<(), String> {
+        let mut notification = self.app_handle.notification().builder();
+        notification = notification.title(title);
+        if let Some(body) = body {
+            notification = notification.body(body);
+        }
+        if let Some(icon) = image.filter(|value| !value.trim().is_empty()) {
+            notification = notification.icon(icon);
+        }
+        if play_sound {
+            notification = notification
+                .sound(crate::commands::host::window::default_desktop_notification_sound());
+        }
+        notification
+            .show()
+            .map_err(|error| format!("notification: {error}"))
     }
 }
 
@@ -627,6 +666,11 @@ pub fn setup_app_with_data_dir(
     app.manage(app_state);
 
     let state = app.state::<AppState>();
+    state
+        .runtime_context
+        .set_notification_desktop_notifier(Arc::new(TauriDesktopNotifier::new(
+            app.handle().clone(),
+        )));
     let _ = state
         .storage
         .remove(BACKGROUND_MODE_RESUME_ROUTE_STORAGE_KEY);

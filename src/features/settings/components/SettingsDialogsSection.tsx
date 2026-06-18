@@ -59,12 +59,16 @@ export function SettingsDialogsSection({ dialogs }: any) {
         setVrNotificationsDialogOpen,
         desktopNotificationsDialogOpen,
         setDesktopNotificationsDialogOpen,
+        webhookNotificationsDialogOpen,
+        setWebhookNotificationsDialogOpen,
         overlayActivityFilters,
         saveOverlayActivityFilters,
         vrNotificationActivityFilters,
         saveVrNotificationActivityFilters,
         desktopNotificationActivityFilters,
-        saveDesktopNotificationActivityFilters
+        saveDesktopNotificationActivityFilters,
+        webhookActivityFilters,
+        saveWebhookActivityFilters
     } = dialogs;
 
     return (
@@ -158,6 +162,12 @@ export function SettingsDialogsSection({ dialogs }: any) {
                 setOpen: setDesktopNotificationsDialogOpen,
                 value: desktopNotificationActivityFilters,
                 onSave: saveDesktopNotificationActivityFilters
+            }}
+            webhookNotifications={{
+                open: webhookNotificationsDialogOpen,
+                setOpen: setWebhookNotificationsDialogOpen,
+                value: webhookActivityFilters,
+                onSave: saveWebhookActivityFilters
             }}
         />
     );

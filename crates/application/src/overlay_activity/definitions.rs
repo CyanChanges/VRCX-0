@@ -364,6 +364,21 @@ pub(super) fn default_activity_rules() -> BTreeMap<String, OverlayActivityRule> 
         .collect()
 }
 
+pub(super) fn disabled_activity_rules() -> BTreeMap<String, OverlayActivityRule> {
+    ACTIVITY_TYPES
+        .iter()
+        .map(|definition| {
+            (
+                definition.key.to_string(),
+                OverlayActivityRule {
+                    scope: OverlayActivityScope::Off,
+                    favorite_group_keys: OverlayActivityFavoriteGroupKeys::All,
+                },
+            )
+        })
+        .collect()
+}
+
 pub(super) fn default_rule(definition: &ActivityTypeDefinition) -> OverlayActivityRule {
     OverlayActivityRule {
         scope: definition.default_scope,
@@ -372,7 +387,7 @@ pub(super) fn default_rule(definition: &ActivityTypeDefinition) -> OverlayActivi
 }
 
 pub(super) fn has_persisted_filter_rules(value: &Value) -> bool {
-    ["wrist", "desktop", "vr"].iter().any(|surface| {
+    ["wrist", "desktop", "vr", "webhook"].iter().any(|surface| {
         value
             .get(*surface)
             .and_then(Value::as_object)
@@ -392,6 +407,10 @@ pub(super) fn normalize_filters(value: Value) -> OverlayActivityFilters {
         wrist: normalize_surface(value.get("wrist")),
         desktop: normalize_surface(value.get("desktop")),
         vr: normalize_surface(value.get("vr")),
+        webhook: value
+            .get("webhook")
+            .map(|surface| normalize_surface(Some(surface)))
+            .unwrap_or_else(OverlayActivitySurfaceFilters::disabled_rules),
     }
 }
 

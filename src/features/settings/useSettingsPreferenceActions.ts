@@ -40,6 +40,7 @@ export function useSettingsPreferenceActions({
     setTrustColorPreference,
     setVrNotificationActivityFiltersPreference,
     setDesktopNotificationActivityFiltersPreference,
+    setWebhookActivityFiltersPreference,
     setWristOverlayEnabledPreference,
     t,
     tableLimitsDraft,
@@ -440,7 +441,8 @@ export function useSettingsPreferenceActions({
     function makeSaveActivityFilterSurface(
         field:
             | 'vrNotificationActivityFilters'
-            | 'desktopNotificationActivityFilters',
+            | 'desktopNotificationActivityFilters'
+            | 'webhookActivityFilters',
         setPreference: (value: any) => Promise<any>
     ) {
         return async function saveActivityFilterSurface(value: any) {
@@ -479,6 +481,10 @@ export function useSettingsPreferenceActions({
             'desktopNotificationActivityFilters',
             setDesktopNotificationActivityFiltersPreference
         );
+    const saveWebhookActivityFilters = makeSaveActivityFilterSurface(
+        'webhookActivityFilters',
+        setWebhookActivityFiltersPreference
+    );
     async function saveWristOverlayEnabled(value: any) {
         let savedValue = Boolean(value);
         const previousValue = prefs.wristOverlayEnabled;
@@ -555,6 +561,7 @@ export function useSettingsPreferenceActions({
         saveOverlayActivityFilters,
         saveVrNotificationActivityFilters,
         saveDesktopNotificationActivityFilters,
+        saveWebhookActivityFilters,
         saveWristOverlayEnabled,
         speakNotificationTts
     };

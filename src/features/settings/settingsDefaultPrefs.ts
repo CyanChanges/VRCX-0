@@ -14,6 +14,7 @@ import {
     DEFAULT_TRANSLATION_MODEL,
     DEFAULT_OVERLAY_ACTIVITY_FILTERS,
     DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
+    DEFAULT_WEBHOOK_ACTIVITY_FILTERS,
     normalizeSharedFeedFilters,
     TABLE_PAGE_SIZE_DEFAULTS
 } from './settingsValues';
@@ -60,6 +61,9 @@ export function createDefaultSettingsPrefs() {
         imageNotifications: true,
         notificationTimeout: 3000,
         notificationOpacity: 100,
+        webhookEnabled: false,
+        webhookUrl: '',
+        webhookFormat: 'generic',
         wristOverlayEnabled: false,
         wristOverlayStartMode: 'vrchatVrMode',
         wristOverlayButton: 'grip',
@@ -101,6 +105,7 @@ export function createDefaultSettingsPrefs() {
         vrNotificationActivityFilters: DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
         desktopNotificationActivityFilters:
             DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
+        webhookActivityFilters: DEFAULT_WEBHOOK_ACTIVITY_FILTERS,
         feedTimeDisplayMode: 'relative',
         youtubeAPI: false,
         translationAPI: false,

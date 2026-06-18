@@ -2022,6 +2022,31 @@
                         "desktop_notification_while_afk": "在 AFK 時顯示桌面通知",
                         "notification_sound": "通知音"
                     },
+                    "webhook": {
+                        "header": "Webhook 通知",
+                        "enabled": "啟用 Webhook 投遞",
+                        "url": "Webhook URL",
+                        "url_placeholder": "https://example.com/webhook",
+                        "format": "酬載格式",
+                        "format_generic": "通用 JSON",
+                        "format_discord": "Discord",
+                        "notification_filters": "Webhook 通知過濾器",
+                        "send_test": "傳送測試 Webhook",
+                        "test_sent": "Webhook 測試已傳送（HTTP {status}）",
+                        "format_help": "查看 JSON 範例",
+                        "examples_title": "Webhook JSON 範例",
+                        "examples_description": "這些範例展示 VRCX-0 依不同載荷格式傳送給 Webhook 的請求內容。",
+                        "comments_note": "範例展示的是請求內容結構；這裡的欄位說明只是註解，不會隨請求傳送。",
+                        "generic_example": "通用 JSON 範例",
+                        "discord_example": "Discord 範例",
+                        "fields_title": "欄位用途",
+                        "field_event": "event 和 category 用來識別通知類型與分組。",
+                        "field_title_message": "title 和 message 是本地化後的通知文字。",
+                        "field_user": "user.id 和 user.displayName 識別相關的 VRChat 使用者；沒有相關使用者時可能為空。",
+                        "field_location": "location 和 worldName 描述相關實例或世界；沒有世界上下文時可能為空。",
+                        "field_timestamp": "timestamp 是通知建立時的 UTC 時間。",
+                        "field_discord": "Discord 格式會把同一份資料映射到 Discord Webhook 的 content 和 embeds。"
+                    },
                     "text_to_speech": {
                         "header": "文字轉語音",
                         "when_to_play": "通知文字轉語音播放時機",
@@ -4501,6 +4526,10 @@
         "desktop_notifications": {
             "title": "桌面通知過濾器",
             "description": "選擇哪些活動會觸發桌面（系統）通知。上方的桌面通知顯示條件依然生效。"
+        },
+        "webhook_notifications": {
+            "title": "Webhook 通知過濾器",
+            "description": "選擇哪些執行階段通知會傳送到已設定的 Webhook。"
         },
         "wrist_feed_notifications": {
             "title": "手腕疊加通知過濾器",

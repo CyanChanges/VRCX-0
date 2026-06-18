@@ -4,6 +4,7 @@ import { sharedFeedFiltersDefaults } from '@/shared/constants/feedFilters';
 import {
     DEFAULT_OVERLAY_ACTIVITY_FILTERS,
     DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
+    DEFAULT_WEBHOOK_ACTIVITY_FILTERS,
     migrateLegacySharedFeedWristFilters,
     normalizeOverlayActivityFilters,
     parseOverlayActivityFilterProfile,
@@ -282,6 +283,9 @@ export const DEFAULT_PREFERENCES: PreferenceInputSnapshot = Object.freeze({
     imageNotifications: true,
     notificationTimeout: 3000,
     notificationOpacity: 100,
+    webhookEnabled: false,
+    webhookUrl: '',
+    webhookFormat: 'generic',
     wristOverlayEnabled: false,
     wristOverlayStartMode: 'vrchatVrMode',
     wristOverlayButton: 'grip',
@@ -324,6 +328,7 @@ export const DEFAULT_PREFERENCES: PreferenceInputSnapshot = Object.freeze({
     vrNotificationActivityFilters: DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
     desktopNotificationActivityFilters:
         DEFAULT_VR_NOTIFICATION_ACTIVITY_FILTERS,
+    webhookActivityFilters: DEFAULT_WEBHOOK_ACTIVITY_FILTERS,
     feedTimeDisplayMode: 'relative',
     trustColor: { ...TRUST_COLOR_DEFAULTS },
     youtubeAPI: false,
@@ -426,6 +431,9 @@ export function normalizePreferenceSnapshot(
             max: 100,
             fallback: 100
         }),
+        webhookEnabled: normalizeBool(next.webhookEnabled),
+        webhookUrl: String(next.webhookUrl || ''),
+        webhookFormat: next.webhookFormat === 'discord' ? 'discord' : 'generic',
         wristOverlayEnabled: normalizeBool(next.wristOverlayEnabled),
         wristOverlayStartMode: normalizeWristOverlayStartMode(
             next.wristOverlayStartMode
@@ -490,6 +498,9 @@ export function normalizePreferenceSnapshot(
         ),
         desktopNotificationActivityFilters: parseOverlayActivityFilterProfile(
             next.desktopNotificationActivityFilters
+        ),
+        webhookActivityFilters: parseOverlayActivityFilterProfile(
+            next.webhookActivityFilters || DEFAULT_WEBHOOK_ACTIVITY_FILTERS
         ),
         feedTimeDisplayMode: normalizeFeedTimeDisplayMode(
             next.feedTimeDisplayMode

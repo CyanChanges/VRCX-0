@@ -1208,11 +1208,8 @@ async appReadVrcRegJsonFile(filepath: string) : Promise<string> {
 async appDesktopNotification(boldText: string, text: string | null, image: string | null, playSound: boolean | null) : Promise<null> {
     return await TAURI_INVOKE("app__desktop_notification", { boldText, text, image, playSound });
 },
-async appXsNotification(title: string, content: string, timeout: number, opacity: number, image: string | null) : Promise<null> {
-    return await TAURI_INVOKE("app__xs_notification", { title, content, timeout, opacity, image });
-},
-async appOvrtNotification(hudNotification: boolean, wristNotification: boolean, title: string, body: string, timeout: number, opacity: number, image: string | null) : Promise<null> {
-    return await TAURI_INVOKE("app__ovrt_notification", { hudNotification, wristNotification, title, body, timeout, opacity, image });
+async appWebhookSendTest(url: string, format: string) : Promise<number> {
+    return await TAURI_INVOKE("app__webhook_send_test", { url, format });
 },
 async appAuthFailureNotificationShow(reason: string | null) : Promise<null> {
     return await TAURI_INVOKE("app__auth_failure_notification_show", { reason });

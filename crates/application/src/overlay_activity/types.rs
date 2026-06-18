@@ -4,8 +4,9 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 
 use super::definitions::{
-    default_activity_rules, default_rule, has_persisted_filter_rules, known_definition_for_type,
-    migrate_legacy_shared_feed_wrist_filters, normalize_filters, normalize_surface,
+    default_activity_rules, default_rule, disabled_activity_rules, has_persisted_filter_rules,
+    known_definition_for_type, migrate_legacy_shared_feed_wrist_filters, normalize_filters,
+    normalize_surface,
 };
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
@@ -117,6 +118,7 @@ pub enum OverlayActivitySurface {
     Wrist,
     Desktop,
     Vr,
+    Webhook,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
@@ -128,6 +130,8 @@ pub struct OverlayActivityFilters {
     pub desktop: OverlayActivitySurfaceFilters,
     #[serde(default = "OverlayActivitySurfaceFilters::default_rules")]
     pub vr: OverlayActivitySurfaceFilters,
+    #[serde(default = "OverlayActivitySurfaceFilters::disabled_rules")]
+    pub webhook: OverlayActivitySurfaceFilters,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, specta::Type)]
@@ -143,6 +147,12 @@ impl OverlayActivitySurfaceFilters {
         }
     }
 
+    pub(super) fn disabled_rules() -> Self {
+        Self {
+            types: disabled_activity_rules(),
+        }
+    }
+
     pub fn from_types_json(value: &Value) -> Self {
         normalize_surface(Some(value))
     }
@@ -155,6 +165,7 @@ impl Default for OverlayActivityFilters {
             wrist: OverlayActivitySurfaceFilters::default_rules(),
             desktop: OverlayActivitySurfaceFilters::default_rules(),
             vr: OverlayActivitySurfaceFilters::default_rules(),
+            webhook: OverlayActivitySurfaceFilters::disabled_rules(),
         }
     }
 }
@@ -177,6 +188,7 @@ impl OverlayActivityFilters {
             OverlayActivitySurface::Wrist => &self.wrist,
             OverlayActivitySurface::Desktop => &self.desktop,
             OverlayActivitySurface::Vr => &self.vr,
+            OverlayActivitySurface::Webhook => &self.webhook,
         }
     }
 
@@ -273,4 +285,5 @@ pub struct OverlayActivityDelivery {
     pub entry: OverlayActivityEntry,
     pub desktop: bool,
     pub vr: bool,
+    pub webhook: bool,
 }
