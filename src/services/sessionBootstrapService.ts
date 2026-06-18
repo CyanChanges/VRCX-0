@@ -75,6 +75,33 @@ async function requestGameRunningStateRefresh(): Promise<boolean> {
     }
 }
 
+async function syncBackendFrontendSession(userId: string): Promise<void> {
+    const auth = useRuntimeStore.getState().auth;
+    const currentUserSnapshot = auth.currentUserSnapshot || { id: userId };
+    try {
+        await commands.appSyncFrontendAuthenticatedSession(
+            userId,
+            String(auth.currentUserEndpoint || ''),
+            String(auth.currentUserWebsocket || ''),
+            currentUserSnapshot
+        );
+    } catch (error) {
+        console.warn(
+            'Backend frontend session sync failed during session bootstrap:',
+            error
+        );
+        return;
+    }
+    try {
+        await commands.appRuntimeGroupInstancesRefresh();
+    } catch (error) {
+        console.warn(
+            'Group instances refresh failed after session bootstrap:',
+            error
+        );
+    }
+}
+
 export async function bootstrapAuthenticatedSession(
     user: AuthenticatedUser | null | undefined
 ): Promise<void> {
@@ -126,6 +153,7 @@ export async function bootstrapAuthenticatedSession(
             isFavoritesLoaded: false,
             sessionPhase: 'ready'
         });
+        await syncBackendFrontendSession(userId);
         if (gameStateRestored) {
             await requestGameRunningStateRefresh();
         }

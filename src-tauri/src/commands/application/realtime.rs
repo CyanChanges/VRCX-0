@@ -35,6 +35,19 @@ pub fn app__start_realtime_transport(
 
 #[tauri::command]
 #[specta::specta]
+pub fn app__sync_frontend_authenticated_session(
+    state: State<'_, AppState>,
+    user_id: String,
+    endpoint: String,
+    websocket: String,
+    current_user_snapshot: Value,
+) -> Result<(), AppError> {
+    state.sync_frontend_authenticated_session(user_id, endpoint, websocket, current_user_snapshot);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
 pub fn app__sync_realtime_friend_snapshot(
     state: State<'_, AppState>,
     user_id: String,

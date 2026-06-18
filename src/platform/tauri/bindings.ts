@@ -101,6 +101,9 @@ async appStartGameFromPath(path: string, launchArguments: string) : Promise<bool
 async appStartRealtimeTransport(userId: string, endpoint: string, websocket: string, clientRunId: number, currentUserSnapshot: JsonValue, friendsById: Partial<{ [key in string]: FriendRecord }>) : Promise<RealtimeTransportStartResult> {
     return await TAURI_INVOKE("app__start_realtime_transport", { userId, endpoint, websocket, clientRunId, currentUserSnapshot, friendsById });
 },
+async appSyncFrontendAuthenticatedSession(userId: string, endpoint: string, websocket: string, currentUserSnapshot: JsonValue) : Promise<null> {
+    return await TAURI_INVOKE("app__sync_frontend_authenticated_session", { userId, endpoint, websocket, currentUserSnapshot });
+},
 async appSyncRealtimeFriendSnapshot(userId: string, endpoint: string, websocket: string, generation: number | null, friendsById: Partial<{ [key in string]: FriendRecord }>) : Promise<FriendBaselineResult> {
     return await TAURI_INVOKE("app__sync_realtime_friend_snapshot", { userId, endpoint, websocket, generation, friendsById });
 },

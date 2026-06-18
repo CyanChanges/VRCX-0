@@ -54,6 +54,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::host::game::app__start_game,
             commands::host::game::app__start_game_from_path,
             commands::application::realtime::app__start_realtime_transport,
+            commands::application::realtime::app__sync_frontend_authenticated_session,
             commands::application::realtime::app__sync_realtime_friend_snapshot,
             commands::application::realtime::app__sync_realtime_current_user_snapshot,
             commands::application::realtime::app__expire_realtime_notification,
