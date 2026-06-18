@@ -2264,6 +2264,7 @@
             "header": "Atualizador do VRCX-0",
             "latest_version": "O VRCX-0 está atualizado.",
             "ready_for_update": "A atualização {value} está pronta",
+            "relaunch_to_update": "Reiniciar para atualizar",
             "branch_stable": "Estável",
             "branch_beta": "Beta",
             "beta_title": "Builds Beta",

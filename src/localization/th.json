@@ -1443,6 +1443,7 @@
             "header": "ตัวอัปเดต VRCX-0",
             "latest_version": "VRCX-0 เป็นเวอร์ชันล่าสุดแล้ว",
             "ready_for_update": "อัปเดต {value} พร้อมแล้ว",
+            "relaunch_to_update": "รีสตาร์ทเพื่ออัปเดต",
             "download": "ดาวน์โหลด",
             "install": "ติดตั้ง",
             "cancel": "ยกเลิก"

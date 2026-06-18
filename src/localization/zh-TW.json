@@ -4755,6 +4755,7 @@
             "header": "VRCX-0 更新器",
             "latest_version": "VRCX-0 已是最新版本",
             "ready_for_update": "新版本 {value} 已就緒",
+            "relaunch_to_update": "重新啟動以更新",
             "branch_stable": "穩定版",
             "release": "正式版",
             "download": "下載",

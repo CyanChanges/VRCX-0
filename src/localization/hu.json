@@ -1196,6 +1196,7 @@
             "header": "VRCX-0 frissítő",
             "latest_version": "A VRCX-0 naprakész.",
             "ready_for_update": "A(z) {value} frissítés készen áll",
+            "relaunch_to_update": "Újraindítás a frissítéshez",
             "download": "Letöltés",
             "install": "Telepítés"
         },

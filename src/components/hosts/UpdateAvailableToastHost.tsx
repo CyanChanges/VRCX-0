@@ -20,6 +20,13 @@ function getLatestUpdaterDisplayVersion(release: any) {
     );
 }
 
+function formatUpdateVersionLabel(version: string) {
+    if (!version || version === '-') {
+        return version;
+    }
+    return /^v/i.test(version) ? version : `v${version}`;
+}
+
 export function UpdateAvailableToastHost() {
     const { t } = useTranslation();
     const hasAvailableUpdate = useRuntimeStore((state: any) =>
@@ -28,9 +35,6 @@ export function UpdateAvailableToastHost() {
     const latestUpdaterRelease = useRuntimeStore(
         (state: any) => state.updateLoop.latestUpdaterRelease
     );
-    const lastUpdaterCheckDetail = useRuntimeStore(
-        (state: any) => state.updateLoop.lastUpdaterCheckDetail
-    );
 
     useEffect(() => {
         if (!hasAvailableUpdate || !latestUpdaterRelease) {
@@ -38,34 +42,28 @@ export function UpdateAvailableToastHost() {
             return undefined;
         }
 
-        toast.info(
-            t('dialog.vrcx_updater.ready_for_update', {
-                value: getLatestUpdaterDisplayVersion(latestUpdaterRelease)
-            }),
-            {
-                id: UPDATE_AVAILABLE_TOAST_ID,
-                description:
-                    String(lastUpdaterCheckDetail || '').trim() ||
-                    t(
-                        'service.background_maintenance.label.vrcx_update_available'
-                    ),
-                duration: Infinity,
-                position: 'bottom-right',
-                closeButton: true,
-                dismissible: true,
-                action: {
-                    label: t('nav_menu.update'),
-                    onClick: () => {
-                        void installLatestAvailableUpdate({
-                            toastId: UPDATE_AVAILABLE_TOAST_ID
-                        });
-                    }
+        toast.info(t('dialog.vrcx_updater.relaunch_to_update'), {
+            id: UPDATE_AVAILABLE_TOAST_ID,
+            icon: null,
+            description: formatUpdateVersionLabel(
+                getLatestUpdaterDisplayVersion(latestUpdaterRelease)
+            ),
+            duration: Infinity,
+            position: 'bottom-right',
+            closeButton: true,
+            dismissible: true,
+            action: {
+                label: t('nav_menu.update'),
+                onClick: () => {
+                    void installLatestAvailableUpdate({
+                        toastId: UPDATE_AVAILABLE_TOAST_ID
+                    });
                 }
             }
-        );
+        });
 
         return undefined;
-    }, [hasAvailableUpdate, lastUpdaterCheckDetail, latestUpdaterRelease, t]);
+    }, [hasAvailableUpdate, latestUpdaterRelease, t]);
 
     return null;
 }

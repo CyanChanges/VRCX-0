@@ -4755,6 +4755,7 @@
             "header": "VRCX-0 Updater",
             "latest_version": "VRCX-0 is up to date",
             "ready_for_update": "Update {value} is ready",
+            "relaunch_to_update": "Relaunch to update",
             "branch_stable": "Stable",
             "release": "Release",
             "download": "Download",

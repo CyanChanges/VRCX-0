@@ -1412,6 +1412,7 @@
             "header": "Обновление VRCX-0",
             "latest_version": "У вас установлена актуальная версия VRCX-0.",
             "ready_for_update": "Обновление {value} готово",
+            "relaunch_to_update": "Перезапустить для обновления",
             "download": "Скачать",
             "install": "Установить",
             "cancel": "Отмена"

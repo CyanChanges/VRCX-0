@@ -1275,6 +1275,7 @@
             "header": "VRCX-0 Updater",
             "latest_version": "VRCX-0 is up to date.",
             "ready_for_update": "Aktualizace {value} je připravena",
+            "relaunch_to_update": "Restartovat pro aktualizaci",
             "download": "Download",
             "install": "Install"
         },
