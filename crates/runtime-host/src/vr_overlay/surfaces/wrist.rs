@@ -1,3 +1,4 @@
+use chrono::{DateTime, Local, Timelike};
 use vrcx_0_application::{
     OverlayActivityActorRelation, OverlayActivityCategory, OverlayActivityEntry,
     OverlayActivitySnapshot, OverlayActivityText,
@@ -430,6 +431,24 @@ fn feed_severity(entry: &OverlayActivityEntry) -> FeedSeverity {
 }
 
 fn time_text(value: &str) -> String {
+    time_text_in_timezone(value, &Local).unwrap_or_else(|| raw_time_text(value))
+}
+
+fn time_text_in_timezone<Tz>(value: &str, timezone: &Tz) -> Option<String>
+where
+    Tz: chrono::TimeZone,
+{
+    let local_time = DateTime::parse_from_rfc3339(value)
+        .ok()?
+        .with_timezone(timezone);
+    Some(format!(
+        "{:02}:{:02}",
+        local_time.hour(),
+        local_time.minute()
+    ))
+}
+
+fn raw_time_text(value: &str) -> String {
     let Some(time_start) = value.find('T').map(|index| index + 1) else {
         return String::new();
     };
@@ -516,6 +535,21 @@ mod tests {
         entry.content.summary = "Ada online in wrld_1".to_string();
 
         assert_eq!(feed_line(&entry, "en").detail, "Ada online in Test World");
+    }
+
+    #[test]
+    fn feed_time_uses_target_timezone_instead_of_raw_utc_text() {
+        let daylight_offset = chrono::FixedOffset::west_opt(4 * 60 * 60).unwrap();
+
+        assert_eq!(
+            time_text_in_timezone("2026-06-01T12:34:56.000Z", &daylight_offset),
+            Some("08:34".to_string())
+        );
+    }
+
+    #[test]
+    fn feed_time_falls_back_to_raw_iso_time_for_invalid_timestamps() {
+        assert_eq!(time_text("not-a-dateT12:34:56"), "12:34");
     }
 
     #[test]
