@@ -2,16 +2,16 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
-labels: ''
+labels: enhancement
 assignees: ''
 
 ---
 
-**Feature request**
-Describe the feature you would like to see.
+**What would you like to see?**
+Describe the feature.
 
-**Use case**
-Describe why this would be useful.
+**Why would this be useful?**
+Explain the use case or problem it solves.
 
 **Additional context**
-Add any screenshots or extra details here.
+Screenshots, examples, or anything else that helps.

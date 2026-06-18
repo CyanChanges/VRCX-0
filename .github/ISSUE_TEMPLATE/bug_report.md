@@ -19,18 +19,12 @@ Describe what happened.
 Describe what you expected to happen.
 
 **Screenshots / Logs**
-If applicable, attach screenshots or the error log file.
+Attach screenshots or the error log if applicable.
 
-Windows error log:
-`%APPDATA%\VRCX-0\error-log.txt`
-
-On macOS and Linux, check the corresponding app data directory.
+- Windows: `%APPDATA%\VRCX-0\error-log.txt`
+- macOS: `~/Library/Application Support/VRCX-0/error-log.txt`
+- Linux: `~/.local/share/VRCX-0/error-log.txt`
 
 **Environment**
-- OS: [e.g. Windows, macOS, Linux]
-- App version: [e.g. 1.4.0]
-- Linux package: [e.g. AppImage, DEB, RPM]
-- macOS architecture: [e.g. Intel, Apple Silicon]
-
-**Additional context**
-Add anything else that may help.
+- OS: [e.g. Windows 11, macOS 15, Ubuntu 24.04]
+- App version: [e.g. 2.1.0]
