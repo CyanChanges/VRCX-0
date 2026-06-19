@@ -5,7 +5,7 @@ use crate::database::DatabaseService;
 use crate::Error;
 
 use super::repository::ensure_config_table;
-use super::types::{ConfigReadEntry, ConfigWriteEntry};
+use super::types::{resolve_config_key, ConfigReadEntry, ConfigWriteEntry};
 
 pub fn config_set_values(
     db: &DatabaseService,
@@ -17,7 +17,7 @@ pub fn config_set_values(
             tx.execute_non_query(
                 "INSERT OR REPLACE INTO configs (key, value) VALUES (@key, @value)",
                 &ParamsBuilder::new()
-                    .set("key", normalize_config_key(&entry.key))
+                    .set("key", resolve_config_key(&entry.key))
                     .set("value", entry.value.clone())
                     .build(),
             )?;
@@ -25,15 +25,6 @@ pub fn config_set_values(
         Ok(())
     })?;
     Ok(())
-}
-
-fn normalize_config_key(key: &str) -> String {
-    let key = key.trim();
-    if key.starts_with("config:") {
-        return key.to_string();
-    }
-    let stripped = key.strip_prefix("VRCX_").unwrap_or(key);
-    format!("config:vrcx_{}", stripped.to_ascii_lowercase())
 }
 
 pub fn config_list_values(db: &DatabaseService) -> Result<Vec<ConfigReadEntry>, Error> {
@@ -53,7 +44,7 @@ pub fn config_remove_value(db: &DatabaseService, key: String) -> Result<i64, Err
     db.execute_non_query(
         "DELETE FROM configs WHERE key = @key",
         &ParamsBuilder::new()
-            .set("key", normalize_config_key(&key))
+            .set("key", resolve_config_key(&key))
             .build(),
     )
 }

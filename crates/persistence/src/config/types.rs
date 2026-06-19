@@ -39,9 +39,10 @@ impl From<String> for ConfigKey {
     }
 }
 
-pub(super) fn resolve_config_key(key: &str) -> String {
-    if key.starts_with("config:") {
-        return key.to_string();
+pub fn resolve_config_key(key: &str) -> String {
+    let key = key.trim();
+    if let Some(rest) = key.strip_prefix("config:") {
+        return format!("config:{}", rest.to_lowercase());
     }
 
     let stripped = key.strip_prefix("VRCX_").unwrap_or(key);

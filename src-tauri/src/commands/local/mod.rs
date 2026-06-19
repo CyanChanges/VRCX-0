@@ -1,7 +1,6 @@
 pub mod activity;
 pub mod avatars;
 pub mod config;
-mod config_policy;
 pub mod database_maintenance;
 pub mod favorites;
 pub mod feed;

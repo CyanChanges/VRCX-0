@@ -298,19 +298,17 @@ impl OverlayActivityRuntime {
                 None
             };
 
-            let delivery = if (desktop || vr || webhook)
-                && state.armed
-                && is_recent(&entry.created_at)
-            {
-                Some(OverlayActivityDelivery {
-                    entry: entry.clone(),
-                    desktop,
-                    vr,
-                    webhook,
-                })
-            } else {
-                None
-            };
+            let delivery =
+                if (desktop || vr || webhook) && state.armed && is_recent(&entry.created_at) {
+                    Some(OverlayActivityDelivery {
+                        entry: entry.clone(),
+                        desktop,
+                        vr,
+                        webhook,
+                    })
+                } else {
+                    None
+                };
 
             (entry, snapshot, delivery)
         };

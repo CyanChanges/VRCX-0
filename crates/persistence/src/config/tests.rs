@@ -58,6 +58,14 @@ fn resolves_frontend_config_keys() {
         ConfigKey::new("config:vrcx_existing").as_str(),
         "config:vrcx_existing"
     );
+    assert_eq!(
+        ConfigKey::new("config:VRCX_Existing").as_str(),
+        "config:vrcx_existing"
+    );
+    assert_eq!(
+        ConfigKey::new("  VRCX_GameLogDisabled  ").as_str(),
+        "config:vrcx_gamelogdisabled"
+    );
 }
 
 #[test]

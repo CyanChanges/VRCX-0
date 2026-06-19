@@ -4,7 +4,6 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use serde_json::{json, Map, Number, Value};
 use std::sync::Arc;
 use vrcx_0_core::json::RawJson;
-use vrcx_0_persistence::config::ConfigRepository;
 use vrcx_0_persistence::DatabaseService;
 use vrcx_0_vrchat_client::http_api::{
     normalize_vrchat_api_endpoint, ApiScope, HttpApiRequestInput,
@@ -113,23 +112,7 @@ fn unique_values(values: Vec<String>) -> Vec<String> {
 }
 
 fn get_config_array(deps: &SocialBaselineDeps, key: &str) -> Result<Vec<String>> {
-    let parsed = ConfigRepository::new(Arc::clone(&deps.db))
-        .get_json(key, Value::Null)
-        .map_err(Error::from)?;
-    let mut groups = parsed
-        .as_array()
-        .map(|values| {
-            values
-                .iter()
-                .map(value_as_string)
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-    groups = unique_values(groups);
-    groups.sort();
-    Ok(groups)
+    crate::config::read_config_string_array(deps.db.as_ref(), key)
 }
 
 fn auth_scope_matches(deps: &SocialBaselineDeps, user_id: &str, endpoint: &str) -> bool {

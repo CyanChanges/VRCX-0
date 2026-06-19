@@ -1,14 +1,12 @@
 #![allow(non_snake_case)]
 
-use serde_json::{json, Value};
 use tauri::State;
 use vrcx_0_application::vrchat_api::favorites::{
     favorite_add_input, favorite_avatars_get_input, favorite_delete_input,
     favorite_group_clear_input, favorite_group_save_input, favorite_groups_get_input,
     favorite_limits_get_input, favorite_worlds_get_input, favorites_get_input,
 };
-use vrcx_0_application::vrchat_api::{normalize_text, require_text};
-use vrcx_0_persistence::config::ConfigRepository;
+use vrcx_0_application::vrchat_api::require_text;
 
 use crate::error::AppError;
 use crate::state::AppState;
@@ -123,61 +121,6 @@ pub async fn app__vrchat_favorite_groups_get(
     .await
 }
 
-fn local_group_config_key(kind: &str) -> Result<&'static str, AppError> {
-    match kind.trim() {
-        "friend" => Ok("localFavoriteFriendGroups"),
-        "avatar" => Ok("localFavoriteAvatarGroups"),
-        "world" => Ok("localFavoriteWorldGroups"),
-        _ => Err(AppError::Custom("unsupported favorite kind".into())),
-    }
-}
-
-fn read_config_array(state: &State<'_, AppState>, key: &str) -> Result<Vec<String>, AppError> {
-    let parsed = ConfigRepository::new(state.db.clone())
-        .get_json(key, Value::Null)
-        .map_err(AppError::from)?;
-    let mut values = parsed
-        .as_array()
-        .map(|items| {
-            items
-                .iter()
-                .map(value_as_string)
-                .map(normalize_text)
-                .filter(|value| !value.is_empty())
-                .collect::<Vec<_>>()
-        })
-        .unwrap_or_default();
-    values.sort();
-    values.dedup();
-    Ok(values)
-}
-
-fn value_as_string(value: &Value) -> String {
-    match value {
-        Value::Null => String::new(),
-        Value::String(value) => value.clone(),
-        other => other.to_string(),
-    }
-}
-
-fn write_config_array(
-    state: State<'_, AppState>,
-    key: &str,
-    values: Vec<String>,
-) -> Result<(), AppError> {
-    ConfigRepository::new(state.db.clone())
-        .set_json(key, &json!(values))
-        .map_err(AppError::from)
-}
-
-fn add_group_value(groups: &mut Vec<String>, group_name: String) {
-    if !groups.iter().any(|value| value == &group_name) {
-        groups.push(group_name);
-    }
-    groups.sort();
-    groups.dedup();
-}
-
 #[tauri::command]
 #[specta::specta]
 pub async fn app__vrchat_favorite_add(
@@ -290,10 +233,8 @@ pub fn app__local_favorite_group_create(
         input.group_name,
         "LocalFavoriteGroupCreate requires groupName.",
     )?;
-    let key = local_group_config_key(&kind)?;
-    let mut groups = read_config_array(&state, key)?;
-    add_group_value(&mut groups, group_name);
-    write_config_array(state, key, groups)
+    vrcx_0_application::create_local_favorite_group(state.db.as_ref(), &kind, group_name)
+        .map_err(AppError::from)
 }
 
 #[tauri::command]
@@ -311,20 +252,13 @@ pub fn app__local_favorite_group_rename(
         input.new_group_name,
         "LocalFavoriteGroupRename requires newGroupName.",
     )?;
-    let key = local_group_config_key(&kind)?;
-    let result = crate::commands::local::favorites::app__favorite_group_rename(
-        state.clone(),
-        kind,
-        group_name.clone(),
-        new_group_name.clone(),
-    )?;
-    let mut groups = read_config_array(&state, key)?
-        .into_iter()
-        .filter(|value| value != &group_name)
-        .collect::<Vec<_>>();
-    add_group_value(&mut groups, new_group_name);
-    write_config_array(state, key, groups)?;
-    Ok(result)
+    vrcx_0_application::rename_local_favorite_group(
+        state.db.as_ref(),
+        &kind,
+        group_name,
+        new_group_name,
+    )
+    .map_err(AppError::from)
 }
 
 #[tauri::command]
@@ -338,16 +272,6 @@ pub fn app__local_favorite_group_delete(
         input.group_name,
         "LocalFavoriteGroupDelete requires groupName.",
     )?;
-    let key = local_group_config_key(&kind)?;
-    let result = crate::commands::local::favorites::app__favorite_group_delete(
-        state.clone(),
-        kind,
-        group_name.clone(),
-    )?;
-    let groups = read_config_array(&state, key)?
-        .into_iter()
-        .filter(|value| value != &group_name)
-        .collect::<Vec<_>>();
-    write_config_array(state, key, groups)?;
-    Ok(result)
+    vrcx_0_application::delete_local_favorite_group(state.db.as_ref(), &kind, group_name)
+        .map_err(AppError::from)
 }

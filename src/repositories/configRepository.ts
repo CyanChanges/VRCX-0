@@ -1,14 +1,7 @@
 import { commands } from '@/platform/tauri/bindings';
-import {
-    ConfigKeys,
-    type ConfigDefaultValue
-} from '@/repositories/configKeys';
+import { ConfigKeys, type ConfigDefaultValue } from '@/repositories/configKeys';
 
-import {
-    asString,
-    safeJsonParse,
-    safeJsonStringify
-} from './baseRepository';
+import { asString, safeJsonParse, safeJsonStringify } from './baseRepository';
 
 type ConfigEntries = Array<[string, unknown]>;
 type ConfigObject = Record<string, unknown> | unknown[] | null;
@@ -25,11 +18,14 @@ class ConfigRepository {
     #ready = false;
 
     #resolveKey(key: string): string {
-        if (key.startsWith('config:')) {
-            return key;
+        const trimmed = key.trim();
+        if (trimmed.startsWith('config:')) {
+            return `config:${trimmed.slice(7).toLowerCase()}`;
         }
 
-        const stripped = key.startsWith('VRCX_') ? key.slice(5) : key;
+        const stripped = trimmed.startsWith('VRCX_')
+            ? trimmed.slice(5)
+            : trimmed;
         return `config:vrcx_${stripped.toLowerCase()}`;
     }
 
@@ -191,7 +187,9 @@ class ConfigRepository {
         await this.#ensureReady();
         const dbKey = this.#resolveKey(key);
         const stringValue = String(value);
-        const result = await commands.appConfigSetValues([{ key: dbKey, value: stringValue }]);
+        const result = await commands.appConfigSetValues([
+            { key: dbKey, value: stringValue }
+        ]);
         this.#cache.set(dbKey, stringValue);
         return result;
     }
@@ -218,15 +216,20 @@ class ConfigRepository {
 
     async setMany(entries: ConfigEntries): Promise<void> {
         await this.#ensureReady();
-        const normalizedEntries = entries.map(([key, value]) => [
-            this.#resolveKey(key),
-            String(value)
-        ] satisfies [string, string]);
+        const normalizedEntries = entries.map(
+            ([key, value]) =>
+                [this.#resolveKey(key), String(value)] satisfies [
+                    string,
+                    string
+                ]
+        );
 
-        await commands.appConfigSetValues(normalizedEntries.map(([key, value]) => ({
+        await commands.appConfigSetValues(
+            normalizedEntries.map(([key, value]) => ({
                 key,
                 value
-            })));
+            }))
+        );
 
         for (const [dbKey, stringValue] of normalizedEntries) {
             this.#cache.set(dbKey, stringValue);

@@ -3,12 +3,14 @@ mod auth_scope;
 mod backend_runtime;
 mod background;
 mod background_capabilities;
+mod config;
 mod diagnostics;
 mod error;
 mod event_bus;
 mod game_client;
 mod game_log;
 mod image_cache;
+mod local_favorites;
 mod log_watcher;
 mod media_upload;
 mod moderation_sync;
@@ -59,6 +61,7 @@ pub use background_capabilities::{
     BackgroundPresenceAutomationResult, BackgroundPresenceAutomationState, BackgroundPresenceFacts,
     BackgroundPresenceFactsInput, PresencePlayer,
 };
+pub use config::validate_config_writes;
 pub use diagnostics::{RuntimeDiagnostics, RuntimeDiagnosticsSnapshot};
 pub use error::Error;
 pub use event_bus::{RuntimeEventBus, RuntimeEventSink};
@@ -74,6 +77,9 @@ pub use game_log::{
     NoopGameLogHostActions, PlayerState, RuntimeSnapshot, ScreenshotInput,
 };
 pub use image_cache::{save_ugc_image_to_file, ImageCache};
+pub use local_favorites::{
+    create_local_favorite_group, delete_local_favorite_group, rename_local_favorite_group,
+};
 pub use log_watcher::{
     GameLogEvent, GameLogEventSink, LogLocationSnapshot, LogLocationSnapshotScanner, LogWatcher,
     NoopLogLocationSnapshotScanner,
@@ -108,10 +114,10 @@ pub use realtime::{
     PendingOfflineTimerAction, RealtimeCurrentUserAuthority, RealtimeCurrentUserOutput,
     RealtimeCurrentUserProjection, RealtimeFriendApplyResult, RealtimeFriendOutput,
     RealtimeFriendSnapshot, RealtimeFriendsRuntime, RealtimeHostRuntime, RealtimeHostRuntimeDeps,
-    RealtimeInstanceClosedOutput, RealtimeInstanceClosedProjection, RealtimeInstanceQueueProjection,
-    RealtimeNotificationOutput, RealtimeNotificationProjection, RealtimeNotificationUpsert,
-    RealtimeSessionContext, RealtimeStopRequest, RealtimeTransportStartResult,
-    RealtimeWsMessagePayload, RealtimeWsStatusPayload,
+    RealtimeInstanceClosedOutput, RealtimeInstanceClosedProjection,
+    RealtimeInstanceQueueProjection, RealtimeNotificationOutput, RealtimeNotificationProjection,
+    RealtimeNotificationUpsert, RealtimeSessionContext, RealtimeStopRequest,
+    RealtimeTransportStartResult, RealtimeWsMessagePayload, RealtimeWsStatusPayload,
 };
 pub use registry_backup::{
     registry_backup_create, registry_backup_delete, registry_backup_export_json,
