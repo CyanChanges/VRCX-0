@@ -1715,7 +1715,38 @@
                 }
             },
             "integrations": {
-                "header": "統合"
+                "header": "統合",
+                "mcp_server": {
+                    "header": "VRCX-0 MCP サーバー",
+                    "description": "localhost 上の信頼済み MCP クライアントに、VRCX-0 のローカルなソーシャル情報を公開します。",
+                    "enable": "MCP サーバーを有効にする",
+                    "enable_description": "Bearer token で保護された、ローカル専用の HTTP MCP サーバーを起動します。",
+                    "allow_vrchat_writes": "VRChat アカウントへの書き込みを許可",
+                    "allow_vrchat_writes_description": "オフの場合、VRChat へのお気に入り登録ツールの呼び出しは強制的にドライランになります。オンにすると、AI が実際の VRChat アカウントにお気に入りを書き込めるようになります。",
+                    "port_label": "サーバーポート",
+                    "port_description": "変更するとサーバーが再起動します。8798 が使用中の場合は、空いているポートを選び、クライアント設定をコピーし直してください。",
+                    "port_apply": "適用",
+                    "port_invalid": "ポートは 1024〜65535 の範囲で指定してください",
+                    "status_label": "状態",
+                    "port_active_connections": "ポート {port}、アクティブ接続 {count}",
+                    "client_config": "クライアント設定",
+                    "copy_claude_code": "Claude Code",
+                    "copy_claude_desktop": "Claude Desktop",
+                    "copy_codex": "Codex",
+                    "copy_generic": "汎用 (HTTP)",
+                    "security_note": "クライアント設定には平文の token が含まれます。信頼できるローカルツールにのみ共有してください。",
+                    "rotate_token": "Token を再生成",
+                    "rotate_token_description": "再生成すると、古いクライアント設定は使用できなくなります。",
+                    "token_rotated": "MCP token を再生成しました",
+                    "copied": "{target} 設定をコピーしました",
+                    "status": {
+                        "loading": "読み込み中",
+                        "disabled": "停止中",
+                        "starting": "起動中",
+                        "running": "実行中",
+                        "stopping": "停止中"
+                    }
+                }
             },
             "advanced_groups": {
                 "system": {

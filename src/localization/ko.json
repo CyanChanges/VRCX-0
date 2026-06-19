@@ -1016,7 +1016,7 @@
             "actions": {
                 "accept": "수락",
                 "invite": "초대",
-                        "decline": "거절",
+                "decline": "거절",
                 "delete_log": "로그 삭제",
                 "decline_with_message": "메시지로 거절"
             },
@@ -1664,7 +1664,38 @@
                 }
             },
             "integrations": {
-                "header": "통합"
+                "header": "통합",
+                "mcp_server": {
+                    "header": "VRCX-0 MCP 서버",
+                    "description": "localhost에서 VRCX-0의 로컬 소셜 사실을 신뢰하는 MCP 클라이언트에 제공합니다.",
+                    "enable": "MCP 서버 활성화",
+                    "enable_description": "Bearer token으로 보호되는 로컬 전용 HTTP MCP 서버를 시작합니다.",
+                    "allow_vrchat_writes": "VRChat 계정 쓰기 허용",
+                    "allow_vrchat_writes_description": "끄면 VRChat 즐겨찾기 도구 호출이 강제로 드라이런으로 실행됩니다. 켜면 AI가 실제 VRChat 계정에 즐겨찾기를 기록할 수 있습니다.",
+                    "port_label": "서버 포트",
+                    "port_description": "변경하면 서버가 다시 시작됩니다. 8798이 사용 중이면 비어 있는 포트를 선택한 뒤 클라이언트 설정을 다시 복사하세요.",
+                    "port_apply": "적용",
+                    "port_invalid": "포트는 1024~65535 사이여야 합니다",
+                    "status_label": "상태",
+                    "port_active_connections": "포트 {port}; 활성 연결 {count}",
+                    "client_config": "클라이언트 설정",
+                    "copy_claude_code": "Claude Code",
+                    "copy_claude_desktop": "Claude Desktop",
+                    "copy_codex": "Codex",
+                    "copy_generic": "일반 (HTTP)",
+                    "security_note": "클라이언트 설정에는 일반 텍스트 token이 포함됩니다. 신뢰하는 로컬 도구에만 공유하세요.",
+                    "rotate_token": "Token 다시 생성",
+                    "rotate_token_description": "다시 생성하면 이전 클라이언트 설정은 더 이상 작동하지 않습니다.",
+                    "token_rotated": "MCP token이 다시 생성되었습니다",
+                    "copied": "{target} 설정을 복사했습니다",
+                    "status": {
+                        "loading": "불러오는 중",
+                        "disabled": "중지됨",
+                        "starting": "시작 중",
+                        "running": "실행 중",
+                        "stopping": "중지 중"
+                    }
+                }
             },
             "advanced_groups": {
                 "system": {
@@ -2551,7 +2582,7 @@
                 "delete_notification_log_entry": "알림 로그 항목 삭제",
                 "accept_friend_request": "친구 요청 수락",
                 "decline_notification": "알림 거부",
-                        "decline": "거절",
+                "decline": "거절",
                 "send_invite": "초대장 보내기",
                 "delete_the_local_value_log_entry": "로컬 {value} 로그 항목을 삭제하시겠습니까?"
             },
@@ -4807,9 +4838,9 @@
             "action": {
                 "update_path": "업그레이드",
                 "install_and_restart": "설치 및 다시 시작",
-            "enable_debug_gui": "--enable-debug-gui",
-            "enable_sdk_log_levels": "--enable-sdk-log-levels",
-            "enable_udon_debug_logging": "--enable-udon-debug-logging",
+                "enable_debug_gui": "--enable-debug-gui",
+                "enable_sdk_log_levels": "--enable-sdk-log-levels",
+                "enable_udon_debug_logging": "--enable-udon-debug-logging",
                 "migrate_and_restart": "마이그레이션 및 다시 시작"
             },
             "success": {
@@ -5846,7 +5877,7 @@
             "modal": {
                 "accept_friend_request": "친구 요청 수락",
                 "decline_notification": "알림 거부",
-            "decline": "거절",
+                "decline": "거절",
                 "send_invite": "초대장 보내기",
                 "delete_notification_log_entry": "알림 로그 항목 삭제",
                 "delete_the_local_value_log_entry": "로컬 {value} 로그 항목을 삭제하시겠습니까?"

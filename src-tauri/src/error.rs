@@ -83,6 +83,17 @@ impl From<vrcx_0_runtime_host::Error> for AppError {
     }
 }
 
+impl From<vrcx_0_mcp::McpError> for AppError {
+    fn from(value: vrcx_0_mcp::McpError) -> Self {
+        match value {
+            vrcx_0_mcp::McpError::Io(error) => AppError::Io(error),
+            vrcx_0_mcp::McpError::Persistence(error) => AppError::from(error),
+            vrcx_0_mcp::McpError::Application(error) => AppError::from(error),
+            other => AppError::Custom(other.to_string()),
+        }
+    }
+}
+
 impl From<vrcx_0_integrations::external_api::ExternalApiError> for AppError {
     fn from(value: vrcx_0_integrations::external_api::ExternalApiError) -> Self {
         match value {

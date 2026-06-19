@@ -134,6 +134,21 @@ async appGetBackendRuntimeFrontendSessionSnapshot() : Promise<BackendRuntimeFron
 async appEnsureMainWindow() : Promise<null> {
     return await TAURI_INVOKE("app__ensure_main_window");
 },
+async appMcpServerStatus() : Promise<McpServerStatus> {
+    return await TAURI_INVOKE("app__mcp_server_status");
+},
+async appMcpServerSetEnabled(enabled: boolean) : Promise<McpServerStatus> {
+    return await TAURI_INVOKE("app__mcp_server_set_enabled", { enabled });
+},
+async appMcpServerSetAllowVrchatWrites(enabled: boolean) : Promise<McpServerStatus> {
+    return await TAURI_INVOKE("app__mcp_server_set_allow_vrchat_writes", { enabled });
+},
+async appMcpServerSetPort(port: number) : Promise<McpServerStatus> {
+    return await TAURI_INVOKE("app__mcp_server_set_port", { port });
+},
+async appMcpServerRotateToken() : Promise<McpServerStatus> {
+    return await TAURI_INVOKE("app__mcp_server_rotate_token");
+},
 async appOverlayActivityDefinitionsGet() : Promise<OverlayActivityTypeDefinition[]> {
     return await TAURI_INVOKE("app__overlay_activity_definitions_get");
 },
@@ -1380,6 +1395,7 @@ export type BrokenGameLogDisplayNameOutput = { id: JsonValue; displayName: JsonV
 export type CacheCheckResult = { Item1: number; Item2: boolean; Item3: string }
 export type CacheEntityInput = { id?: JsonValue; authorId?: JsonValue; authorName?: JsonValue; createdAt?: JsonValue; description?: JsonValue; imageUrl?: JsonValue; name?: JsonValue; releaseStatus?: JsonValue; thumbnailImageUrl?: JsonValue; updatedAt?: JsonValue; version?: JsonValue }
 export type CapabilityStatus = { supported: boolean; enabled: boolean; available: boolean; reason?: string | null }
+export type ClientConfigSnippets = { claudeCodeCommand: string; claudeDesktopJson: string; codexToml: string; genericJson: string }
 export type CommunityThemeDebugLocalThemeOutput = { folderPath: string; cssPath: string; manifestPath: string | null; themeName: string; version: string; darkMode: boolean; accentMode: boolean; css: string }
 export type ConfigReadEntry = { key: string; value: string }
 export type ConfigWriteEntry = { key: string; value: string }
@@ -1426,6 +1442,8 @@ export type LocalFavoriteInput = { kind?: string; entityId?: string; groupName?:
 export type LocalModerationOutput = { userId: string; updatedAt: string; displayName: string; block: boolean; mute: boolean }
 export type LogLocationSnapshot = { location: string; worldName: string; createdAt: string; fileName: string }
 export type MaintenanceTableSizesOutput = { gps: number; status: number; bio: number; avatar: number; onlineOffline: number; friendLogHistory: number; notification: number; location: number; joinLeave: number; portalSpawn: number; videoPlay: number; event: number; external: number; resourceLoad: number }
+export type McpServerState = "disabled" | "running"
+export type McpServerStatus = { enabled: boolean; allowVrchatWrites: boolean; state: McpServerState; port: number | null; activeConnections: number; lastError: string | null; clientConfig: ClientConfigSnippets | null }
 export type MemoSaveResult = { entityId: string; editedAt: string; memo: string }
 export type ModerationSyncMutationInput = { ownerUserId?: string; endpoint?: string; targetUserId: string; targetDisplayName?: string; type: string; enabled: boolean }
 export type ModerationSyncMutationOutput = { targetUserId: string; type: string; enabled: boolean; local: LocalModerationOutput | null }

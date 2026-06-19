@@ -1715,7 +1715,38 @@
                 }
             },
             "integrations": {
-                "header": "集成"
+                "header": "集成",
+                "mcp_server": {
+                    "header": "VRCX-0 MCP 服务器",
+                    "description": "通过本机 localhost 把 VRCX-0 的本地社交事实暴露给可信 MCP 客户端。",
+                    "enable": "启用 MCP 服务器",
+                    "enable_description": "启动仅监听本机的 HTTP MCP 服务器，并使用 Bearer token 保护。",
+                    "allow_vrchat_writes": "允许写入 VRChat 账号",
+                    "allow_vrchat_writes_description": "关闭时，收藏到 VRChat 的工具调用会被强制为预演（dry-run）。开启后才允许 AI 把收藏写入你的真实 VRChat 账号。每次服务启动都会重置为关闭。",
+                    "port_label": "服务器端口",
+                    "port_description": "修改会重启服务。若 8798 被占用，改成空闲端口并重新复制客户端配置。",
+                    "port_apply": "应用",
+                    "port_invalid": "端口需在 1024–65535 之间",
+                    "status_label": "状态",
+                    "port_active_connections": "端口 {port}；活动连接 {count}",
+                    "client_config": "客户端配置",
+                    "copy_claude_code": "Claude Code",
+                    "copy_claude_desktop": "Claude Desktop",
+                    "copy_codex": "Codex",
+                    "copy_generic": "通用 (HTTP)",
+                    "security_note": "客户端配置包含明文 token。只提供给你信任的本机工具。",
+                    "rotate_token": "重新生成 Token",
+                    "rotate_token_description": "重新生成后，旧客户端配置会立即失效。",
+                    "token_rotated": "MCP token 已重新生成",
+                    "copied": "已复制 {target} 配置",
+                    "status": {
+                        "loading": "正在加载",
+                        "disabled": "已停止",
+                        "starting": "启动中",
+                        "running": "运行中",
+                        "stopping": "停止中"
+                    }
+                }
             },
             "advanced_groups": {
                 "system": {

@@ -51,6 +51,8 @@ fn ensure_user_prefix(user_prefix: &str) -> Result<(), Error> {
 fn realtime_table_statements(user_prefix: &str) -> Vec<String> {
     vec![
         format!("CREATE TABLE IF NOT EXISTS {user_prefix}_feed_gps (id INTEGER PRIMARY KEY, created_at TEXT, user_id TEXT, display_name TEXT, location TEXT, world_name TEXT, previous_location TEXT, time INTEGER, group_name TEXT)"),
+        format!("CREATE INDEX IF NOT EXISTS {user_prefix}_feed_gps_user_created_idx ON {user_prefix}_feed_gps (user_id, created_at)"),
+        format!("CREATE INDEX IF NOT EXISTS {user_prefix}_feed_gps_location_idx ON {user_prefix}_feed_gps (location)"),
         format!("CREATE TABLE IF NOT EXISTS {user_prefix}_feed_status (id INTEGER PRIMARY KEY, created_at TEXT, user_id TEXT, display_name TEXT, status TEXT, status_description TEXT, previous_status TEXT, previous_status_description TEXT)"),
         format!("CREATE TABLE IF NOT EXISTS {user_prefix}_feed_bio (id INTEGER PRIMARY KEY, created_at TEXT, user_id TEXT, display_name TEXT, bio TEXT, previous_bio TEXT)"),
         format!("CREATE TABLE IF NOT EXISTS {user_prefix}_feed_avatar (id INTEGER PRIMARY KEY, created_at TEXT, user_id TEXT, display_name TEXT, owner_id TEXT, avatar_name TEXT, current_avatar_image_url TEXT, current_avatar_thumbnail_image_url TEXT, previous_current_avatar_image_url TEXT, previous_current_avatar_thumbnail_image_url TEXT)"),

@@ -7,12 +7,14 @@ use crate::adapters::ipc::{IpcEventSink, IpcServer};
 use crate::adapters::log_watcher::LogWatcherCompatBridge;
 use crate::error::AppError;
 use vrcx_0_host::app_paths::AppDataDirResolution;
+use vrcx_0_mcp::{McpRuntime, McpServerController};
 use vrcx_0_runtime_host::{RuntimeHostOptions, RuntimeHostState};
 
 pub const BACKGROUND_MODE_RESUME_ROUTE_STORAGE_KEY: &str = "VRCX_BackgroundModeResumeRoute";
 
 pub struct AppState {
     pub runtime: RuntimeHostState,
+    pub mcp_controller: McpServerController,
     pub log_watcher_compat_bridge: LogWatcherCompatBridge,
     pub ipc: IpcServer,
     background_resume_route: Mutex<Option<String>>,
@@ -31,12 +33,14 @@ impl AppState {
             launched_from_autostart,
             app_data_dir,
         })?;
+        let mcp_controller = McpServerController::new(McpRuntime::from_host(&runtime));
         let ipc_sink: Arc<dyn IpcEventSink> = runtime.game_client_runtime.clone();
         let ipc = IpcServer::new(Some(ipc_sink));
         let log_watcher_compat_bridge = LogWatcherCompatBridge::new();
 
         Ok(Self {
             runtime,
+            mcp_controller,
             log_watcher_compat_bridge,
             ipc,
             background_resume_route: Mutex::new(None),

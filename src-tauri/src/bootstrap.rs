@@ -705,6 +705,7 @@ pub fn setup_app_with_data_dir(
     sync_autostart_from_db(app, &state);
     apply_autostart_window_state_if_needed(app, &state);
     start_host_services(app.handle(), &state);
+    start_mcp_server_if_enabled(app.handle());
     state
         .runtime_context
         .sync
@@ -1058,6 +1059,36 @@ fn start_host_services(app: &tauri::AppHandle, state: &AppState) {
             .log_watcher_compat_bridge
             .start(app.clone(), state.log_watcher.clone());
     }
+}
+
+fn start_mcp_server_if_enabled(app: &tauri::AppHandle) {
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        let Some(state) = app.try_state::<AppState>() else {
+            return;
+        };
+        match state.mcp_controller.start_from_config().await {
+            Ok(status) => {
+                if matches!(status.state, vrcx_0_mcp::McpServerState::Running) {
+                    state.runtime_context.sync.record(
+                        "mcpServer",
+                        "running",
+                        format!(
+                            "MCP server listening on port {}.",
+                            status.port.unwrap_or_default()
+                        ),
+                        0,
+                    );
+                }
+            }
+            Err(error) => {
+                state
+                    .runtime_context
+                    .sync
+                    .record_failure("mcpServer", error.to_string());
+            }
+        }
+    });
 }
 
 #[cfg(test)]

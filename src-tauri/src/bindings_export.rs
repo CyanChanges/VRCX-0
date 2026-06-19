@@ -5,6 +5,7 @@ use vrcx_0_application::{
     OverlayActivitySnapshot, RealtimeCurrentUserProjection, RealtimeInstanceClosedProjection,
     RealtimeInstanceQueueProjection, RealtimeNotificationProjection, RealtimeWsStatusPayload,
 };
+use vrcx_0_mcp::McpServerStatus;
 
 use crate::commands;
 
@@ -15,6 +16,7 @@ pub fn builder() -> Builder<tauri::Wry> {
         .typ::<FriendProjection>()
         .typ::<GameLogProjection>()
         .typ::<HostSessionProjection>()
+        .typ::<McpServerStatus>()
         .typ::<OverlayActivitySnapshot>()
         .typ::<RealtimeCurrentUserProjection>()
         .typ::<RealtimeInstanceClosedProjection>()
@@ -65,6 +67,11 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::application::background_mode::app__get_backend_runtime_snapshot,
             commands::application::background_mode::app__get_backend_runtime_frontend_session_snapshot,
             commands::application::background_mode::app__ensure_main_window,
+            commands::application::mcp_server::app__mcp_server_status,
+            commands::application::mcp_server::app__mcp_server_set_enabled,
+            commands::application::mcp_server::app__mcp_server_set_allow_vrchat_writes,
+            commands::application::mcp_server::app__mcp_server_set_port,
+            commands::application::mcp_server::app__mcp_server_rotate_token,
             commands::application::overlay_activity::app__overlay_activity_definitions_get,
             commands::application::overlay_activity::app__overlay_activity_filters_reload,
             commands::application::overlay_activity::app__overlay_activity_snapshot_get,

@@ -1715,7 +1715,38 @@
                 }
             },
             "integrations": {
-                "header": "整合"
+                "header": "整合",
+                "mcp_server": {
+                    "header": "VRCX-0 MCP 伺服器",
+                    "description": "透過本機 localhost 將 VRCX-0 的本地社交事實提供給可信 MCP 用戶端。",
+                    "enable": "啟用 MCP 伺服器",
+                    "enable_description": "啟動僅監聽本機的 HTTP MCP 伺服器，並使用 Bearer token 保護。",
+                    "allow_vrchat_writes": "允許寫入 VRChat 帳號",
+                    "allow_vrchat_writes_description": "關閉時，收藏至 VRChat 的工具呼叫會被強制為預演（dry-run）。開啟後才允許 AI 將收藏寫入你的真實 VRChat 帳號。",
+                    "port_label": "伺服器連接埠",
+                    "port_description": "修改後會重新啟動服務。若 8798 已被占用，請改用空閒的連接埠並重新複製用戶端設定。",
+                    "port_apply": "套用",
+                    "port_invalid": "連接埠需介於 1024–65535 之間",
+                    "status_label": "狀態",
+                    "port_active_connections": "連接埠 {port}；活動連線 {count}",
+                    "client_config": "用戶端設定",
+                    "copy_claude_code": "Claude Code",
+                    "copy_claude_desktop": "Claude Desktop",
+                    "copy_codex": "Codex",
+                    "copy_generic": "通用 (HTTP)",
+                    "security_note": "用戶端設定包含明文 token。只提供給你信任的本機工具。",
+                    "rotate_token": "重新產生 Token",
+                    "rotate_token_description": "重新產生後，舊用戶端設定會立即失效。",
+                    "token_rotated": "MCP token 已重新產生",
+                    "copied": "已複製 {target} 設定",
+                    "status": {
+                        "loading": "正在載入",
+                        "disabled": "已停止",
+                        "starting": "啟動中",
+                        "running": "執行中",
+                        "stopping": "停止中"
+                    }
+                }
             },
             "advanced_groups": {
                 "system": {

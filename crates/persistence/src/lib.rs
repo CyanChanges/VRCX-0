@@ -13,6 +13,7 @@ pub mod game_log;
 pub mod legacy_migration;
 pub mod legacy_vrcx;
 pub mod local_moderation;
+pub mod mcp_social;
 pub mod memos;
 pub mod mutual_graph;
 pub mod notifications;
