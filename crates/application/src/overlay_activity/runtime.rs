@@ -15,8 +15,8 @@ use super::types::{
 
 const DEFAULT_CAPACITY: usize = 128;
 const DEDUP_CAPACITY: usize = 4096;
-const DELIVERY_MAX_AGE_SECS: i64 = 60;
-const DEDUP_TTL: Duration = Duration::from_secs(2 * DELIVERY_MAX_AGE_SECS as u64);
+const DEDUP_TTL: Duration = Duration::from_secs(120);
+const DELIVERY_LIVE_GRACE: chrono::Duration = chrono::Duration::seconds(5);
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct OverlayFavoriteGroups {
@@ -119,7 +119,7 @@ pub(super) struct OverlayActivityState {
     pub(super) next_sequence: u64,
     pub(super) capacity: usize,
     pub(super) dedup_capacity: usize,
-    pub(super) armed: bool,
+    pub(super) live_since: Option<DateTime<Utc>>,
 }
 
 impl Default for OverlayActivityState {
@@ -134,7 +134,7 @@ impl Default for OverlayActivityState {
             next_sequence: 1,
             capacity: DEFAULT_CAPACITY,
             dedup_capacity: DEDUP_CAPACITY,
-            armed: false,
+            live_since: None,
         }
     }
 }
@@ -207,7 +207,11 @@ impl OverlayActivityRuntime {
 
     pub fn set_delivery_armed(&self, armed: bool) {
         if let Ok(mut state) = self.state.lock() {
-            state.armed = armed;
+            if armed {
+                state.live_since.get_or_insert_with(Utc::now);
+            } else {
+                state.live_since = None;
+            }
         }
     }
 
@@ -222,7 +226,7 @@ impl OverlayActivityRuntime {
             state.source_ids.clear();
             state.seen_order.clear();
             state.next_sequence = 1;
-            state.armed = false;
+            state.live_since = None;
             snapshot_from_state(&state)
         };
         self.emit_snapshot(snapshot);
@@ -298,17 +302,17 @@ impl OverlayActivityRuntime {
                 None
             };
 
-            let delivery =
-                if (desktop || vr || webhook) && state.armed && is_recent(&entry.created_at) {
-                    Some(OverlayActivityDelivery {
-                        entry: entry.clone(),
-                        desktop,
-                        vr,
-                        webhook,
-                    })
-                } else {
-                    None
-                };
+            let delivery = if (desktop || vr || webhook) && is_live_event(&state, &entry.created_at)
+            {
+                Some(OverlayActivityDelivery {
+                    entry: entry.clone(),
+                    desktop,
+                    vr,
+                    webhook,
+                })
+            } else {
+                None
+            };
 
             (entry, snapshot, delivery)
         };
@@ -398,19 +402,17 @@ fn remember_source_id(state: &mut OverlayActivityState, source_id: String) {
     }
 }
 
-fn is_recent(created_at: &str) -> bool {
+fn is_live_event(state: &OverlayActivityState, created_at: &str) -> bool {
+    let Some(live_since) = state.live_since else {
+        return false;
+    };
     let trimmed = created_at.trim();
     if trimmed.is_empty() {
         return true;
     }
     match DateTime::parse_from_rfc3339(trimmed) {
-        Ok(timestamp) => {
-            Utc::now()
-                .signed_duration_since(timestamp.with_timezone(&Utc))
-                .num_seconds()
-                <= DELIVERY_MAX_AGE_SECS
-        }
-        Err(_) => false,
+        Ok(timestamp) => timestamp.with_timezone(&Utc) >= live_since - DELIVERY_LIVE_GRACE,
+        Err(_) => true,
     }
 }
 

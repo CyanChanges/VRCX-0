@@ -76,6 +76,7 @@ impl RealtimeHostRuntime {
     pub(super) fn apply_notification_output(&self, mut output: RealtimeNotificationOutput) {
         let mut projection = output.projection;
         self.enrich_notification_world_names(&mut projection);
+        self.enrich_notification_sender_names(&mut projection);
         self.enrich_persistence_world_names(&mut output.persistence);
         let persistence_attempted = !output.persistence.is_empty();
         match write_realtime_batch(&self.deps.db, &output.owner_user_id, &output.persistence) {

@@ -165,7 +165,7 @@ fn notification_projection_uses_sender_as_actor() {
 }
 
 #[test]
-fn notification_projection_skips_unresolved_direct_actor_delivery() {
+fn notification_projection_keeps_unresolved_direct_actor_with_user_id_title() {
     let (runtime, sink) = webhook_only_invite_runtime();
     let projection = RealtimeNotificationProjection {
         upserts: vec![RealtimeNotificationUpsert {
@@ -183,10 +183,16 @@ fn notification_projection_skips_unresolved_direct_actor_delivery() {
         ..RealtimeNotificationProjection::default()
     };
 
-    runtime.ingest_notification_projection(&projection);
+    let entries = runtime.ingest_notification_projection(&projection);
 
-    assert!(runtime.snapshot().entries.is_empty());
-    assert!(sink.take_deliveries().is_empty());
+    assert_eq!(entries.len(), 1);
+    assert_eq!(entries[0].actor_user_id, "usr_sender");
+    assert!(entries[0].content.title.key.is_empty());
+    assert_eq!(entries[0].content.title.fallback, "usr_sender");
+    let deliveries = sink.take_deliveries();
+    assert_eq!(deliveries.len(), 1);
+    assert!(deliveries[0].webhook);
+    assert_eq!(deliveries[0].entry.content.title.fallback, "usr_sender");
 }
 
 #[test]
@@ -553,7 +559,7 @@ fn game_log_system_and_video_entries_with_same_timestamp_do_not_collide() {
 }
 
 #[test]
-fn delivery_requires_armed_and_recent_event() {
+fn delivery_requires_live_session_event() {
     let runtime = OverlayActivityRuntime::new();
     let sink = TestOverlayActivitySink::default();
     runtime.set_sink(sink.clone());
@@ -572,6 +578,24 @@ fn delivery_requires_armed_and_recent_event() {
 
     runtime.ingest_candidate(candidate("friendRequest", "usr_c"));
     assert!(sink.take_deliveries().is_empty());
+}
+
+#[test]
+fn delivery_fires_for_missed_event_after_live_session_started() {
+    let runtime = OverlayActivityRuntime::new();
+    let sink = TestOverlayActivitySink::default();
+    runtime.set_sink(sink.clone());
+    runtime.set_delivery_armed(true);
+
+    let now = chrono::Utc::now();
+    runtime.state.lock().unwrap().live_since = Some(now - chrono::Duration::seconds(120));
+
+    let mut missed = candidate("friendRequest", "usr_missed");
+    missed.created_at = (now - chrono::Duration::seconds(90)).to_rfc3339();
+    runtime.ingest_candidate(missed);
+    let deliveries = sink.take_deliveries();
+    assert_eq!(deliveries.len(), 1);
+    assert_eq!(deliveries[0].entry.actor_user_id, "usr_missed");
 }
 
 #[test]

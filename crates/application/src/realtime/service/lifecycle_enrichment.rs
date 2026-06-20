@@ -17,6 +17,59 @@ impl RealtimeHostRuntime {
         }
     }
 
+    pub(super) fn enrich_notification_sender_names(
+        &self,
+        projection: &mut RealtimeNotificationProjection,
+    ) {
+        let endpoint = self.active_endpoint();
+        for upsert in &mut projection.upserts {
+            self.enrich_sender_name(&endpoint, &mut upsert.notification);
+        }
+    }
+
+    fn enrich_sender_name(&self, endpoint: &str, value: &mut Value) {
+        let Some(object) = value.as_object_mut() else {
+            return;
+        };
+        let already_named = [
+            object_string(object, "senderDisplayName"),
+            object_string(object, "displayName"),
+            object_string(object, "senderUsername"),
+            nested_object_string(object, &["details", "senderDisplayName"]),
+            nested_object_string(object, &["details", "displayName"]),
+        ]
+        .iter()
+        .any(|name| is_meaningful_actor_name(name));
+        if already_named {
+            return;
+        }
+        let sender_id = {
+            let sender_user_id = object_string(object, "senderUserId");
+            if sender_user_id.is_empty() {
+                object_string(object, "userId")
+            } else {
+                sender_user_id
+            }
+        };
+        if !sender_id.starts_with("usr_") {
+            return;
+        }
+        let Some(user) = self.user_cache.get_user(endpoint, &sender_id) else {
+            return;
+        };
+        let display_name = user
+            .get("displayName")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .unwrap_or_default();
+        if is_meaningful_actor_name(display_name) {
+            object.insert(
+                "senderDisplayName".into(),
+                Value::String(display_name.to_string()),
+            );
+        }
+    }
+
     pub(super) fn enrich_persistence_world_names(
         &self,
         persistence: &mut RealtimePersistenceBatch,
@@ -175,4 +228,9 @@ fn world_id_from_location_or_id(value: &str) -> String {
 fn is_meaningful_world_name(value: &str) -> bool {
     let trimmed = value.trim();
     !trimmed.is_empty() && !trimmed.starts_with("wrld_")
+}
+
+fn is_meaningful_actor_name(value: &str) -> bool {
+    let trimmed = value.trim();
+    !trimmed.is_empty() && !trimmed.starts_with("usr_")
 }

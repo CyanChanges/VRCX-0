@@ -235,9 +235,6 @@ fn notification_candidate(value: &Value) -> Option<OverlayActivityCandidate> {
         string_field(value, "receiverUserId"),
     ]);
     let actor_display_name = notification_actor_display_name(value);
-    if has_unresolved_direct_actor(&activity_type, &actor_user_id, &actor_display_name) {
-        return None;
-    }
     let source_id = if id.trim().is_empty() {
         format!(
             "notification:{activity_type}:{actor_user_id}:{created_at}:{}",
@@ -267,28 +264,6 @@ fn notification_actor_display_name(value: &Value) -> String {
         nested_string(value, &["data", "senderDisplayName"]),
         nested_string(value, &["data", "displayName"]),
     ])
-}
-
-fn has_unresolved_direct_actor(
-    activity_type: &str,
-    actor_user_id: &str,
-    actor_display_name: &str,
-) -> bool {
-    if !matches!(
-        activity_type,
-        "invite"
-            | "requestInvite"
-            | "inviteResponse"
-            | "requestInviteResponse"
-            | "friendRequest"
-            | "boop"
-    ) {
-        return false;
-    }
-    let display_name = actor_display_name.trim();
-    display_name.is_empty()
-        || display_name == actor_user_id.trim()
-        || display_name.starts_with("usr_")
 }
 
 fn nested_string(value: &Value, path: &[&str]) -> String {

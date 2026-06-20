@@ -89,7 +89,6 @@ impl UserCacheRuntime {
         output
     }
 
-    #[allow(dead_code)]
     pub(crate) fn get_user(&self, endpoint: &str, user_id: &str) -> Option<Map<String, Value>> {
         let key = user_fact_key(
             &Value::String(endpoint.to_string()),
