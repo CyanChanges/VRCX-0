@@ -49,6 +49,32 @@ pub struct RealtimeNotificationProjection {
     pub clear_menu_if_no_unseen: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub enum RealtimeEntryCorrectionStream {
+    Feed,
+    Notification,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeEntryCorrectionFields {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub world_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub display_location: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RealtimeEntryCorrection {
+    pub stream: RealtimeEntryCorrectionStream,
+    pub id: String,
+    pub fields: RealtimeEntryCorrectionFields,
+}
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize, specta::Type)]
 #[serde(rename_all = "camelCase")]
 pub struct RealtimeCurrentUserProjection {

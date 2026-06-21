@@ -80,9 +80,9 @@ impl RealtimeHostRuntime {
         mut output: RealtimeNotificationOutput,
     ) {
         let mut projection = output.projection;
-        let _ = self.enrich_notification_world_names(&mut projection);
+        let mut world_name_fetch_ids = self.enrich_notification_world_names(&mut projection);
         self.enrich_notification_sender_names(&mut projection);
-        let _ = self.enrich_persistence_world_names(&mut output.persistence);
+        world_name_fetch_ids.extend(self.enrich_persistence_world_names(&mut output.persistence));
         self.enrich_persistence_sender_names(&mut output.persistence);
         output.projection = projection;
         self.finalize_notification_output_for_delivery(&mut output);
@@ -114,6 +114,7 @@ impl RealtimeHostRuntime {
                 .emit_realtime_notification_projection(projection.clone());
             self.schedule_invite_automation(&projection);
         }
+        self.schedule_world_name_warm(world_name_fetch_ids);
     }
 
     pub(super) fn schedule_notification_output(

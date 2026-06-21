@@ -1,6 +1,6 @@
+use super::lifecycle_enrichment::{resolved_display_location, PendingWorldNameResolution};
+use super::types::PendingEntryCorrection;
 use super::*;
-use vrcx_0_persistence::cache_entities::CacheEntityInput;
-use vrcx_0_persistence::worlds::{world_cache_get, world_cache_upsert};
 use vrcx_0_vrchat_client::worlds::world_get_input;
 
 const WORLD_NAME_FETCH_THROTTLE_MS: i64 = 600_000;
@@ -21,7 +21,7 @@ impl RealtimeHostRuntime {
         if world_id.is_empty() {
             return None;
         }
-        if let Some(name) = lookup_cached_world_name(self.deps.db.as_ref(), &world_id) {
+        if let Some(name) = self.world_cache.get_name(&world_id) {
             return Some(name);
         }
         match self.fetch_and_cache_world_once(endpoint, world_id).await {
@@ -78,45 +78,40 @@ impl RealtimeHostRuntime {
         if !is_meaningful_world_name(&name) {
             return WorldNameFetchOutcome::PermanentFailure;
         }
-        let entry = CacheEntityInput {
-            id: string_or_value(&world, "id", &world_id),
-            author_id: value_or_null(&world, "authorId"),
-            author_name: value_or_null(&world, "authorName"),
-            created_at: value_or_null(&world, "createdAt"),
-            description: value_or_null(&world, "description"),
-            image_url: value_or_null(&world, "imageUrl"),
-            name: Value::String(name.clone()),
-            release_status: value_or_null(&world, "releaseStatus"),
-            thumbnail_image_url: value_or_null(&world, "thumbnailImageUrl"),
-            updated_at: value_or_null(&world, "updatedAt"),
-            version: value_or_null(&world, "version"),
-        };
-        if let Err(error) = world_cache_upsert(self.deps.db.as_ref(), entry) {
-            tracing::warn!(world_id = %world_id, "Realtime world cache upsert failed: {error}");
-        }
+        let _ = self.world_cache.hydrate_from_payload(&world);
         WorldNameFetchOutcome::Found(name)
     }
 
-    pub(super) fn schedule_world_name_warm(self: &Arc<Self>, world_ids: Vec<String>) {
-        if world_ids.is_empty() {
+    pub(super) fn schedule_world_name_warm(
+        self: &Arc<Self>,
+        pending_worlds: Vec<PendingWorldNameResolution>,
+    ) {
+        if pending_worlds.is_empty() {
             return;
         }
         let endpoint = self.active_endpoint();
         if endpoint.is_empty() {
             return;
         }
-        let mut candidate_ids = Vec::new();
-        for world_id in world_ids {
-            let world_id = world_id.trim().to_string();
-            if world_id.is_empty() || candidate_ids.contains(&world_id) {
+        let mut candidates = Vec::new();
+        for pending in pending_worlds {
+            let world_id = pending.world_id.trim().to_string();
+            if world_id.is_empty() {
                 continue;
             }
-            if lookup_cached_world_name(self.deps.db.as_ref(), &world_id).is_some() {
+            if let Some(world_name) = self.world_cache.get_name(&world_id) {
+                if let Some(entry) = pending.entry {
+                    self.emit_world_name_correction(entry, &world_name);
+                }
+                self.resolve_pending_world_corrections(&world_id, Some(&world_name));
                 continue;
             }
-            candidate_ids.push(world_id);
+            candidates.push(PendingWorldNameResolution {
+                world_id,
+                entry: pending.entry,
+            });
         }
-        if candidate_ids.is_empty() {
+        if candidates.is_empty() {
             return;
         }
         let now_ms = chrono::Utc::now().timestamp_millis();
@@ -129,17 +124,32 @@ impl RealtimeHostRuntime {
                 }
             };
             let mut fetch_ids = Vec::new();
-            for world_id in candidate_ids {
+            for pending in candidates {
                 let recent = state
                     .world_name_fetches
-                    .get(&world_id)
+                    .get(&pending.world_id)
                     .map(|last_ms| now_ms.saturating_sub(*last_ms) < WORLD_NAME_FETCH_THROTTLE_MS)
                     .unwrap_or(false);
+                let in_flight = state.world_name_fetch_inflight.contains(&pending.world_id);
+                if let Some(entry) = pending.entry {
+                    if !recent || in_flight {
+                        state
+                            .pending_world_name_corrections
+                            .entry(pending.world_id.clone())
+                            .or_default()
+                            .push(entry);
+                    }
+                }
                 if recent {
                     continue;
                 }
-                state.world_name_fetches.insert(world_id.clone(), now_ms);
-                fetch_ids.push(world_id);
+                state
+                    .world_name_fetches
+                    .insert(pending.world_id.clone(), now_ms);
+                state
+                    .world_name_fetch_inflight
+                    .insert(pending.world_id.clone());
+                fetch_ids.push(pending.world_id);
             }
             fetch_ids
         };
@@ -147,23 +157,56 @@ impl RealtimeHostRuntime {
             let runtime = Arc::clone(self);
             let endpoint = endpoint.clone();
             self.deps.tasks.spawn(async move {
-                runtime.fetch_and_cache_world(endpoint, world_id).await;
+                let world_name = runtime
+                    .fetch_and_cache_world(endpoint, world_id.clone())
+                    .await;
+                runtime.resolve_pending_world_corrections(&world_id, world_name.as_deref());
             });
         }
     }
-}
 
-pub(super) fn lookup_cached_world_name(db: &DatabaseService, world_id: &str) -> Option<String> {
-    world_cache_get(db, world_id.to_string())
-        .ok()
-        .flatten()
-        .map(|world| world.name)
-        .filter(|name| is_meaningful_world_name(name))
-        .or_else(|| {
-            lookup_game_log_world_name(db, world_id)
-                .ok()
-                .filter(|name| is_meaningful_world_name(name))
-        })
+    pub(super) fn resolve_pending_world_corrections(
+        &self,
+        world_id: &str,
+        world_name: Option<&str>,
+    ) {
+        let pending = {
+            let mut state = match self.state.lock() {
+                Ok(state) => state,
+                Err(error) => {
+                    tracing::warn!("realtime state lock failed: {error}");
+                    return;
+                }
+            };
+            state.world_name_fetch_inflight.remove(world_id);
+            state
+                .pending_world_name_corrections
+                .remove(world_id)
+                .unwrap_or_default()
+        };
+        let Some(world_name) = world_name else {
+            return;
+        };
+        for entry in pending {
+            self.emit_world_name_correction(entry, world_name);
+        }
+    }
+
+    fn emit_world_name_correction(&self, entry: PendingEntryCorrection, world_name: &str) {
+        let display_location =
+            resolved_display_location(&entry.location, world_name, &entry.group_name);
+        self.deps
+            .event_bus
+            .emit_realtime_entry_correction(RealtimeEntryCorrection {
+                stream: entry.stream,
+                id: entry.id,
+                fields: RealtimeEntryCorrectionFields {
+                    display_name: None,
+                    world_name: Some(world_name.to_string()),
+                    display_location: (!display_location.is_empty()).then_some(display_location),
+                },
+            });
+    }
 }
 
 pub(super) fn is_meaningful_world_name(value: &str) -> bool {
@@ -178,17 +221,4 @@ fn string_value(value: &Value, key: &str) -> String {
         .map(str::trim)
         .map(ToString::to_string)
         .unwrap_or_default()
-}
-
-fn value_or_null(value: &Value, key: &str) -> Value {
-    value.get(key).cloned().unwrap_or(Value::Null)
-}
-
-fn string_or_value(value: &Value, key: &str, fallback: &str) -> Value {
-    let text = string_value(value, key);
-    if text.is_empty() {
-        Value::String(fallback.to_string())
-    } else {
-        Value::String(text)
-    }
 }

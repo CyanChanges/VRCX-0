@@ -15,8 +15,14 @@ pub fn app__favorite_add(
     entity_id: String,
     group_name: String,
 ) -> Result<i64, AppError> {
-    vrcx_0_persistence::favorites::favorite_add(state.db.as_ref(), kind, entity_id, group_name)
-        .map_err(AppError::from)
+    let is_world = kind.trim() == "world";
+    let affected =
+        vrcx_0_persistence::favorites::favorite_add(state.db.as_ref(), kind, entity_id, group_name)
+            .map_err(AppError::from)?;
+    if is_world {
+        state.realtime_runtime.sync_world_cache_favorites_from_db();
+    }
+    Ok(affected)
 }
 
 #[tauri::command]
@@ -26,8 +32,14 @@ pub fn app__favorite_group_delete(
     kind: String,
     group_name: String,
 ) -> Result<i64, AppError> {
-    vrcx_0_persistence::favorites::favorite_group_delete(state.db.as_ref(), kind, group_name)
-        .map_err(AppError::from)
+    let is_world = kind.trim() == "world";
+    let affected =
+        vrcx_0_persistence::favorites::favorite_group_delete(state.db.as_ref(), kind, group_name)
+            .map_err(AppError::from)?;
+    if is_world {
+        state.realtime_runtime.sync_world_cache_favorites_from_db();
+    }
+    Ok(affected)
 }
 
 #[tauri::command]
@@ -64,6 +76,16 @@ pub fn app__favorite_remove(
     entity_id: String,
     group_name: String,
 ) -> Result<i64, AppError> {
-    vrcx_0_persistence::favorites::favorite_remove(state.db.as_ref(), kind, entity_id, group_name)
-        .map_err(AppError::from)
+    let is_world = kind.trim() == "world";
+    let affected = vrcx_0_persistence::favorites::favorite_remove(
+        state.db.as_ref(),
+        kind,
+        entity_id,
+        group_name,
+    )
+    .map_err(AppError::from)?;
+    if is_world {
+        state.realtime_runtime.sync_world_cache_favorites_from_db();
+    }
+    Ok(affected)
 }

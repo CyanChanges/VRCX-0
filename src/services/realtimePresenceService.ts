@@ -1,10 +1,11 @@
-import configRepository from '@/repositories/configRepository';
 import type {
     FriendProjection,
     RealtimeCurrentUserProjection,
+    RealtimeEntryCorrection,
     RealtimeInstanceClosedProjection,
     RealtimeNotificationProjection
 } from '@/platform/tauri/bindings';
+import configRepository from '@/repositories/configRepository';
 import { useFeedLiveStore } from '@/state/feedLiveStore';
 import { useFriendLogStore } from '@/state/friendLogStore';
 import { useFriendRosterStore } from '@/state/friendRosterStore';
@@ -44,7 +45,15 @@ function normalizeUserId(value: unknown): string {
         : String(value ?? '').trim();
 }
 
-function getCurrentUserSnapshot(runtimeState: RuntimeState = useRuntimeStore.getState()) {
+function trimCorrectionId(value: unknown): string {
+    return typeof value === 'string'
+        ? value.trim()
+        : String(value ?? '').trim();
+}
+
+function getCurrentUserSnapshot(
+    runtimeState: RuntimeState = useRuntimeStore.getState()
+) {
     return isRecord(runtimeState.auth.currentUserSnapshot)
         ? runtimeState.auth.currentUserSnapshot
         : null;
@@ -170,9 +179,7 @@ function notifyNotificationMenu(notification: ProjectionRecord) {
 
 function parseStringArray(value: unknown): string[] {
     if (Array.isArray(value)) {
-        return value
-            .map((entry) => normalizeUserId(entry))
-            .filter(Boolean);
+        return value.map((entry) => normalizeUserId(entry)).filter(Boolean);
     }
     if (typeof value !== 'string') {
         return [];
@@ -281,8 +288,7 @@ async function handleRealtimeNotificationProjection(
         const mergedNotification =
             useVrcNotificationStore
                 .getState()
-                .rows.find((row) => row.id === notification.id) ||
-            notification;
+                .rows.find((row) => row.id === notification.id) || notification;
         if (item.notifyMenu) {
             notifyNotificationMenu(mergedNotification);
         }
@@ -290,6 +296,21 @@ async function handleRealtimeNotificationProjection(
 
     if (projection.clearMenuIfNoUnseen) {
         clearNotificationMenuIfNoUnseen();
+    }
+}
+
+function handleRealtimeEntryCorrection(
+    payload: Partial<RealtimeEntryCorrection>
+) {
+    const fields = asRecord(payload.fields);
+    const id = trimCorrectionId(payload.id);
+    if (!id || !Object.keys(fields).length) {
+        return;
+    }
+    if (payload.stream === 'feed') {
+        useFeedLiveStore.getState().patchEntry(id, fields);
+    } else if (payload.stream === 'notification') {
+        useVrcNotificationStore.getState().patchNotification(id, fields);
     }
 }
 
@@ -355,6 +376,7 @@ async function handleRealtimeInstanceClosedProjection(
 
 export {
     handleRealtimeCurrentUserProjection,
+    handleRealtimeEntryCorrection,
     handleRealtimeFriendProjection,
     handleRealtimeInstanceClosedProjection,
     handleRealtimeNotificationProjection

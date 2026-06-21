@@ -24,7 +24,7 @@ type FetchWithEntityPolicyOptions = {
 
 export const entityQueryPolicies = Object.freeze({
     instance: Object.freeze({
-        staleTime: 20 * SECOND,
+        staleTime: 0,
         gcTime: 90 * SECOND,
         retry: 1,
         refetchOnWindowFocus: false
@@ -42,25 +42,25 @@ export const entityQueryPolicies = Object.freeze({
         refetchOnWindowFocus: false
     }),
     world: Object.freeze({
-        staleTime: 60 * SECOND,
+        staleTime: 0,
         gcTime: 300 * SECOND,
         retry: 1,
         refetchOnWindowFocus: false
     }),
     worldDialog: Object.freeze({
-        staleTime: 120 * SECOND,
+        staleTime: 0,
         gcTime: 300 * SECOND,
         retry: 1,
         refetchOnWindowFocus: false
     }),
     worldLocation: Object.freeze({
-        staleTime: 120 * SECOND,
+        staleTime: 0,
         gcTime: 300 * SECOND,
         retry: 1,
         refetchOnWindowFocus: false
     }),
     worldBasic: Object.freeze({
-        staleTime: 5 * MINUTE,
+        staleTime: 0,
         gcTime: 10 * MINUTE,
         retry: 1,
         refetchOnWindowFocus: false

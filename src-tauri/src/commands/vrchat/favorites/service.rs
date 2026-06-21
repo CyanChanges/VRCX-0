@@ -268,10 +268,16 @@ pub fn app__local_favorite_group_delete(
     input: LocalFavoriteGroupInput,
 ) -> Result<i64, AppError> {
     let kind = require_text(input.kind, "LocalFavoriteGroupDelete requires kind.")?;
+    let is_world = kind.trim() == "world";
     let group_name = require_text(
         input.group_name,
         "LocalFavoriteGroupDelete requires groupName.",
     )?;
-    vrcx_0_application::delete_local_favorite_group(state.db.as_ref(), &kind, group_name)
-        .map_err(AppError::from)
+    let affected =
+        vrcx_0_application::delete_local_favorite_group(state.db.as_ref(), &kind, group_name)
+            .map_err(AppError::from)?;
+    if is_world {
+        state.realtime_runtime.sync_world_cache_favorites_from_db();
+    }
+    Ok(affected)
 }

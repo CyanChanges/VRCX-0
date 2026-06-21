@@ -1,10 +1,11 @@
-import { commands } from '@/platform/tauri/bindings';
 import {
     entityQueryPolicies,
     fetchCachedData,
     queryKeys,
     setCachedQueryData
 } from '@/lib/entityQueryCache';
+import { commands } from '@/platform/tauri/bindings';
+import { useWorldFactsStore } from '@/state/worldFactsStore';
 
 import {
     createRequestError,
@@ -277,6 +278,29 @@ function normalize(world: unknown): WorldProfileRecord {
     return normalizeWorldProfile(world);
 }
 
+function recordWorldFact(world: unknown) {
+    if (world && typeof world === 'object') {
+        useWorldFactsStore.getState().upsertWorldFacts(world as WorldRecord);
+    }
+}
+
+function getMirroredWorldProfile(worldId: string): WorldProfileRecord | null {
+    const world = useWorldFactsStore.getState().getWorldFact(worldId);
+    return world ? normalize(world) : null;
+}
+
+async function getLocalCachedWorldProfile(
+    worldId: string
+): Promise<WorldProfileRecord | null> {
+    try {
+        const world = await commands.appWorldCacheGet(worldId);
+        return world ? normalize(world) : null;
+    } catch (error) {
+        console.warn('Failed to read local world cache:', error);
+        return null;
+    }
+}
+
 async function fetchWorldProfile({ worldId, endpoint = '' }: WorldIdInput) {
     const normalizedWorldId = normalizeEntityId(worldId);
     if (!normalizedWorldId) {
@@ -292,7 +316,9 @@ async function fetchWorldProfile({ worldId, endpoint = '' }: WorldIdInput) {
         }),
         `worlds/${encodeURIComponent(normalizedWorldId)}`
     );
-    return normalize(response.json);
+    const world = normalize(response.json);
+    recordWorldFact(world);
+    return world;
 }
 
 async function getWorldProfile({
@@ -307,6 +333,17 @@ async function getWorldProfile({
         throw new Error(
             'WorldProfileRepository.getWorldProfile requires a world id.'
         );
+    }
+
+    if (!force && !dialog) {
+        const mirroredWorld = getMirroredWorldProfile(normalizedWorldId);
+        if (mirroredWorld) {
+            return mirroredWorld;
+        }
+        const localWorld = await getLocalCachedWorldProfile(normalizedWorldId);
+        if (localWorld) {
+            return localWorld;
+        }
     }
 
     const json = await fetchCachedData({
@@ -370,7 +407,9 @@ async function getWorldsByUser({
         }
     });
 
-    return rows.map((world) => normalize(world));
+    const worlds = rows.map((world) => normalize(world));
+    useWorldFactsStore.getState().upsertWorldFacts(worlds);
+    return worlds;
 }
 
 async function saveWorld({
@@ -398,6 +437,7 @@ async function saveWorld({
             queryKeys.world(normalizedWorldId, endpoint),
             response.json
         );
+        recordWorldFact(normalize(response.json));
     }
     return response;
 }
@@ -439,6 +479,7 @@ async function publishWorld({ worldId, endpoint = '' }: WorldIdInput) {
             queryKeys.world(normalizedWorldId, endpoint),
             response.json
         );
+        recordWorldFact(normalize(response.json));
     }
     return response;
 }
@@ -463,6 +504,7 @@ async function unpublishWorld({ worldId, endpoint = '' }: WorldIdInput) {
             queryKeys.world(normalizedWorldId, endpoint),
             response.json
         );
+        recordWorldFact(normalize(response.json));
     }
     return response;
 }

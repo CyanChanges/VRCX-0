@@ -1,5 +1,7 @@
 use super::*;
 use crate::realtime::invite_automation::runtime::InviteAutomationState;
+use crate::world_cache::WorldCache;
+use std::collections::HashSet;
 
 pub(super) const MAX_QUEUED_FRIEND_MESSAGES: usize = 512;
 
@@ -17,6 +19,14 @@ pub(super) struct PendingFriendBaseline {
     pub(super) friends_by_id: HashMap<String, FriendRecord>,
 }
 
+#[derive(Clone, Debug)]
+pub(super) struct PendingEntryCorrection {
+    pub(super) stream: RealtimeEntryCorrectionStream,
+    pub(super) id: String,
+    pub(super) location: String,
+    pub(super) group_name: String,
+}
+
 #[derive(Default)]
 pub(super) struct RealtimeHostRuntimeState {
     pub(super) generation: u64,
@@ -26,6 +36,8 @@ pub(super) struct RealtimeHostRuntimeState {
     pub(super) queued_friend_messages: Vec<RealtimeWsMessagePayload>,
     pub(super) friend_profile_refetches: HashMap<String, i64>,
     pub(super) world_name_fetches: HashMap<String, i64>,
+    pub(super) world_name_fetch_inflight: HashSet<String>,
+    pub(super) pending_world_name_corrections: HashMap<String, Vec<PendingEntryCorrection>>,
     pub(super) invite_automation: InviteAutomationState,
 }
 
@@ -90,6 +102,7 @@ pub struct RealtimeHostRuntime {
     pub(super) current_user: RealtimeCurrentUserRuntime,
     pub(super) user_cache: UserCacheRuntime,
     pub(super) user_query_cache: UserQueryCache,
+    pub(super) world_cache: WorldCache,
     pub(super) notification_apply_lock: Arc<tokio::sync::Mutex<()>>,
 }
 

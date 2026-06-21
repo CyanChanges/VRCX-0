@@ -7,6 +7,7 @@ import type {
     HostSessionProjection,
     OverlayActivitySnapshot,
     RealtimeCurrentUserProjection,
+    RealtimeEntryCorrection,
     RealtimeInstanceClosedProjection,
     RealtimeInstanceQueueProjection,
     RealtimeNotificationProjection
@@ -38,6 +39,7 @@ import { executeNotificationTts } from './notificationDeliveryService';
 import { handleRealtimeInstanceQueueProjection } from './realtimeInstanceQueueService';
 import {
     handleRealtimeCurrentUserProjection,
+    handleRealtimeEntryCorrection,
     handleRealtimeFriendProjection,
     handleRealtimeInstanceClosedProjection,
     handleRealtimeNotificationProjection,
@@ -60,6 +62,7 @@ type RuntimeEventName =
     | 'notificationTts'
     | 'realtimeFriendProjection'
     | 'realtimeUserProjection'
+    | 'realtimeEntryCorrection'
     | 'realtimeNotificationProjection'
     | 'realtimeCurrentUserProjection'
     | 'realtimeInstanceClosedProjection'
@@ -81,6 +84,7 @@ type RuntimeEventPayloadMap = {
     notificationTts: Parameters<typeof executeNotificationTts>[0];
     realtimeFriendProjection: FriendProjection;
     realtimeUserProjection: unknown;
+    realtimeEntryCorrection: RealtimeEntryCorrection;
     realtimeNotificationProjection: RealtimeNotificationProjection;
     realtimeCurrentUserProjection: RealtimeCurrentUserProjection;
     realtimeInstanceClosedProjection: RealtimeInstanceClosedProjection;
@@ -593,6 +597,13 @@ function handleRuntimeEvent(
         return;
     }
 
+    if (name === 'realtimeEntryCorrection') {
+        handleRealtimeEntryCorrection(
+            payload as RuntimeEventPayloadMap['realtimeEntryCorrection']
+        );
+        return;
+    }
+
     if (name === 'gameLogProjection') {
         if (!isHostCapabilityAvailable('runtimeGameLogIngest')) {
             return;
@@ -749,6 +760,7 @@ export async function bindRuntimeEvents(): Promise<() => void> {
         'runtimeWorkerError',
         'realtimeFriendProjection',
         'realtimeUserProjection',
+        'realtimeEntryCorrection',
         'realtimeNotificationProjection',
         'realtimeCurrentUserProjection',
         'realtimeInstanceClosedProjection',

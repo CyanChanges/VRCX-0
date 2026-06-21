@@ -107,7 +107,7 @@ export function useUserHoverCardData({ userId, seed }: any) {
         }
         setPopulationLoading(true);
         vrchatInstanceRepository
-            .getInstance({ worldId, instanceId, endpoint, force: true })
+            .getInstance({ worldId, instanceId, endpoint })
             .then((response: any) => {
                 if (active) {
                     setPopulation(

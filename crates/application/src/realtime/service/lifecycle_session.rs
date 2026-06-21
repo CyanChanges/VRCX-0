@@ -2,10 +2,19 @@ use super::types::{
     ActiveRealtimeContext, RealtimeHostRuntimeMessageSink, RealtimeHostRuntimeState,
 };
 use super::*;
+use std::time::Duration;
+
+const WORLD_CACHE_WORKING_CAPACITY: u64 = 512;
+const WORLD_CACHE_WORKING_TTL: Duration = Duration::from_secs(30 * 60);
 
 impl RealtimeHostRuntime {
     pub fn new(deps: RealtimeHostRuntimeDeps) -> Self {
         let (cancel_tx, _) = watch::channel(0);
+        let world_cache = crate::world_cache::WorldCache::new(
+            Arc::clone(&deps.db),
+            WORLD_CACHE_WORKING_CAPACITY,
+            WORLD_CACHE_WORKING_TTL,
+        );
         Self {
             deps,
             state: Mutex::new(RealtimeHostRuntimeState::default()),
@@ -14,6 +23,7 @@ impl RealtimeHostRuntime {
             current_user: RealtimeCurrentUserRuntime::new(),
             user_cache: UserCacheRuntime::new(),
             user_query_cache: UserQueryCache::new(),
+            world_cache,
             notification_apply_lock: Arc::new(tokio::sync::Mutex::new(())),
         }
     }
@@ -70,6 +80,8 @@ impl RealtimeHostRuntime {
             state.queued_friend_messages.clear();
             state.friend_profile_refetches.clear();
             state.world_name_fetches.clear();
+            state.world_name_fetch_inflight.clear();
+            state.pending_world_name_corrections.clear();
             state.invite_automation.clear_all();
             self.friends.clear();
             self.current_user.clear();
@@ -95,6 +107,7 @@ impl RealtimeHostRuntime {
         }
         self.user_cache.clear();
         self.user_query_cache.clear();
+        self.world_cache.init_load();
         self.record_baseline_friends_into_cache();
         let transport_deps = RealtimeTransportDeps {
             db: Arc::clone(&self.deps.db),
@@ -143,6 +156,10 @@ impl RealtimeHostRuntime {
 
     pub fn current_user_snapshot(&self) -> Option<serde_json::Value> {
         self.current_user.snapshot_value()
+    }
+
+    pub fn sync_world_cache_favorites_from_db(&self) {
+        self.world_cache.sync_favorites_from_db();
     }
 
     pub fn expire_notification(&self, user_id: String, notification_id: String) -> Result<()> {
@@ -243,6 +260,8 @@ impl RealtimeHostRuntime {
             state.queued_friend_messages.clear();
             state.friend_profile_refetches.clear();
             state.world_name_fetches.clear();
+            state.world_name_fetch_inflight.clear();
+            state.pending_world_name_corrections.clear();
             let _ = self.cancel_tx.send(state.generation);
             self.deps.session.clear_realtime_context();
             self.friends.clear();
@@ -258,6 +277,7 @@ impl RealtimeHostRuntime {
 
         self.user_cache.clear();
         self.user_query_cache.clear();
+        self.world_cache.clear_working();
 
         if let Some(output) = final_current_user_output {
             self.apply_current_user_output(output);

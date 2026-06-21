@@ -1,5 +1,5 @@
 use serde_json::{json, Value};
-use vrcx_0_core::location::{parse_location, ParsedLocation};
+use vrcx_0_core::location::{format_display_location, parse_location};
 
 use super::types::{
     OverlayActivityCandidate, OverlayActivityCategory, OverlayActivityContent, OverlayActivityText,
@@ -35,7 +35,11 @@ pub(super) fn build_activity_content(
         nested_string(payload, &["details", "groupName"]),
     ]);
     let parsed_location = parse_location(&location);
-    let display_location = display_location(&parsed_location, &world_name, &group_name);
+    let display_location = first_non_empty([
+        string_field(payload, "displayLocation"),
+        nested_string(payload, &["details", "displayLocation"]),
+        format_display_location(&parsed_location, &world_name, &group_name),
+    ]);
 
     let mut content = match activity_type {
         "OnPlayerJoining" => titled_body(
@@ -349,7 +353,8 @@ pub(super) fn build_activity_content(
     };
 
     content.location = location;
-    content.world_id = parsed_location.world_id;
+    content.world_id =
+        first_non_empty([string_field(payload, "worldId"), parsed_location.world_id]);
     content.display_location = display_location.clone();
     content.world_name = world_name;
     content.group_name = group_name;
@@ -490,33 +495,6 @@ fn detail_message(payload: &Value) -> String {
         nested_string(payload, &["details", "responseMessage"]),
         string_field(payload, "message"),
     ])
-}
-
-fn display_location(parsed: &ParsedLocation, world_name: &str, group_name: &str) -> String {
-    if parsed.is_offline {
-        return "Offline".to_string();
-    }
-    if parsed.is_private {
-        return "Private".to_string();
-    }
-    if parsed.is_traveling {
-        return "Traveling".to_string();
-    }
-    let world_name = readable_name(world_name);
-    let group_name = readable_name(group_name);
-    if !parsed.world_id.is_empty() {
-        if !group_name.is_empty() {
-            return format!("{world_name} {}({group_name})", parsed.access_type_name)
-                .trim()
-                .to_string();
-        }
-        if !parsed.instance_id.is_empty() {
-            return format!("{world_name} {}", parsed.access_type_name)
-                .trim()
-                .to_string();
-        }
-    }
-    world_name.to_string()
 }
 
 fn readable_name(value: &str) -> &str {

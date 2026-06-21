@@ -40,7 +40,8 @@ use crate::realtime::user_cache::UserCacheRuntime;
 use crate::realtime::user_query_cache::UserQueryCache;
 use crate::realtime::{
     FriendBaselineResult, FriendProjection, PendingOfflineTimerAction,
-    RealtimeCurrentUserAuthority, RealtimeCurrentUserOutput, RealtimeFriendApplyResult,
+    RealtimeCurrentUserAuthority, RealtimeCurrentUserOutput, RealtimeEntryCorrection,
+    RealtimeEntryCorrectionFields, RealtimeEntryCorrectionStream, RealtimeFriendApplyResult,
     RealtimeFriendOutput, RealtimeInstanceClosedOutput, RealtimeNotificationOutput,
     RealtimeNotificationProjection, RealtimeNotificationUpsert, RealtimeSessionContext,
     RealtimeTransportStartResult, RealtimeWsStatusPayload,
@@ -79,8 +80,6 @@ mod persistence;
 #[path = "types.rs"]
 mod types;
 
-use lifecycle_world_cache::{
-    is_meaningful_world_name, lookup_cached_world_name, WorldNameFetchOutcome,
-};
+use lifecycle_world_cache::{is_meaningful_world_name, WorldNameFetchOutcome};
 
 pub use types::{RealtimeHostRuntime, RealtimeHostRuntimeDeps, RealtimeStopRequest};

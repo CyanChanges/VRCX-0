@@ -31,6 +31,7 @@ mod task_supervisor;
 pub mod vrchat_api;
 mod web_client;
 mod worker;
+mod world_cache;
 
 pub mod ports {
     pub use crate::event_bus::{RuntimeEventBus, RuntimeEventSink};
@@ -118,7 +119,8 @@ pub use process_monitor::{
 pub use realtime::{
     is_friend_event_type, FriendBaselineResult, FriendProjection, FriendProjectionPatch,
     PendingOfflineTimerAction, RealtimeCurrentUserAuthority, RealtimeCurrentUserOutput,
-    RealtimeCurrentUserProjection, RealtimeFriendApplyResult, RealtimeFriendOutput,
+    RealtimeCurrentUserProjection, RealtimeEntryCorrection, RealtimeEntryCorrectionFields,
+    RealtimeEntryCorrectionStream, RealtimeFriendApplyResult, RealtimeFriendOutput,
     RealtimeFriendSnapshot, RealtimeFriendsRuntime, RealtimeHostRuntime, RealtimeHostRuntimeDeps,
     RealtimeInstanceClosedOutput, RealtimeInstanceClosedProjection,
     RealtimeInstanceQueueProjection, RealtimeNotificationOutput, RealtimeNotificationProjection,

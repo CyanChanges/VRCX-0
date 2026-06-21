@@ -156,6 +156,50 @@ pub fn normalize_instance_type(parsed: &ParsedLocation) -> String {
     }
 }
 
+pub fn format_display_location(
+    parsed: &ParsedLocation,
+    world_name: &str,
+    group_name: &str,
+) -> String {
+    if parsed.is_offline {
+        return "Offline".to_string();
+    }
+    if parsed.is_private {
+        return "Private".to_string();
+    }
+    if parsed.is_traveling {
+        return "Traveling".to_string();
+    }
+    let world_name = readable_location_part(world_name);
+    let group_name = readable_location_part(group_name);
+    if !parsed.world_id.is_empty() {
+        if !group_name.is_empty() {
+            return format!("{world_name} {}({group_name})", parsed.access_type_name)
+                .trim()
+                .to_string();
+        }
+        if !parsed.instance_id.is_empty() {
+            return format!("{world_name} {}", parsed.access_type_name)
+                .trim()
+                .to_string();
+        }
+    }
+    world_name.to_string()
+}
+
+fn readable_location_part(value: &str) -> &str {
+    let trimmed = value.trim();
+    if trimmed == "private"
+        || trimmed == "private:private"
+        || trimmed.starts_with("wrld_")
+        || trimmed.starts_with("grp_")
+    {
+        ""
+    } else {
+        trimmed
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -275,6 +319,38 @@ mod tests {
         assert_eq!(
             offline.to_minimal_value("  offline  "),
             json!({"tag": "  offline  ", "worldId": "", "instanceId": "", "groupId": ""})
+        );
+    }
+
+    #[test]
+    fn display_location_formats_sentinels_and_instance_access() {
+        assert_eq!(
+            format_display_location(&parse_location("offline"), "Ignored", ""),
+            "Offline"
+        );
+        assert_eq!(
+            format_display_location(&parse_location("private"), "Ignored", ""),
+            "Private"
+        );
+        assert_eq!(
+            format_display_location(&parse_location("traveling"), "Ignored", ""),
+            "Traveling"
+        );
+        assert_eq!(
+            format_display_location(
+                &parse_location("wrld_a:1~group(grp_a)~groupAccessType(plus)"),
+                "Group World",
+                "Group Name",
+            ),
+            "Group World groupPlus(Group Name)"
+        );
+        assert_eq!(
+            format_display_location(&parse_location("wrld_a:1~region(use)"), "Public World", ""),
+            "Public World public"
+        );
+        assert_eq!(
+            format_display_location(&parse_location("wrld_a:1"), "wrld_a", "grp_a"),
+            "public"
         );
     }
 }

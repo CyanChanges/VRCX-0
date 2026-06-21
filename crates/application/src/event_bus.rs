@@ -6,8 +6,9 @@ use serde_json::Value;
 use crate::game_log::GameLogProjection;
 use crate::overlay_activity::OverlayActivitySnapshot;
 use crate::realtime::{
-    FriendProjection, RealtimeCurrentUserProjection, RealtimeInstanceClosedProjection,
-    RealtimeInstanceQueueProjection, RealtimeNotificationProjection,
+    FriendProjection, RealtimeCurrentUserProjection, RealtimeEntryCorrection,
+    RealtimeInstanceClosedProjection, RealtimeInstanceQueueProjection,
+    RealtimeNotificationProjection,
 };
 use crate::session::HostSessionProjection;
 use vrcx_0_core::realtime::RealtimeWsStatusPayload;
@@ -174,6 +175,10 @@ impl RuntimeEventBus {
 
     pub fn emit_realtime_notification_projection(&self, payload: RealtimeNotificationProjection) {
         self.emit("realtimeNotificationProjection", payload);
+    }
+
+    pub fn emit_realtime_entry_correction(&self, payload: RealtimeEntryCorrection) {
+        self.emit("realtimeEntryCorrection", payload);
     }
 
     pub fn emit_realtime_current_user_projection(&self, payload: RealtimeCurrentUserProjection) {

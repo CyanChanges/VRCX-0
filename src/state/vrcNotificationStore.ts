@@ -26,10 +26,50 @@ type NotificationRow = Record<string, unknown> & {
     createdAt?: string | number | null;
     type?: string;
 };
+type NotificationPatch = Partial<{
+    displayName: string;
+    senderDisplayName: string;
+    senderUsername: string;
+    worldName: string;
+    displayLocation: string;
+}>;
 type NotificationBucket = {
     unseen: NotificationRow[];
     recent: NotificationRow[];
 };
+const NOTIFICATION_DETAILS_PATCH_KEYS = [
+    'worldName',
+    'displayLocation'
+] as const;
+
+function normalizeNotificationId(value: unknown): string {
+    return typeof value === 'string'
+        ? value.trim()
+        : String(value ?? '').trim();
+}
+
+function nonEmptyNotificationPatch(
+    fields: NotificationPatch
+): NotificationPatch {
+    return Object.fromEntries(
+        Object.entries(fields).filter(
+            ([, value]) => typeof value === 'string' && value.trim() !== ''
+        )
+    ) as NotificationPatch;
+}
+
+function notificationDetailsPatch(
+    patch: NotificationPatch
+): Record<string, unknown> {
+    const detailsPatch: Record<string, unknown> = {};
+    for (const key of NOTIFICATION_DETAILS_PATCH_KEYS) {
+        if (patch[key]) {
+            detailsPatch[key] = patch[key];
+        }
+    }
+    return detailsPatch;
+}
+
 type NotificationCategories = Record<
     NotificationCategoryKey,
     NotificationBucket
@@ -49,6 +89,7 @@ type VrcNotificationStore = {
     setCenterOpen(isCenterOpen: unknown): void;
     openCenter(): void;
     upsertNotification(notification: NotificationRow): void;
+    patchNotification(id: unknown, fields: NotificationPatch): void;
     expireNotifications(ids: unknown | unknown[]): void;
     markNotificationsSeen(ids: unknown | unknown[]): void;
     markNotificationSeen(notification?: NotificationRow | null): Promise<void>;
@@ -266,6 +307,41 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
                     )
                 ];
                 return createNotificationState(rows, state.detail);
+            });
+            syncShellUnseenCount(get().unseenCount);
+        },
+        patchNotification(id: any, fields: any) {
+            const normalizedId = normalizeNotificationId(id);
+            if (!normalizedId || !fields || typeof fields !== 'object') {
+                return;
+            }
+            set((state: any) => {
+                let changed = false;
+                const rows = state.rows.map((row: NotificationRow) => {
+                    if (row.id !== normalizedId) {
+                        return row;
+                    }
+                    const patch = nonEmptyNotificationPatch(fields);
+                    if (!Object.keys(patch).length) {
+                        return row;
+                    }
+                    const details =
+                        row.details && typeof row.details === 'object'
+                            ? (row.details as Record<string, unknown>)
+                            : {};
+                    const detailsPatch = notificationDetailsPatch(patch);
+                    changed = true;
+                    return {
+                        ...row,
+                        ...patch,
+                        ...(Object.keys(detailsPatch).length
+                            ? { details: { ...details, ...detailsPatch } }
+                            : {})
+                    };
+                });
+                return changed
+                    ? createNotificationState(rows, state.detail)
+                    : state;
             });
             syncShellUnseenCount(get().unseenCount);
         },

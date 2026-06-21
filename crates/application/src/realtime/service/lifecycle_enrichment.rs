@@ -1,19 +1,41 @@
 use super::message_dispatch::json_string_field;
+use super::types::PendingEntryCorrection;
 use super::*;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use vrcx_0_core::location::{format_display_location, parse_location};
 
 const NOTIFICATION_RESOLVE_BUDGET_MS: u64 = 2_500;
 const NOTIFICATION_RESOLVE_ATTEMPTS: usize = 3;
 const NOTIFICATION_RESOLVE_RETRY_DELAY_MS: u64 = 100;
 
+#[derive(Clone, Debug)]
+pub(super) struct PendingWorldNameResolution {
+    pub(super) world_id: String,
+    pub(super) entry: Option<PendingEntryCorrection>,
+}
+
+impl PendingWorldNameResolution {
+    fn cache_only(world_id: String) -> Self {
+        Self {
+            world_id,
+            entry: None,
+        }
+    }
+}
+
 impl RealtimeHostRuntime {
-    pub(super) fn enrich_projection_world_names(&self, entries: &mut [Value]) -> Vec<String> {
+    pub(super) fn enrich_projection_world_names(
+        &self,
+        entries: &mut [Value],
+    ) -> Vec<PendingWorldNameResolution> {
         let mut unresolved_world_ids = Vec::new();
         for entry in entries {
-            if let Some(world_id) = self.enrich_world_name(entry) {
-                unresolved_world_ids.push(world_id);
+            if let Some(pending) =
+                self.enrich_world_name_for_entry(entry, RealtimeEntryCorrectionStream::Feed)
+            {
+                unresolved_world_ids.push(pending);
             }
         }
         unresolved_world_ids
@@ -22,11 +44,14 @@ impl RealtimeHostRuntime {
     pub(super) fn enrich_notification_world_names(
         &self,
         projection: &mut RealtimeNotificationProjection,
-    ) -> Vec<String> {
+    ) -> Vec<PendingWorldNameResolution> {
         let mut unresolved_world_ids = Vec::new();
         for upsert in &mut projection.upserts {
-            if let Some(world_id) = self.enrich_world_name(&mut upsert.notification) {
-                unresolved_world_ids.push(world_id);
+            if let Some(pending) = self.enrich_world_name_for_entry(
+                &mut upsert.notification,
+                RealtimeEntryCorrectionStream::Notification,
+            ) {
+                unresolved_world_ids.push(pending);
             }
         }
         unresolved_world_ids
@@ -217,7 +242,7 @@ impl RealtimeHostRuntime {
         deadline: Instant,
     ) -> Option<String> {
         for attempt in 0..NOTIFICATION_RESOLVE_ATTEMPTS {
-            if let Some(name) = lookup_cached_world_name(self.deps.db.as_ref(), world_id) {
+            if let Some(name) = self.world_cache.get_name(world_id) {
                 return Some(name);
             }
             let remaining = deadline.checked_duration_since(Instant::now())?;
@@ -317,51 +342,69 @@ impl RealtimeHostRuntime {
     pub(super) fn enrich_persistence_world_names(
         &self,
         persistence: &mut RealtimePersistenceBatch,
-    ) -> Vec<String> {
-        let mut unresolved_world_ids =
-            self.enrich_projection_world_names(&mut persistence.feed_entries);
+    ) -> Vec<PendingWorldNameResolution> {
+        let mut unresolved_world_ids = Vec::new();
+        for entry in &mut persistence.feed_entries {
+            if let Some(world_id) = self.enrich_world_name(entry) {
+                unresolved_world_ids.push(PendingWorldNameResolution::cache_only(world_id));
+            }
+        }
         for notification in &mut persistence.notification_v1_upserts {
             if let Some(world_id) = self.enrich_world_name(notification) {
-                unresolved_world_ids.push(world_id);
+                unresolved_world_ids.push(PendingWorldNameResolution::cache_only(world_id));
             }
         }
         for notification in &mut persistence.notification_v2_upserts {
             if let Some(world_id) = self.enrich_world_name(notification) {
-                unresolved_world_ids.push(world_id);
+                unresolved_world_ids.push(PendingWorldNameResolution::cache_only(world_id));
             }
         }
         for update in &mut persistence.notification_v2_updates {
             if let Some(world_id) = self.enrich_world_name(&mut update.updates) {
-                unresolved_world_ids.push(world_id);
+                unresolved_world_ids.push(PendingWorldNameResolution::cache_only(world_id));
             }
         }
         unresolved_world_ids
     }
 
     fn enrich_world_name(&self, value: &mut Value) -> Option<String> {
+        self.enrich_world_name_inner(value, None)
+            .map(|pending| pending.world_id)
+    }
+
+    fn enrich_world_name_for_entry(
+        &self,
+        value: &mut Value,
+        stream: RealtimeEntryCorrectionStream,
+    ) -> Option<PendingWorldNameResolution> {
+        self.enrich_world_name_inner(value, Some(stream))
+    }
+
+    fn enrich_world_name_inner(
+        &self,
+        value: &mut Value,
+        stream: Option<RealtimeEntryCorrectionStream>,
+    ) -> Option<PendingWorldNameResolution> {
         let object = value.as_object_mut()?;
         let top_level_name = object_string(object, "worldName");
         let details_name = nested_object_string(object, &["details", "worldName"]);
         let top_level_is_meaningful = is_meaningful_world_name(&top_level_name);
         let details_is_meaningful = is_meaningful_world_name(&details_name);
-        if top_level_is_meaningful && details_is_meaningful {
-            return None;
-        }
 
         let mut unresolved_world_id = None;
+        let world_id = notification_world_id_from_object(object);
         let world_name = if top_level_is_meaningful {
             Some(top_level_name)
         } else if details_is_meaningful {
             Some(details_name)
         } else {
-            let world_id = notification_world_id_from_object(object);
             if world_id.is_empty() {
                 None
             } else {
-                match lookup_cached_world_name(self.deps.db.as_ref(), &world_id) {
+                match self.world_cache.get_name(&world_id) {
                     Some(world_name) => Some(world_name),
                     None => {
-                        unresolved_world_id = Some(world_id);
+                        unresolved_world_id = Some(world_id.clone());
                         None
                     }
                 }
@@ -377,8 +420,15 @@ impl RealtimeHostRuntime {
                     details.insert("worldName".into(), Value::String(world_name));
                 }
             }
+            if !world_id.is_empty() && object_string(object, "worldId").is_empty() {
+                object.insert("worldId".into(), Value::String(world_id));
+            }
         }
-        unresolved_world_id
+        apply_display_location(object);
+        unresolved_world_id.map(|world_id| PendingWorldNameResolution {
+            world_id,
+            entry: stream.and_then(|stream| pending_entry_correction(object, stream)),
+        })
     }
 
     pub(super) fn enrich_current_user_location_output(
@@ -664,6 +714,111 @@ fn notification_world_id_from_object(object: &serde_json::Map<String, Value>) ->
         nested_object_string(object, &["details", "worldName"]),
         nested_object_string(object, &["details", "location"]),
     ])
+}
+
+fn pending_entry_correction(
+    object: &serde_json::Map<String, Value>,
+    stream: RealtimeEntryCorrectionStream,
+) -> Option<PendingEntryCorrection> {
+    let id = match stream {
+        RealtimeEntryCorrectionStream::Feed => feed_entry_correction_id(object),
+        RealtimeEntryCorrectionStream::Notification => notification_id_from_object(object),
+    };
+    (!id.trim().is_empty()).then(|| PendingEntryCorrection {
+        stream,
+        id,
+        location: first_owned([
+            object_string(object, "location"),
+            nested_object_string(object, &["details", "location"]),
+            object_string(object, "instanceLocation"),
+        ]),
+        group_name: first_owned([
+            object_string(object, "groupName"),
+            nested_object_string(object, &["details", "groupName"]),
+        ]),
+    })
+}
+
+pub(super) fn feed_entry_correction_id(object: &serde_json::Map<String, Value>) -> String {
+    let id = object_string(object, "id");
+    if !id.is_empty() {
+        return format!("id:{id}");
+    }
+    let row_id = first_owned([
+        object_string(object, "rowId"),
+        object_string(object, "row_id"),
+    ]);
+    if !row_id.is_empty() {
+        let source_rank = first_owned([
+            object_string(object, "sourceRank"),
+            object_string(object, "source_rank"),
+        ]);
+        let entry_type = object_string(object, "type");
+        if !source_rank.is_empty() {
+            return format!("row:{entry_type}:{source_rank}:{row_id}");
+        }
+        return format!("row:{entry_type}:{row_id}");
+    }
+    let entry_type = object_string(object, "type");
+    let created_at = first_owned([
+        object_string(object, "created_at"),
+        object_string(object, "createdAt"),
+    ]);
+    let user_id = first_owned([
+        object_string(object, "userId"),
+        object_string(object, "senderUserId"),
+    ]);
+    let location = first_owned([
+        object_string(object, "location"),
+        nested_object_string(object, &["details", "location"]),
+    ]);
+    let message = object_string(object, "message");
+    format!("{entry_type}:{created_at}:{user_id}:{location}:{message}")
+}
+
+fn notification_id_from_object(object: &serde_json::Map<String, Value>) -> String {
+    let id = object_string(object, "id");
+    if id.is_empty() {
+        object_string(object, "notificationId")
+    } else {
+        id
+    }
+}
+
+fn apply_display_location(object: &mut serde_json::Map<String, Value>) {
+    let location = first_owned([
+        object_string(object, "location"),
+        nested_object_string(object, &["details", "location"]),
+        object_string(object, "instanceLocation"),
+    ]);
+    let world_name = first_owned([
+        object_string(object, "worldName"),
+        nested_object_string(object, &["details", "worldName"]),
+    ]);
+    let group_name = first_owned([
+        object_string(object, "groupName"),
+        nested_object_string(object, &["details", "groupName"]),
+    ]);
+    let display_location = resolved_display_location(&location, &world_name, &group_name);
+    if !display_location.is_empty() {
+        object.insert("displayLocation".into(), Value::String(display_location));
+    }
+}
+
+pub(super) fn resolved_display_location(
+    location: &str,
+    world_name: &str,
+    group_name: &str,
+) -> String {
+    let parsed = parse_location(location);
+    format_display_location(&parsed, world_name, group_name)
+}
+
+fn first_owned<const N: usize>(values: [String; N]) -> String {
+    values
+        .into_iter()
+        .find(|value| !value.trim().is_empty())
+        .unwrap_or_default()
 }
 
 fn sanitize_world_name_fields(object: &mut serde_json::Map<String, Value>) {

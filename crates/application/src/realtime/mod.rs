@@ -19,6 +19,7 @@ pub use output::{
 };
 pub use projection::{
     FriendProjection, FriendProjectionPatch, RealtimeCurrentUserProjection,
+    RealtimeEntryCorrection, RealtimeEntryCorrectionFields, RealtimeEntryCorrectionStream,
     RealtimeInstanceClosedProjection, RealtimeInstanceQueueProjection,
     RealtimeNotificationProjection, RealtimeNotificationUpsert,
 };
