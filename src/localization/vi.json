@@ -1507,6 +1507,7 @@
         "tray": {
             "open": "Mở VRCX-0",
             "backgroundMode": "Chế độ nền",
+            "rebuildUi": "Tải lại giao diện",
             "disableTheme": "Tắt chủ đề",
             "exit": "Thoát"
         },

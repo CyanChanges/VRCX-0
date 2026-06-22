@@ -1864,6 +1864,7 @@
         "tray": {
             "open": "Открыть VRCX-0",
             "backgroundMode": "Фоновый режим",
+            "rebuildUi": "Перезагрузить интерфейс",
             "disableTheme": "Отключить тему",
             "exit": "Выход"
         },

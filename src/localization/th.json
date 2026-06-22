@@ -1883,6 +1883,7 @@
         "tray": {
             "open": "เปิด VRCX-0",
             "backgroundMode": "โหมดพื้นหลัง",
+            "rebuildUi": "โหลด UI ใหม่",
             "disableTheme": "ปิดใช้งานธีม",
             "exit": "ออก"
         },

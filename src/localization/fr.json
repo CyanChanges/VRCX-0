@@ -2015,6 +2015,7 @@
         "tray": {
             "open": "Ouvrir VRCX-0",
             "backgroundMode": "Mode arrière-plan",
+            "rebuildUi": "Recharger l'interface",
             "disableTheme": "Désactiver le thème",
             "exit": "Quitter"
         },

@@ -8,6 +8,7 @@ const SHELL_STRINGS_JSON: &str = include_str!("shell_strings.json");
 pub(crate) struct TrayLabels {
     pub(crate) open: String,
     pub(crate) background_mode: String,
+    pub(crate) rebuild_ui: String,
     pub(crate) disable_theme: String,
     pub(crate) exit: String,
 }
@@ -35,6 +36,7 @@ pub(crate) fn tray_labels_for_language(language: &str) -> TrayLabels {
     TrayLabels {
         open: text(language, "nativeShell.tray.open"),
         background_mode: text(language, "nativeShell.tray.backgroundMode"),
+        rebuild_ui: text(language, "nativeShell.tray.rebuildUi"),
         disable_theme: text(language, "nativeShell.tray.disableTheme"),
         exit: text(language, "nativeShell.tray.exit"),
     }

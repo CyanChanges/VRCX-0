@@ -2963,6 +2963,7 @@
         "tray": {
             "open": "Abrir VRCX-0",
             "backgroundMode": "Modo em segundo plano",
+            "rebuildUi": "Recarregar interface",
             "disableTheme": "Desativar tema",
             "exit": "Sair"
         },

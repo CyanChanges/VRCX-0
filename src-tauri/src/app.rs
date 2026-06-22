@@ -242,6 +242,14 @@ pub fn run() {
                     disable_community_theme_from_tray(app, &state);
                 }
             }
+            "tray-rebuild-ui" => {
+                let app_handle = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Err(error) = bootstrap::rebuild_main_window(&app_handle).await {
+                        tracing::warn!(error = %error, "failed to rebuild main window from tray");
+                    }
+                });
+            }
             "tray-exit" => {
                 commands::host::window::stop_runtime_services(app);
                 app.exit(0);
@@ -265,6 +273,10 @@ pub fn run() {
                 let Some(state) = app.try_state::<AppState>() else {
                     return;
                 };
+                if state.is_main_window_rebuild_in_progress() {
+                    api.prevent_exit();
+                    return;
+                }
                 let snapshot = state.snapshot_backend_runtime();
                 if is_background_running(snapshot.mode, snapshot.phase) {
                     api.prevent_exit();

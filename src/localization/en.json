@@ -84,6 +84,7 @@
         "tray": {
             "open": "Open VRCX-0",
             "backgroundMode": "Background Mode",
+            "rebuildUi": "Reload UI",
             "disableTheme": "Disable Theme",
             "exit": "Exit"
         },
@@ -646,6 +647,7 @@
                 "date_range": "Date range",
                 "players_joined": "{count} players joined",
                 "players_left": "{count} players left",
+                "friends_count": "{count} friends",
                 "play_count": "×{count}",
                 "joined": "Joined",
                 "left": "Left",

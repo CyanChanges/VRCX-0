@@ -1711,6 +1711,7 @@
         "tray": {
             "open": "Otevřít VRCX-0",
             "backgroundMode": "Režim na pozadí",
+            "rebuildUi": "Znovu načíst UI",
             "disableTheme": "Zakázat motiv",
             "exit": "Ukončit"
         },

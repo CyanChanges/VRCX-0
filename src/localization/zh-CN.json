@@ -84,6 +84,7 @@
         "tray": {
             "open": "打开 VRCX-0",
             "backgroundMode": "后台模式",
+            "rebuildUi": "重载界面",
             "disableTheme": "禁用主题",
             "exit": "退出"
         },
@@ -646,6 +647,7 @@
                 "date_range": "日期范围",
                 "players_joined": "{count} 名玩家加入",
                 "players_left": "{count} 名玩家离开",
+                "friends_count": "{count} 位好友",
                 "play_count": "×{count}",
                 "joined": "已加入",
                 "left": "离开",

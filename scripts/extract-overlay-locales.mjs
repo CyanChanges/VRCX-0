@@ -109,6 +109,7 @@ const shellPathKeys = [
         'nativeShell.tray.backgroundMode',
         ['nativeShell', 'tray', 'backgroundMode']
     ],
+    ['nativeShell.tray.rebuildUi', ['nativeShell', 'tray', 'rebuildUi']],
     ['nativeShell.tray.disableTheme', ['nativeShell', 'tray', 'disableTheme']],
     ['nativeShell.tray.exit', ['nativeShell', 'tray', 'exit']],
     [

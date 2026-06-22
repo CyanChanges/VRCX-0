@@ -1,4 +1,5 @@
 use std::ops::Deref;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
@@ -18,11 +19,24 @@ pub struct AppState {
     pub log_watcher_compat_bridge: LogWatcherCompatBridge,
     pub ipc: IpcServer,
     background_resume_route: Mutex<Option<String>>,
+    main_window_rebuild_in_progress: AtomicBool,
     auth_failure_notification: Mutex<Option<AuthFailureNotificationRecord>>,
 }
 
 struct AuthFailureNotificationRecord {
     sent_at: Instant,
+}
+
+pub(crate) struct MainWindowRebuildGuard<'a> {
+    state: &'a AppState,
+}
+
+impl Drop for MainWindowRebuildGuard<'_> {
+    fn drop(&mut self) {
+        self.state
+            .main_window_rebuild_in_progress
+            .store(false, Ordering::SeqCst);
+    }
 }
 
 impl AppState {
@@ -44,6 +58,7 @@ impl AppState {
             log_watcher_compat_bridge,
             ipc,
             background_resume_route: Mutex::new(None),
+            main_window_rebuild_in_progress: AtomicBool::new(false),
             auth_failure_notification: Mutex::new(None),
         })
     }
@@ -56,6 +71,17 @@ impl AppState {
 
     pub fn take_background_resume_route(&self) -> Option<String> {
         self.background_resume_route.lock().ok()?.take()
+    }
+
+    pub(crate) fn try_begin_main_window_rebuild(&self) -> Option<MainWindowRebuildGuard<'_>> {
+        self.main_window_rebuild_in_progress
+            .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
+            .ok()?;
+        Some(MainWindowRebuildGuard { state: self })
+    }
+
+    pub(crate) fn is_main_window_rebuild_in_progress(&self) -> bool {
+        self.main_window_rebuild_in_progress.load(Ordering::SeqCst)
     }
 
     pub fn should_emit_auth_failure_notification(&self, _key: &str, cooldown: Duration) -> bool {

@@ -28,6 +28,8 @@ use vrcx_0_runtime_host::notification::DesktopNotifier;
 use vrcx_0_runtime_host::RuntimeHostActions;
 
 const AUTH_FAILURE_NOTIFICATION_COOLDOWN: Duration = Duration::from_secs(5);
+const MAIN_WINDOW_REBUILD_DESTROY_TIMEOUT: Duration = Duration::from_secs(2);
+const MAIN_WINDOW_REBUILD_DESTROY_POLL_INTERVAL: Duration = Duration::from_millis(50);
 
 #[derive(Clone)]
 struct TauriRuntimeEventSink {
@@ -358,6 +360,51 @@ pub fn ensure_main_window(app: &tauri::AppHandle) -> Result<(), Box<dyn std::err
     start_host_services(app, &state);
     present_main_window(app);
     let _ = refresh_tray_menu(app, &state);
+    Ok(())
+}
+
+pub(crate) async fn rebuild_main_window(
+    app: &tauri::AppHandle,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let state = app.state::<AppState>();
+    let _rebuild_guard = state.try_begin_main_window_rebuild().ok_or_else(|| {
+        std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "main window rebuild is already in progress",
+        )
+    })?;
+    capture_background_resume_route(app, &state);
+
+    if let Some(window) = app.get_webview_window("main") {
+        window.destroy()?;
+        wait_for_main_window_destroyed(app).await?;
+    }
+
+    create_main_window(app, state.web.proxy_url())?;
+    disable_windows_default_context_menu(app);
+    start_host_services(app, &state);
+    present_main_window(app);
+    let _ = refresh_tray_menu(app, &state);
+    Ok(())
+}
+
+async fn wait_for_main_window_destroyed(
+    app: &tauri::AppHandle,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let wait_until_destroyed = async {
+        while app.get_webview_window("main").is_some() {
+            tokio::time::sleep(MAIN_WINDOW_REBUILD_DESTROY_POLL_INTERVAL).await;
+        }
+    };
+
+    tokio::time::timeout(MAIN_WINDOW_REBUILD_DESTROY_TIMEOUT, wait_until_destroyed)
+        .await
+        .map_err(|_| {
+            std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "main window label was not released before rebuild timeout",
+            )
+        })?;
     Ok(())
 }
 
@@ -872,6 +919,14 @@ pub fn refresh_tray_menu(app: &tauri::AppHandle, state: &AppState) -> Result<(),
             background_mode_active,
             None::<&str>,
         )?;
+        #[cfg(target_os = "linux")]
+        let rebuild_ui_item = MenuItem::with_id(
+            app,
+            "tray-rebuild-ui",
+            labels.rebuild_ui,
+            !background_mode_active,
+            None::<&str>,
+        )?;
         let disable_theme_item = MenuItem::with_id(
             app,
             "tray-disable-theme",
@@ -880,19 +935,15 @@ pub fn refresh_tray_menu(app: &tauri::AppHandle, state: &AppState) -> Result<(),
             None::<&str>,
         )?;
         let exit_item = MenuItem::with_id(app, "tray-exit", labels.exit, true, None::<&str>)?;
-        let menu = if community_theme_enabled {
-            Menu::with_items(
-                app,
-                &[
-                    &open_item,
-                    &background_item,
-                    &disable_theme_item,
-                    &exit_item,
-                ],
-            )?
-        } else {
-            Menu::with_items(app, &[&open_item, &background_item, &exit_item])?
-        };
+        let menu = Menu::new(app)?;
+        menu.append(&open_item)?;
+        menu.append(&background_item)?;
+        #[cfg(target_os = "linux")]
+        menu.append(&rebuild_ui_item)?;
+        if community_theme_enabled {
+            menu.append(&disable_theme_item)?;
+        }
+        menu.append(&exit_item)?;
         let _ = tray.set_menu(Some(menu));
         let _ = tray.set_show_menu_on_left_click(false);
     }

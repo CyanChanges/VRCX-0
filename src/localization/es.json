@@ -1831,6 +1831,7 @@
         "tray": {
             "open": "Abrir VRCX-0",
             "backgroundMode": "Modo en segundo plano",
+            "rebuildUi": "Recargar interfaz",
             "disableTheme": "Desactivar tema",
             "exit": "Salir"
         },

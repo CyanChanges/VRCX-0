@@ -1507,6 +1507,7 @@
         "tray": {
             "open": "VRCX-0 megnyitása",
             "backgroundMode": "Háttér mód",
+            "rebuildUi": "Felület újratöltése",
             "disableTheme": "Téma letiltása",
             "exit": "Kilépés"
         },
