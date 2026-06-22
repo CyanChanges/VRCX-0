@@ -1,4 +1,3 @@
-import { commands } from '@/platform/tauri/bindings';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -9,6 +8,7 @@ import { useRightSidePanelVisibility } from '@/components/layout/useRightSidePan
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { SupportVrcxDialog } from '@/components/support/SupportVrcxDialog';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog';
+import { commands } from '@/platform/tauri/bindings';
 import { tauriEvents } from '@/platform/tauri/events';
 import { logoutFromReactShell } from '@/services/authExecutionService';
 import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
@@ -30,6 +30,7 @@ import { useRuntimeStore } from '@/state/runtimeStore';
 import { useSessionStore } from '@/state/sessionStore';
 import { useShellStore } from '@/state/shellStore';
 import { useVrcNotificationStore } from '@/state/vrcNotificationStore';
+import { Button } from '@/ui/shadcn/button';
 import {
     Dialog,
     DialogContent,
@@ -166,7 +167,6 @@ export function MacNativeMenuActionHost() {
                 action !== 'qq-group' &&
                 action !== 'changelog' &&
                 action !== 'support-vrcx' &&
-                action !== 'open-source-licenses' &&
                 action !== 'keyboard-shortcuts' &&
                 action !== 'about' &&
                 action !== 'open-devtools';
@@ -250,9 +250,6 @@ export function MacNativeMenuActionHost() {
                     break;
                 case 'open-devtools':
                     runOpenDevtools();
-                    break;
-                case 'open-source-licenses':
-                    setOpenSourceNoticeOpen(true);
                     break;
                 case 'about':
                     setAboutOpen(true);
@@ -343,6 +340,16 @@ export function MacNativeMenuActionHost() {
                             <span className="font-medium">{appVersion}</span>
                         </div>
                     </div>
+                    <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => {
+                            setAboutOpen(false);
+                            setOpenSourceNoticeOpen(true);
+                        }}
+                    >
+                        {t('app_menu.open_source_licenses')}
+                    </Button>
                     <DialogFooter showCloseButton />
                 </DialogContent>
             </Dialog>

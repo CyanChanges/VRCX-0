@@ -6,7 +6,6 @@ const MENU_ACTION_EVENT: &str = "macNativeMenuAction";
 pub(crate) fn configure_macos_app_menu(app: &AppHandle) -> tauri::Result<()> {
     let app_menu = SubmenuBuilder::new(app, "VRCX-0")
         .text("mac-menu-about", "About VRCX-0")
-        .text("mac-menu-open-source-licenses", "Open Source Licenses")
         .separator()
         .text("mac-menu-settings", "Settings")
         .text("mac-menu-check-updates", "Check for Updates")
@@ -41,6 +40,7 @@ pub(crate) fn configure_macos_app_menu(app: &AppHandle) -> tauri::Result<()> {
         .text("mac-menu-keyboard-shortcuts", "Keyboard Shortcuts")
         .separator()
         .text("mac-menu-report-issue", "Report Issue")
+        .separator()
         .text("mac-menu-github", "GitHub")
         .text("mac-menu-discord", "Discord")
         .text("mac-menu-qq-group", "QQ Group");

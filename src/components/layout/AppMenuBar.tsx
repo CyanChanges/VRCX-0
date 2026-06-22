@@ -1,4 +1,3 @@
-import { commands } from '@/platform/tauri/bindings';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -6,6 +5,7 @@ import { toast } from 'sonner';
 
 import { SupportVrcxDialog } from '@/components/support/SupportVrcxDialog';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog';
+import { commands } from '@/platform/tauri/bindings';
 import configRepository from '@/repositories/configRepository';
 import { logoutFromReactShell } from '@/services/authExecutionService';
 import { startBackgroundModeForCurrentSession } from '@/services/backgroundModeService';
@@ -41,6 +41,7 @@ import { usePreferencesStore } from '@/state/preferencesStore';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useShellStore } from '@/state/shellStore';
 import { Badge } from '@/ui/shadcn/badge';
+import { Button } from '@/ui/shadcn/button';
 import {
     Dialog,
     DialogContent,
@@ -75,6 +76,14 @@ function MenuItem({ children, onSelect, ...props }: any) {
         >
             {children}
         </MenubarItem>
+    );
+}
+
+function MenuGroupLabel({ children }: any) {
+    return (
+        <MenubarLabel className="text-muted-foreground px-2 py-1.5 text-[11px] font-medium uppercase">
+            {children}
+        </MenubarLabel>
     );
 }
 
@@ -264,6 +273,13 @@ export function AppMenuBar({
                                 {t('app_menu.settings')}
                             </MenuItem>
                             <MenuItem
+                                onSelect={() =>
+                                    setSystemHostOpen('updaterOpen', true)
+                                }
+                            >
+                                {t('app_menu.check_updates')}
+                            </MenuItem>
+                            <MenuItem
                                 onSelect={() => {
                                     runRestartApplication();
                                 }}
@@ -399,9 +415,9 @@ export function AppMenuBar({
                             <>
                                 <MenubarSeparator />
                                 <MenubarGroup>
-                                    <MenubarLabel className="text-muted-foreground px-2 py-1.5 text-[11px] font-medium uppercase">
+                                    <MenuGroupLabel>
                                         {t('view.tools.quick_access.header')}
-                                    </MenubarLabel>
+                                    </MenuGroupLabel>
                                     {quickAccessTools.map((tool: any) => (
                                         <ToolMenuItem
                                             key={tool.key}
@@ -471,6 +487,12 @@ export function AppMenuBar({
                             <MenuItem onSelect={() => openLink(links.issues)}>
                                 {t('app_menu.report_issue')}
                             </MenuItem>
+                        </MenubarGroup>
+                        <MenubarSeparator />
+                        <MenubarGroup>
+                            <MenuGroupLabel>
+                                {t('app_menu.community')}
+                            </MenuGroupLabel>
                             <MenuItem onSelect={() => openLink(links.github)}>
                                 {t('app_menu.github')}
                             </MenuItem>
@@ -497,18 +519,6 @@ export function AppMenuBar({
                         <MenubarGroup>
                             <MenuItem onSelect={() => setSupportOpen(true)}>
                                 {t('support_vrcx.title')}
-                            </MenuItem>
-                            <MenuItem
-                                onSelect={() => setOpenSourceNoticeOpen(true)}
-                            >
-                                {t('app_menu.open_source_licenses')}
-                            </MenuItem>
-                            <MenuItem
-                                onSelect={() =>
-                                    setSystemHostOpen('updaterOpen', true)
-                                }
-                            >
-                                {t('app_menu.check_updates')}
                             </MenuItem>
                             <MenuItem onSelect={() => setAboutOpen(true)}>
                                 {t('app_menu.about')}
@@ -546,6 +556,16 @@ export function AppMenuBar({
                             <span className="font-medium">{appVersion}</span>
                         </div>
                     </div>
+                    <Button
+                        variant="outline"
+                        className="w-full justify-start"
+                        onClick={() => {
+                            setAboutOpen(false);
+                            setOpenSourceNoticeOpen(true);
+                        }}
+                    >
+                        {t('app_menu.open_source_licenses')}
+                    </Button>
                     <DialogFooter showCloseButton />
                 </DialogContent>
             </Dialog>
