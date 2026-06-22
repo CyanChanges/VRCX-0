@@ -1,15 +1,41 @@
-import { lazy, Suspense } from 'react';
-import { HashRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+    HashRouter,
+    Navigate,
+    Outlet,
+    Route,
+    Routes,
+    useLocation
+} from 'react-router-dom';
 
 import { GlobalHosts } from '@/components/hosts/GlobalHosts';
 import { AppTitleBar } from '@/components/layout/AppTitleBar';
 import { MacNativeMenuActionHost } from '@/components/layout/MacNativeMenuActionHost';
 import { MacOverlayTitleBar } from '@/components/layout/MacOverlayTitleBar';
 import { useGlobalKeyboardShortcuts } from '@/components/layout/useGlobalKeyboardShortcuts';
+import { recordRouteEnter } from '@/services/telemetry/telemetryPageReach';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useSessionStore } from '@/state/sessionStore';
+import { Button } from '@/ui/shadcn/button';
 
+import { RouteErrorBoundary } from './RouteErrorBoundary';
 import { protectedRoutes, publicRoutes, RouteLoadingFallback } from './routes';
+
+function RouteErrorFallback() {
+    const { t } = useTranslation();
+    return (
+        <div className="text-muted-foreground flex h-full min-h-0 flex-col items-center justify-center gap-3 text-sm">
+            <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.location.reload()}
+            >
+                {t('nativeShell.tray.rebuildUi')}
+            </Button>
+        </div>
+    );
+}
 
 const AppShellLayout = lazy(() =>
     import('@/components/layout/AppShellLayout').then((module: any) => ({
@@ -71,7 +97,11 @@ function AppRouterContent() {
     const isMacHost = useRuntimeStore(
         (state: any) => state.hostCapabilities.platform === 'macos'
     );
+    const { pathname } = useLocation();
     useGlobalKeyboardShortcuts();
+    useEffect(() => {
+        recordRouteEnter(pathname);
+    }, [pathname]);
 
     return (
         <div
@@ -83,37 +113,42 @@ function AppRouterContent() {
                 data-vrcx-0-surface="route-host"
                 className="vrcx-0-route-host min-h-0 flex-1 overflow-hidden"
             >
-                <Routes>
-                    <Route element={<RedirectIfAuthenticated />}>
-                        {publicRoutes.map((route: any) => (
-                            <Route
-                                key={route.path}
-                                path={route.path}
-                                element={route.element}
-                            />
-                        ))}
-                    </Route>
-
-                    <Route element={<RequireAuth />}>
-                        <Route element={<AppShellRoute />}>
-                            <Route
-                                index
-                                element={<Navigate to="/feed" replace />}
-                            />
-                            {protectedRoutes.map((route: any) => (
+                <RouteErrorBoundary
+                    resetKey={pathname}
+                    fallback={<RouteErrorFallback />}
+                >
+                    <Routes>
+                        <Route element={<RedirectIfAuthenticated />}>
+                            {publicRoutes.map((route: any) => (
                                 <Route
                                     key={route.path}
                                     path={route.path}
                                     element={route.element}
                                 />
                             ))}
-                            <Route
-                                path="*"
-                                element={<Navigate to="/feed" replace />}
-                            />
                         </Route>
-                    </Route>
-                </Routes>
+
+                        <Route element={<RequireAuth />}>
+                            <Route element={<AppShellRoute />}>
+                                <Route
+                                    index
+                                    element={<Navigate to="/feed" replace />}
+                                />
+                                {protectedRoutes.map((route: any) => (
+                                    <Route
+                                        key={route.path}
+                                        path={route.path}
+                                        element={route.element}
+                                    />
+                                ))}
+                                <Route
+                                    path="*"
+                                    element={<Navigate to="/feed" replace />}
+                                />
+                            </Route>
+                        </Route>
+                    </Routes>
+                </RouteErrorBoundary>
             </div>
             <GlobalHosts />
             <MacNativeMenuActionHost />

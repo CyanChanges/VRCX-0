@@ -13,6 +13,7 @@ import {
     createTelemetrySessionId,
     getOrCreateTelemetryInstallIdentity
 } from './telemetryIdentity';
+import { resetPageReach, sendPageReach } from './telemetryPageReach';
 import {
     buildBasicTelemetryContext,
     buildTelemetryContext,
@@ -209,6 +210,7 @@ export function startTelemetryLifecycle(): () => void {
             requestHeartbeat();
             if (activeSession) {
                 silently(sendViewModeUsage(activeSession));
+                silently(sendPageReach(activeSession));
             }
         }, TELEMETRY_HEARTBEAT_INTERVAL_MS);
     })().catch(() => {});
@@ -227,10 +229,12 @@ export function startTelemetryLifecycle(): () => void {
         if (activeSession) {
             silently(sendSessionEndHeartbeat(activeSession));
             silently(sendViewModeUsage(activeSession));
+            silently(sendPageReach(activeSession));
         }
         if (lastVrchatRunning === true && activeSession) {
             requestVrchatLifecycle(false, { force: true });
         }
         resetViewModeUsage();
+        resetPageReach();
     };
 }
