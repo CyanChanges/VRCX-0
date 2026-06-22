@@ -1,17 +1,11 @@
-import {
-    CalendarRangeIcon,
-    ChevronsUpDownIcon,
-    RefreshCwIcon,
-    UserRoundIcon
-} from 'lucide-react';
+import { ChevronsUpDownIcon, RefreshCwIcon, UserRoundIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { PreviousInstancesListTable } from '@/components/dialogs/previous-instances-table/PreviousInstancesListTable';
+import { DateTimeRangePicker } from '@/components/date-time-range-picker/DateTimeRangePicker';
 import {
-    formatPreviousInstanceCount,
     createdTime,
     rowLocation,
     rowSearchText,
@@ -27,18 +21,15 @@ import {
     PageToolbar,
     PageToolbarRow
 } from '@/components/layout/PageScaffold';
-import { UserPickerRow } from '@/features/charts/components/MutualFriendsViewParts';
-import {
-    parseGameLogDateInput,
-    toGameLogDateInputValue
-} from '@/features/game-log/gameLogDateRange';
 import { normalizeEndpoint, normalizeUserId } from '@/domain/users/userFacts';
+import { UserPickerRow } from '@/features/charts/components/MutualFriendsViewParts';
+import { InstanceHistoryList } from '@/features/instance-history/components/InstanceHistoryList';
+import { formatDateTime } from '@/lib/dateTime';
 import gameLogRepository from '@/repositories/gameLogRepository';
 import { useModalStore } from '@/state/modalStore';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useUserFactsStore } from '@/state/userFactsStore';
 import { Button } from '@/ui/shadcn/button';
-import { Calendar } from '@/ui/shadcn/calendar';
 import { Input } from '@/ui/shadcn/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import {
@@ -60,27 +51,19 @@ function knownUserName(user: any) {
     return user?.displayName || user?.username || user?.name || '';
 }
 
-function dateRangeContains(row: any, dateFrom: any, dateTo: any) {
-    if (!dateFrom && !dateTo) {
+function dateRangeContains(row: any, from: Date | null, to: Date | null) {
+    if (!from && !to) {
         return true;
     }
     const value = createdTime(row);
     if (!value) {
         return false;
     }
-    const fromDate = parseGameLogDateInput(dateFrom);
-    if (fromDate) {
-        fromDate.setHours(0, 0, 0, 0);
-        if (value < fromDate.getTime()) {
-            return false;
-        }
+    if (from && value < from.getTime()) {
+        return false;
     }
-    const toDate = parseGameLogDateInput(dateTo);
-    if (toDate) {
-        toDate.setHours(23, 59, 59, 999);
-        if (value > toDate.getTime()) {
-            return false;
-        }
+    if (to && value > to.getTime()) {
+        return false;
     }
     return true;
 }
@@ -107,10 +90,10 @@ export function InstanceHistoryPage({
     const [status, setStatus] = useState('idle');
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
-    const [dateFilterOpen, setDateFilterOpen] = useState(false);
-    const [dateFrom, setDateFrom] = useState('');
-    const [dateTo, setDateTo] = useState('');
-    const [dateDraftRange, setDateDraftRange] = useState<any>(undefined);
+    const [dateRange, setDateRange] = useState<{
+        from: Date | null;
+        to: Date | null;
+    }>({ from: null, to: null });
     const [sortKey, setSortKey] = useState('date');
     const [sortDesc, setSortDesc] = useState(true);
     const [pageSize, setPageSize] = useState(25);
@@ -130,13 +113,15 @@ export function InstanceHistoryPage({
                 endpoint
             });
         }
-        for (const user of Object.values(usersByKey || {}).filter((user: any) => {
-            const userId = normalizeUserId(user?.id);
-            return (
-                userId &&
-                normalizeEndpoint(user?.endpoint || endpoint) === endpoint
-            );
-        })) {
+        for (const user of Object.values(usersByKey || {}).filter(
+            (user: any) => {
+                const userId = normalizeUserId(user?.id);
+                return (
+                    userId &&
+                    normalizeEndpoint(user?.endpoint || endpoint) === endpoint
+                );
+            }
+        )) {
             const userId = normalizeUserId((user as any)?.id);
             if (!usersById.has(userId)) {
                 usersById.set(userId, user);
@@ -194,7 +179,7 @@ export function InstanceHistoryPage({
 
     useEffect(() => {
         setPageIndex(0);
-    }, [dateFrom, dateTo, search, sortDesc, sortKey]);
+    }, [dateRange.from, dateRange.to, search, sortDesc, sortKey]);
 
     useEffect(() => {
         if (!activeUserId) {
@@ -242,13 +227,13 @@ export function InstanceHistoryPage({
     const filteredRows = useMemo(() => {
         const query = search.trim().toLowerCase();
         const dateRows = rows.filter((row: any) =>
-            dateRangeContains(row, dateFrom, dateTo)
+            dateRangeContains(row, dateRange.from, dateRange.to)
         );
         const nextRows = query
             ? dateRows.filter((row: any) => rowSearchText(row).includes(query))
             : dateRows;
         return sortPreviousInstanceRows(nextRows, sortKey, sortDesc);
-    }, [dateFrom, dateTo, rows, search, sortDesc, sortKey]);
+    }, [dateRange.from, dateRange.to, rows, search, sortDesc, sortKey]);
 
     const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
     const currentPageIndex = Math.min(pageIndex, totalPages - 1);
@@ -257,18 +242,9 @@ export function InstanceHistoryPage({
         currentPageIndex * pageSize + pageSize
     );
 
-    function changeSort(nextKey: any) {
-        if (nextKey === sortKey) {
-            if (!sortDesc) {
-                setSortKey('');
-                setSortDesc(true);
-                return;
-            }
-            setSortDesc((value: any) => !value);
-            return;
-        }
+    function selectSort(nextKey: any, nextDesc: any) {
         setSortKey(nextKey);
-        setSortDesc(nextKey === 'date');
+        setSortDesc(Boolean(nextDesc));
     }
 
     function applyTarget(value: any) {
@@ -290,80 +266,39 @@ export function InstanceHistoryPage({
         setReloadToken((value: any) => value + 1);
     }
 
-    function updateDateDraftRange(range: any) {
-        setDateDraftRange(range);
-    }
-
-    function applyDateRange() {
-        const from = dateDraftRange?.from
-            ? toGameLogDateInputValue(dateDraftRange.from)
-            : '';
-        const to = dateDraftRange?.to
-            ? toGameLogDateInputValue(dateDraftRange.to)
-            : from;
-        setDateFrom(from);
-        setDateTo(to);
-        setDateFilterOpen(false);
-    }
-
     function clearDateRange() {
-        setDateFrom('');
-        setDateTo('');
-        setDateDraftRange(undefined);
-        setDateFilterOpen(false);
+        setDateRange({ from: null, to: null });
     }
 
-    const dateRangeLabel =
-        dateFrom || dateTo
-            ? [dateFrom || '...', dateTo || '...'].join(' - ')
-            : t('view.instance_history.label.date_range');
+    const dateActive = Boolean(dateRange.from || dateRange.to);
+
+    const formatRangePart = (value: Date) =>
+        formatDateTime(value, {
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+    const dateRangeLabel = dateActive
+        ? [
+              dateRange.from ? formatRangePart(dateRange.from) : '...',
+              dateRange.to ? formatRangePart(dateRange.to) : '...'
+          ].join(' - ')
+        : t('view.instance_history.label.date_range');
 
     const dateRangeControl = (
-        <Popover open={dateFilterOpen} onOpenChange={setDateFilterOpen}>
-            <PopoverTrigger asChild>
-                <Button
-                    type="button"
-                    variant={dateFrom || dateTo ? 'secondary' : 'outline'}
-                >
-                    <CalendarRangeIcon data-icon="inline-start" />
-                    <span>{dateRangeLabel}</span>
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent align="start" className="w-auto">
-                <Calendar
-                    mode="range"
-                    numberOfMonths={2}
-                    selected={dateDraftRange}
-                    disabled={{ after: new Date() }}
-                    onSelect={updateDateDraftRange}
-                />
-                <div className="flex items-center justify-between gap-4 px-3 pb-3">
-                    <div className="text-muted-foreground min-w-0 text-xs">
-                        {[
-                            dateDraftRange?.from
-                                ? toGameLogDateInputValue(dateDraftRange.from)
-                                : '...',
-                            dateDraftRange?.to
-                                ? toGameLogDateInputValue(dateDraftRange.to)
-                                : '...'
-                        ].join(' - ')}
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={clearDateRange}
-                        >
-                            {t('common.actions.clear')}
-                        </Button>
-                        <Button type="button" size="sm" onClick={applyDateRange}>
-                            {t('common.actions.confirm')}
-                        </Button>
-                    </div>
-                </div>
-            </PopoverContent>
-        </Popover>
+        <DateTimeRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            placeholder={t('view.instance_history.label.date_range')}
+            startLabel={t('view.instance_history.label.start')}
+            endLabel={t('view.instance_history.label.end')}
+            clearLabel={t('common.actions.clear')}
+            confirmLabel={t('common.actions.confirm')}
+            formatValue={formatRangePart}
+            disabled={{ after: new Date() }}
+        />
     );
 
     async function deleteRow(row: any) {
@@ -439,9 +374,11 @@ export function InstanceHistoryPage({
                             <Button
                                 type="button"
                                 variant="outline"
-                                className="min-w-64 max-w-xl flex-1 justify-between"
+                                className="max-w-xl min-w-64 flex-1 justify-between"
                             >
-                                <span className="truncate">{activeUserLabel}</span>
+                                <span className="truncate">
+                                    {activeUserLabel}
+                                </span>
                                 <ChevronsUpDownIcon className="text-muted-foreground size-4" />
                             </Button>
                         </PopoverTrigger>
@@ -523,18 +460,15 @@ export function InstanceHistoryPage({
                 >
                     <ResizablePanel
                         id="instance-history-list"
-                        defaultSize={62}
-                        minSize={45}
+                        defaultSize={36}
+                        minSize={28}
                         className="min-h-0 min-w-0 pr-3"
                     >
-                        <PreviousInstancesListTable
-                            title={t('view.instance_history.title')}
+                        <InstanceHistoryList
                             rows={rows}
                             filteredRows={filteredRows}
                             visibleRows={visibleRows}
-                            variant="user"
-                            showHeader
-                            className="h-full min-h-0"
+                            selectedRow={detailRow}
                             search={search}
                             onSearchChange={(value: any) => {
                                 setSearch(value);
@@ -547,7 +481,7 @@ export function InstanceHistoryPage({
                             }}
                             sortKey={sortKey}
                             sortDesc={sortDesc}
-                            onSortChange={changeSort}
+                            onSortSelect={selectSort}
                             currentPageIndex={currentPageIndex}
                             totalPages={totalPages}
                             onPreviousPage={() =>
@@ -560,18 +494,19 @@ export function InstanceHistoryPage({
                                     Math.min(totalPages - 1, value + 1)
                                 )
                             }
-                            currentUserId={currentUserId}
-                            currentEndpoint={currentEndpoint}
                             onOpenDetails={setDetailRow}
                             onDeleteRow={deleteRow}
-                            searchActions={dateRangeControl}
+                            dateRangeControl={dateRangeControl}
+                            dateActive={dateActive}
+                            dateRangeLabel={dateRangeLabel}
+                            onClearDate={clearDateRange}
                         />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel
                         id="instance-history-details"
-                        defaultSize={38}
-                        minSize={28}
+                        defaultSize={64}
+                        minSize={40}
                         className="min-h-0 min-w-0 pl-3"
                     >
                         <PreviousInstanceDetailsPanel
@@ -581,13 +516,6 @@ export function InstanceHistoryPage({
                         />
                     </ResizablePanel>
                 </ResizablePanelGroup>
-                {status === 'ready' ? (
-                    <div className="text-muted-foreground shrink-0 text-xs">
-                        {t('view.instance_history.label.loaded_records', {
-                            count: formatPreviousInstanceCount(rows.length)
-                        })}
-                    </div>
-                ) : null}
             </PageBody>
         </PageScaffold>
     );

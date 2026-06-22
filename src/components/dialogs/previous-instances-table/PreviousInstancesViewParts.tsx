@@ -1,6 +1,8 @@
+import { HeartIcon, StarIcon } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { InstanceActionBar } from '@/components/instances/InstanceActionBar';
 import {
     PageBackButton,
     PageDescription,
@@ -14,10 +16,11 @@ import {
     useKnownUserFacts
 } from '@/domain/users/useKnownUser';
 import { openGameLogUser } from '@/features/game-log/gameLogUserLookup';
-import { formatDateFilter, timeToText } from '@/lib/dateTime';
+import { formatClock, formatDateFilter, timeToText } from '@/lib/dateTime';
 import gameLogRepository from '@/repositories/gameLogRepository';
 import userProfileRepository from '@/repositories/userProfileRepository';
 import { openUserDialog, openWorldDialog } from '@/services/dialogService';
+import { parseLocation } from '@/shared/utils/locationParser';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { Alert, AlertDescription } from '@/ui/shadcn/alert';
 import { Button } from '@/ui/shadcn/button';
@@ -54,6 +57,27 @@ export function formatDate(value: any) {
     return formatDateFilter(value, 'long');
 }
 
+function playerLeaveMs(player: any) {
+    const value = new Date(
+        player?.created_at || player?.createdAt || 0
+    ).getTime();
+    return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function playerJoinClock(player: any) {
+    const leaveMs = playerLeaveMs(player);
+    if (!leaveMs) {
+        return '—';
+    }
+    const stayMs = Math.max(0, Number(player?.time || 0)) * 1000;
+    return formatClock(leaveMs - stayMs) || '—';
+}
+
+function playerLeaveClock(player: any) {
+    const leaveMs = playerLeaveMs(player);
+    return leaveMs ? formatClock(leaveMs) || '—' : '—';
+}
+
 export function DialogEmptyState({ title, description, className = '' }: any) {
     return (
         <Empty
@@ -88,7 +112,11 @@ function instanceDetailsSummary(row: any, t: any) {
         : t('dialog.previous_instances.description.instance_details');
 }
 
-export function InstanceOwnerCell({ userId, location = '', endpoint = '' }: any) {
+export function InstanceOwnerCell({
+    userId,
+    location = '',
+    endpoint = ''
+}: any) {
     const knownUser = useKnownUserFact(userId, { endpoint });
     const displayName =
         knownUser?.displayName ||
@@ -154,11 +182,13 @@ function PreviousInstancePlayerNameButton({
         return <span className="text-muted-foreground">-</span>;
     }
 
+    const isFavorite = Boolean(knownUser?.isFavorite || knownUser?.$isFavorite);
+
     return (
         <Button
             type="button"
             variant="ghost"
-            className="hover:text-primary h-auto max-w-full min-w-0 justify-start p-0 text-left font-normal"
+            className="hover:text-primary h-auto max-w-full min-w-0 justify-start gap-1.5 p-0 text-left font-normal"
             onClick={() => {
                 if (userId) {
                     openUserDialog({
@@ -172,6 +202,27 @@ function PreviousInstancePlayerNameButton({
             }}
         >
             <span className="truncate">{displayName || userId}</span>
+            {knownUser?.isFriend ? (
+                <span
+                    className={[
+                        'inline-flex h-[18px] shrink-0 items-center gap-1 rounded-md px-1.5 text-[0.7rem] font-medium',
+                        isFavorite
+                            ? 'bg-amber-500/15 text-amber-300'
+                            : 'bg-rose-500/15 text-rose-300'
+                    ].join(' ')}
+                >
+                    {isFavorite ? (
+                        <StarIcon className="size-3 shrink-0 fill-current" />
+                    ) : (
+                        <HeartIcon className="size-3 shrink-0 fill-current" />
+                    )}
+                    {t(
+                        isFavorite
+                            ? 'view.game_log.sessions.favorite'
+                            : 'view.game_log.sessions.friend'
+                    )}
+                </span>
+            ) : null}
         </Button>
     );
 }
@@ -377,6 +428,8 @@ export function PreviousInstanceDetailsPanel({
         );
     }
 
+    const parsedLocation = parseLocation(rowLocation(row));
+
     return (
         <div
             className={[
@@ -450,7 +503,34 @@ export function PreviousInstanceDetailsPanel({
                             />
                         </div>
                     </div>
+                    <div>
+                        <span className="text-muted-foreground">
+                            {t('dialog.new_instance.region')}
+                        </span>
+                        <div className="uppercase">
+                            {parsedLocation.region || '-'}
+                        </div>
+                    </div>
+                    <div>
+                        <span className="text-muted-foreground">
+                            {t('dialog.new_instance.instance_id')}
+                        </span>
+                        <div className="tabular-nums">
+                            {parsedLocation.instanceName
+                                ? `#${parsedLocation.instanceName}`
+                                : '-'}
+                        </div>
+                    </div>
                 </div>
+                <InstanceActionBar
+                    target={{
+                        location: rowLocation(row),
+                        worldName: row?.worldName || ''
+                    }}
+                    showRefresh={false}
+                    showInstanceInfo={false}
+                    className="flex-wrap"
+                />
                 <Tabs
                     value={detailsViewMode}
                     onValueChange={setDetailsViewMode}
@@ -502,9 +582,19 @@ export function PreviousInstanceDetailsPanel({
                                                         'table.previous_instances.display_name'
                                                     )}
                                                 </TableHead>
-                                                <TableHead className="w-24">
+                                                <TableHead className="w-20">
                                                     {t(
                                                         'dialog.world.info.visits'
+                                                    )}
+                                                </TableHead>
+                                                <TableHead className="w-20">
+                                                    {t(
+                                                        'table.previous_instances.joined'
+                                                    )}
+                                                </TableHead>
+                                                <TableHead className="w-20">
+                                                    {t(
+                                                        'table.previous_instances.left'
                                                     )}
                                                 </TableHead>
                                                 <TableHead className="w-28">
@@ -522,7 +612,10 @@ export function PreviousInstanceDetailsPanel({
                                         <TableBody>
                                             {infoData.players.length ? (
                                                 infoData.players.map(
-                                                    (player: any, index: any) => (
+                                                    (
+                                                        player: any,
+                                                        index: any
+                                                    ) => (
                                                         <TableRow
                                                             key={`${playerDisplayName(player)}:${playerUserId(player)}:${index}`}
                                                         >
@@ -546,6 +639,16 @@ export function PreviousInstanceDetailsPanel({
                                                             <TableCell className="align-top text-xs tabular-nums">
                                                                 {player?.count ||
                                                                     '-'}
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground align-top text-xs tabular-nums">
+                                                                {playerJoinClock(
+                                                                    player
+                                                                )}
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground align-top text-xs tabular-nums">
+                                                                {playerLeaveClock(
+                                                                    player
+                                                                )}
                                                             </TableCell>
                                                             <TableCell className="align-top text-xs tabular-nums">
                                                                 {Number(
@@ -571,7 +674,7 @@ export function PreviousInstanceDetailsPanel({
                                             ) : (
                                                 <TableRow>
                                                     <TableCell
-                                                        colSpan={4}
+                                                        colSpan={6}
                                                         className="py-6 text-center"
                                                     >
                                                         {t(
@@ -595,78 +698,6 @@ export function PreviousInstanceDetailsPanel({
                         </>
                     ) : null}
                 </Tabs>
-                {detailsViewMode === 'players' && infoData.details.length ? (
-                    <details className="shrink-0 rounded-md border p-3">
-                        <summary className="cursor-pointer text-sm font-medium">
-                            {t(
-                                'dialog.previous_instances.action.leave_details_count',
-                                {
-                                    count: infoData.details.length
-                                }
-                            )}
-                        </summary>
-                        <div className="mt-3 max-h-48 overflow-auto">
-                            <Table>
-                                <TableHeader className="vrcx-0-table-header sticky top-0">
-                                    <TableRow>
-                                        <TableHead className="h-8 px-2 py-1 text-xs">
-                                            {t('table.previous_instances.date')}
-                                        </TableHead>
-                                        <TableHead className="h-8 px-2 py-1 text-xs">
-                                            {t(
-                                                'table.previous_instances.display_name'
-                                            )}
-                                        </TableHead>
-                                        <TableHead className="h-8 px-2 py-1 text-xs">
-                                            {t('table.previous_instances.time')}
-                                        </TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {infoData.details.map(
-                                        (detailRow: any, index: any) => (
-                                            <TableRow
-                                                key={`${detailRow?.created_at}:${detailRow?.user_id}:${index}`}
-                                            >
-                                                <TableCell className="text-muted-foreground px-2 py-1 text-xs">
-                                                    {formatDate(
-                                                        detailRow?.created_at
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="px-2 py-1 text-xs">
-                                                    <PreviousInstancePlayerNameButton
-                                                        player={detailRow}
-                                                        displayName={resolvePlayerDisplayName(
-                                                            detailRow
-                                                        )}
-                                                        knownUser={
-                                                            knownPlayersById[
-                                                                playerUserId(
-                                                                    detailRow
-                                                                )
-                                                            ]
-                                                        }
-                                                    />
-                                                </TableCell>
-                                                <TableCell className="px-2 py-1 text-xs tabular-nums">
-                                                    {Number(
-                                                        detailRow?.time || 0
-                                                    ) > 0
-                                                        ? timeToText(
-                                                              Number(
-                                                                  detailRow.time
-                                                              )
-                                                          )
-                                                        : '-'}
-                                                </TableCell>
-                                            </TableRow>
-                                        )
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </details>
-                ) : null}
             </div>
         </div>
     );
