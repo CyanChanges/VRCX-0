@@ -3,10 +3,10 @@ use std::io::Cursor;
 use std::sync::Arc;
 
 use base64::{engine::general_purpose::STANDARD as B64, Engine};
+use cookie_store::{CookieStore, RawCookie};
 use reqwest::header::{HeaderName, HeaderValue, CONTENT_TYPE, REFERER};
 use reqwest::multipart::{Form, Part};
 use reqwest::{Client, Method, Proxy};
-use reqwest_cookie_store::{CookieStore, CookieStoreMutex, RawCookie};
 
 pub type Result<T> = std::result::Result<T, WebClientError>;
 
@@ -18,7 +18,12 @@ pub enum WebClientError {
     Io(#[from] std::io::Error),
 }
 
+use crate::cookies::{CookieEntry, CookieJar};
 use WebClientError as Error;
+
+pub use crate::cookies::{
+    deserialize_cookie_store, deserialize_legacy_cookie_entries, serialize_cookie_store,
+};
 
 #[derive(Clone, Debug, Default)]
 pub enum WebUploadMode {
@@ -64,15 +69,6 @@ impl WebExecuteRequest {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, specta::Type)]
-#[serde(rename_all = "PascalCase")]
-struct CookieEntry {
-    name: String,
-    value: String,
-    domain: String,
-    path: String,
-}
-
 pub fn validate_vrchat_cookies_b64(b64: &str) -> Result<()> {
     const MAX_COOKIE_STORE_BYTES: usize = 1024 * 1024;
 
@@ -103,22 +99,20 @@ fn load_cookie_store(bytes: &[u8]) -> Result<CookieStore> {
 }
 
 fn validate_cookie_store_domains(store: &CookieStore) -> Result<()> {
-    let domains = store
-        .iter_any()
-        .filter_map(|cookie| cookie.domain.as_cow().map(|domain| domain.to_string()))
-        .collect::<Vec<_>>();
-    if domains.is_empty() {
-        return Err(Error::Custom(
-            "cookie payload does not contain any cookie domains".into(),
-        ));
-    }
-
-    for domain in domains {
+    let mut saw_domain = false;
+    for domain in store.iter_any().filter_map(|cookie| cookie.domain.as_cow()) {
+        saw_domain = true;
         if !is_vrchat_cookie_domain(&domain) {
             return Err(Error::Custom(format!(
                 "cookie domain is not allowed: {domain}"
             )));
         }
+    }
+
+    if !saw_domain {
+        return Err(Error::Custom(
+            "cookie payload does not contain any cookie domains".into(),
+        ));
     }
 
     Ok(())
@@ -191,14 +185,14 @@ fn is_vrchat_cookie_domain(domain: &str) -> bool {
 
 pub struct WebClient {
     client: Client,
-    jar: Arc<CookieStoreMutex>,
+    jar: Arc<CookieJar>,
     proxy_url: Option<String>,
 }
 
 impl WebClient {
     pub fn new(proxy_url: Option<String>, cookies_b64: Option<&str>) -> Result<Self> {
-        let cookie_store = reqwest_cookie_store::CookieStore::default();
-        let jar = Arc::new(CookieStoreMutex::new(cookie_store));
+        let cookie_store = CookieStore::default();
+        let jar = Arc::new(CookieJar::new(cookie_store));
 
         let mut builder = Client::builder()
             .cookie_provider(jar.clone())
@@ -227,58 +221,42 @@ impl WebClient {
 
         if let Some(cookies_b64) = cookies_b64 {
             let _ = wc.restore_cookies(cookies_b64);
+            wc.jar.clear_dirty();
         }
 
         Ok(wc)
     }
 
     fn restore_cookies(&self, b64: &str) -> Result<bool> {
-        if let Some(store) = Self::deserialize_cookie_store(b64) {
-            let mut jar = self.jar.lock().unwrap();
-            *jar = store;
+        if let Some(new_store) = crate::cookies::deserialize_cookie_store(b64) {
+            self.jar.update(|store_mut| *store_mut = new_store);
             return Ok(true);
         }
-        if let Some(entries) = Self::deserialize_legacy_cookie_entries(b64) {
+        if let Some(entries) = crate::cookies::deserialize_legacy_cookie_entries(b64) {
             self.apply_cookie_entries(&entries)?;
             return Ok(true);
         }
         Ok(false)
     }
 
-    fn serialize_cookie_store(&self) -> Option<String> {
-        let store = self.jar.lock().unwrap();
-        let mut json = Vec::new();
-        #[allow(deprecated)]
-        store
-            .save_incl_expired_and_nonpersistent_json(&mut json)
-            .ok()?;
-        Some(B64.encode(json))
-    }
-
-    fn deserialize_cookie_store(b64: &str) -> Option<CookieStore> {
-        let bytes = B64.decode(b64).ok()?;
-        #[allow(deprecated)]
-        CookieStore::load_json_all(Cursor::new(bytes)).ok()
-    }
-
-    fn deserialize_legacy_cookie_entries(b64: &str) -> Option<Vec<CookieEntry>> {
-        let bytes = B64.decode(b64).ok()?;
-        serde_json::from_slice::<Vec<CookieEntry>>(&bytes).ok()
+    fn cookies_snapshot_b64(&self) -> Option<String> {
+        self.jar.read_with(crate::cookies::serialize_cookie_store)
     }
 
     fn apply_cookie_entries(&self, entries: &[CookieEntry]) -> Result<()> {
-        let mut store = self.jar.lock().unwrap();
-        for e in entries {
-            let url = legacy_cookie_url(e)?;
-            let cookie = legacy_raw_cookie(e)?;
-            store
-                .insert_raw(&cookie, &url)
-                .map_err(|error| Error::Custom(format!("insert legacy cookie: {error}")))?;
-        }
-        Ok(())
+        self.jar.update(|store| {
+            for e in entries {
+                let url = legacy_cookie_url(e)?;
+                let cookie = legacy_raw_cookie(e)?;
+                store
+                    .insert_raw(&cookie, &url)
+                    .map_err(|error| Error::Custom(format!("insert legacy cookie: {error}")))?;
+            }
+            Ok(())
+        })
     }
 
-    pub fn cookie_jar(&self) -> Arc<CookieStoreMutex> {
+    pub fn cookie_jar(&self) -> Arc<CookieJar> {
         self.jar.clone()
     }
 
@@ -287,12 +265,11 @@ impl WebClient {
     }
 
     pub fn clear_cookies(&self) {
-        let mut store = self.jar.lock().unwrap();
-        store.clear();
+        self.jar.update(|store| store.clear());
     }
 
     pub fn get_cookies(&self) -> String {
-        self.serialize_cookie_store().unwrap_or_default()
+        self.cookies_snapshot_b64().unwrap_or_default()
     }
 
     pub fn set_cookies(&self, b64: &str) -> Result<()> {
@@ -595,5 +572,20 @@ mod tests {
         }]));
 
         assert!(validate_vrchat_cookies_b64(&payload).is_err());
+    }
+
+    #[test]
+    fn rejects_cookie_store_without_domains() {
+        let store = CookieStore::default();
+        assert!(validate_cookie_store_domains(&store).is_err());
+    }
+
+    #[test]
+    fn accepts_cookie_store_with_vrchat_domain() {
+        let mut store = CookieStore::default();
+        let url = reqwest::Url::parse("https://vrchat.com/").unwrap();
+        let cookie = RawCookie::parse("auth=token; Domain=vrchat.com; Path=/").unwrap();
+        store.insert_raw(&cookie, &url).unwrap();
+        assert!(validate_cookie_store_domains(&store).is_ok());
     }
 }

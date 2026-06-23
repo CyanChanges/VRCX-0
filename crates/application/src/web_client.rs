@@ -1,5 +1,3 @@
-use std::sync::Mutex;
-
 use vrcx_0_integrations::external_api::{
     self, ExternalApiExecuteResponse, ExternalApiScope, ExternalHttpRequestInput,
     ExternalWebExecuteRequest,
@@ -17,7 +15,6 @@ use crate::Result;
 pub struct WebClient {
     inner: transport::WebClient,
     realtime_origin: String,
-    last_saved_cookies: Mutex<Option<String>>,
 }
 
 impl WebClient {
@@ -32,21 +29,22 @@ impl WebClient {
         Ok(Self {
             inner,
             realtime_origin,
-            last_saved_cookies: Mutex::new(persisted_cookies),
         })
     }
 
     pub fn save_cookies(&self, db: &DatabaseService) {
-        let b64 = self.inner.get_cookies();
-        let mut last_saved = self.last_saved_cookies.lock().unwrap();
-        if last_saved.as_ref() == Some(&b64) {
+        let jar = self.inner.cookie_jar();
+        let Some(maybe_b64) = jar.flush_if_dirty(transport::serialize_cookie_store) else {
             return;
-        }
+        };
+        let Some(b64) = maybe_b64 else {
+            jar.mark_dirty();
+            return;
+        };
         if let Err(error) = cookies::save_default_cookies(db, &b64) {
+            jar.mark_dirty();
             tracing::warn!("failed to persist cookies: {error}");
-            return;
         }
-        *last_saved = Some(b64);
     }
 
     pub fn proxy_url(&self) -> Option<&str> {
