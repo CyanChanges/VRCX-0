@@ -501,7 +501,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                     </StatusSegment>
                 </div>
 
-                <div className="flex shrink-0 items-center justify-end overflow-hidden">
+                <div className="text-muted-foreground flex shrink-0 items-center justify-end overflow-hidden">
                     <StatusSegment
                         visible={visibility.mutualGraph && mutualGraphVisible}
                         showDot={false}
@@ -525,7 +525,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                           type="button"
                                           variant="ghost"
                                           size="sm"
-                                          className="h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal tabular-nums"
+                                          className="text-muted-foreground hover:text-muted-foreground h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal tabular-nums"
                                       >
                                           <ClockIcon
                                               data-icon="inline-start"
@@ -604,12 +604,12 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                     variant="ghost"
                                     size="sm"
                                     aria-label={t('status_bar.zoom_tooltip')}
-                                    className="h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal"
+                                    className="text-muted-foreground hover:text-muted-foreground h-6 gap-1.5 rounded-none border-r px-2 text-xs font-normal"
                                 >
                                     <span className="text-muted-foreground">
                                         {t('status_bar.zoom')}
                                     </span>
-                                    <span className="tabular-nums">
+                                    <span className="text-muted-foreground tabular-nums">
                                         {zoomLabel}
                                     </span>
                                 </Button>
@@ -682,7 +682,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                     <span className="text-muted-foreground">
                                         {t('status_bar.app_uptime_short')}
                                     </span>
-                                    <span className="tabular-nums">
+                                    <span className="text-muted-foreground tabular-nums">
                                         <AppUptimeValue
                                             formatter={formatAppUptime}
                                             startedAtMs={appStartedAt}
@@ -705,7 +705,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                     aria-label="Proxy settings"
                                     className={cn(
                                         '-ml-px h-6 w-7 rounded-none border-l',
-                                        'border-primary/30 bg-primary/15 text-primary hover:bg-primary/20 hover:text-primary'
+                                        'text-muted-foreground hover:text-muted-foreground'
                                     )}
                                     onClick={onPromptProxySettings}
                                 >
@@ -728,7 +728,7 @@ export const StatusBarFooter = forwardRef(function StatusBarFooter(
                                 )}
                                 className={cn(
                                     '-ml-px size-6 shrink-0 rounded-none border-l',
-                                    'text-zinc-700 hover:text-zinc-950 dark:text-zinc-300 dark:hover:text-zinc-50'
+                                    'text-muted-foreground hover:text-muted-foreground'
                                 )}
                                 onClick={onStartBackgroundMode}
                             >
