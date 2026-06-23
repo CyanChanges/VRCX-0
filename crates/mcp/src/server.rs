@@ -14,6 +14,28 @@ use crate::runtime::McpRuntime;
 
 const DATA_CAVEATS_URI: &str = "vrcx://data-caveats";
 
+const SERVER_INSTRUCTIONS: &str = "\
+VRCX-0 exposes observer-centered VRChat social facts from the signed-in user's local history and live session. \
+Tools return aggregated facts centered on the signed-in user (\"me\"); you interpret them.
+
+Read before answering:
+- Missing data means unobserved, not false.
+- Facts about ME are reliable even inside private instances; facts about a THIRD PARTY (who someone else is with) are blind in private instances. Say so.
+- Each result carries a `caveats` array; reflect the relevant ones instead of presenting figures as exact.
+
+Map fuzzy requests to tools, then read each tool's own description for details (compose freely):
+- Closest to / who I play with most -> get_copresence_summary
+- Drifting from / losing touch with -> get_fading_friends
+- When to log on to catch people -> get_best_time_to_play (one friend: get_friend_activity_pattern)
+- Who was that person, by name fragment, time, world, or who they were with -> recall_encounter
+- Recap a week or month -> summarize_social_period
+- Who someone else hangs out with -> get_companions_of
+- A single friend, or who is online now -> get_friend_profile, get_online_friends
+- History, mutuals, invites, status changes -> get_friend_log, get_social_graph (refresh_mutual_graph if stale), get_invite_history, get_friend_changes
+
+For vague asks, start with summarize_social_period or get_online_friends, then drill in and cross-reference. Time windows are RFC3339; omit to search all history. \
+Writes (favorite_local, favorite_vrchat, set_friend_note) default to dry_run=true and never message other users; confirm before a real write.";
+
 pub(crate) struct VrcxMcpServer {
     pub(crate) runtime: McpRuntime,
     pub(crate) tool_router: ToolRouter<Self>,
@@ -29,9 +51,7 @@ impl ServerHandler for VrcxMcpServer {
                 .build(),
         )
         .with_server_info(Implementation::new("vrcx-0", env!("CARGO_PKG_VERSION")))
-        .with_instructions(
-            "VRCX-0 exposes observer-centered VRChat social facts. Treat missing data as unobserved, not false; mention privacy and visibility limits when answering.",
-        )
+        .with_instructions(SERVER_INSTRUCTIONS)
     }
 
     fn list_resources(

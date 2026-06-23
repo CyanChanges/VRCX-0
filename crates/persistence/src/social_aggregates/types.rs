@@ -319,6 +319,110 @@ pub struct FriendChangeEvent {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct FadingFriendsInput {
+    pub owner_user_id: String,
+    pub prior_from: String,
+    pub pivot: String,
+    pub now: String,
+    #[serde(default)]
+    pub min_prior_minutes: Option<i64>,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FadingFriendsOutput {
+    pub rows: Vec<FadingFriendRow>,
+    pub caveats: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FadingFriendRow {
+    pub user_id: String,
+    pub display_name: String,
+    pub prior_minutes: i64,
+    pub recent_minutes: i64,
+    pub prior_co_days: usize,
+    pub recent_co_days: usize,
+    pub drop_percent: i64,
+    pub last_seen_together: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BestTimeToPlayInput {
+    pub owner_user_id: String,
+    pub time_window: TimeWindow,
+    #[serde(default)]
+    pub bucket: ActivityBucket,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BestTimeToPlayOutput {
+    pub rows: Vec<BestTimeBucketRow>,
+    pub caveats: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BestTimeBucketRow {
+    pub bucket: String,
+    pub label: String,
+    pub distinct_friends: usize,
+    pub online_events: i64,
+    pub top_friends: Vec<BestTimeFriend>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct BestTimeFriend {
+    pub user_id: String,
+    pub display_name: String,
+    pub online_events: i64,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecallEncounterInput {
+    pub owner_user_id: String,
+    #[serde(default)]
+    pub name_query: Option<String>,
+    #[serde(default)]
+    pub world_id: Option<String>,
+    #[serde(default)]
+    pub co_present_with_user_id: Option<String>,
+    pub time_window: TimeWindow,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecallEncounterOutput {
+    pub rows: Vec<RecallEncounterRow>,
+    pub caveats: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct RecallEncounterRow {
+    pub user_id: String,
+    pub display_name: String,
+    pub encounter_count: i64,
+    pub encounter_days: usize,
+    pub first_seen: String,
+    pub last_seen: String,
+    pub is_friend: bool,
+    pub sample_locations: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct FavoriteLocalInput {
     pub kind: String,
     pub entity_id: String,

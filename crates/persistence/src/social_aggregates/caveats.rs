@@ -71,3 +71,28 @@ pub(crate) fn friend_log_caveats() -> Vec<String> {
 pub(crate) fn friend_changes_caveats() -> Vec<String> {
     vec!["Friend changes are observed realtime feed events for this VRCX-0 profile.".into()]
 }
+
+pub(crate) fn fading_friends_caveats() -> Vec<String> {
+    vec![
+        "Fading is a relative drop in observed co-presence between two equal-length windows, not proof a friend is avoiding you.".into(),
+        "Co-presence undercounts private instances and unpaired join/leave rows, so use dropPercent for ranking, not as an exact figure.".into(),
+        "Only users still present in the local friend roster are considered; removed friends are excluded.".into(),
+    ]
+}
+
+pub(crate) fn best_time_caveats() -> Vec<String> {
+    vec![
+        "Buckets count observed friend online events; being online does not imply an instance you can join.".into(),
+        "distinctFriends reflects only friends this profile observed coming online in the window.".into(),
+        "Hour and weekday buckets are in UTC, not the local time zone; convert before presenting clock times.".into(),
+    ]
+}
+
+pub(crate) fn recall_encounter_caveats() -> Vec<String> {
+    vec![
+        "Encounters come from the local game log and include non-friends who shared an instance with you.".into(),
+        "coPresentWith matches shared instance ids within the window, not exact overlapping minutes.".into(),
+        "isFriend reflects the current local friend roster, not the relationship at encounter time.".into(),
+        "When many encounters match, only the most recent rows are scanned, so older encounters can be missed; narrow the window or name to widen coverage.".into(),
+    ]
+}

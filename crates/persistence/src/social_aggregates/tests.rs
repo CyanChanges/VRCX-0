@@ -586,6 +586,267 @@ fn friend_changes_returns_recent_status_events_by_friend() {
     assert_eq!(bob.rows[0].user_id, "usr_bob");
 }
 
+fn insert_join_leave(
+    db: &DatabaseService,
+    created_at: &str,
+    kind: &str,
+    display_name: &str,
+    user_id: &str,
+    location: &str,
+    millis: i64,
+) {
+    db.execute_non_query(
+        "INSERT INTO gamelog_join_leave (created_at, type, display_name, location, user_id, time)
+         VALUES (@created_at, @type, @display_name, @location, @user_id, @time)",
+        &crate::common::ParamsBuilder::new()
+            .set("created_at", created_at)
+            .set("type", kind)
+            .set("display_name", display_name)
+            .set("location", location)
+            .set("user_id", user_id)
+            .set("time", millis)
+            .build(),
+    )
+    .unwrap();
+}
+
+#[test]
+fn fading_friends_ranks_dropped_copresence_for_current_friends() {
+    let (_dir, db) = test_db("fading-friends");
+    create_game_log_tables(&db);
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES ('usr_alice', 'Alice', 'Trusted', 1), ('usr_bob', 'Bob', 'Known', 2)",
+        &Default::default(),
+    )
+    .unwrap();
+    // Alice: heavy in prior window, almost gone in recent window -> fading.
+    insert_join_leave(
+        &db,
+        "2026-05-05T20:00:00Z",
+        "OnPlayerLeft",
+        "Alice",
+        "usr_alice",
+        "wrld_a:1",
+        3_600_000,
+    );
+    insert_join_leave(
+        &db,
+        "2026-05-10T20:00:00Z",
+        "OnPlayerLeft",
+        "Alice",
+        "usr_alice",
+        "wrld_a:1",
+        3_600_000,
+    );
+    insert_join_leave(
+        &db,
+        "2026-06-10T20:00:00Z",
+        "OnPlayerLeft",
+        "Alice",
+        "usr_alice",
+        "wrld_a:1",
+        600_000,
+    );
+    // Bob: steady in both windows -> not fading.
+    insert_join_leave(
+        &db,
+        "2026-05-08T20:00:00Z",
+        "OnPlayerLeft",
+        "Bob",
+        "usr_bob",
+        "wrld_b:1",
+        1_800_000,
+    );
+    insert_join_leave(
+        &db,
+        "2026-06-08T20:00:00Z",
+        "OnPlayerLeft",
+        "Bob",
+        "usr_bob",
+        "wrld_b:1",
+        1_800_000,
+    );
+    // Stranger is ignored even with a big drop.
+    insert_join_leave(
+        &db,
+        "2026-05-09T20:00:00Z",
+        "OnPlayerLeft",
+        "Carol",
+        "usr_carol",
+        "wrld_c:1",
+        3_600_000,
+    );
+
+    let output = get_fading_friends(
+        &db,
+        FadingFriendsInput {
+            owner_user_id: "usr_self".into(),
+            prior_from: "2026-05-01T00:00:00Z".into(),
+            pivot: "2026-06-01T00:00:00Z".into(),
+            now: "2026-07-01T00:00:00Z".into(),
+            min_prior_minutes: Some(30),
+            limit: None,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(output.rows.len(), 1);
+    let row = &output.rows[0];
+    assert_eq!(row.user_id, "usr_alice");
+    assert_eq!(row.prior_minutes, 120);
+    assert_eq!(row.recent_minutes, 10);
+    assert_eq!(row.prior_co_days, 2);
+    assert_eq!(row.recent_co_days, 1);
+    assert_eq!(row.drop_percent, 91);
+    assert_eq!(row.last_seen_together, "2026-06-10T20:00:00Z");
+}
+
+#[test]
+fn best_time_to_play_ranks_buckets_by_distinct_friends() {
+    let (_dir, db) = test_db("best-time");
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    for (user_id, display_name, created_at) in [
+        ("usr_alice", "Alice", "2026-06-01T20:05:00Z"),
+        ("usr_bob", "Bob", "2026-06-02T20:30:00Z"),
+        ("usr_alice", "Alice", "2026-06-03T20:45:00Z"),
+        ("usr_carol", "Carol", "2026-06-04T09:00:00Z"),
+    ] {
+        db.execute_non_query(
+                "INSERT INTO usrself_feed_online_offline
+                    (created_at, user_id, display_name, type, location, world_name, time, group_name)
+                 VALUES (@created_at, @user_id, @display_name, 'Online', '', '', 0, '')",
+                &crate::common::ParamsBuilder::new()
+                    .set("created_at", created_at)
+                    .set("user_id", user_id)
+                    .set("display_name", display_name)
+                    .build(),
+            )
+            .unwrap();
+    }
+
+    let output = get_best_time_to_play(
+        &db,
+        BestTimeToPlayInput {
+            owner_user_id: "usr_self".into(),
+            time_window: TimeWindow::all(),
+            bucket: ActivityBucket::HourOfDay,
+            limit: None,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(output.rows.len(), 2);
+    let top = &output.rows[0];
+    assert_eq!(top.bucket, "20");
+    assert_eq!(top.label, "20:00-21:00");
+    assert_eq!(top.distinct_friends, 2);
+    assert_eq!(top.online_events, 3);
+    assert_eq!(top.top_friends[0].user_id, "usr_alice");
+    assert_eq!(top.top_friends[0].online_events, 2);
+}
+
+#[test]
+fn recall_encounter_filters_by_name_and_copresence_including_non_friends() {
+    let (_dir, db) = test_db("recall-encounter");
+    create_game_log_tables(&db);
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES ('usr_anchor', 'Anchor', 'Known', 1)",
+        &Default::default(),
+    )
+    .unwrap();
+    // Anchor and Luna share wrld_party; Luna is a non-friend stranger.
+    insert_join_leave(
+        &db,
+        "2026-06-10T21:00:00Z",
+        "OnPlayerJoined",
+        "Anchor",
+        "usr_anchor",
+        "wrld_party:1",
+        0,
+    );
+    insert_join_leave(
+        &db,
+        "2026-06-10T21:05:00Z",
+        "OnPlayerJoined",
+        "LunaBunny",
+        "usr_luna",
+        "wrld_party:1",
+        0,
+    );
+    insert_join_leave(
+        &db,
+        "2026-06-12T21:00:00Z",
+        "OnPlayerJoined",
+        "LunaBunny",
+        "usr_luna",
+        "wrld_party:1",
+        0,
+    );
+    // Luna also appears in a world Anchor never visited -> excluded by coPresentWith.
+    insert_join_leave(
+        &db,
+        "2026-06-11T10:00:00Z",
+        "OnPlayerJoined",
+        "LunaBunny",
+        "usr_luna",
+        "wrld_solo:1",
+        0,
+    );
+    // Different person should be filtered out by the name query.
+    insert_join_leave(
+        &db,
+        "2026-06-10T21:10:00Z",
+        "OnPlayerJoined",
+        "Zephyr",
+        "usr_zephyr",
+        "wrld_party:1",
+        0,
+    );
+
+    let output = recall_encounter(
+        &db,
+        RecallEncounterInput {
+            owner_user_id: "usr_self".into(),
+            name_query: Some("luna".into()),
+            world_id: None,
+            co_present_with_user_id: Some("usr_anchor".into()),
+            time_window: TimeWindow::all(),
+            limit: None,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(output.rows.len(), 1);
+    let row = &output.rows[0];
+    assert_eq!(row.user_id, "usr_luna");
+    assert_eq!(row.display_name, "LunaBunny");
+    assert_eq!(row.encounter_count, 2);
+    assert_eq!(row.encounter_days, 2);
+    assert_eq!(row.last_seen, "2026-06-12T21:00:00Z");
+    assert!(!row.is_friend);
+    assert_eq!(row.sample_locations, vec!["wrld_party:1".to_string()]);
+
+    // coPresentWith must not return the anchor user as their own companion.
+    let anchored = recall_encounter(
+        &db,
+        RecallEncounterInput {
+            owner_user_id: "usr_self".into(),
+            name_query: None,
+            world_id: None,
+            co_present_with_user_id: Some("usr_anchor".into()),
+            time_window: TimeWindow::all(),
+            limit: None,
+        },
+    )
+    .unwrap();
+    assert!(anchored.rows.iter().all(|row| row.user_id != "usr_anchor"));
+    assert!(anchored.rows.iter().any(|row| row.user_id == "usr_luna"));
+}
+
 #[test]
 fn tool_outputs_include_global_data_caveat_resource_text() {
     let value = data_caveats_resource();

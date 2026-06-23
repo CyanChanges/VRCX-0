@@ -79,11 +79,28 @@ pub(crate) fn typical_online_window(
     else {
         return String::new();
     };
+    bucket_label(bucket, key)
+}
+
+pub(crate) fn bucket_label(bucket: &ActivityBucket, key: &str) -> String {
     match bucket {
         ActivityBucket::HourOfDay => {
             let hour = key.parse::<u8>().unwrap_or(0).min(23);
             format!("{hour:02}:00-{next:02}:00", next = (hour + 1) % 24)
         }
-        ActivityBucket::DayOfWeek => key.clone(),
+        ActivityBucket::DayOfWeek => weekday_name(key).to_string(),
+    }
+}
+
+fn weekday_name(key: &str) -> &'static str {
+    match key {
+        "0" => "Sunday",
+        "1" => "Monday",
+        "2" => "Tuesday",
+        "3" => "Wednesday",
+        "4" => "Thursday",
+        "5" => "Friday",
+        "6" => "Saturday",
+        _ => "",
     }
 }
