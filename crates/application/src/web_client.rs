@@ -33,19 +33,17 @@ impl WebClient {
     }
 
     pub fn save_cookies(&self, db: &DatabaseService) {
-        if let Some(maybe_b64) = self
-            .inner
-            .cookie_jar()
-            .with_snapshot_if_dirty(transport::serialize_cookie_store, true)
-        {
-            let b64 = match maybe_b64 {
-                Some(b64) => b64,
-                None => return,
-            };
-            if let Err(error) = cookies::save_default_cookies(db, &b64) {
-                tracing::warn!("failed to persist cookies: {error}");
-                return;
-            }
+        let jar = self.inner.cookie_jar();
+        let Some(maybe_b64) = jar.flush_if_dirty(transport::serialize_cookie_store) else {
+            return;
+        };
+        let Some(b64) = maybe_b64 else {
+            jar.mark_dirty();
+            return;
+        };
+        if let Err(error) = cookies::save_default_cookies(db, &b64) {
+            jar.mark_dirty();
+            tracing::warn!("failed to persist cookies: {error}");
         }
     }
 

@@ -99,12 +99,20 @@ fn load_cookie_store(bytes: &[u8]) -> Result<CookieStore> {
 }
 
 fn validate_cookie_store_domains(store: &CookieStore) -> Result<()> {
+    let mut saw_domain = false;
     for domain in store.iter_any().filter_map(|cookie| cookie.domain.as_cow()) {
+        saw_domain = true;
         if !is_vrchat_cookie_domain(&domain) {
             return Err(Error::Custom(format!(
                 "cookie domain is not allowed: {domain}"
             )));
         }
+    }
+
+    if !saw_domain {
+        return Err(Error::Custom(
+            "cookie payload does not contain any cookie domains".into(),
+        ));
     }
 
     Ok(())
@@ -213,6 +221,7 @@ impl WebClient {
 
         if let Some(cookies_b64) = cookies_b64 {
             let _ = wc.restore_cookies(cookies_b64);
+            wc.jar.clear_dirty();
         }
 
         Ok(wc)
@@ -563,5 +572,20 @@ mod tests {
         }]));
 
         assert!(validate_vrchat_cookies_b64(&payload).is_err());
+    }
+
+    #[test]
+    fn rejects_cookie_store_without_domains() {
+        let store = CookieStore::default();
+        assert!(validate_cookie_store_domains(&store).is_err());
+    }
+
+    #[test]
+    fn accepts_cookie_store_with_vrchat_domain() {
+        let mut store = CookieStore::default();
+        let url = reqwest::Url::parse("https://vrchat.com/").unwrap();
+        let cookie = RawCookie::parse("auth=token; Domain=vrchat.com; Path=/").unwrap();
+        store.insert_raw(&cookie, &url).unwrap();
+        assert!(validate_cookie_store_domains(&store).is_ok());
     }
 }

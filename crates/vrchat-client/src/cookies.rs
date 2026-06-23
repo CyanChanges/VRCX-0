@@ -3,9 +3,8 @@
 
 use base64::engine::general_purpose::STANDARD as B64;
 use base64::Engine;
-use cookie_store::{Cookie, CookieStore, RawCookie, RawCookieParseError};
+use cookie_store::{CookieStore, RawCookie, RawCookieParseError};
 use reqwest::header::HeaderValue;
-use tokio_tungstenite::tungstenite::Bytes;
 use url::Url;
 
 pub struct CookieJarInner {
@@ -23,19 +22,21 @@ impl CookieJar {
         }))
     }
 
-    pub fn has_changed(&self) -> bool {
-        self.0.lock().unwrap().dirty
+    pub fn mark_dirty(&self) {
+        self.map(|inner| inner.dirty = true);
     }
 
-    pub fn with_snapshot_if_dirty<F, R>(&self, closure: F, is_flush: bool) -> Option<R>
+    pub fn clear_dirty(&self) {
+        self.map(|inner| inner.dirty = false);
+    }
+
+    pub fn flush_if_dirty<F, R>(&self, closure: F) -> Option<R>
     where
         F: FnOnce(&CookieStore) -> R,
     {
         self.map(|inner| {
             inner.dirty.then(|| {
-                if is_flush {
-                    inner.dirty = false;
-                }
+                inner.dirty = false;
                 closure(&inner.store)
             })
         })
@@ -65,11 +66,6 @@ impl CookieJar {
         let mut guard = self.0.lock().unwrap();
         closure(&mut guard)
     }
-
-    pub fn into_inner(self) -> (bool, CookieStore) {
-        let inner = self.0.into_inner().unwrap();
-        (inner.dirty, inner.store)
-    }
 }
 
 impl reqwest::cookie::CookieStore for CookieJar {
@@ -92,7 +88,7 @@ impl reqwest::cookie::CookieStore for CookieJar {
             return None;
         }
 
-        HeaderValue::from_maybe_shared(Bytes::from(s)).ok()
+        HeaderValue::try_from(s).ok()
     }
 }
 
@@ -138,4 +134,40 @@ pub fn deserialize_cookie_store(b64: &str) -> Option<CookieStore> {
 pub fn deserialize_legacy_cookie_entries(b64: &str) -> Option<Vec<CookieEntry>> {
     let bytes = B64.decode(b64).ok()?;
     serde_json::from_slice::<Vec<CookieEntry>>(&bytes).ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fresh_jar_is_clean() {
+        let jar = CookieJar::new(CookieStore::default());
+        assert!(jar.flush_if_dirty(|_| ()).is_none());
+    }
+
+    #[test]
+    fn update_marks_dirty_and_flush_clears_once() {
+        let jar = CookieJar::new(CookieStore::default());
+        jar.update(|_| {});
+        assert!(jar.flush_if_dirty(|_| ()).is_some());
+        assert!(jar.flush_if_dirty(|_| ()).is_none());
+    }
+
+    #[test]
+    fn mark_dirty_rearms_after_flush() {
+        let jar = CookieJar::new(CookieStore::default());
+        jar.update(|_| {});
+        assert!(jar.flush_if_dirty(|_| ()).is_some());
+        jar.mark_dirty();
+        assert!(jar.flush_if_dirty(|_| ()).is_some());
+    }
+
+    #[test]
+    fn clear_dirty_suppresses_next_flush() {
+        let jar = CookieJar::new(CookieStore::default());
+        jar.update(|_| {});
+        jar.clear_dirty();
+        assert!(jar.flush_if_dirty(|_| ()).is_none());
+    }
 }
