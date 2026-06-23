@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::sync::{Arc, Mutex};
 
+use crate::cookies::CookieJar;
 use reqwest::Client;
-use reqwest_cookie_store::CookieStoreMutex;
 
 pub type Result<T> = std::result::Result<T, ImageFetchError>;
 
@@ -18,7 +18,7 @@ pub struct ImageFetcher {
 }
 
 impl ImageFetcher {
-    pub fn new(cookie_jar: Arc<CookieStoreMutex>, proxy_url: Option<&str>) -> Result<Self> {
+    pub fn new(cookie_jar: Arc<CookieJar>, proxy_url: Option<&str>) -> Result<Self> {
         let mut builder = Client::builder()
             .cookie_provider(cookie_jar)
             .user_agent("VRCX-0");
