@@ -62,6 +62,26 @@ export function isVrchatMissingCredentialsError(
     );
 }
 
+export function isVrchatInvalidCredentialsError(
+    error: unknown,
+    { credentialSubmission = false }: { credentialSubmission?: boolean } = {}
+): error is VrchatRequestError {
+    if (!error || typeof error !== 'object') {
+        return false;
+    }
+    const message = (error as Error).message;
+    if (
+        typeof message === 'string' &&
+        message.includes('Invalid Username/Email or Password')
+    ) {
+        return true;
+    }
+    return (
+        credentialSubmission &&
+        (error as Partial<VrchatRequestError>).status === 401
+    );
+}
+
 export function isVrchatSessionRecoveryError(
     error: unknown
 ): error is VrchatRequestError {

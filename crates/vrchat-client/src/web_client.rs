@@ -270,7 +270,14 @@ impl WebClient {
 
     pub fn clear_auth_cookies(&self) {
         self.jar.update(|store| {
-            store.remove("api.vrchat.cloud", "/", "auth");
+            let targets: Vec<(String, String)> = store
+                .iter_any()
+                .filter(|cookie| cookie.name() == "auth")
+                .map(|cookie| (String::from(&cookie.domain), String::from(&cookie.path)))
+                .collect();
+            for (domain, path) in &targets {
+                store.remove(domain, path, "auth");
+            }
         });
     }
 
@@ -593,5 +600,24 @@ mod tests {
         let cookie = RawCookie::parse("auth=token; Domain=vrchat.com; Path=/").unwrap();
         store.insert_raw(&cookie, &url).unwrap();
         assert!(validate_cookie_store_domains(&store).is_ok());
+    }
+
+    #[test]
+    fn clear_auth_cookies_drops_auth_keeps_two_factor() -> Result<()> {
+        let payload = legacy_cookie_payload(serde_json::json!([
+            {"Name": "auth", "Value": "a", "Domain": ".vrchat.cloud", "Path": "/"},
+            {"Name": "auth", "Value": "b", "Domain": "api.vrchat.cloud", "Path": "/"},
+            {"Name": "twoFactorAuth", "Value": "t", "Domain": ".vrchat.cloud", "Path": "/"}
+        ]));
+        let web = WebClient::new(None, Some(&payload))?;
+
+        web.clear_auth_cookies();
+
+        let store = deserialize_cookie_store(&web.get_cookies())
+            .ok_or_else(|| Error::Custom("cookie store did not round-trip".into()))?;
+        let names: Vec<&str> = store.iter_any().map(|cookie| cookie.name()).collect();
+        assert!(!names.contains(&"auth"));
+        assert!(names.contains(&"twoFactorAuth"));
+        Ok(())
     }
 }

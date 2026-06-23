@@ -7,7 +7,10 @@ import authRepository, {
     type SavedCredentialRecord
 } from '@/repositories/authRepository';
 import avatarProfileRepository from '@/repositories/avatarProfileRepository';
-import { isVrchatSessionRecoveryError } from '@/repositories/vrchatRequest';
+import {
+    isVrchatInvalidCredentialsError,
+    isVrchatSessionRecoveryError
+} from '@/repositories/vrchatRequest';
 import vrchatAuthRepository from '@/repositories/vrchatAuthRepository';
 import webRepository from '@/repositories/webRepository';
 import { useDialogStore } from '@/state/dialogStore';
@@ -430,7 +433,10 @@ async function finalizeSuccessfulLogin(
     return snapshot;
 }
 
-async function restoreAuthSnapshotOnFailure(error: AuthExecutionError) {
+async function restoreAuthSnapshotOnFailure(
+    error: AuthExecutionError,
+    { credentialSubmission = false }: { credentialSubmission?: boolean } = {}
+) {
     const shouldClearAutoLoginTarget = Boolean(
         isVrchatSessionRecoveryError(error)
     );
@@ -440,8 +446,16 @@ async function restoreAuthSnapshotOnFailure(error: AuthExecutionError) {
             ''
     );
 
+    const isInvalidCredentials = isVrchatInvalidCredentialsError(error, {
+        credentialSubmission
+    });
+
     try {
-        await webRepository.clearAuthCookies();
+        if (isInvalidCredentials) {
+            await webRepository.clearCookies();
+        } else {
+            await webRepository.clearAuthCookies();
+        }
     } catch {
         // ignore cleanup failure and still surface the original auth error
     }
@@ -514,7 +528,7 @@ export async function logoutFromReactShell() {
         const snapshot = await authRepository.recordLogout(currentUserId, {
             clearLastUserLoggedIn: true
         });
-        await webRepository.clearAuthCookies();
+        await webRepository.clearCookies();
         resetReactAutoLoginThrottle();
 
         await resetCurrentUserRuntimeAuth();
@@ -652,7 +666,8 @@ export async function executeManualLogin({
         });
     } catch (error) {
         return restoreAuthSnapshotOnFailure(
-            error instanceof Error ? error : new Error(String(error))
+            error instanceof Error ? error : new Error(String(error)),
+            { credentialSubmission: true }
         );
     }
 
@@ -726,12 +741,11 @@ export async function executeSavedCredentialLogin(
             error instanceof Error ? error : new Error(String(error));
         if (
             userId &&
-            typeof normalizedError.message === 'string' &&
-            normalizedError.message.includes(
-                'Invalid Username/Email or Password'
-            )
+            isVrchatInvalidCredentialsError(normalizedError, {
+                credentialSubmission: true
+            })
         ) {
-            await webRepository.clearAuthCookies();
+            await webRepository.clearCookies();
             await resetCurrentUserRuntimeAuth();
             setSignedOutSessionState();
             const snapshot = await authRepository.deleteSavedCredential(userId);

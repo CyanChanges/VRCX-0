@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     createRequestError,
+    isVrchatInvalidCredentialsError,
     isVrchatMissingCredentialsError,
     isVrchatSessionRecoveryError,
     unwrapErrorMessage
@@ -61,5 +62,31 @@ describe('vrchat request error classification', () => {
             'plain failure'
         );
         expect(unwrapErrorMessage({}, 500)).toBe('VRChat request failed (500)');
+    });
+
+    it('classifies invalid credentials by message or by a 401 credential rejection', () => {
+        expect(
+            isVrchatInvalidCredentialsError(
+                new Error('Invalid Username/Email or Password')
+            )
+        ).toBe(true);
+        expect(
+            isVrchatInvalidCredentialsError(
+                createRequestError('Reworded rejection', 401, 'auth/user'),
+                { credentialSubmission: true }
+            )
+        ).toBe(true);
+        expect(
+            isVrchatInvalidCredentialsError(
+                createRequestError('Reworded rejection', 401, 'auth/user')
+            )
+        ).toBe(false);
+        expect(
+            isVrchatInvalidCredentialsError(
+                createRequestError('Missing Credentials', 401, 'auth/user')
+            )
+        ).toBe(false);
+        expect(isVrchatInvalidCredentialsError(null)).toBe(false);
+        expect(isVrchatInvalidCredentialsError({ message: 123 })).toBe(false);
     });
 });
