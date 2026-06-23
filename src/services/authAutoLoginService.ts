@@ -243,7 +243,7 @@ export async function executeReactAutoLogin(
     try {
         if (!canAttemptReactAutoLogin(throttleKey)) {
             try {
-                await webRepository.clearCookies();
+                await webRepository.clearAuthCookies();
             } catch {
                 // ignore cleanup failure and still clear the auto-login target
             }
@@ -305,7 +305,7 @@ export async function executeReactAutoLogin(
                 }
             }
 
-            await webRepository.clearCookies();
+            await webRepository.clearAuthCookies();
         }
 
         if (!savedCredentialFallbackAvailable || !savedCredential) {

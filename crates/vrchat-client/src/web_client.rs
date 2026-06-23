@@ -268,6 +268,12 @@ impl WebClient {
         self.jar.update(|store| store.clear());
     }
 
+    pub fn clear_auth_cookies(&self) {
+        self.jar.update(|store| {
+            store.remove("api.vrchat.cloud", "/", "auth");
+        });
+    }
+
     pub fn get_cookies(&self) -> String {
         self.cookies_snapshot_b64().unwrap_or_default()
     }

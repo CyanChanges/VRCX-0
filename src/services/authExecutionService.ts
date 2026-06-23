@@ -441,7 +441,7 @@ async function restoreAuthSnapshotOnFailure(error: AuthExecutionError) {
     );
 
     try {
-        await webRepository.clearCookies();
+        await webRepository.clearAuthCookies();
     } catch {
         // ignore cleanup failure and still surface the original auth error
     }
@@ -514,7 +514,7 @@ export async function logoutFromReactShell() {
         const snapshot = await authRepository.recordLogout(currentUserId, {
             clearLastUserLoggedIn: true
         });
-        await webRepository.clearCookies();
+        await webRepository.clearAuthCookies();
         resetReactAutoLoginThrottle();
 
         await resetCurrentUserRuntimeAuth();
@@ -628,7 +628,7 @@ export async function executeManualLogin({
     let snapshot: SavedAuthSnapshot | null = null;
 
     try {
-        await webRepository.clearCookies();
+        await webRepository.clearAuthCookies();
         const response =
             await vrchatAuthRepository.loginWithBasicAuth(loginParams);
         const authResponse = parseAuthResponse(response.json);
@@ -639,7 +639,7 @@ export async function executeManualLogin({
                       endpoint: loginParams.endpoint,
                       initialMethods: authResponse.methods,
                       async restartChallenge() {
-                          await webRepository.clearCookies();
+                          await webRepository.clearAuthCookies();
                           return vrchatAuthRepository.loginWithBasicAuth(
                               loginParams
                           );
@@ -731,7 +731,7 @@ export async function executeSavedCredentialLogin(
                 'Invalid Username/Email or Password'
             )
         ) {
-            await webRepository.clearCookies();
+            await webRepository.clearAuthCookies();
             await resetCurrentUserRuntimeAuth();
             setSignedOutSessionState();
             const snapshot = await authRepository.deleteSavedCredential(userId);

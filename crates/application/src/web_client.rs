@@ -69,6 +69,10 @@ impl WebClient {
         self.inner.clear_cookies();
     }
 
+    pub fn clear_auth_cookies(&self) {
+        self.inner.clear_auth_cookies();
+    }
+
     pub fn get_cookies(&self) -> String {
         self.inner.get_cookies()
     }

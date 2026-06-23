@@ -35,11 +35,8 @@ async sqliteGetFailedUpgrade() : Promise<DatabaseUpgradeStatus | null> {
 async webClearCookies() : Promise<null> {
     return await TAURI_INVOKE("web__clear_cookies");
 },
-async webGetCookies() : Promise<string> {
-    return await TAURI_INVOKE("web__get_cookies");
-},
-async webSetCookies(cookies: string) : Promise<null> {
-    return await TAURI_INVOKE("web__set_cookies", { cookies });
+async webClearAuthCookies() : Promise<null> {
+    return await TAURI_INVOKE("web__clear_auth_cookies");
 },
 async appAppendErrorLog(entry: string) : Promise<null> {
     return await TAURI_INVOKE("app__append_error_log", { entry });

@@ -67,7 +67,7 @@ async function runRuntimeAuthRecovery(error: unknown): Promise<void> {
     });
 
     try {
-        await webRepository.clearCookies();
+        await webRepository.clearAuthCookies();
     } catch (clearError) {
         console.warn(
             'Failed to clear cookies after VRChat session expired:',
