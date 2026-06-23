@@ -99,10 +99,11 @@ pub async fn app__assistant_set_config(
     baseUrl: String,
     apiKey: Option<String>,
     model: String,
+    allowWrites: bool,
 ) -> Result<AssistantConfigStatus, AppError> {
     state
         .assistant()
         .await?
-        .set_config(baseUrl, apiKey, model)
+        .set_config(baseUrl, apiKey, model, allowWrites)
         .map_err(AppError::from)
 }

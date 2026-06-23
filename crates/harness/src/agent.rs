@@ -23,6 +23,8 @@ Guidance:
 - Prefer calling a tool over guessing. Compose tools for broad questions.
 - Missing data means unobserved, not false. Facts about ME are reliable even inside \
 private instances; facts about a THIRD PARTY are blind in private instances — say so.
+- \"Me\" (the signed-in user) is NOT a friend. Never count my own data as a friend or \
+include myself in friend lists, counts, or rankings.
 - Each tool result carries caveats; reflect the relevant ones instead of presenting \
 figures as exact.
 - Stay focused on VRChat social topics. Be concise and refer to people by name.
@@ -37,15 +39,11 @@ pub(crate) struct TurnContext {
     pub tool_defs: Arc<Vec<ToolDefinition>>,
     pub session_id: String,
     pub turn_id: String,
-    pub user_text: String,
     pub locale: Option<String>,
     pub cancel: CancellationToken,
 }
 
 pub(crate) async fn run_turn(ctx: TurnContext) {
-    ctx.sessions
-        .push_message(&ctx.session_id, Role::User, ctx.user_text.clone());
-
     let mut working = build_context(&ctx);
     let mut collected: Vec<Entity> = Vec::new();
     let mut final_answer = String::new();
@@ -57,11 +55,10 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
 
         let turn = {
             let emitter = &ctx.emitter;
-            let sessions = &ctx.sessions;
             let stream = ctx
                 .client
                 .stream_chat(&working, ctx.tool_defs.as_slice(), |delta| {
-                    emitter.delta(sessions.next_seq(), delta);
+                    emitter.delta(delta);
                 });
             tokio::pin!(stream);
             tokio::select! {
@@ -82,12 +79,8 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
 
         working.push(turn.clone().into_message());
         for call in &turn.tool_calls {
-            ctx.emitter.tool_call(
-                ctx.sessions.next_seq(),
-                &call.id,
-                &call.function.name,
-                &call.function.arguments,
-            );
+            ctx.emitter
+                .tool_call(&call.id, &call.function.name, &call.function.arguments);
             let arguments = parse_arguments(&call.function.arguments);
             let outcome = ctx
                 .tools
@@ -103,13 +96,8 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
                 );
             }
             collected.extend(resolved.entities.iter().cloned());
-            ctx.emitter.tool_result(
-                ctx.sessions.next_seq(),
-                &call.id,
-                resolved.ok,
-                &resolved.summary,
-                &resolved.entities,
-            );
+            ctx.emitter
+                .tool_result(&call.id, resolved.ok, &resolved.summary, &resolved.entities);
             working.push(ChatMessage::tool(call.id.clone(), resolved.content));
         }
     }
@@ -131,8 +119,7 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
 
     let surfaced = surfaced_entities(dedup_entities(collected), &final_answer, SURFACE_CAP);
     if !surfaced.is_empty() {
-        ctx.emitter
-            .turn_entities(ctx.sessions.next_seq(), &surfaced);
+        ctx.emitter.turn_entities(&surfaced);
     }
 
     ctx.sessions.set_active_turn(
@@ -142,7 +129,7 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
             status: TurnStatus::Done,
         }),
     );
-    ctx.emitter.done(ctx.sessions.next_seq());
+    ctx.emitter.done();
 }
 
 fn build_context(ctx: &TurnContext) -> Vec<ChatMessage> {
@@ -195,8 +182,7 @@ fn finish_cancelled(ctx: &TurnContext) {
             status: TurnStatus::Cancelled,
         }),
     );
-    ctx.emitter
-        .error(ctx.sessions.next_seq(), "cancelled", "Turn cancelled.");
+    ctx.emitter.error("cancelled", "Turn cancelled.");
 }
 
 fn finish_error(ctx: &TurnContext, code: &str, message: &str) {
@@ -210,7 +196,7 @@ fn finish_error(ctx: &TurnContext, code: &str, message: &str) {
             status: TurnStatus::Error,
         }),
     );
-    ctx.emitter.error(ctx.sessions.next_seq(), code, message);
+    ctx.emitter.error(code, message);
 }
 
 struct ResolvedTool {
@@ -268,7 +254,16 @@ fn parse_arguments(raw: &str) -> Option<serde_json::Map<String, Value>> {
     if trimmed.is_empty() {
         return None;
     }
-    let mut map = serde_json::from_str::<serde_json::Map<String, Value>>(trimmed).ok()?;
+    let mut map = match serde_json::from_str::<serde_json::Map<String, Value>>(trimmed) {
+        Ok(map) => map,
+        Err(error) => {
+            // Distinguish "model sent no args" (empty, handled above) from
+            // "model sent malformed JSON we dropped" — the latter usually means
+            // a truncated stream or a weak model and is worth surfacing.
+            tracing::warn!(args = %trimmed, %error, "assistant: tool arguments were not valid JSON; dispatching with none");
+            return None;
+        }
+    };
     // Models routinely emit explicit `null` for optional parameters. serde's
     // `#[serde(default)]` only covers a missing key, not an explicit null, so
     // drop null-valued keys to let tool defaults apply.

@@ -335,10 +335,13 @@ impl LlmClient {
 
         let tool_calls = tool_acc
             .into_iter()
-            .filter(|acc| !acc.name.is_empty())
-            .map(|acc| ToolCall {
+            .enumerate()
+            .filter(|(_, acc)| !acc.name.is_empty())
+            .map(|(index, acc)| ToolCall {
+                // Some local models omit the id; fall back to the index (not the
+                // name) so two calls to the same tool keep distinct ids.
                 id: if acc.id.is_empty() {
-                    acc.name.clone()
+                    format!("call_{index}")
                 } else {
                     acc.id
                 },
@@ -365,11 +368,16 @@ fn normalize_base_url(raw: String) -> String {
 // each as UTF-8. Partial trailing bytes stay buffered so a multibyte character
 // split across network chunks is never decoded until it is whole.
 fn drain_complete_lines(buffer: &mut Vec<u8>) -> Vec<String> {
-    let mut lines = Vec::new();
-    while let Some(newline) = buffer.iter().position(|&byte| byte == b'\n') {
-        let line: Vec<u8> = buffer.drain(..=newline).collect();
-        lines.push(String::from_utf8_lossy(&line).into_owned());
-    }
+    let Some(last_newline) = buffer.iter().rposition(|&byte| byte == b'\n') else {
+        return Vec::new();
+    };
+    let consumed = last_newline + 1;
+    let lines = buffer[..consumed]
+        .split_inclusive(|&byte| byte == b'\n')
+        .map(|line| String::from_utf8_lossy(line).into_owned())
+        .collect();
+    // Shift the unconsumed tail down once, instead of once per line.
+    buffer.drain(..consumed);
     lines
 }
 

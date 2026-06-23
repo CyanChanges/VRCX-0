@@ -12,5 +12,9 @@ pub use config::{
 };
 pub use entities::Entity;
 pub use error::HarnessError;
+pub use events::{
+    AssistantDeltaEvent, AssistantDoneEvent, AssistantErrorEvent, AssistantToolCallEvent,
+    AssistantToolResultEvent, AssistantTurnEntitiesEvent,
+};
 pub use runtime::{AssistantConfigStatus, AssistantController, SendResult};
 pub use session::{ActiveTurn, Message, Role, Session, SessionSummary, TurnStatus};

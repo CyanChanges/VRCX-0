@@ -12,12 +12,20 @@ use vrcx_0_runtime_host::RuntimeHostState;
 
 use crate::agent::{run_turn, TurnContext};
 use crate::config::{
-    obfuscate_api_key, AssistantConfig, ASSISTANT_API_KEY_CONFIG_KEY,
-    ASSISTANT_BASE_URL_CONFIG_KEY, ASSISTANT_MODEL_CONFIG_KEY,
+    obfuscate_api_key, AssistantConfig, ASSISTANT_ALLOW_WRITES_CONFIG_KEY,
+    ASSISTANT_API_KEY_CONFIG_KEY, ASSISTANT_BASE_URL_CONFIG_KEY, ASSISTANT_MODEL_CONFIG_KEY,
 };
+
+/// Tools that mutate state (local DB or the VRChat account). They are hidden
+/// from the model unless the user has explicitly armed writes, so a prompt
+/// injection in attacker-controlled data (e.g. a friend's bio) cannot drive an
+/// autonomous write.
+const WRITE_TOOLS: &[&str] = &["favorite_local", "favorite_vrchat", "set_friend_note"];
 use crate::error::HarnessError;
 use crate::events::AssistantEmitter;
-use crate::session::{random_hex, ActiveTurn, Session, SessionStore, SessionSummary, TurnStatus};
+use crate::session::{
+    random_hex, ActiveTurn, Role, Session, SessionStore, SessionSummary, TurnStatus,
+};
 
 pub struct AssistantController {
     config: ConfigRepository,
@@ -36,6 +44,7 @@ pub struct AssistantConfigStatus {
     pub base_url: String,
     pub model: String,
     pub is_local: bool,
+    pub allow_writes: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Type)]
@@ -70,6 +79,7 @@ impl AssistantController {
             base_url: config.base_url.clone(),
             model: config.model.clone(),
             is_local: config.is_local(),
+            allow_writes: config.allow_writes,
         })
     }
 
@@ -78,7 +88,10 @@ impl AssistantController {
         base_url: String,
         api_key: Option<String>,
         model: String,
+        allow_writes: bool,
     ) -> Result<AssistantConfigStatus, HarnessError> {
+        self.config
+            .set_bool(ASSISTANT_ALLOW_WRITES_CONFIG_KEY, allow_writes)?;
         let previous_base_url = self.config.get_string(ASSISTANT_BASE_URL_CONFIG_KEY, "")?;
         let base_url = base_url.trim();
         self.config
@@ -155,10 +168,26 @@ impl AssistantController {
     ) -> Result<SendResult, HarnessError> {
         let assistant_config = AssistantConfig::load(&self.config)?;
         let client = assistant_config.build_client()?;
+        let tool_defs = if assistant_config.allow_writes {
+            Arc::clone(&self.tool_defs)
+        } else {
+            Arc::new(
+                self.tool_defs
+                    .iter()
+                    .filter(|tool| !WRITE_TOOLS.contains(&tool.name.as_str()))
+                    .cloned()
+                    .collect(),
+            )
+        };
 
         let session = self.sessions.ensure_session(session_id);
         let session_id = session.id.clone();
         let turn_id = format!("turn_{}", random_hex());
+
+        // Record the user message synchronously, before spawning the turn, so a
+        // rapid second send can never let a superseded turn's task push it later
+        // (which reordered or duplicated messages in history).
+        self.sessions.push_message(&session_id, Role::User, text);
 
         let cancel = CancellationToken::new();
         // Install the new turn as active and swap in its cancel token before
@@ -185,10 +214,9 @@ impl AssistantController {
             sessions: Arc::clone(&self.sessions),
             emitter: AssistantEmitter::new(self.bus.clone(), session_id.clone(), turn_id.clone()),
             client,
-            tool_defs: Arc::clone(&self.tool_defs),
+            tool_defs,
             session_id: session_id.clone(),
             turn_id: turn_id.clone(),
-            user_text: text,
             locale,
             cancel,
         };

@@ -6,6 +6,7 @@ use crate::error::HarnessError;
 pub const ASSISTANT_BASE_URL_CONFIG_KEY: &str = "assistant.baseUrl";
 pub const ASSISTANT_API_KEY_CONFIG_KEY: &str = "assistant.apiKey";
 pub const ASSISTANT_MODEL_CONFIG_KEY: &str = "assistant.model";
+pub const ASSISTANT_ALLOW_WRITES_CONFIG_KEY: &str = "assistant.allowWrites";
 
 const DEFAULT_BASE_URL: &str = "https://api.openai.com/v1";
 
@@ -14,6 +15,7 @@ pub struct AssistantConfig {
     pub base_url: String,
     pub api_key: String,
     pub model: String,
+    pub allow_writes: bool,
 }
 
 impl AssistantConfig {
@@ -21,10 +23,12 @@ impl AssistantConfig {
         let base_url = config.get_string(ASSISTANT_BASE_URL_CONFIG_KEY, DEFAULT_BASE_URL)?;
         let api_key = config.get_string(ASSISTANT_API_KEY_CONFIG_KEY, "")?;
         let model = config.get_string(ASSISTANT_MODEL_CONFIG_KEY, "")?;
+        let allow_writes = config.get_bool(ASSISTANT_ALLOW_WRITES_CONFIG_KEY, false)?;
         Ok(Self {
             base_url: base_url.trim().to_string(),
             api_key: deobfuscate_api_key(api_key.trim()),
             model: model.trim().to_string(),
+            allow_writes,
         })
     }
 

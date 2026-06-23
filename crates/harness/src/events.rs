@@ -1,4 +1,5 @@
-use serde_json::Value;
+use serde::Serialize;
+use specta::Type;
 use vrcx_0_application::RuntimeEventBus;
 
 use crate::entities::Entity;
@@ -9,6 +10,59 @@ pub const EVENT_TOOL_RESULT: &str = "assistantToolResult";
 pub const EVENT_TURN_ENTITIES: &str = "assistantTurnEntities";
 pub const EVENT_DONE: &str = "assistantDone";
 pub const EVENT_ERROR: &str = "assistantError";
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantDeltaEvent {
+    pub session_id: String,
+    pub turn_id: String,
+    pub text: String,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantToolCallEvent {
+    pub session_id: String,
+    pub turn_id: String,
+    pub tool_call_id: String,
+    pub name: String,
+    pub args: String,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantToolResultEvent {
+    pub session_id: String,
+    pub turn_id: String,
+    pub tool_call_id: String,
+    pub ok: bool,
+    pub summary: String,
+    pub entities: Vec<Entity>,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantTurnEntitiesEvent {
+    pub session_id: String,
+    pub turn_id: String,
+    pub entities: Vec<Entity>,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantDoneEvent {
+    pub session_id: String,
+    pub turn_id: String,
+}
+
+#[derive(Serialize, Type)]
+#[serde(rename_all = "camelCase")]
+pub struct AssistantErrorEvent {
+    pub session_id: String,
+    pub turn_id: String,
+    pub code: String,
+    pub message: String,
+}
 
 #[derive(Clone)]
 pub struct AssistantEmitter {
@@ -26,64 +80,74 @@ impl AssistantEmitter {
         }
     }
 
-    fn base(&self, seq: u64) -> serde_json::Map<String, Value> {
-        let mut map = serde_json::Map::new();
-        map.insert("sessionId".into(), Value::String(self.session_id.clone()));
-        map.insert("turnId".into(), Value::String(self.turn_id.clone()));
-        map.insert("seq".into(), Value::Number(seq.into()));
-        map
-    }
-
-    pub fn delta(&self, seq: u64, text: &str) {
-        let mut payload = self.base(seq);
-        payload.insert("text".into(), Value::String(text.to_string()));
-        self.bus.emit(EVENT_DELTA, Value::Object(payload));
-    }
-
-    pub fn tool_call(&self, seq: u64, tool_call_id: &str, name: &str, args: &str) {
-        let mut payload = self.base(seq);
-        payload.insert("toolCallId".into(), Value::String(tool_call_id.to_string()));
-        payload.insert("name".into(), Value::String(name.to_string()));
-        payload.insert("args".into(), Value::String(args.to_string()));
-        self.bus.emit(EVENT_TOOL_CALL, Value::Object(payload));
-    }
-
-    pub fn tool_result(
-        &self,
-        seq: u64,
-        tool_call_id: &str,
-        ok: bool,
-        summary: &str,
-        entities: &[Entity],
-    ) {
-        let mut payload = self.base(seq);
-        payload.insert("toolCallId".into(), Value::String(tool_call_id.to_string()));
-        payload.insert("ok".into(), Value::Bool(ok));
-        payload.insert("summary".into(), Value::String(summary.to_string()));
-        payload.insert(
-            "entities".into(),
-            serde_json::to_value(entities).unwrap_or(Value::Array(Vec::new())),
+    pub fn delta(&self, text: &str) {
+        self.bus.emit(
+            EVENT_DELTA,
+            AssistantDeltaEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+                text: text.to_string(),
+            },
         );
-        self.bus.emit(EVENT_TOOL_RESULT, Value::Object(payload));
     }
 
-    pub fn turn_entities(&self, seq: u64, entities: &[Entity]) {
-        let mut payload = self.base(seq);
-        payload.insert(
-            "entities".into(),
-            serde_json::to_value(entities).unwrap_or(Value::Array(Vec::new())),
+    pub fn tool_call(&self, tool_call_id: &str, name: &str, args: &str) {
+        self.bus.emit(
+            EVENT_TOOL_CALL,
+            AssistantToolCallEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+                tool_call_id: tool_call_id.to_string(),
+                name: name.to_string(),
+                args: args.to_string(),
+            },
         );
-        self.bus.emit(EVENT_TURN_ENTITIES, Value::Object(payload));
     }
 
-    pub fn done(&self, seq: u64) {
-        self.bus.emit(EVENT_DONE, Value::Object(self.base(seq)));
+    pub fn tool_result(&self, tool_call_id: &str, ok: bool, summary: &str, entities: &[Entity]) {
+        self.bus.emit(
+            EVENT_TOOL_RESULT,
+            AssistantToolResultEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+                tool_call_id: tool_call_id.to_string(),
+                ok,
+                summary: summary.to_string(),
+                entities: entities.to_vec(),
+            },
+        );
     }
 
-    pub fn error(&self, seq: u64, code: &str, message: &str) {
-        let mut payload = self.base(seq);
-        payload.insert("code".into(), Value::String(code.to_string()));
-        payload.insert("message".into(), Value::String(message.to_string()));
-        self.bus.emit(EVENT_ERROR, Value::Object(payload));
+    pub fn turn_entities(&self, entities: &[Entity]) {
+        self.bus.emit(
+            EVENT_TURN_ENTITIES,
+            AssistantTurnEntitiesEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+                entities: entities.to_vec(),
+            },
+        );
+    }
+
+    pub fn done(&self) {
+        self.bus.emit(
+            EVENT_DONE,
+            AssistantDoneEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+            },
+        );
+    }
+
+    pub fn error(&self, code: &str, message: &str) {
+        self.bus.emit(
+            EVENT_ERROR,
+            AssistantErrorEvent {
+                session_id: self.session_id.clone(),
+                turn_id: self.turn_id.clone(),
+                code: code.to_string(),
+                message: message.to_string(),
+            },
+        );
     }
 }

@@ -16,6 +16,7 @@ import {
     SelectTrigger,
     SelectValue
 } from '@/ui/shadcn/select';
+import { Switch } from '@/ui/shadcn/switch';
 
 import { Field, SettingsGroup } from '../SettingsField';
 
@@ -28,6 +29,7 @@ export function AssistantSettingsGroup() {
     const [busy, setBusy] = useState(false);
     const [models, setModels] = useState<string[]>([]);
     const [detecting, setDetecting] = useState(false);
+    const [allowWrites, setAllowWrites] = useState(false);
 
     useEffect(() => {
         let active = true;
@@ -40,6 +42,7 @@ export function AssistantSettingsGroup() {
                 setStatus(next);
                 setBaseUrl(next.baseUrl);
                 setModel(next.model);
+                setAllowWrites(next.allowWrites);
             })
             .catch(() => {});
         return () => {
@@ -77,7 +80,8 @@ export function AssistantSettingsGroup() {
             const next = await commands.appAssistantSetConfig(
                 baseUrl,
                 apiKey.trim() ? apiKey : null,
-                model
+                model,
+                allowWrites
             );
             setStatus(next);
             setApiKey('');
@@ -158,6 +162,15 @@ export function AssistantSettingsGroup() {
                         />
                     )}
                 </div>
+            </Field>
+            <Field
+                label={t('assistant.settings.allow_writes')}
+                description={t('assistant.settings.allow_writes_description')}
+            >
+                <Switch
+                    checked={allowWrites}
+                    onCheckedChange={setAllowWrites}
+                />
             </Field>
             <Field
                 label={t('assistant.settings.privacy_title')}

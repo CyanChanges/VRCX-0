@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 import { cn } from '@/lib/utils';
 
 import type { UIMessage } from '../assistantTypes';
@@ -8,8 +10,12 @@ interface MessageBubbleProps {
     message: UIMessage;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+function MessageBubbleImpl({ message }: MessageBubbleProps) {
     const isUser = message.role === 'user';
+    // Markdown is parsed only once the answer is complete: parsing the whole
+    // accumulating text every token is O(n²) and mid-stream markdown is half
+    // broken (unterminated **, partial tables) anyway.
+    const renderPlain = isUser || message.streaming;
 
     return (
         <div
@@ -31,12 +37,14 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                     className={cn(
                         'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
                         isUser
-                            ? 'bg-secondary text-secondary-foreground whitespace-pre-wrap'
+                            ? 'bg-secondary text-secondary-foreground'
                             : 'bg-card/50 text-foreground'
                     )}
                 >
-                    {isUser ? (
-                        message.text
+                    {renderPlain ? (
+                        <span className="whitespace-pre-wrap">
+                            {message.text}
+                        </span>
                     ) : (
                         <AssistantMarkdown text={message.text} />
                     )}
@@ -54,3 +62,5 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
     );
 }
+
+export const MessageBubble = memo(MessageBubbleImpl);

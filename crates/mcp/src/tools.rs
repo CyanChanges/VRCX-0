@@ -1056,11 +1056,49 @@ fn time_window_from_value(value: &Value) -> TimeWindowParams {
     match value {
         Value::String(text) => parse_relative_window(text),
         Value::Object(map) => TimeWindowParams {
-            from: map.get("from").and_then(Value::as_str).map(str::to_string),
-            to: map.get("to").and_then(Value::as_str).map(str::to_string),
+            from: map
+                .get("from")
+                .and_then(Value::as_str)
+                .and_then(normalize_time_bound),
+            to: map
+                .get("to")
+                .and_then(Value::as_str)
+                .and_then(normalize_time_bound),
         },
         _ => TimeWindowParams::default(),
     }
+}
+
+/// Coerce a single `from`/`to` bound into RFC3339, since models pass shorthand
+/// (`7d`, `now`), date-only (`2025-07-11`), or timezone-less datetimes despite
+/// the schema. Returns `None` (unbounded) for anything unparseable so the tool
+/// never sees an invalid RFC3339 string.
+fn normalize_time_bound(raw: &str) -> Option<String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+    if DateTime::parse_from_rfc3339(trimmed).is_ok() {
+        return Some(trimmed.to_string());
+    }
+    let lowered = trimmed.to_ascii_lowercase();
+    if lowered == "now" || lowered == "today" {
+        return Some(Utc::now().to_rfc3339());
+    }
+    if let Ok(date) = chrono::NaiveDate::parse_from_str(trimmed, "%Y-%m-%d") {
+        let naive = date.and_time(chrono::NaiveTime::MIN);
+        return Some(Utc.from_utc_datetime(&naive).to_rfc3339());
+    }
+    for fmt in ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"] {
+        if let Ok(naive) = chrono::NaiveDateTime::parse_from_str(trimmed, fmt) {
+            return Some(Utc.from_utc_datetime(&naive).to_rfc3339());
+        }
+    }
+    if let Some(duration) = parse_duration(&lowered) {
+        return Some((Utc::now() - duration).to_rfc3339());
+    }
+    tracing::warn!(input = %raw, "assistant: unrecognized time bound, ignoring");
+    None
 }
 
 fn parse_relative_window(text: &str) -> TimeWindowParams {
@@ -1099,27 +1137,49 @@ fn parse_relative_window(text: &str) -> TimeWindowParams {
 }
 
 fn parse_rolling_window(text: &str, now: DateTime<Utc>) -> Option<TimeWindowParams> {
-    let number: i64 = text
-        .split(|ch: char| !ch.is_ascii_digit())
-        .find(|token| !token.is_empty())
-        .and_then(|token| token.parse().ok())?;
-    let duration = if text.contains("hour") {
-        Duration::hours(number)
-    } else if text.contains("day") {
-        Duration::days(number)
-    } else if text.contains("week") {
-        Duration::days(number * 7)
-    } else if text.contains("month") {
-        Duration::days(number * 30)
-    } else if text.contains("year") {
-        Duration::days(number * 365)
-    } else {
-        return None;
-    };
+    let duration = parse_duration(text)?;
     Some(TimeWindowParams {
         from: Some((now - duration).to_rfc3339()),
         to: None,
     })
+}
+
+/// Parse a duration from word forms (`7 days`, `last 3 weeks`) or compact forms
+/// (`7d`, `2w`, `3mo`, `24h`, `1y`). Bare `m` is read as months — the common
+/// intent for social-history windows. `text` is expected to be lowercased.
+fn parse_duration(text: &str) -> Option<Duration> {
+    let number: i64 = text
+        .split(|ch: char| !ch.is_ascii_digit())
+        .find(|token| !token.is_empty())
+        .and_then(|token| token.parse().ok())?;
+    let compact = compact_unit(text);
+    if text.contains("hour") || compact == Some('h') {
+        Some(Duration::hours(number))
+    } else if text.contains("week") || compact == Some('w') {
+        Some(Duration::days(number * 7))
+    } else if text.contains("mo") || compact == Some('m') {
+        Some(Duration::days(number * 30))
+    } else if text.contains("year") || compact == Some('y') {
+        Some(Duration::days(number * 365))
+    } else if text.contains("day") || compact == Some('d') {
+        Some(Duration::days(number))
+    } else {
+        None
+    }
+}
+
+/// First alphabetic character that immediately follows a digit, e.g. `d` in
+/// `7d`. Used to read compact duration units.
+fn compact_unit(text: &str) -> Option<char> {
+    let mut seen_digit = false;
+    for ch in text.chars() {
+        if ch.is_ascii_digit() {
+            seen_digit = true;
+        } else if seen_digit && ch.is_ascii_alphabetic() {
+            return Some(ch);
+        }
+    }
+    None
 }
 
 fn start_of_day(now: DateTime<Utc>) -> DateTime<Utc> {
@@ -1973,5 +2033,45 @@ mod time_window_tests {
     fn unknown_string_falls_back_to_all_history() {
         let window = time_window_from_value(&serde_json::json!("whenever-ish"));
         assert!(window.from.is_none() && window.to.is_none());
+    }
+
+    #[test]
+    fn object_bounds_are_coerced_to_rfc3339() {
+        // Shorthand, date-only, and "now" must all become valid RFC3339.
+        for value in [
+            serde_json::json!({ "from": "7d" }),
+            serde_json::json!({ "from": "7d", "to": "now" }),
+            serde_json::json!({ "from": "2025-07-11", "to": "2025-07-18" }),
+            serde_json::json!({ "from": "2025-07-11T10:00:00" }),
+        ] {
+            let window = time_window_from_value(&value);
+            for bound in [window.from.as_deref(), window.to.as_deref()] {
+                if let Some(bound) = bound {
+                    assert!(
+                        DateTime::parse_from_rfc3339(bound).is_ok(),
+                        "bound '{bound}' should be valid RFC3339"
+                    );
+                }
+            }
+            assert!(
+                window.from.is_some(),
+                "from bound should be set for {value}"
+            );
+        }
+    }
+
+    #[test]
+    fn valid_rfc3339_bounds_pass_through() {
+        let value = serde_json::json!({ "from": "2025-07-11T10:00:00Z" });
+        let window = time_window_from_value(&value);
+        assert_eq!(window.from.as_deref(), Some("2025-07-11T10:00:00Z"));
+    }
+
+    #[test]
+    fn unparseable_bound_becomes_unbounded() {
+        let value = serde_json::json!({ "from": "soon", "to": "2025-07-18" });
+        let window = time_window_from_value(&value);
+        assert!(window.from.is_none(), "garbage 'from' should drop to None");
+        assert!(window.to.is_some(), "valid 'to' should remain");
     }
 }

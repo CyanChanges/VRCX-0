@@ -31,12 +31,44 @@ export function useAssistantEvents(): void {
         const unsubscribers: Array<() => void> = [];
         let active = true;
 
+        // Coalesce per-token deltas into one store commit per animation frame.
+        // A fast model streams 20-60 tokens/sec; without this each token would
+        // trigger a full store update + markdown re-parse + re-render.
+        const pendingDeltas = new Map<string, AssistantDeltaEvent>();
+        let rafHandle = 0;
+        const flushDeltas = () => {
+            rafHandle = 0;
+            for (const event of pendingDeltas.values()) {
+                store.applyDelta(event);
+            }
+            pendingDeltas.clear();
+        };
+        const flushNow = () => {
+            if (rafHandle) {
+                cancelAnimationFrame(rafHandle);
+            }
+            flushDeltas();
+        };
+
         const handlers: Record<string, (payload: unknown) => void> = {
-            assistantDelta: (payload) =>
-                store.applyDelta(payload as AssistantDeltaEvent),
-            assistantToolCall: (payload) =>
-                store.applyToolCall(payload as AssistantToolCallEvent),
+            assistantDelta: (payload) => {
+                const event = payload as AssistantDeltaEvent;
+                const buffered = pendingDeltas.get(event.turnId);
+                if (buffered) {
+                    buffered.text += event.text;
+                } else {
+                    pendingDeltas.set(event.turnId, { ...event });
+                }
+                if (!rafHandle) {
+                    rafHandle = requestAnimationFrame(flushDeltas);
+                }
+            },
+            assistantToolCall: (payload) => {
+                flushNow();
+                store.applyToolCall(payload as AssistantToolCallEvent);
+            },
             assistantToolResult: (payload) => {
+                flushNow();
                 const event = payload as AssistantToolResultEvent;
                 store.applyToolResult(event);
                 if (!event.ok) {
@@ -45,9 +77,12 @@ export function useAssistantEvents(): void {
             },
             assistantTurnEntities: (payload) =>
                 store.applyTurnEntities(payload as AssistantTurnEntitiesEvent),
-            assistantDone: (payload) =>
-                store.applyDone(payload as AssistantDoneEvent),
+            assistantDone: (payload) => {
+                flushNow();
+                store.applyDone(payload as AssistantDoneEvent);
+            },
             assistantError: (payload) => {
+                flushNow();
                 const event = payload as AssistantErrorEvent;
                 store.applyError(event);
                 recordAssistantTurnError(event.code);
@@ -69,6 +104,9 @@ export function useAssistantEvents(): void {
 
         return () => {
             active = false;
+            if (rafHandle) {
+                cancelAnimationFrame(rafHandle);
+            }
             for (const unsubscribe of unsubscribers) {
                 unsubscribe();
             }
