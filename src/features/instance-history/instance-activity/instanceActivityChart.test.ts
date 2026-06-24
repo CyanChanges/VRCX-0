@@ -1,11 +1,66 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseLocation } from '@/shared/utils/locationParser';
+
 import {
     buildChartOption,
     buildDetailChartOption,
     getMainChartClickedRow
 } from './instanceActivityChart';
 import { getLocalDayBounds } from './instanceActivityRows';
+import type {
+    InstanceActivityChartRow,
+    InstanceActivityDetailRow
+} from './instanceActivityTypes';
+
+type ChartRowFixture = Partial<
+    Omit<InstanceActivityChartRow, 'parsedLocation'>
+> & {
+    parsedLocation?: Partial<InstanceActivityChartRow['parsedLocation']>;
+};
+
+function chartRow(row: ChartRowFixture): InstanceActivityChartRow {
+    return {
+        id: row.id || 'row',
+        currentUserId: row.currentUserId || 'usr_self',
+        displayName: row.displayName || 'Self',
+        location: row.location || 'wrld_test:1',
+        userId: row.userId || 'usr_self',
+        parsedLocation: {
+            ...parseLocation('wrld_test:1'),
+            ...row.parsedLocation
+        },
+        worldId: row.worldId || 'wrld_test',
+        worldName: row.worldName || '',
+        worldResolvedFromCache: row.worldResolvedFromCache || false,
+        joinMs: row.joinMs || 0,
+        leaveMs: row.leaveMs || 0,
+        visibleStartMs: row.visibleStartMs || 0,
+        visibleDurationMs: row.visibleDurationMs || 0,
+        activityKey: row.activityKey || 'wrld_test:1:0'
+    };
+}
+
+function detailRow(
+    row: Partial<InstanceActivityDetailRow>
+): InstanceActivityDetailRow {
+    return {
+        id: row.id || 'detail',
+        user_id: row.user_id || row.userId || 'usr_self',
+        display_name: row.display_name || row.displayName || 'Self',
+        location: row.location || 'wrld_test:1',
+        displayName: row.displayName || 'Self',
+        userId: row.userId || 'usr_self',
+        joinMs: row.joinMs || 0,
+        leaveMs: row.leaveMs || 0,
+        durationMs: row.durationMs || 0,
+        isCurrentUser: row.isCurrentUser || false,
+        isFriend: row.isFriend || false,
+        isFavorite: row.isFavorite || false
+    };
+}
+
+const t = (key: string) => key;
 
 describe('instanceActivityChart', () => {
     it('builds the main chart data series from clipped visible intervals', () => {
@@ -15,9 +70,9 @@ describe('instanceActivityChart', () => {
             selectedDate,
             barWidth: 25,
             hour12: false,
-            t: (key: any) => key,
+            t,
             rows: [
-                {
+                chartRow({
                     worldName: 'Known World',
                     parsedLocation: {
                         instanceName: '1',
@@ -27,7 +82,7 @@ describe('instanceActivityChart', () => {
                     leaveMs: startMs + 2 * 60 * 60 * 1000,
                     visibleStartMs: startMs,
                     visibleDurationMs: 2 * 60 * 60 * 1000
-                }
+                })
             ]
         });
 
@@ -47,7 +102,7 @@ describe('instanceActivityChart', () => {
         const selectedDate = '2024-01-02';
         const { startMs } = getLocalDayBounds(selectedDate);
         const rows = [
-            {
+            chartRow({
                 activityKey: 'wrld_one:1:1000',
                 worldName: 'One',
                 parsedLocation: {},
@@ -55,8 +110,8 @@ describe('instanceActivityChart', () => {
                 leaveMs: startMs + 1000,
                 visibleStartMs: startMs,
                 visibleDurationMs: 1000
-            },
-            {
+            }),
+            chartRow({
                 activityKey: 'wrld_two:1:2000',
                 worldName: 'Two',
                 parsedLocation: {},
@@ -64,14 +119,14 @@ describe('instanceActivityChart', () => {
                 leaveMs: startMs + 3000,
                 visibleStartMs: startMs + 2000,
                 visibleDurationMs: 1000
-            }
+            })
         ];
         const option = buildChartOption({
             selectedDate,
             barWidth: 25,
             hour12: false,
             selectedActivityKey: 'wrld_two:1:2000',
-            t: (key: any) => key,
+            t,
             rows
         });
 
@@ -112,7 +167,7 @@ describe('instanceActivityChart', () => {
             barWidth: 12,
             hour12: false,
             group: [
-                {
+                detailRow({
                     userId: 'usr_regular',
                     displayName: 'Same Name',
                     joinMs: 0,
@@ -121,8 +176,8 @@ describe('instanceActivityChart', () => {
                     isCurrentUser: true,
                     isFriend: false,
                     isFavorite: false
-                },
-                {
+                }),
+                detailRow({
                     userId: 'usr_favorite',
                     displayName: 'Same Name',
                     joinMs: 100,
@@ -131,12 +186,12 @@ describe('instanceActivityChart', () => {
                     isCurrentUser: false,
                     isFriend: true,
                     isFavorite: true
-                }
+                })
             ]
         });
 
         expect(option.yAxis.data).toEqual(['Same Name', '\u2b50 Same Name']);
-        expect(option.firstEntries.map((entry: any) => entry.userId)).toEqual([
+        expect(option.firstEntries.map((entry) => entry.userId)).toEqual([
             'usr_regular',
             'usr_favorite'
         ]);

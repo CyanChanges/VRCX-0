@@ -16,17 +16,24 @@ import {
     toLocalDayKey
 } from '../instance-activity/instanceActivityDate';
 
+type InstanceActivityDateControlsProps = {
+    selectedDate: string;
+    onSelectedDateChange: (value: string) => void;
+    availableDates: string[];
+    dataStatus: string;
+};
+
 export function InstanceActivityDateControls({
     selectedDate,
     onSelectedDateChange,
     availableDates,
     dataStatus
-}: any) {
+}: InstanceActivityDateControlsProps) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
     const sortedDatesDesc = useMemo(
         () =>
-            [...availableDates].sort((left: any, right: any) =>
+            [...availableDates].sort((left, right) =>
                 right.localeCompare(left)
             ),
         [availableDates]
@@ -34,10 +41,10 @@ export function InstanceActivityDateControls({
     const earliestDate = sortedDatesDesc[sortedDatesDesc.length - 1] || null;
     const latestDate = sortedDatesDesc[0] || null;
     const selectedDateIndex = sortedDatesDesc.findIndex(
-        (value: any) => value === selectedDate
+        (value) => value === selectedDate
     );
     const availableDateObjects = useMemo(
-        () => availableDates.map((dayKey: any) => parseLocalDayKey(dayKey)),
+        () => availableDates.map((dayKey) => parseLocalDayKey(dayKey)),
         [availableDates]
     );
     const selectedDateObject = selectedDate
@@ -47,14 +54,14 @@ export function InstanceActivityDateControls({
     const isNextDayDisabled = !latestDate || selectedDate >= latestDate;
     const isPrevDayDisabled = !earliestDate || selectedDate === earliestDate;
 
-    function handleDateStep(isNext: any = false) {
+    function handleDateStep(isNext = false) {
         if (!sortedDatesDesc.length) {
             return;
         }
 
         if (selectedDateIndex === -1 && !isNext) {
             const earlierDate = sortedDatesDesc.find(
-                (value: any) => value < selectedDate
+                (value) => value < selectedDate
             );
             if (earlierDate) {
                 onSelectedDateChange(earlierDate);
@@ -124,7 +131,7 @@ export function InstanceActivityDateControls({
                             hasActivity:
                                 'relative after:absolute after:bottom-1 after:left-1/2 after:size-1 after:-translate-x-1/2 after:rounded-full after:bg-primary'
                         }}
-                        onSelect={(date: any) => {
+                        onSelect={(date?: Date) => {
                             if (date) {
                                 onSelectedDateChange(toLocalDayKey(date));
                                 setOpen(false);

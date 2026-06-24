@@ -10,10 +10,10 @@ import {
 
 describe('navMenuModel charts retirement', () => {
     it('removes charts-instance from route paths and nav definitions', () => {
-        expect((routePathByName as any)['charts-instance']).toBeUndefined();
+        expect('charts-instance' in routePathByName).toBe(false);
         expect(
             navDefinitions.some(
-                (definition: any) => definition.key === 'charts-instance'
+                (definition) => definition.key === 'charts-instance'
             )
         ).toBe(false);
     });
@@ -23,7 +23,7 @@ describe('navMenuModel charts retirement', () => {
 
         expect(
             layout.some(
-                (entry: any) =>
+                (entry) =>
                     entry.type === 'folder' &&
                     entry.nameKey === 'nav_tooltip.charts'
             )

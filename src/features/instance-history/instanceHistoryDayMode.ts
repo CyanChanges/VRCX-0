@@ -5,6 +5,10 @@ import {
 } from '@/components/dialogs/previous-instances-table/previousInstancesRows';
 
 import { toLocalDayKey } from './instance-activity/instanceActivityDate';
+import type {
+    InstanceActivityChartRow,
+    PreviousInstanceRow
+} from './instance-activity/instanceActivityTypes';
 
 export type InstanceHistoryMode = 'search' | 'day';
 
@@ -14,33 +18,39 @@ export function sanitizeInstanceHistoryMode(
     return value === 'day' ? 'day' : 'search';
 }
 
-export function previousInstanceLeaveMs(row: any) {
-    const groupedLeaveMs = Number(row?.last_ts ?? row?.lastTs ?? 0);
+export function previousInstanceLeaveMs(row: PreviousInstanceRow): number {
+    const groupedLeaveValue = row.last_ts ?? row.lastTs ?? 0;
+    const groupedLeaveMs =
+        typeof groupedLeaveValue === 'string'
+            ? Number(groupedLeaveValue) || new Date(groupedLeaveValue).getTime()
+            : Number(groupedLeaveValue);
     if (Number.isFinite(groupedLeaveMs) && groupedLeaveMs > 0) {
         return groupedLeaveMs;
     }
     return createdTime(row);
 }
 
-export function previousInstanceJoinMs(row: any) {
+export function previousInstanceJoinMs(row: PreviousInstanceRow): number {
     const leaveMs = previousInstanceLeaveMs(row);
     return leaveMs - rowDurationValue(row);
 }
 
-export function buildAvailableInstanceHistoryDays(rows: any[] = []) {
+export function buildAvailableInstanceHistoryDays(
+    rows: PreviousInstanceRow[] = []
+): string[] {
     return Array.from(
         new Set(
             rows
-                .map((row: any) => toLocalDayKey(previousInstanceLeaveMs(row)))
+                .map((row) => toLocalDayKey(previousInstanceLeaveMs(row)))
                 .filter(Boolean)
         )
-    ).sort((left: any, right: any) => right.localeCompare(left));
+    ).sort((left, right) => right.localeCompare(left));
 }
 
 export function selectDefaultInstanceHistoryDay(
     selectedDay: unknown,
-    availableDays: any[] = []
-) {
+    availableDays: string[] = []
+): string {
     const normalizedSelectedDay = String(selectedDay || '');
     if (
         normalizedSelectedDay &&
@@ -52,24 +62,22 @@ export function selectDefaultInstanceHistoryDay(
 }
 
 export function filterPreviousInstanceRowsForDay(
-    rows: any[] = [],
+    rows: PreviousInstanceRow[] = [],
     selectedDay: unknown
-) {
+): PreviousInstanceRow[] {
     const dayKey = String(selectedDay || '');
     if (!dayKey) {
         return [];
     }
     return rows
-        .filter(
-            (row: any) => toLocalDayKey(previousInstanceLeaveMs(row)) === dayKey
-        )
+        .filter((row) => toLocalDayKey(previousInstanceLeaveMs(row)) === dayKey)
         .sort(
-            (left: any, right: any) =>
+            (left, right) =>
                 previousInstanceLeaveMs(right) - previousInstanceLeaveMs(left)
         );
 }
 
-export function activityRowKey(row: any) {
+export function activityRowKey(row: InstanceActivityChartRow | null): string {
     const location = row?.location || '';
     const joinMs = Number(row?.joinMs || 0);
     return location && Number.isFinite(joinMs) && joinMs > 0
@@ -77,17 +85,17 @@ export function activityRowKey(row: any) {
         : '';
 }
 
-function matchByLocationAndJoin(
-    items: any[],
+function matchByLocationAndJoin<T>(
+    items: T[],
     location: string,
     targetJoinMs: number,
-    getLocation: (item: any) => string,
-    getJoinMs: (item: any) => number
-) {
+    getLocation: (item: T) => string,
+    getJoinMs: (item: T) => number
+): T | null {
     if (!location || !Number.isFinite(targetJoinMs)) {
         return null;
     }
-    let best: any = null;
+    let best: T | null = null;
     let bestDelta = Infinity;
     for (const item of items) {
         if (getLocation(item) !== location) {
@@ -107,9 +115,9 @@ function matchByLocationAndJoin(
 }
 
 export function findPreviousInstanceRowForActivityRow(
-    activityRow: any,
-    rows: any[] = []
-) {
+    activityRow: InstanceActivityChartRow,
+    rows: PreviousInstanceRow[] = []
+): PreviousInstanceRow | null {
     return matchByLocationAndJoin(
         rows,
         String(activityRow?.location || ''),
@@ -120,14 +128,14 @@ export function findPreviousInstanceRowForActivityRow(
 }
 
 export function findActivityRowForPreviousInstanceRow(
-    previousRow: any,
-    activityRows: any[] = []
-) {
+    previousRow: PreviousInstanceRow,
+    activityRows: InstanceActivityChartRow[] = []
+): InstanceActivityChartRow | null {
     return matchByLocationAndJoin(
         activityRows,
         rowLocation(previousRow),
         previousInstanceJoinMs(previousRow),
-        (activityRow: any) => String(activityRow?.location || ''),
-        (activityRow: any) => Number(activityRow?.joinMs || 0)
+        (activityRow) => String(activityRow?.location || ''),
+        (activityRow) => Number(activityRow?.joinMs || 0)
     );
 }

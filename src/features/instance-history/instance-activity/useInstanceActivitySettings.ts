@@ -10,7 +10,7 @@ const NO_FRIEND_INSTANCE_VISIBLE_KEY =
     'VRCX_InstanceActivityNoFriendInstanceVisible';
 const CHART_COLLAPSED_KEY = 'VRCX_InstanceActivityChartCollapsed';
 
-function normalizeBarWidth(value: any) {
+function normalizeBarWidth(value: number) {
     return Number.isFinite(value)
         ? Math.min(50, Math.max(1, value))
         : DEFAULT_BAR_WIDTH;
@@ -41,7 +41,7 @@ export function useInstanceActivitySettings() {
                     nextSoloVisible,
                     nextNoFriendVisible,
                     nextChartCollapsed
-                ]: any) => {
+                ]: [number, boolean, boolean, boolean, boolean]) => {
                     if (!active) {
                         return;
                     }
@@ -60,30 +60,30 @@ export function useInstanceActivitySettings() {
         };
     }, []);
 
-    function handleBarWidthCommit(value: any) {
+    function handleBarWidthCommit(value: number | string) {
         const nextValue = normalizeBarWidth(
-            Number.parseInt(value, 10) || DEFAULT_BAR_WIDTH
+            Number.parseInt(String(value), 10) || DEFAULT_BAR_WIDTH
         );
         setBarWidth(nextValue);
         configRepository.setInt(BAR_WIDTH_KEY, nextValue);
     }
 
-    function setDetailVisible(value: any) {
+    function setDetailVisible(value: boolean) {
         setIsDetailVisible(value);
         configRepository.setBool(DETAIL_VISIBLE_KEY, value);
     }
 
-    function setSoloInstanceVisible(value: any) {
+    function setSoloInstanceVisible(value: boolean) {
         setIsSoloInstanceVisible(value);
         configRepository.setBool(SOLO_INSTANCE_VISIBLE_KEY, value);
     }
 
-    function setNoFriendInstanceVisible(value: any) {
+    function setNoFriendInstanceVisible(value: boolean) {
         setIsNoFriendInstanceVisible(value);
         configRepository.setBool(NO_FRIEND_INSTANCE_VISIBLE_KEY, value);
     }
 
-    function setChartCollapsed(value: any) {
+    function setChartCollapsed(value: boolean) {
         setIsChartCollapsed(value);
         configRepository.setBool(CHART_COLLAPSED_KEY, value);
     }

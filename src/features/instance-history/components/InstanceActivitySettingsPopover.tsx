@@ -6,6 +6,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/ui/shadcn/popover';
 import { Slider } from '@/ui/shadcn/slider';
 import { Switch } from '@/ui/shadcn/switch';
 
+type InstanceActivitySettingsPopoverProps = {
+    barWidth: number;
+    isDetailVisible: boolean;
+    isSoloInstanceVisible: boolean;
+    isNoFriendInstanceVisible: boolean;
+    showDetailControl?: boolean;
+    onBarWidthCommit: (value: number) => void;
+    onDetailVisibleChange?: (value: boolean) => void;
+    onSoloInstanceVisibleChange: (value: boolean) => void;
+    onNoFriendInstanceVisibleChange: (value: boolean) => void;
+};
+
 export function InstanceActivitySettingsPopover({
     barWidth,
     isDetailVisible,
@@ -16,7 +28,7 @@ export function InstanceActivitySettingsPopover({
     onDetailVisibleChange,
     onSoloInstanceVisibleChange,
     onNoFriendInstanceVisibleChange
-}: any) {
+}: InstanceActivitySettingsPopoverProps) {
     const { t } = useTranslation();
     const showInstanceFilters = isDetailVisible || !showDetailControl;
 
@@ -48,7 +60,7 @@ export function InstanceActivitySettingsPopover({
                         max={50}
                         step={1}
                         value={[barWidth]}
-                        onValueChange={([value]: any) =>
+                        onValueChange={([value]: number[]) =>
                             onBarWidthCommit(value)
                         }
                         className="w-40"
@@ -63,7 +75,9 @@ export function InstanceActivitySettingsPopover({
                         </span>
                         <Switch
                             checked={isDetailVisible}
-                            onCheckedChange={onDetailVisibleChange}
+                            onCheckedChange={
+                                onDetailVisibleChange || (() => {})
+                            }
                         />
                     </div>
                 ) : null}

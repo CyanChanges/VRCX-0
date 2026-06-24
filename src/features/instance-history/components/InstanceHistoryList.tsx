@@ -6,6 +6,7 @@ import {
     Trash2Icon,
     XIcon
 } from 'lucide-react';
+import type { ChangeEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
@@ -16,6 +17,8 @@ import {
 import { DialogEmptyState } from '@/components/dialogs/previous-instances-table/PreviousInstancesViewParts';
 import { InstanceActionBar } from '@/components/instances/InstanceActionBar';
 import { Location } from '@/components/Location';
+import type { PreviousInstanceRow } from '@/features/instance-history/instance-activity/instanceActivityTypes';
+import type { InstanceHistoryMode } from '@/features/instance-history/instanceHistoryDayMode';
 import { formatClock, formatDateFilter } from '@/lib/dateTime';
 import { cn } from '@/lib/utils';
 import { Button } from '@/ui/shadcn/button';
@@ -29,22 +32,30 @@ import {
     SelectValue
 } from '@/ui/shadcn/select';
 
-const SORT_FIELDS = ['date', 'location', 'duration'];
+const SORT_FIELDS = ['date', 'location', 'duration'] as const;
+type SortField = (typeof SORT_FIELDS)[number];
 
-function rowKey(row: any, index: any) {
+function rowKey(row: PreviousInstanceRow, index: number): string {
     return `${rowLocation(row)}:${row?.id || row?.created_at || row?.createdAt || index}`;
 }
 
-function dayLabel(row: any) {
+function dayLabel(row: PreviousInstanceRow): string {
     return formatDateFilter(row?.created_at || row?.createdAt, 'date');
 }
+
+type InstanceHistoryRowProps = {
+    row: PreviousInstanceRow;
+    selected: boolean;
+    onOpenDetails: (row: PreviousInstanceRow) => void;
+    onDeleteRow: (row: PreviousInstanceRow) => void;
+};
 
 function InstanceHistoryRow({
     row,
     selected,
     onOpenDetails,
     onDeleteRow
-}: any) {
+}: InstanceHistoryRowProps) {
     const { t } = useTranslation();
     const location = rowLocation(row);
 
@@ -54,7 +65,7 @@ function InstanceHistoryRow({
             tabIndex={0}
             aria-pressed={selected}
             onClick={() => onOpenDetails(row)}
-            onKeyDown={(event: any) => {
+            onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
                     onOpenDetails(row);
@@ -91,7 +102,9 @@ function InstanceHistoryRow({
                 </span>
                 <div
                     className="bg-muted invisible absolute right-0 flex items-center gap-1 pl-3 group-hover:visible"
-                    onClick={(event: any) => event.stopPropagation()}
+                    onClick={(event: MouseEvent<HTMLDivElement>) =>
+                        event.stopPropagation()
+                    }
                     role="presentation"
                 >
                     <InstanceActionBar
@@ -118,6 +131,31 @@ function InstanceHistoryRow({
     );
 }
 
+type InstanceHistoryListProps = {
+    mode?: InstanceHistoryMode;
+    totalCount?: number;
+    filteredCount?: number;
+    visibleRows: PreviousInstanceRow[];
+    selectedRow: PreviousInstanceRow | null;
+    search: string;
+    onSearchChange: (value: string) => void;
+    pageSize: number;
+    onPageSizeChange: (value: number) => void;
+    sortKey: string;
+    sortDesc: boolean;
+    onSortSelect: (sortKey: SortField, sortDesc: boolean) => void;
+    currentPageIndex: number;
+    totalPages: number;
+    onPreviousPage: () => void;
+    onNextPage: () => void;
+    onOpenDetails: (row: PreviousInstanceRow) => void;
+    onDeleteRow: (row: PreviousInstanceRow) => void;
+    dateRangeControl?: ReactNode;
+    dateActive?: boolean;
+    dateRangeLabel?: string;
+    onClearDate?: () => void;
+};
+
 export function InstanceHistoryList({
     mode = 'search',
     totalCount = 0,
@@ -141,10 +179,12 @@ export function InstanceHistoryList({
     dateActive = false,
     dateRangeLabel = '',
     onClearDate
-}: any) {
+}: InstanceHistoryListProps) {
     const { t } = useTranslation();
     const isDayMode = mode === 'day';
-    const activeSortKey = SORT_FIELDS.includes(sortKey) ? sortKey : 'date';
+    const activeSortKey = SORT_FIELDS.includes(sortKey as SortField)
+        ? (sortKey as SortField)
+        : 'date';
     const grouped = !isDayMode && activeSortKey === 'date';
     const searchActive = !isDayMode && Boolean(search && search.trim());
     const dayRangeActive = !isDayMode && dateActive;
@@ -164,7 +204,7 @@ export function InstanceHistoryList({
                 <div className="flex flex-col gap-2">
                     <Input
                         value={search}
-                        onChange={(event: any) =>
+                        onChange={(event: ChangeEvent<HTMLInputElement>) =>
                             onSearchChange(event.target.value)
                         }
                         placeholder={t(
@@ -177,8 +217,8 @@ export function InstanceHistoryList({
                         <div className="flex shrink-0 items-center">
                             <Select
                                 value={activeSortKey}
-                                onValueChange={(value: any) =>
-                                    onSortSelect(value, sortDesc)
+                                onValueChange={(value: string) =>
+                                    onSortSelect(value as SortField, sortDesc)
                                 }
                             >
                                 <SelectTrigger
@@ -193,7 +233,7 @@ export function InstanceHistoryList({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        {SORT_FIELDS.map((field: any) => (
+                                        {SORT_FIELDS.map((field) => (
                                             <SelectItem
                                                 key={field}
                                                 value={field}
@@ -276,7 +316,7 @@ export function InstanceHistoryList({
 
             {visibleRows.length ? (
                 <div className="min-h-0 flex-1 overflow-auto rounded-md border p-1">
-                    {visibleRows.map((row: any, index: any) => {
+                    {visibleRows.map((row, index) => {
                         const label = grouped ? dayLabel(row) : '';
                         const showHeader = grouped && label !== lastDayLabel;
                         lastDayLabel = label;
@@ -314,7 +354,7 @@ export function InstanceHistoryList({
                     <div className="text-muted-foreground flex items-center gap-2 text-sm">
                         <Select
                             value={String(pageSize)}
-                            onValueChange={(value: any) =>
+                            onValueChange={(value: string) =>
                                 onPageSizeChange(
                                     Number.parseInt(value, 10) || 10
                                 )
@@ -325,7 +365,7 @@ export function InstanceHistoryList({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectGroup>
-                                    {[10, 25, 50, 100].map((size: any) => (
+                                    {[10, 25, 50, 100].map((size) => (
                                         <SelectItem
                                             key={size}
                                             value={String(size)}

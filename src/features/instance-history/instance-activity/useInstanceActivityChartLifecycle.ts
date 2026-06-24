@@ -5,8 +5,21 @@ import { echarts } from '@/lib/echarts';
 
 import {
     buildChartOption,
-    getMainChartClickedRow
+    getMainChartClickedRow,
+    type ChartEventParams
 } from './instanceActivityChart';
+import type { InstanceActivityChartRow } from './instanceActivityTypes';
+
+type InstanceActivityChartLifecycleOptions = {
+    barWidth: number;
+    chartRows: InstanceActivityChartRow[];
+    hour12: boolean;
+    onRowActivate?: (row: InstanceActivityChartRow) => void;
+    onYAxisClick?: (row: InstanceActivityChartRow) => void;
+    resolvedTheme: string;
+    selectedActivityKey?: string;
+    selectedDate: string;
+};
 
 export function useInstanceActivityChartLifecycle({
     barWidth,
@@ -17,25 +30,31 @@ export function useInstanceActivityChartLifecycle({
     resolvedTheme,
     selectedActivityKey = '',
     selectedDate
-}: any) {
+}: InstanceActivityChartLifecycleOptions) {
     const { t } = useTranslation();
-    const [mainChartElement, setMainChartElement] = useState(null);
-    const chartElementRef = useRef<any>(null);
-    const chartInstanceRef = useRef<any>(null);
-    const chartThemeRef = useRef<any>(null);
-    const resizeObserverRef = useRef<any>(null);
+    const [mainChartElement, setMainChartElement] =
+        useState<HTMLDivElement | null>(null);
+    const chartElementRef = useRef<HTMLDivElement | null>(null);
+    const chartInstanceRef = useRef<ReturnType<typeof echarts.init> | null>(
+        null
+    );
+    const chartThemeRef = useRef<string | null>(null);
+    const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-    const setMainChartElementRef = useCallback((node: any) => {
-        if (chartElementRef.current && chartElementRef.current !== node) {
-            resizeObserverRef.current?.disconnect();
-            chartInstanceRef.current?.dispose();
-            resizeObserverRef.current = null;
-            chartInstanceRef.current = null;
-            chartThemeRef.current = null;
-        }
-        chartElementRef.current = node;
-        setMainChartElement(node);
-    }, []);
+    const setMainChartElementRef = useCallback(
+        (node: HTMLDivElement | null) => {
+            if (chartElementRef.current && chartElementRef.current !== node) {
+                resizeObserverRef.current?.disconnect();
+                chartInstanceRef.current?.dispose();
+                resizeObserverRef.current = null;
+                chartInstanceRef.current = null;
+                chartThemeRef.current = null;
+            }
+            chartElementRef.current = node;
+            setMainChartElement(node);
+        },
+        []
+    );
 
     useEffect(() => {
         return () => {
@@ -92,7 +111,7 @@ export function useInstanceActivityChartLifecycle({
             }),
             true
         );
-        chart.on('click', (params: any) => {
+        chart.on('click', (params: ChartEventParams) => {
             const row = getMainChartClickedRow(params, chartRows);
             if (!row) {
                 return;

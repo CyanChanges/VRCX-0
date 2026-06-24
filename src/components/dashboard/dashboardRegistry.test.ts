@@ -11,12 +11,12 @@ describe('dashboardRegistry charts retirement', () => {
     it('removes chart pages as dashboard page modes', () => {
         expect(
             DASHBOARD_PAGE_DEFINITIONS.some(
-                (definition: any) => definition.key === 'charts-instance'
+                (definition) => definition.key === 'charts-instance'
             )
         ).toBe(false);
         expect(
             DASHBOARD_PAGE_DEFINITIONS.some(
-                (definition: any) => definition.key === 'charts-mutual'
+                (definition) => definition.key === 'charts-mutual'
             )
         ).toBe(false);
         expect(getDashboardPanelDefinition('charts-instance')).toBe(null);

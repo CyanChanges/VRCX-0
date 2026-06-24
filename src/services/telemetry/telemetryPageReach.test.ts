@@ -23,8 +23,18 @@ function mockDeps(options: { anonymous: boolean }) {
 
 const session = { installId: 'i', sessionId: 's' };
 
-function findRoute(payload: any, route: string) {
-    return payload.routes.find((entry: any) => entry.route === route);
+type PageReachRoutePayload = {
+    route: string;
+    visits?: number;
+    renderCrash?: number;
+};
+
+type PageReachPayload = {
+    routes: PageReachRoutePayload[];
+};
+
+function findRoute(payload: PageReachPayload, route: string) {
+    return payload.routes.find((entry) => entry.route === route);
 }
 
 describe('page reach telemetry', () => {
@@ -49,7 +59,10 @@ describe('page reach telemetry', () => {
         mod.recordRouteEnter('/game-log');
         await mod.sendPageReach(session);
 
-        const [path, payload] = postTelemetry.mock.calls[0] as [string, any];
+        const [path, payload] = postTelemetry.mock.calls[0] as [
+            string,
+            PageReachPayload
+        ];
         expect(path).toBe('/api/v1/telemetry/page-health');
         expect(findRoute(payload, 'game_log').visits).toBe(2);
         expect(findRoute(payload, 'search').visits).toBe(1);
@@ -63,7 +76,7 @@ describe('page reach telemetry', () => {
         mod.recordRouteEnter('/search');
         await mod.sendPageReach(session);
 
-        const payload = postTelemetry.mock.calls[0]?.[1] as any;
+        const payload = postTelemetry.mock.calls[0]?.[1] as PageReachPayload;
         expect(findRoute(payload, 'game_log').renderCrash).toBe(1);
         expect(findRoute(payload, 'search').renderCrash).toBeUndefined();
     });

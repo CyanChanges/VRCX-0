@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseLocation } from '@/shared/utils/locationParser';
+
+import type { InstanceActivityChartRow } from './instance-activity/instanceActivityTypes';
 import {
     buildAvailableInstanceHistoryDays,
     filterPreviousInstanceRowsForDay,
@@ -15,6 +18,27 @@ function iso(value: number) {
 
 function localIso(year: number, month: number, day: number, hour: number) {
     return new Date(year, month - 1, day, hour, 0, 0, 0).toISOString();
+}
+
+function chartRow(
+    row: Partial<InstanceActivityChartRow>
+): InstanceActivityChartRow {
+    return {
+        id: row.id || 'chart',
+        currentUserId: row.currentUserId || 'usr_self',
+        displayName: row.displayName || 'Self',
+        location: row.location || 'wrld_target:123',
+        userId: row.userId || 'usr_self',
+        parsedLocation: row.parsedLocation || parseLocation('wrld_target:123'),
+        worldId: row.worldId || 'wrld_target',
+        worldName: row.worldName || '',
+        worldResolvedFromCache: row.worldResolvedFromCache || false,
+        joinMs: row.joinMs || 0,
+        leaveMs: row.leaveMs || 0,
+        visibleStartMs: row.visibleStartMs || row.joinMs || 0,
+        visibleDurationMs: row.visibleDurationMs || 0,
+        activityKey: row.activityKey || 'wrld_target:123:0'
+    };
 }
 
 describe('instanceHistoryDayMode', () => {
@@ -64,13 +88,13 @@ describe('instanceHistoryDayMode', () => {
 
         expect(
             filterPreviousInstanceRowsForDay(rows, '2024-01-02').map(
-                (row: any) => row.id
+                (row) => row.id
             )
         ).toEqual(['late', 'early', 'cross-midnight']);
 
         expect(
             filterPreviousInstanceRowsForDay(rows, '2024-01-01').map(
-                (row: any) => row.id
+                (row) => row.id
             )
         ).toEqual(['old']);
     });
@@ -97,22 +121,22 @@ describe('instanceHistoryDayMode', () => {
 
         expect(
             findPreviousInstanceRowForActivityRow(
-                {
+                chartRow({
                     location: 'wrld_target:123',
                     joinMs: leaveMs - durationMs,
                     leaveMs
-                },
+                }),
                 previousRows
             )?.id
         ).toBe('target');
         expect(
             findActivityRowForPreviousInstanceRow(previousRows[0], [
-                {
+                chartRow({
                     activityKey: 'chart-row',
                     location: 'wrld_target:123',
                     joinMs: leaveMs - durationMs,
                     leaveMs
-                }
+                })
             ])?.activityKey
         ).toBe('chart-row');
     });

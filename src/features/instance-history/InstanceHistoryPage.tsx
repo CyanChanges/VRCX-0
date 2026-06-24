@@ -4,6 +4,7 @@ import {
     RefreshCwIcon,
     UserRoundIcon
 } from 'lucide-react';
+import type { ChangeEvent } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
@@ -27,6 +28,7 @@ import {
     PageToolbarRow
 } from '@/components/layout/PageScaffold';
 import { normalizeEndpoint, normalizeUserId } from '@/domain/users/userFacts';
+import type { UserFact } from '@/domain/users/userFacts';
 import { UserPickerRow } from '@/features/charts/components/MutualFriendsViewParts';
 import { InstanceActivityDateControls } from '@/features/instance-history/components/InstanceActivityDateControls';
 import { InstanceActivitySettingsPopover } from '@/features/instance-history/components/InstanceActivitySettingsPopover';
@@ -37,6 +39,10 @@ import {
     filterDetailGroups,
     getDetailGroupKeys
 } from '@/features/instance-history/instance-activity/instanceActivityRows';
+import type {
+    InstanceActivityChartRow,
+    PreviousInstanceRow
+} from '@/features/instance-history/instance-activity/instanceActivityTypes';
 import { useInstanceActivityChartLifecycle } from '@/features/instance-history/instance-activity/useInstanceActivityChartLifecycle';
 import { useInstanceActivityData } from '@/features/instance-history/instance-activity/useInstanceActivityData';
 import { useInstanceActivityRuntime } from '@/features/instance-history/instance-activity/useInstanceActivityRuntime';
@@ -67,18 +73,43 @@ import { ScrollArea } from '@/ui/shadcn/scroll-area';
 import { Spinner } from '@/ui/shadcn/spinner';
 import { ToggleGroup, ToggleGroupItem } from '@/ui/shadcn/toggle-group';
 
-function rowsFromResult(result: any) {
+type KnownUserOption = Partial<UserFact> & {
+    id: string;
+    endpoint: string;
+    name?: string;
+};
+
+type TargetOption = {
+    value: string;
+    label: string;
+    user: KnownUserOption;
+};
+
+type PreviousInstanceSortKey = 'date' | 'location' | 'duration';
+
+function rowsFromResult(result: unknown): PreviousInstanceRow[] {
     if (result instanceof Set || result instanceof Map) {
-        return Array.from(result.values());
+        return Array.from(result.values()).filter(
+            (row): row is PreviousInstanceRow =>
+                Boolean(row && typeof row === 'object')
+        );
     }
-    return Array.isArray(result) ? result : [];
+    return Array.isArray(result)
+        ? result.filter((row): row is PreviousInstanceRow =>
+              Boolean(row && typeof row === 'object')
+          )
+        : [];
 }
 
-function knownUserName(user: any) {
+function knownUserName(user: Partial<KnownUserOption> | null | undefined) {
     return user?.displayName || user?.username || user?.name || '';
 }
 
-function dateRangeContains(row: any, from: Date | null, to: Date | null) {
+function dateRangeContains(
+    row: PreviousInstanceRow,
+    from: Date | null,
+    to: Date | null
+) {
     if (!from && !to) {
         return true;
     }
@@ -100,22 +131,20 @@ export function InstanceHistoryPage({
 }: { embedded?: boolean } = {}) {
     const { t } = useTranslation();
     const [searchParams, setSearchParams] = useSearchParams();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const confirm = useModalStore((state) => state.confirm);
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserDisplayName = useRuntimeStore(
-        (state: any) => state.auth.currentUserDisplayName
+        (state) => state.auth.currentUserDisplayName
     );
     const currentEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const usersByKey = useUserFactsStore((state: any) => state.usersByKey);
+    const usersByKey = useUserFactsStore((state) => state.usersByKey);
     const mode = sanitizeInstanceHistoryMode(searchParams.get('mode'));
     const isDayMode = mode === 'day';
     const [targetPickerOpen, setTargetPickerOpen] = useState(false);
     const [targetSearch, setTargetSearch] = useState('');
-    const [rows, setRows] = useState<any[]>([]);
+    const [rows, setRows] = useState<PreviousInstanceRow[]>([]);
     const [status, setStatus] = useState('idle');
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
@@ -123,11 +152,13 @@ export function InstanceHistoryPage({
         from: Date | null;
         to: Date | null;
     }>({ from: null, to: null });
-    const [sortKey, setSortKey] = useState('date');
+    const [sortKey, setSortKey] = useState<PreviousInstanceSortKey>('date');
     const [sortDesc, setSortDesc] = useState(true);
     const [pageSize, setPageSize] = useState(25);
     const [pageIndex, setPageIndex] = useState(0);
-    const [detailRow, setDetailRow] = useState<any>(null);
+    const [detailRow, setDetailRow] = useState<PreviousInstanceRow | null>(
+        null
+    );
     const [reloadToken, setReloadToken] = useState(0);
     const [selectedDay, setSelectedDay] = useState('');
     const endpoint = normalizeEndpoint(currentEndpoint);
@@ -145,7 +176,7 @@ export function InstanceHistoryPage({
     });
 
     const knownUsers = useMemo(() => {
-        const usersById = new Map();
+        const usersById = new Map<string, KnownUserOption>();
         if (currentUserId) {
             usersById.set(currentUserId, {
                 id: currentUserId,
@@ -153,22 +184,20 @@ export function InstanceHistoryPage({
                 endpoint
             });
         }
-        for (const user of Object.values(usersByKey || {}).filter(
-            (user: any) => {
-                const userId = normalizeUserId(user?.id);
-                return (
-                    userId &&
-                    normalizeEndpoint(user?.endpoint || endpoint) === endpoint
-                );
-            }
-        )) {
-            const userId = normalizeUserId((user as any)?.id);
+        for (const user of Object.values(usersByKey || {}).filter((user) => {
+            const userId = normalizeUserId(user?.id);
+            return (
+                userId &&
+                normalizeEndpoint(user?.endpoint || endpoint) === endpoint
+            );
+        })) {
+            const userId = normalizeUserId(user?.id);
             if (!usersById.has(userId)) {
                 usersById.set(userId, user);
             }
         }
         return Array.from(usersById.values())
-            .sort((left: any, right: any) =>
+            .sort((left, right) =>
                 (knownUserName(left) || left?.id || '').localeCompare(
                     knownUserName(right) || right?.id || ''
                 )
@@ -176,10 +205,10 @@ export function InstanceHistoryPage({
             .slice(0, 500);
     }, [currentUserDisplayName, currentUserId, endpoint, usersByKey]);
 
-    const activeKnownUser: any = useMemo(
+    const activeKnownUser = useMemo<KnownUserOption | null>(
         () =>
             knownUsers.find(
-                (user: any) => normalizeUserId(user?.id) === activeUserId
+                (user) => normalizeUserId(user?.id) === activeUserId
             ) || null,
         [activeUserId, knownUsers]
     );
@@ -194,16 +223,19 @@ export function InstanceHistoryPage({
     const targetOptions = useMemo(() => {
         const query = targetSearch.trim().toLowerCase();
         return knownUsers
-            .map((user: any) => ({
-                value: normalizeUserId(user?.id),
-                label:
-                    normalizeUserId(user?.id) === normalizeUserId(currentUserId)
-                        ? t('view.instance_history.label.self')
-                        : knownUserName(user) ||
-                          t('view.instance_history.label.unnamed_user'),
-                user
-            }))
-            .filter((option: any) => {
+            .map(
+                (user): TargetOption => ({
+                    value: normalizeUserId(user?.id),
+                    label:
+                        normalizeUserId(user?.id) ===
+                        normalizeUserId(currentUserId)
+                            ? t('view.instance_history.label.self')
+                            : knownUserName(user) ||
+                              t('view.instance_history.label.unnamed_user'),
+                    user
+                })
+            )
+            .filter((option) => {
                 if (!option.value) {
                     return false;
                 }
@@ -279,7 +311,7 @@ export function InstanceHistoryPage({
         ]
     );
     const visibleActivityKeySet = useMemo(() => {
-        const keys = new Set();
+        const keys = new Set<string>();
         for (const group of visibleDetailGroups) {
             for (const key of getDetailGroupKeys(group, activeUserId)) {
                 keys.add(key);
@@ -294,7 +326,7 @@ export function InstanceHistoryPage({
         if (!detailGroups.length) {
             return rawChartRows;
         }
-        return rawChartRows.filter((row: any) =>
+        return rawChartRows.filter((row) =>
             visibleActivityKeySet.has(activityRowKey(row))
         );
     }, [
@@ -306,7 +338,7 @@ export function InstanceHistoryPage({
     const totalOnlineTime = useMemo(
         () =>
             rawChartRows.reduce(
-                (total: any, row: any) => total + row.visibleDurationMs,
+                (total, row) => total + row.visibleDurationMs,
                 0
             ),
         [rawChartRows]
@@ -345,14 +377,14 @@ export function InstanceHistoryPage({
 
         gameLogRepository
             .getPreviousInstancesByUserId({ id: activeUserId })
-            .then((result: any) => {
+            .then((result: unknown) => {
                 if (!active) {
                     return;
                 }
                 setRows(rowsFromResult(result));
                 setStatus('ready');
             })
-            .catch((loadError: any) => {
+            .catch((loadError: unknown) => {
                 if (!active) {
                     return;
                 }
@@ -374,11 +406,11 @@ export function InstanceHistoryPage({
 
     const filteredRows = useMemo(() => {
         const query = search.trim().toLowerCase();
-        const dateRows = rows.filter((row: any) =>
+        const dateRows = rows.filter((row) =>
             dateRangeContains(row, dateRange.from, dateRange.to)
         );
         const nextRows = query
-            ? dateRows.filter((row: any) => rowSearchText(row).includes(query))
+            ? dateRows.filter((row) => rowSearchText(row).includes(query))
             : dateRows;
         return sortPreviousInstanceRows(nextRows, sortKey, sortDesc);
     }, [dateRange.from, dateRange.to, rows, search, sortDesc, sortKey]);
@@ -390,7 +422,7 @@ export function InstanceHistoryPage({
         currentPageIndex * pageSize + pageSize
     );
 
-    function selectSort(nextKey: any, nextDesc: any) {
+    function selectSort(nextKey: PreviousInstanceSortKey, nextDesc: boolean) {
         setSortKey(nextKey);
         setSortDesc(Boolean(nextDesc));
     }
@@ -398,7 +430,10 @@ export function InstanceHistoryPage({
     function commitSearchParams({
         nextMode = mode,
         nextUserId = activeUserId
-    }: any) {
+    }: {
+        nextMode?: typeof mode;
+        nextUserId?: string;
+    }) {
         const params = new URLSearchParams();
         if (nextMode === 'day') {
             params.set('mode', 'day');
@@ -410,12 +445,12 @@ export function InstanceHistoryPage({
         setSearchParams(params);
     }
 
-    function changeMode(nextMode: any) {
+    function changeMode(nextMode: string) {
         const sanitizedMode = sanitizeInstanceHistoryMode(nextMode);
         commitSearchParams({ nextMode: sanitizedMode });
     }
 
-    function applyTarget(value: any) {
+    function applyTarget(value: string | null) {
         const nextUserId = normalizeUserId(value);
         if (!nextUserId) {
             return;
@@ -427,33 +462,33 @@ export function InstanceHistoryPage({
         if (!activeUserId) {
             return;
         }
-        setReloadToken((value: any) => value + 1);
+        setReloadToken((value) => value + 1);
     }
 
     function clearDateRange() {
         setDateRange({ from: null, to: null });
     }
 
-    function handleSearchChange(value: any) {
+    function handleSearchChange(value: string) {
         setSearch(value);
         setPageIndex(0);
     }
 
-    function handlePageSizeChange(value: any) {
+    function handlePageSizeChange(value: number) {
         setPageSize(value);
         setPageIndex(0);
     }
 
     function handlePreviousPage() {
-        setPageIndex((value: any) => Math.max(0, value - 1));
+        setPageIndex((value) => Math.max(0, value - 1));
     }
 
     function handleNextPage() {
-        setPageIndex((value: any) => Math.min(totalPages - 1, value + 1));
+        setPageIndex((value) => Math.min(totalPages - 1, value + 1));
     }
 
     const handleActivityRowActivate = useCallback(
-        (activityRow: any) => {
+        (activityRow: InstanceActivityChartRow) => {
             const matchedRow = findPreviousInstanceRowForActivityRow(
                 activityRow,
                 rawDayRows
@@ -500,7 +535,7 @@ export function InstanceHistoryPage({
         />
     );
 
-    async function deleteRow(row: any) {
+    async function deleteRow(row: PreviousInstanceRow) {
         const location = rowLocation(row);
         if (!location || !activeUserId) {
             return;
@@ -531,11 +566,11 @@ export function InstanceHistoryPage({
                 location,
                 events: row.events
             });
-            setRows((currentRows: any[]) =>
-                currentRows.filter((item: any) => item !== row)
+            setRows((currentRows) =>
+                currentRows.filter((item) => item !== row)
             );
-            setDetailRow((current: any) => (current === row ? null : current));
-            setReloadToken((value: any) => value + 1);
+            setDetailRow((current) => (current === row ? null : current));
+            setReloadToken((value) => value + 1);
             toast.success(
                 t('dialog.previous_instances.success.instance_record_deleted')
             );
@@ -618,16 +653,16 @@ export function InstanceHistoryPage({
                             <div className="flex flex-col gap-2">
                                 <Input
                                     value={targetSearch}
-                                    onChange={(event: any) =>
-                                        setTargetSearch(event.target.value)
-                                    }
+                                    onChange={(
+                                        event: ChangeEvent<HTMLInputElement>
+                                    ) => setTargetSearch(event.target.value)}
                                     placeholder={t(
                                         'view.instance_history.placeholder.user'
                                     )}
                                 />
                                 <ScrollArea className="h-72 rounded-md border">
                                     <div className="flex flex-col gap-1 p-1 pr-2">
-                                        {targetOptions.map((option: any) => (
+                                        {targetOptions.map((option) => (
                                             <Button
                                                 key={option.value}
                                                 type="button"
@@ -671,7 +706,7 @@ export function InstanceHistoryPage({
                     <ToggleGroup
                         type="single"
                         value={mode}
-                        onValueChange={(value: any) => {
+                        onValueChange={(value: string) => {
                             if (value) {
                                 changeMode(value);
                             }
