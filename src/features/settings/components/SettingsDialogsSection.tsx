@@ -6,6 +6,8 @@ export function SettingsDialogsSection({ dialogs }: any) {
         setCustomFontDialogOpen,
         customFontDraft,
         setCustomFontDraft,
+        customFontOptions,
+        customFontOptionsLoading,
         saveCustomFontFamily,
         youtubeApiDialogOpen,
         setYoutubeApiDialogOpen,
@@ -78,6 +80,8 @@ export function SettingsDialogsSection({ dialogs }: any) {
                 setOpen: setCustomFontDialogOpen,
                 draft: customFontDraft,
                 setDraft: setCustomFontDraft,
+                options: customFontOptions,
+                loading: customFontOptionsLoading,
                 onSave: saveCustomFontFamily
             }}
             youtubeApi={{

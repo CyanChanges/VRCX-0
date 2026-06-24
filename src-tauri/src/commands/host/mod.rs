@@ -3,6 +3,7 @@ pub mod calendar;
 pub mod clipboard;
 pub mod devkit;
 pub mod error_log;
+pub mod fonts;
 pub mod game;
 pub mod host_capabilities;
 pub mod ipc_commands;

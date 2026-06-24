@@ -210,6 +210,7 @@ pub fn builder() -> Builder<tauri::Wry> {
             commands::local::local_moderation::app__local_moderation_list,
             commands::local::local_moderation::app__local_moderation_get,
             commands::host::host_capabilities::app__get_host_capabilities,
+            commands::host::fonts::app__list_system_fonts,
             commands::host::paths::app__current_culture,
             commands::host::paths::app__current_language,
             commands::host::paths::app__get_app_data_dir_state,

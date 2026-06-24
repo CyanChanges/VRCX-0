@@ -1,3 +1,14 @@
+import {
+    consumeSystemFontsUnavailableWarning,
+    loadSystemFonts
+} from '@/services/systemFontsService';
+
+import {
+    composeCustomFontFamily,
+    createCustomFontDraftFromPrefs,
+    type CustomFontDraft
+} from './settingsValues';
+
 export function useSettingsPreferenceActions({
     APP_FONT_DEFAULT_KEY,
     DEFAULT_MAX_TABLE_SIZE,
@@ -22,6 +33,8 @@ export function useSettingsPreferenceActions({
     setConfigTreeData,
     setCustomFontDialogOpen,
     setCustomFontDraft,
+    setCustomFontOptions,
+    setCustomFontOptionsLoading,
     setDiscordPrefs,
     setIntegrationPrefs,
     setLocalFavoriteFriendsGroups,
@@ -146,13 +159,31 @@ export function useSettingsPreferenceActions({
         });
     }
     function openCustomFontDialog() {
-        setCustomFontDraft(
-            prefs.customFontFamily || "'My Font', Arial, sans-serif"
-        );
+        setCustomFontDraft(createCustomFontDraftFromPrefs(prefs));
         setCustomFontDialogOpen(true);
+        setCustomFontOptionsLoading(true);
+        loadSystemFonts()
+            .then((fonts) => {
+                setCustomFontOptions(fonts);
+                if (consumeSystemFontsUnavailableWarning(fonts)) {
+                    toast.warning(
+                        t(
+                            'view.settings.appearance.appearance.font_family_custom_detection_unavailable_toast'
+                        )
+                    );
+                }
+            })
+            .finally(() => {
+                setCustomFontOptionsLoading(false);
+            });
     }
     async function saveCustomFontFamily(value: any = customFontDraft) {
-        const nextValue = String(value ?? '').trim();
+        const nextDraft: CustomFontDraft = {
+            primary: String(value?.primary ?? '').trim(),
+            secondary: String(value?.secondary ?? '').trim(),
+            override: String(value?.override ?? '').trim()
+        };
+        const nextValue = composeCustomFontFamily(nextDraft);
         if (!isValidFontFamilyList(nextValue)) {
             toast.error(
                 t(
@@ -163,9 +194,15 @@ export function useSettingsPreferenceActions({
         }
         const previousFontFamily = prefs.appFontFamily;
         const previousCustomFontFamily = prefs.customFontFamily;
+        const previousCustomFontPrimary = prefs.customFontPrimary;
+        const previousCustomFontSecondary = prefs.customFontSecondary;
+        const previousCustomFontOverride = prefs.customFontOverride;
         const saved = await commit(
             () =>
                 configRepository.setMany([
+                    ['customFontPrimary', nextDraft.primary],
+                    ['customFontSecondary', nextDraft.secondary],
+                    ['customFontOverride', nextDraft.override],
                     ['customFontFamily', nextValue],
                     ['VRCX_fontFamily', 'custom']
                 ]),
@@ -173,7 +210,10 @@ export function useSettingsPreferenceActions({
                 setPrefs((current: any) => ({
                     ...current,
                     appFontFamily: 'custom',
-                    customFontFamily: nextValue
+                    customFontFamily: nextValue,
+                    customFontPrimary: nextDraft.primary,
+                    customFontSecondary: nextDraft.secondary,
+                    customFontOverride: nextDraft.override
                 }));
                 applyAppFontPreferences({
                     fontFamily: 'custom',
@@ -184,7 +224,10 @@ export function useSettingsPreferenceActions({
                     setPrefs((current: any) => ({
                         ...current,
                         appFontFamily: previousFontFamily,
-                        customFontFamily: previousCustomFontFamily
+                        customFontFamily: previousCustomFontFamily,
+                        customFontPrimary: previousCustomFontPrimary,
+                        customFontSecondary: previousCustomFontSecondary,
+                        customFontOverride: previousCustomFontOverride
                     }));
                     applyAppFontPreferences({
                         fontFamily: previousFontFamily,

@@ -129,6 +129,9 @@ export function createDefaultSettingsPrefs() {
         appFontFamily: APP_FONT_DEFAULT_KEY,
         appCjkFontPack: APP_CJK_FONT_PACK_DEFAULT_KEY,
         customFontFamily: '',
+        customFontPrimary: '',
+        customFontSecondary: '',
+        customFontOverride: '',
         trustColor: {
             ...TRUST_COLOR_DEFAULTS
         }

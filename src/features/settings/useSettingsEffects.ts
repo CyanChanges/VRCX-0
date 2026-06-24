@@ -71,9 +71,20 @@ export function useSettingsEffects({
                 'VRCX_cjkFontPack',
                 APP_CJK_FONT_PACK_DEFAULT_KEY
             ),
-            configRepository.getString('customFontFamily', '')
+            configRepository.getString('customFontFamily', ''),
+            configRepository.getString('customFontPrimary', ''),
+            configRepository.getString('customFontSecondary', ''),
+            configRepository.getString('customFontOverride', '')
         ])
-            .then(([appFontFamily, appCjkFontPack, customFontFamily]: any) => {
+            .then(
+                ([
+                    appFontFamily,
+                    appCjkFontPack,
+                    customFontFamily,
+                    customFontPrimary,
+                    customFontSecondary,
+                    customFontOverride
+                ]: any) => {
                 if (!active) {
                     return;
                 }
@@ -84,14 +95,18 @@ export function useSettingsEffects({
                     ...current,
                     appFontFamily: normalizedFont,
                     appCjkFontPack: normalizedCjkFont,
-                    customFontFamily: customFontFamily || ''
+                    customFontFamily: customFontFamily || '',
+                    customFontPrimary: customFontPrimary || '',
+                    customFontSecondary: customFontSecondary || '',
+                    customFontOverride: customFontOverride || ''
                 }));
                 applyAppFontPreferences({
                     fontFamily: normalizedFont,
                     customFontFamily: customFontFamily || '',
                     cjkFontPack: normalizedCjkFont
                 });
-            })
+                }
+            )
             .catch(() => {});
         return () => {
             active = false;

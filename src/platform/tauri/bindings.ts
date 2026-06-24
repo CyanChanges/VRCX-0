@@ -527,6 +527,9 @@ async appLocalModerationGet(ownerUserId: string, userId: string) : Promise<Local
 async appGetHostCapabilities() : Promise<HostCapabilities> {
     return await TAURI_INVOKE("app__get_host_capabilities");
 },
+async appListSystemFonts() : Promise<string[]> {
+    return await TAURI_INVOKE("app__list_system_fonts");
+},
 async appCurrentCulture() : Promise<string> {
     return await TAURI_INVOKE("app__current_culture");
 },

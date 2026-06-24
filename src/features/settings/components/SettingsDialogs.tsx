@@ -34,6 +34,8 @@ export function SettingsDialogs({
                 onOpenChange={customFont.setOpen}
                 draft={customFont.draft}
                 onDraftChange={customFont.setDraft}
+                fontOptions={customFont.options}
+                fontOptionsLoading={customFont.loading}
                 onSave={customFont.onSave}
             />
             <YoutubeApiDialog

@@ -29,7 +29,28 @@ export const DEFAULT_TRANSLATION_MODEL = 'gpt-4o-mini';
 export const MAX_CUSTOM_FONT_FAMILY_LENGTH = 200;
 
 const FONT_FAMILY_TOKEN_PATTERN =
-    /^([-_\p{L}][\p{L}\p{N}_\s-]*|'[^']+'|"[^"]+")$/u;
+    /^([-_\p{L}][\p{L}\p{N}_\s-]*|'(?:\\.|[^'\\])+'|"(?:\\.|[^"\\])+")$/u;
+const CSS_GENERIC_FONT_FAMILIES = new Set([
+    'serif',
+    'sans-serif',
+    'monospace',
+    'cursive',
+    'fantasy',
+    'system-ui',
+    'ui-serif',
+    'ui-sans-serif',
+    'ui-monospace',
+    'ui-rounded',
+    'emoji',
+    'math',
+    'fangsong'
+]);
+
+export type CustomFontDraft = {
+    primary: string;
+    secondary: string;
+    override: string;
+};
 
 export function parseWebJson(response: any) {
     if (response?.data && typeof response.data === 'object') {
@@ -112,7 +133,7 @@ export function parseIntegerInput(value: any, fallback: any) {
     return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-export function isValidFontFamilyList(value: any) {
+export function isValidFontFamilyList(value: any): boolean {
     const normalized = String(value ?? '').trim();
     if (!normalized || normalized.length > MAX_CUSTOM_FONT_FAMILY_LENGTH) {
         return false;
@@ -121,6 +142,73 @@ export function isValidFontFamilyList(value: any) {
     return normalized
         .split(',')
         .every((entry: any) => FONT_FAMILY_TOKEN_PATTERN.test(entry.trim()));
+}
+
+export function quoteCssFontFamilyName(value: any): string {
+    const name = String(value ?? '').trim();
+    if (!name) {
+        return '';
+    }
+    if (
+        (name.startsWith("'") && name.endsWith("'")) ||
+        (name.startsWith('"') && name.endsWith('"')) ||
+        CSS_GENERIC_FONT_FAMILIES.has(name.toLowerCase())
+    ) {
+        return name;
+    }
+    return `'${name.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
+export function composeCustomFontFamily(
+    value: Partial<CustomFontDraft>
+): string {
+    const override = String(value?.override ?? '').trim();
+    if (override) {
+        return override;
+    }
+
+    const primary = String(value?.primary ?? '').trim();
+    const secondary = String(value?.secondary ?? '').trim();
+    const parts = [];
+    if (primary) {
+        parts.push(quoteCssFontFamilyName(primary));
+    }
+    if (secondary && secondary.toLowerCase() !== primary.toLowerCase()) {
+        parts.push(quoteCssFontFamilyName(secondary));
+    }
+    if (!parts.length) {
+        return '';
+    }
+    parts.push('system-ui');
+    return parts.join(', ');
+}
+
+export function createCustomFontDraftFromPrefs(prefs: any): CustomFontDraft {
+    const primary = String(prefs?.customFontPrimary ?? '').trim();
+    const secondary = String(prefs?.customFontSecondary ?? '').trim();
+    const override = String(prefs?.customFontOverride ?? '').trim();
+    const isCustomActive = String(prefs?.appFontFamily ?? '') === 'custom';
+    const legacyEffective = String(prefs?.customFontFamily ?? '').trim();
+
+    if (
+        isCustomActive &&
+        !primary &&
+        !secondary &&
+        !override &&
+        legacyEffective
+    ) {
+        return {
+            primary: '',
+            secondary: '',
+            override: legacyEffective
+        };
+    }
+
+    return {
+        primary,
+        secondary,
+        override
+    };
 }
 
 export function formatByteSize(value: any) {

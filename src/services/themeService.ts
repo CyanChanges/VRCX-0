@@ -438,14 +438,28 @@ export function applyAppFontPreferences({
     const useMacosSystemFonts = VRCX_0_MACOS_SYSTEM_FONTS_ENABLED;
     const effectiveFont = useMacosSystemFonts ? 'system_ui' : normalizedFont;
     const fontConfig = APP_FONT_CONFIG[effectiveFont];
+
+    if (effectiveFont === 'custom') {
+        const stack =
+            String(customFontFamily || '').trim() ||
+            `${APP_FONT_CONFIG[APP_FONT_DEFAULT_KEY].cssName}, system-ui`;
+        ensureDynamicStyle(APP_FONT_STYLE_ATTR, 'custom', null);
+        ensureDynamicStyle(APP_CJK_FONT_STYLE_ATTR, 'custom', null);
+        document.documentElement.style.setProperty(
+            '--vrcx-app-font-family',
+            stack
+        );
+        return {
+            fontFamily: normalizedFont,
+            customFontFamily,
+            cjkFontPack: normalizedCjk
+        };
+    }
+
     const cjkConfig = useMacosSystemFonts
         ? resolveNotoCjkFontConfig(normalizedLocale)
         : resolveCjkFontConfig(normalizedCjk, normalizedLocale);
-    const westernFont =
-        effectiveFont === 'custom'
-            ? String(customFontFamily || '').trim() ||
-              APP_FONT_CONFIG[APP_FONT_DEFAULT_KEY].cssName
-            : fontConfig.cssName;
+    const westernFont = fontConfig.cssName;
 
     ensureDynamicStyle(
         APP_FONT_STYLE_ATTR,

@@ -108,7 +108,14 @@ export function useSettingsPageState() {
     const [ttsVoices, setTtsVoices] = useState<any[]>([]);
     const [notificationTtsTest, setNotificationTtsTest] = useState('');
     const [customFontDialogOpen, setCustomFontDialogOpen] = useState(false);
-    const [customFontDraft, setCustomFontDraft] = useState('');
+    const [customFontDraft, setCustomFontDraft] = useState({
+        primary: '',
+        secondary: '',
+        override: ''
+    });
+    const [customFontOptions, setCustomFontOptions] = useState<string[]>([]);
+    const [customFontOptionsLoading, setCustomFontOptionsLoading] =
+        useState(false);
     const [loading, setLoading] = useState(true);
     const [activeSettingsTab, setActiveSettingsTab] = useState('system');
     const feedFilterMode = 'noty';
@@ -237,6 +244,8 @@ export function useSettingsPageState() {
         setConfigTreeData,
         setCustomFontDialogOpen,
         setCustomFontDraft,
+        setCustomFontOptions,
+        setCustomFontOptionsLoading,
         setDiscordPrefs,
         setIntegrationPrefs,
         setLocalFavoriteFriendsGroups,
@@ -756,6 +765,8 @@ export function useSettingsPageState() {
             setCustomFontDialogOpen,
             customFontDraft,
             setCustomFontDraft,
+            customFontOptions,
+            customFontOptionsLoading,
             saveCustomFontFamily,
             youtubeApiDialogOpen,
             setYoutubeApiDialogOpen,

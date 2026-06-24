@@ -6,6 +6,8 @@ import { settingsTabs } from './settingsOptions';
 import {
     buildOpenAiModelsEndpoint,
     buildTablePageSizeOptions,
+    composeCustomFontFamily,
+    createCustomFontDraftFromPrefs,
     DEFAULT_TRANSLATION_ENDPOINT,
     filterTablePageSizeOptions,
     formatByteSize,
@@ -18,6 +20,7 @@ import {
     OVERLAY_ACTIVITY_TYPE_DEFINITIONS,
     parseIntegerInput,
     parseWebJson,
+    quoteCssFontFamilyName,
     TABLE_PAGE_SIZE_DEFAULTS
 } from './settingsValues';
 
@@ -271,8 +274,93 @@ describe('settingsValues', () => {
             true
         );
         expect(isValidFontFamilyList('Noto Sans JP')).toBe(true);
+        expect(isValidFontFamilyList("'Map\\'s Font', system-ui")).toBe(true);
         expect(isValidFontFamilyList('bad;font')).toBe(false);
         expect(isValidFontFamilyList('')).toBe(false);
+    });
+
+    it('quotes selected font family names for CSS stacks', () => {
+        expect(quoteCssFontFamilyName('Segoe UI')).toBe("'Segoe UI'");
+        expect(quoteCssFontFamilyName("'Already Quoted'")).toBe(
+            "'Already Quoted'"
+        );
+        expect(quoteCssFontFamilyName('system-ui')).toBe('system-ui');
+        expect(quoteCssFontFamilyName("Map's Font")).toBe("'Map\\'s Font'");
+    });
+
+    it('composes selected custom font slots into the effective stack', () => {
+        expect(
+            composeCustomFontFamily({
+                primary: 'Segoe UI',
+                secondary: 'Noto Sans JP',
+                override: ''
+            })
+        ).toBe("'Segoe UI', 'Noto Sans JP', system-ui");
+        expect(
+            composeCustomFontFamily({
+                primary: 'Segoe UI',
+                secondary: 'segoe ui',
+                override: ''
+            })
+        ).toBe("'Segoe UI', system-ui");
+        expect(
+            composeCustomFontFamily({
+                primary: '',
+                secondary: '',
+                override: ''
+            })
+        ).toBe('');
+    });
+
+    it('lets an advanced custom font override replace selected slots', () => {
+        expect(
+            composeCustomFontFamily({
+                primary: 'Segoe UI',
+                secondary: 'Noto Sans JP',
+                override: "'Manual Font', serif"
+            })
+        ).toBe("'Manual Font', serif");
+    });
+
+    it('seeds legacy custom font stacks into the advanced override', () => {
+        expect(
+            createCustomFontDraftFromPrefs({
+                appFontFamily: 'custom',
+                customFontFamily: "'Legacy Font', Arial, sans-serif",
+                customFontPrimary: '',
+                customFontSecondary: '',
+                customFontOverride: ''
+            })
+        ).toEqual({
+            primary: '',
+            secondary: '',
+            override: "'Legacy Font', Arial, sans-serif"
+        });
+        expect(
+            createCustomFontDraftFromPrefs({
+                appFontFamily: 'geist',
+                customFontFamily: "'Inter Variable'",
+                customFontPrimary: '',
+                customFontSecondary: '',
+                customFontOverride: ''
+            })
+        ).toEqual({
+            primary: '',
+            secondary: '',
+            override: ''
+        });
+        expect(
+            createCustomFontDraftFromPrefs({
+                customFontFamily: "'Effective Font', system-ui",
+                customFontPrimary: 'Segoe UI',
+                customFontSecondary: 'Noto Sans JP',
+                customFontOverride: ''
+            })
+        ).toEqual({
+            primary: 'Segoe UI',
+            secondary: 'Noto Sans JP',
+            override: ''
+        });
     });
 
     it('formats cache sizes into readable units for settings diagnostics', () => {

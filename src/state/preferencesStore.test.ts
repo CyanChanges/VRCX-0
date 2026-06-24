@@ -35,6 +35,24 @@ describe('preferencesStore normalizers', () => {
         ).toBe(true);
     });
 
+    it('keeps custom font selector fields round-trippable', () => {
+        expect(DEFAULT_PREFERENCES.customFontPrimary).toBe('');
+        expect(DEFAULT_PREFERENCES.customFontSecondary).toBe('');
+        expect(DEFAULT_PREFERENCES.customFontOverride).toBe('');
+
+        expect(
+            normalizePreferenceSnapshot({
+                customFontPrimary: 'Segoe UI',
+                customFontSecondary: 'Noto Sans JP',
+                customFontOverride: "'Manual Font', serif"
+            })
+        ).toMatchObject({
+            customFontPrimary: 'Segoe UI',
+            customFontSecondary: 'Noto Sans JP',
+            customFontOverride: "'Manual Font', serif"
+        });
+    });
+
     it('normalizes table page sizes into a positive sorted unique list', () => {
         expect(
             normalizeTablePageSizes(['50', 10, 'bad', 10, 0, 1001, 25])
