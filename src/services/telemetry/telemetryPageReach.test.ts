@@ -27,6 +27,13 @@ type PageReachRoutePayload = {
     route: string;
     visits?: number;
     renderCrash?: number;
+    details?: Array<{
+        kind: string;
+        name?: string;
+        summary?: string;
+        signature: string;
+        count: number;
+    }>;
 };
 
 type PageReachPayload = {
@@ -79,6 +86,35 @@ describe('page reach telemetry', () => {
         const payload = postTelemetry.mock.calls[0]?.[1] as PageReachPayload;
         expect(findRoute(payload, 'game_log').renderCrash).toBe(1);
         expect(findRoute(payload, 'search').renderCrash).toBeUndefined();
+    });
+
+    it('reports route error details with sensitive values redacted', async () => {
+        const { postTelemetry } = mockDeps({ anonymous: true });
+        const mod = await import('./telemetryPageReach');
+        mod.recordRouteEnter('/game-log');
+        mod.recordRouteError(
+            'render_crash',
+            new Error(
+                'Failed user usr_123 at https://example.com/path from C:\\Users\\name\\secret.txt'
+            )
+        );
+        await mod.sendPageReach(session);
+
+        const payload = postTelemetry.mock.calls[0]?.[1] as PageReachPayload;
+        const details = findRoute(payload, 'game_log').details;
+        expect(details).toEqual([
+            expect.objectContaining({
+                kind: 'render_crash',
+                name: 'Error',
+                count: 1
+            })
+        ]);
+        expect(details?.[0]?.summary).toContain('<id>');
+        expect(details?.[0]?.summary).toContain('<url>');
+        expect(details?.[0]?.summary).toContain('<path>');
+        expect(details?.[0]?.summary).not.toContain('usr_123');
+        expect(details?.[0]?.summary).not.toContain('example.com');
+        expect(details?.[0]?.summary).not.toContain('secret.txt');
     });
 
     it('does not send when anonymous usage telemetry is off', async () => {
