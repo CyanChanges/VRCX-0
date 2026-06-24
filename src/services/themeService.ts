@@ -1,4 +1,3 @@
-import { normalizeLanguageCode } from '@/localization/locales';
 import { commands } from '@/platform/tauri/bindings';
 import { tauriClient } from '@/platform/tauri/client';
 import {
@@ -47,7 +46,6 @@ const MACOS_SYSTEM_CJK_FONT_STACKS = Object.freeze({
     ko: Object.freeze(["'Apple SD Gothic Neo'"]),
     default: Object.freeze([])
 });
-const CONFIGURABLE_CJK_FONT_LOCALES = new Set(['ja', 'ko', 'zh-CN', 'zh-TW']);
 
 export const APP_FONT_CONFIG = Object.freeze({
     inter: {
@@ -318,22 +316,10 @@ export function normalizeAppCjkFontPack(value: unknown): AppCjkFontPackKey {
 }
 
 function normalizeFontLocale(locale: unknown): string {
-    const rawLocale = String(
+    const normalized = String(
         locale || useShellStore.getState().locale || 'en'
     ).trim();
-    return normalizeLanguageCode(rawLocale || 'en');
-}
-
-export function supportsConfigurableCjkFontPack(locale: unknown): boolean {
-    return CONFIGURABLE_CJK_FONT_LOCALES.has(normalizeFontLocale(locale));
-}
-
-export function resolveAppCjkFontPackForLocale(
-    cjkFontPack: unknown,
-    locale: unknown
-): AppCjkFontPackKey {
-    const normalizedCjk = normalizeAppCjkFontPack(cjkFontPack);
-    return supportsConfigurableCjkFontPack(locale) ? normalizedCjk : 'system';
+    return normalized || 'en';
 }
 
 function getMacosSystemCjkFonts(locale: string): readonly string[] {
@@ -356,14 +342,6 @@ function resolveNotoCjkFontConfig(locale: string): {
     cssImport: string | null;
     styleKey: string;
 } {
-    if (!supportsConfigurableCjkFontPack(locale)) {
-        return {
-            cssNames: [],
-            cssImport: null,
-            styleKey: `noto:system:${locale}`
-        };
-    }
-
     if (!VRCX_0_BUNDLED_CJK_FONTS_ENABLED) {
         return {
             cssNames: getMacosSystemCjkFonts(locale),
@@ -409,20 +387,15 @@ function resolveCjkFontConfig(
     cssImport: string | null;
     styleKey: string;
 } {
-    const effectiveCjk = resolveAppCjkFontPackForLocale(
-        normalizedCjk,
-        locale
-    );
-
-    if (effectiveCjk === 'noto') {
+    if (normalizedCjk === 'noto') {
         return resolveNotoCjkFontConfig(locale);
     }
 
-    const cjkConfig = APP_CJK_FONT_PACK_CONFIG[effectiveCjk];
+    const cjkConfig = APP_CJK_FONT_PACK_CONFIG[normalizedCjk];
     return {
         cssNames: Array.isArray(cjkConfig.cssNames) ? cjkConfig.cssNames : [],
         cssImport: cjkConfig.cssImport,
-        styleKey: effectiveCjk
+        styleKey: normalizedCjk
     };
 }
 
