@@ -25,7 +25,9 @@ describe('StorageRepository', () => {
     });
 
     it('applies nested prefixes to reads, writes, and JSON values', async () => {
-        const repository = new StorageRepository('tool:').withPrefix('gallery:');
+        const repository = new StorageRepository('tool:').withPrefix(
+            'gallery:'
+        );
         commandMocks.storageGet.mockResolvedValueOnce('{"columns":["name"]}');
 
         await expect(
@@ -53,9 +55,9 @@ describe('StorageRepository', () => {
         await expect(repository.getString('missing', 'fallback')).resolves.toBe(
             'fallback'
         );
-        await expect(repository.getJson('broken', ['fallback'])).resolves.toEqual(
-            ['fallback']
-        );
+        await expect(
+            repository.getJson('broken', ['fallback'])
+        ).resolves.toEqual(['fallback']);
     });
 
     it('checks existence without treating the string undefined as present', async () => {

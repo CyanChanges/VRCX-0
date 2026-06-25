@@ -173,9 +173,7 @@ export function ScreenshotMetadataDetailsCard({
                         {metadata.application ? (
                             <section className="flex flex-col gap-2 border-t pt-4">
                                 <div className="text-muted-foreground text-xs font-medium tracking-[0.08em] uppercase">
-                                    {t(
-                                        'dialog.screenshot_metadata.source'
-                                    )}
+                                    {t('dialog.screenshot_metadata.source')}
                                 </div>
                                 <div className="text-muted-foreground text-sm">
                                     {metadata.application}

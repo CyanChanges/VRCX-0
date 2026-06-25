@@ -42,8 +42,7 @@ vi.mock('@/platform/tauri/bindings', () => ({
         sqliteBeginUpgrade: mocks.sqliteBeginUpgrade,
         sqliteCommitUpgrade: mocks.sqliteCommitUpgrade,
         sqliteFailUpgrade: mocks.sqliteFailUpgrade,
-        appGetLegacyVrcxMigrationStatus:
-            mocks.appGetLegacyVrcxMigrationStatus,
+        appGetLegacyVrcxMigrationStatus: mocks.appGetLegacyVrcxMigrationStatus,
         appCheckLegacyVrcxAvailable: mocks.appCheckLegacyVrcxAvailable,
         appRequestLegacyMigration: mocks.appRequestLegacyMigration
     }

@@ -42,9 +42,11 @@ describe('ConfigRepository', () => {
             'dark'
         );
         await expect(repository.getBool('logResourceLoad')).resolves.toBe(true);
-        await expect(repository.getObject('savedCredentials')).resolves.toEqual({
-            ok: true
-        });
+        await expect(repository.getObject('savedCredentials')).resolves.toEqual(
+            {
+                ok: true
+            }
+        );
         expect(commandMocks.appConfigSetValues).toHaveBeenCalledWith([]);
         expect(commandMocks.appConfigListValues).toHaveBeenCalledTimes(1);
     });
@@ -52,9 +54,9 @@ describe('ConfigRepository', () => {
     it('uses explicit fallbacks before schema defaults for missing values', async () => {
         const repository = createRepository();
 
-        await expect(repository.getString('unknownKey', 'fallback')).resolves.toBe(
-            'fallback'
-        );
+        await expect(
+            repository.getString('unknownKey', 'fallback')
+        ).resolves.toBe('fallback');
         await expect(repository.getInt('maxTableSize_v2')).resolves.toBe(500);
         await expect(repository.getBool('autoUpdateVRCX', true)).resolves.toBe(
             true

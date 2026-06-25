@@ -14,6 +14,7 @@
     "scripts": {
         "generate:overlay-locales": "node ./scripts/extract-overlay-locales.mjs",
         "generate:tauri-bindings": "cargo run --manifest-path src-tauri/Cargo.toml --bin export-bindings && oxfmt src/platform/tauri/bindings.ts",
+        "prepare": "husky",
         "predev": "npm run generate:overlay-locales",
         "dev": "vite",
         "tauri": "tauri",
@@ -96,7 +97,9 @@
         "@vitest/coverage-v8": "^4.1.9",
         "babel-plugin-react-compiler": "^1.0.0",
         "browserslist": "^4.28.4",
+        "husky": "^9.1.7",
         "lightningcss": "^1.32.0",
+        "lint-staged": "^17.0.8",
         "oxfmt": "^0.56.0",
         "oxlint": "^1.71.0",
         "shadcn": "^4.11.0",

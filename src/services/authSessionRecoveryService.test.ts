@@ -26,9 +26,7 @@ describe('authSessionRecoveryService public guardrails', () => {
         useRuntimeStore.getState().resetRuntimeState();
         useSessionStore.getState().resetSessionState();
         vrchatRequestMocks.isVrchatSessionRecoveryError.mockReturnValue(true);
-        vrchatRequestMocks.setVrchatAuthFailureHandler.mockReturnValue(
-            vi.fn()
-        );
+        vrchatRequestMocks.setVrchatAuthFailureHandler.mockReturnValue(vi.fn());
     });
 
     it('handles runtime auth failures only for ready signed-in sessions with a current user', () => {

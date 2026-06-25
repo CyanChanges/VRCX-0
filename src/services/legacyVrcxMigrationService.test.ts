@@ -54,10 +54,12 @@ describe('legacyVrcxMigrationService', () => {
 
     it('shows the unavailable reason without opening confirmation', async () => {
         const options = createPromptOptions();
-        commandMocks.appGetLegacyVrcxForceMigrationStatus.mockResolvedValueOnce({
-            available: false,
-            reason: 'Legacy DB is too new.'
-        });
+        commandMocks.appGetLegacyVrcxForceMigrationStatus.mockResolvedValueOnce(
+            {
+                available: false,
+                reason: 'Legacy DB is too new.'
+            }
+        );
 
         await promptLegacyVrcxForceMigration(options);
 
