@@ -58,7 +58,7 @@ export function ScreenshotMetadataPage() {
     const isVrcPlusSupporter = Boolean(
         currentUserSnapshot?.$isVRCPlus ||
         currentUserSnapshot?.tags?.includes?.('system_supporter') ||
-        globalThis?.$debug?.debugVrcPlus
+        globalThis.$debug?.debugVrcPlus
     );
     const imageVersionRef = useRef(0);
     const metadataRequestRef = useRef(0);

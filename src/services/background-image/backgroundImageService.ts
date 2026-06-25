@@ -453,7 +453,7 @@ export async function initializeBackgroundImage(): Promise<void> {
         nextEnabled = Boolean(snapshot && !isCommunityAppearanceActive());
     } else if (nextEnabled && mode === 'custom') {
         snapshot = await resolveCustomSnapshot(customSource, true).catch(
-            (error) => {
+            (error: unknown): null => {
                 console.warn(
                     'Unable to initialize custom Background Image:',
                     error

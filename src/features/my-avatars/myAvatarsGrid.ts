@@ -59,9 +59,14 @@ const MY_AVATARS_GRID_DENSITY_CONFIGS = Object.freeze({
     })
 });
 
+type MyAvatarsGridDensityKey = keyof typeof MY_AVATARS_GRID_DENSITY_CONFIGS;
+
 export function getMyAvatarsGridDensityConfig(value: any) {
+    const densityKey = sanitizeMyAvatarsGridDensity(
+        value
+    ) as MyAvatarsGridDensityKey;
     return (
-        MY_AVATARS_GRID_DENSITY_CONFIGS[sanitizeMyAvatarsGridDensity(value)] ||
+        MY_AVATARS_GRID_DENSITY_CONFIGS[densityKey] ||
         MY_AVATARS_GRID_DENSITY_CONFIGS[MY_AVATARS_DEFAULT_GRID_DENSITY]
     );
 }

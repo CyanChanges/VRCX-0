@@ -4,6 +4,10 @@ import { openUserDialog } from '@/services/dialogService';
 import { resolveUserByDisplayName } from '@/services/userIdentityService';
 import { normalizeString as normalizeId } from '@/shared/utils/string';
 
+function recordOrNull(value: unknown): Record<string, unknown> | null {
+    return value && typeof value === 'object' ? { ...value } : null;
+}
+
 export async function openGameLogUser(row: any, t: any) {
     const userId = normalizeId(row?.userId);
     const displayName = normalizeId(row?.displayName);
@@ -23,7 +27,7 @@ export async function openGameLogUser(row: any, t: any) {
             openUserDialog({
                 userId: resolved.userId,
                 title: resolved.title || displayName,
-                seedData: resolved.seedData || null
+                seedData: recordOrNull(resolved.seedData)
             });
             return;
         }

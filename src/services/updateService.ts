@@ -291,7 +291,7 @@ function normalizeReleaseList(
         );
 }
 
-function sanitizeBranch(_branch?: unknown) {
+function sanitizeBranch(_branch?: unknown): keyof typeof branches {
     return 'Stable';
 }
 

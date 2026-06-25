@@ -7,8 +7,14 @@ import {
     shrinkFavoriteImage as shrinkImage,
     sortFavoriteItems as sortItems
 } from './favoritesItems';
+import type { FavoriteGroup, FavoriteItem } from './favoritesTypes';
 
-function buildRemoteFavoriteGroups(kind: any, sourceGroups: any) {
+type FavoriteItemsByGroup = Record<string, FavoriteItem[]>;
+
+function buildRemoteFavoriteGroups(
+    kind: any,
+    sourceGroups: any
+): FavoriteGroup[] {
     return sourceGroups.map((group: any) => ({
         source: 'remote',
         key: group.key,
@@ -26,7 +32,7 @@ function buildRemoteFavoriteGroups(kind: any, sourceGroups: any) {
     }));
 }
 
-function buildLocalFavoriteGroups(names: any, source: any) {
+function buildLocalFavoriteGroups(names: any, source: any): FavoriteGroup[] {
     return names.map((name: any) => ({
         source: 'local',
         key: name,
@@ -81,7 +87,7 @@ function buildFriendFavoriteItem({
     index,
     favoritesSortIndex,
     t
-}: any) {
+}: any): FavoriteItem {
     const translate = resolveTranslator(t);
     const normalizedId = normalizeEntityId(friendId);
     const profile = friend
@@ -165,7 +171,7 @@ export function buildFavoriteRemoteGroups({
     favoriteFriendGroups,
     favoriteAvatarGroups,
     favoriteWorldGroups
-}: any) {
+}: any): FavoriteGroup[] {
     const sourceGroups =
         kind === 'friend'
             ? favoriteFriendGroups
@@ -184,7 +190,7 @@ export function buildFavoriteLocalGroups({
     localFriendFavorites,
     localAvatarFavorites,
     localWorldFavorites
-}: any) {
+}: any): FavoriteGroup[] {
     const names =
         kind === 'friend'
             ? localFriendFavoriteGroups
@@ -205,7 +211,7 @@ export function buildFavoriteAvatarHistoryGroups({
     kind,
     avatarHistoryLength,
     t
-}: any) {
+}: any): FavoriteGroup[] {
     if (kind !== 'avatar') {
         return [];
     }
@@ -243,9 +249,9 @@ export function buildFavoriteRemoteItemsByGroup({
     localWorldDetailsById = {},
     remoteGroupLabelByKey,
     t
-}: any) {
+}: any): FavoriteItemsByGroup {
     const translate = resolveTranslator(t);
-    const itemsByGroup = Object.create(null);
+    const itemsByGroup: FavoriteItemsByGroup = Object.create(null);
     for (const group of remoteGroups) {
         itemsByGroup[group.key] = [];
     }
@@ -273,17 +279,19 @@ export function buildFavoriteRemoteItemsByGroup({
         return itemsByGroup;
     }
 
-    const remoteFavorites = (
-        Object.values(remoteFavoritesById) as any[]
-    ).filter((favorite: any) =>
-        kind === 'avatar'
-            ? favorite?.type === 'avatar'
-            : favorite?.type === 'world' || favorite?.type === 'vrcPlusWorld'
-    );
+    const remoteFavorites = Object.values(remoteFavoritesById)
+        .filter((favorite): favorite is Record<string, unknown> =>
+            Boolean(favorite && typeof favorite === 'object')
+        )
+        .filter((favorite) =>
+            kind === 'avatar'
+                ? favorite.type === 'avatar'
+                : favorite.type === 'world' || favorite.type === 'vrcPlusWorld'
+        );
 
     for (const favorite of remoteFavorites) {
         const favoriteId = normalizeEntityId(favorite.favoriteId);
-        const groupKey = favorite.$groupKey;
+        const groupKey = String(favorite.$groupKey || '');
         if (!favoriteId || !groupKey || !itemsByGroup[groupKey]) {
             continue;
         }
@@ -359,9 +367,9 @@ export function buildFavoriteLocalItemsByGroup({
     knownUsersById = {},
     sortValue,
     t
-}: any) {
+}: any): FavoriteItemsByGroup {
     const translate = resolveTranslator(t);
-    const itemsByGroup = Object.create(null);
+    const itemsByGroup: FavoriteItemsByGroup = Object.create(null);
 
     if (kind === 'friend') {
         for (const group of localGroups) {
@@ -434,7 +442,7 @@ export function buildFavoriteAvatarHistoryItems({
     kind,
     avatarHistory,
     t
-}: any) {
+}: any): FavoriteItem[] {
     if (kind !== 'avatar') {
         return [];
     }

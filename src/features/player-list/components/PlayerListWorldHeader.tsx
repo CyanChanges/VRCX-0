@@ -66,7 +66,7 @@ export function PlayerListWorldHeader({
                 }
                 return vrchatAuthRepository
                     .getConfig({ endpoint: currentUserEndpoint })
-                    .catch(() => null)
+                    .catch((): null => null)
                     .then((configResponse: any) => {
                         const sdkUnityVersion = String(
                             configResponse?.json?.sdkUnityVersion || ''

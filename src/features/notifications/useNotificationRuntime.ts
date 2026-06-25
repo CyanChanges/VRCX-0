@@ -27,7 +27,7 @@ export function useNotificationRuntime() {
             state.auth.currentUserSnapshot?.tags?.includes?.(
                 'system_supporter'
             ) ||
-            globalThis?.$debug?.debugVrcPlus
+            globalThis.$debug?.debugVrcPlus
         )
     );
     const currentLocation = useRuntimeStore(

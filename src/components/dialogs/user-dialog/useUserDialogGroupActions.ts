@@ -271,7 +271,7 @@ export function useUserDialogGroupActions({
     }
 
     function editableGroupOrder() {
-        const nextOrder = [];
+        const nextOrder: string[] = [];
         const seen = new Set();
         const pushGroupId = (groupId: any) => {
             const normalizedGroupId = normalizedText(groupId);

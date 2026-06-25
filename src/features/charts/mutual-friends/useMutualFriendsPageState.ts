@@ -242,7 +242,8 @@ export function useMutualFriendsPageState() {
                 })
             );
         } catch (error) {
-            if (error?.status === 403 || error?.status === 404) {
+            const status = (error as { status?: number })?.status;
+            if (status === 403 || status === 404) {
                 if (currentUserIdRef.current !== ownerUserId) {
                     return;
                 }

@@ -465,7 +465,9 @@ export function useSettingsPreferenceActions({
             tableLimitsDraft.searchLimit,
             10
         );
-        let savedLimits;
+        let savedLimits:
+            | Awaited<ReturnType<typeof setTableLimitsPreference>>
+            | undefined;
         const saved = await commit(async () => {
             savedLimits = await setTableLimitsPreference({
                 maxTableSize: nextMaxTableSize,
@@ -503,7 +505,9 @@ export function useSettingsPreferenceActions({
         );
     }
     async function saveOverlayActivityFilters(value: any, definitions?: any) {
-        let savedFilters;
+        let savedFilters:
+            | Awaited<ReturnType<typeof setOverlayActivityFiltersPreference>>
+            | undefined;
         const previousFilters = prefs.overlayActivityFilters;
         const saved = await commit(
             async () => {
@@ -542,7 +546,7 @@ export function useSettingsPreferenceActions({
         setPreference: (value: any) => Promise<any>
     ) {
         return async function saveActivityFilterSurface(value: any) {
-            let savedFilters;
+            let savedFilters: Awaited<ReturnType<typeof setPreference>>;
             const previousFilters = prefs[field];
             const saved = await commit(
                 async () => {

@@ -166,7 +166,7 @@ function matchesPromptPattern(pattern: unknown, value: unknown): boolean {
     }
 
     const flags = pattern.flags.replace(/g/g, '');
-    return new RegExp(pattern.source, flags).test((value ?? '') as string);
+    return new RegExp(pattern.source, flags).test(String(value ?? ''));
 }
 
 export const useModalStore = create<ModalStore>((set: any, get: any) => {

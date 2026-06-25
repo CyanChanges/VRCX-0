@@ -32,9 +32,11 @@ type SharedFeedFilterContext = {
     favorite: boolean;
 };
 
-const FEED_FILTER_KEY_BY_TYPE = Object.freeze({
-    Avatar: 'AvatarChange'
-}) satisfies Record<string, string>;
+const FEED_FILTER_KEY_BY_TYPE: Readonly<Record<string, string>> = Object.freeze(
+    {
+        Avatar: 'AvatarChange'
+    }
+);
 
 let cachedSharedFeedFilters: SharedFeedFilters = normalizeSharedFeedFilters();
 let sharedFeedFiltersLoaded = false;
@@ -64,7 +66,7 @@ function parseSharedFeedFilters(value: unknown): SharedFeedFilters {
         return normalizeSharedFeedFilters(value);
     }
     try {
-        return normalizeSharedFeedFilters(JSON.parse(value as string));
+        return normalizeSharedFeedFilters(JSON.parse(String(value)));
     } catch {
         return normalizeSharedFeedFilters();
     }

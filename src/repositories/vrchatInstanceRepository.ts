@@ -64,6 +64,14 @@ type VrchatInstanceIdentity = {
     instanceId: string;
 };
 
+type VrchatInstanceShortNameResponse = {
+    json: Record<string, unknown>;
+    status?: number;
+    raw?: unknown;
+    instance?: VrchatInstanceIdentity;
+    params?: { shortName?: string };
+};
+
 function toApiAccessType(accessType: InstanceAccessType): string {
     if (accessType === 'friends') {
         return 'friends';
@@ -250,7 +258,7 @@ async function getInstanceShortName({
         worldId: normalizedWorldId,
         instanceId: normalizedInstanceId
     };
-    return fetchCachedData({
+    return fetchCachedData<VrchatInstanceShortNameResponse>({
         queryKey: queryKeys.instanceShortName(
             normalizedWorldId,
             normalizedInstanceId,
@@ -274,6 +282,7 @@ async function getInstanceShortName({
             );
             return {
                 ...response,
+                json: isRecord(response.json) ? response.json : {},
                 instance,
                 params
             };

@@ -20,7 +20,7 @@ import {
 import { bootstrapFavorites } from './favoriteBootstrapService';
 import { openFavoriteImportDialog } from './favoriteImportService';
 
-let ipcTimeoutId = null;
+let ipcTimeoutId: ReturnType<typeof globalThis.setTimeout> | null = null;
 
 type IpcRecord = Record<string, unknown>;
 type IpcPingPayload = { type: 'Ping' };

@@ -124,7 +124,11 @@ function parseYouTubeVideoId(videoUrl: string): string {
             url.origin === 'https://nextnex.com' ||
             url.origin === 'https://r.0cm.org'
         ) {
-            url = new URL(url.searchParams.get('url') as string);
+            const redirectUrl = url.searchParams.get('url');
+            if (!redirectUrl) {
+                return '';
+            }
+            url = new URL(redirectUrl);
         }
         if (videoUrl.startsWith('https://u2b.cx/')) {
             url = new URL(videoUrl.substring(15));
@@ -151,8 +155,8 @@ function parseYouTubeVideoId(videoUrl: string): string {
 function parseWebJson(response: unknown): Record<string, unknown> {
     const responseRecord = isRecord(response) ? response : {};
     const data = responseRecord.data;
-    if (data && typeof data === 'object') {
-        return data as Record<string, unknown>;
+    if (isRecord(data)) {
+        return data;
     }
     if (typeof data === 'string' && data.trim()) {
         const parsed = JSON.parse(data);

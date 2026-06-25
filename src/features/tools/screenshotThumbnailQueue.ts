@@ -2,10 +2,21 @@ import mediaRepository from '@/repositories/mediaRepository';
 
 const MAX_ACTIVE_THUMBNAIL_REQUESTS = 2;
 
+interface ThumbnailTask {
+    path: string;
+    resolve: ((value: unknown) => void) | null;
+    reject: ((reason?: unknown) => void) | null;
+    promise: Promise<unknown> | null;
+    subscribers: number;
+    started: boolean;
+    cancelled: boolean;
+    sequence: number;
+}
+
 let activeRequests = 0;
 let requestSequence = 0;
-const queue = [];
-const inFlightByPath = new Map();
+const queue: ThumbnailTask[] = [];
+const inFlightByPath = new Map<string, ThumbnailTask>();
 
 function runNextThumbnailRequest() {
     while (activeRequests < MAX_ACTIVE_THUMBNAIL_REQUESTS && queue.length) {
@@ -49,7 +60,7 @@ export function requestScreenshotThumbnail(path: any) {
         };
     }
 
-    const task: any = {
+    const task: ThumbnailTask = {
         path: filePath,
         resolve: null,
         reject: null,

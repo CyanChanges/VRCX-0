@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import configRepository from '@/repositories/configRepository';
+import type { ScreenshotLibraryStatus } from '@/repositories/mediaFileRepository';
 import mediaRepository from '@/repositories/mediaRepository';
 
 import {
@@ -15,7 +16,7 @@ import {
     serializeGalleryScrollPositions
 } from './screenshotMetadataValues';
 
-function persistGalleryScrollPositions(positions: any) {
+function persistGalleryScrollPositions(positions: Map<unknown, unknown>) {
     return configRepository
         .setObject(
             SCREENSHOT_GALLERY_SCROLL_CONFIG_KEY,
@@ -33,10 +34,10 @@ export function useScreenshotGalleryController({
 }: any) {
     const galleryRequestRef = useRef(0);
     const selectedGalleryFolderRef = useRef('');
-    const galleryScrollPositionsRef = useRef(new Map());
+    const galleryScrollPositionsRef = useRef<Map<string, number>>(new Map());
     const galleryScrollPersistTimerRef = useRef<number | null>(null);
-    const [folderTree, setFolderTree] = useState(null);
-    const [galleryImages, setGalleryImages] = useState<any[]>([]);
+    const [folderTree, setFolderTree] = useState<unknown>(null);
+    const [galleryImages, setGalleryImages] = useState<unknown[]>([]);
     const [galleryImagesFolder, setGalleryImagesFolder] = useState('');
     const [selectedGalleryFolder, setSelectedGalleryFolder] = useState('');
     const [storedGalleryFolder, setStoredGalleryFolder] = useState('');
@@ -44,7 +45,8 @@ export function useScreenshotGalleryController({
         isGalleryFolderPreferenceLoaded,
         setIsGalleryFolderPreferenceLoaded
     ] = useState(false);
-    const [scanStatus, setScanStatus] = useState(null);
+    const [scanStatus, setScanStatus] =
+        useState<ScreenshotLibraryStatus | null>(null);
     const [galleryScanError, setGalleryScanError] = useState('');
     const [galleryTreeError, setGalleryTreeError] = useState('');
     const [galleryImagesError, setGalleryImagesError] = useState('');
@@ -68,7 +70,7 @@ export function useScreenshotGalleryController({
             ),
             configRepository.getObject(SCREENSHOT_GALLERY_SCROLL_CONFIG_KEY, {})
         ])
-            .then(([folder, scrollPositions]: any) => {
+            .then(([folder, scrollPositions]) => {
                 if (!active) {
                     return;
                 }
@@ -124,7 +126,7 @@ export function useScreenshotGalleryController({
     ]);
 
     const openGalleryRoute = useCallback(
-        (folder: any = selectedGalleryFolder || routeFolder) => {
+        (folder: string = selectedGalleryFolder || routeFolder) => {
             const nextParams = new URLSearchParams();
             if (folder) {
                 nextParams.set('folder', folder);
@@ -135,7 +137,9 @@ export function useScreenshotGalleryController({
     );
 
     const loadGalleryTree = useCallback(
-        async ({ preferPopulated = false }: any = {}) => {
+        async ({
+            preferPopulated = false
+        }: { preferPopulated?: boolean } = {}) => {
             setIsGalleryTreeLoading(true);
             try {
                 const tree = await mediaRepository.getScreenshotFolderTree();
@@ -145,9 +149,9 @@ export function useScreenshotGalleryController({
                 galleryScrollPositionsRef.current = new Map(
                     Array.from(
                         galleryScrollPositionsRef.current.entries()
-                    ).filter(([path]: any) => folderPathSet.has(path))
+                    ).filter(([path]) => folderPathSet.has(path))
                 );
-                setSelectedGalleryFolder((current: any) =>
+                setSelectedGalleryFolder((current) =>
                     resolveGalleryFolder(
                         tree,
                         preferPopulated
@@ -163,7 +167,7 @@ export function useScreenshotGalleryController({
                               ]
                     )
                 );
-                setGalleryRevision((current: any) => current + 1);
+                setGalleryRevision((current) => current + 1);
             } catch (error) {
                 const message =
                     error instanceof Error
@@ -179,7 +183,7 @@ export function useScreenshotGalleryController({
     );
 
     const refreshGallery = useCallback(
-        async (force: any = false) => {
+        async (force = false) => {
             setGalleryScanError('');
             setGalleryTreeError('');
             setGalleryImagesError('');
@@ -250,7 +254,7 @@ export function useScreenshotGalleryController({
             pollInFlight = true;
             mediaRepository
                 .getScreenshotLibraryStatus()
-                .then((status: any) => {
+                .then((status) => {
                     if (!active) {
                         return;
                     }
@@ -271,7 +275,7 @@ export function useScreenshotGalleryController({
                             ? error.message
                             : t('dialog.screenshot_metadata.scan_failed');
                     setGalleryScanError(message);
-                    setScanStatus((current: any) =>
+                    setScanStatus((current) =>
                         current ? { ...current, running: false } : current
                     );
                 })
@@ -302,7 +306,7 @@ export function useScreenshotGalleryController({
 
         mediaRepository
             .getScreenshotFolderImages(requestedFolder)
-            .then((images: any) => {
+            .then((images) => {
                 if (galleryRequestRef.current === requestId) {
                     setGalleryImagesError('');
                     setGalleryImages(Array.isArray(images) ? images : []);
@@ -330,7 +334,7 @@ export function useScreenshotGalleryController({
             });
     }, [galleryRevision, isGalleryMode, selectedGalleryFolder, t]);
 
-    function selectGalleryFolder(folder: any) {
+    function selectGalleryFolder(folder: string) {
         setSelectedGalleryFolder(folder);
         const nextParams = new URLSearchParams();
         if (folder) {
@@ -340,7 +344,7 @@ export function useScreenshotGalleryController({
     }
 
     const updateGalleryScrollPosition = useCallback(
-        (folder: any, scrollTop: any) => {
+        (folder: string, scrollTop: unknown) => {
             if (!folder) {
                 return;
             }

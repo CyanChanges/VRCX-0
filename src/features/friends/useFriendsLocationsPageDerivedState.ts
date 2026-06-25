@@ -259,7 +259,7 @@ export function useFriendsLocationsPageDerivedState({
                 ? showSameInstanceInOnline
                     ? onlineNonFavoriteFriends
                     : onlineWithoutSameInstanceFriends
-                : (segmentMap[activeSegment] ?? []);
+                : (segmentMap[activeSegment as keyof typeof segmentMap] ?? []);
         return source.filter((friend: any) =>
             matchesSearch(friend, deferredSearchQuery, favoriteIds)
         );

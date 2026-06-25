@@ -380,7 +380,7 @@ export function useUserDialogActions({
             if (
                 (action === 'accept' || action === 'decline') &&
                 incomingNotification &&
-                error?.status === 404
+                (error as { status?: number } | null)?.status === 404
             ) {
                 await expireNotificationLocally({
                     currentUserId,

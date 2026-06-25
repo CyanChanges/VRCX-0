@@ -13,11 +13,12 @@ async function loadOverlayActivityTypeDefinitionsForSave() {
     return commands
         .appOverlayActivityDefinitionsGet()
         .catch((error: unknown) => {
+            const fallbackDefinitions: OverlayActivityTypeDefinition[] = [];
             console.warn(
                 'Failed to load overlay activity definitions for save:',
                 error
             );
-            return [] as OverlayActivityTypeDefinition[];
+            return fallbackDefinitions;
         });
 }
 

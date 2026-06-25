@@ -114,10 +114,12 @@ export async function attachRunningVrchat(
     shortName: unknown = '',
     endpoint: string = ''
 ): Promise<void> {
+    const launchLocation = normalizeString(location);
+    const launchShortName = normalizeString(shortName);
     if (
         !(await tryOpenLaunchLocation(
-            location as string,
-            shortName as string,
+            launchLocation,
+            launchShortName,
             endpoint
         ))
     ) {
@@ -131,8 +133,8 @@ export async function attachRunningVrchat(
             )
         );
         const launchToken = await resolveInstanceLaunchToken(
-            location as string,
-            shortName as string,
+            launchLocation,
+            launchShortName,
             endpoint
         );
         await vrchatInstanceRepository.selfInvite({
@@ -150,6 +152,8 @@ export async function selfInviteToInstance(
     shortName: unknown = '',
     endpoint: string = ''
 ): Promise<void> {
+    const launchLocation = normalizeString(location);
+    const launchShortName = normalizeString(shortName);
     const parsed = parseLocation(location);
     if (!parsed.worldId || !parsed.instanceId) {
         throw new Error(
@@ -157,8 +161,8 @@ export async function selfInviteToInstance(
         );
     }
     const launchToken = await resolveInstanceLaunchToken(
-        location as string,
-        shortName as string,
+        launchLocation,
+        launchShortName,
         endpoint
     );
     await vrchatInstanceRepository.selfInvite({
@@ -176,9 +180,11 @@ export async function launchVrchat(
     endpoint: string = ''
 ): Promise<void> {
     requireHostCapabilitySupported('gameLaunch');
+    const launchLocation = normalizeString(location);
+    const launchShortName = normalizeString(shortName);
     const launchUrl = await resolveVrcLaunchUrl(
-        location as string,
-        shortName as string,
+        launchLocation,
+        launchShortName,
         endpoint
     );
     const args = [launchUrl];

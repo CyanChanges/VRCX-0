@@ -1,6 +1,33 @@
 import { sortStatus } from './friendStatus';
 
-type ComparableRecord = Record<string, any>;
+type ComparableFieldValue = string | number | undefined;
+
+type ComparableRef = Record<string, ComparableFieldValue> & {
+    $online_for?: ComparableFieldValue;
+    last_activity?: ComparableFieldValue;
+    last_login?: ComparableFieldValue;
+    location?: string;
+    state?: string;
+    status?: string;
+};
+
+type ComparableRecord = Record<string, unknown> & {
+    $friendNumber?: number;
+    $lastSeen?: ComparableFieldValue;
+    $location_at?: ComparableFieldValue;
+    $online_for?: ComparableFieldValue;
+    created_at?: string;
+    displayName?: string;
+    id?: string;
+    last_activity?: ComparableFieldValue;
+    last_login?: ComparableFieldValue;
+    location?: string;
+    memberCount?: number;
+    name?: string;
+    ref?: ComparableRef;
+    state?: string;
+    updated_at?: string;
+};
 type Comparator = (a: ComparableRecord, b: ComparableRecord) => number;
 
 /**
@@ -47,6 +74,9 @@ function compareByCreatedAtAscending(
     a: ComparableRecord,
     b: ComparableRecord
 ): number {
+    if (typeof a.created_at !== 'string' || typeof b.created_at !== 'string') {
+        return 0;
+    }
     const A = a.created_at;
     const B = b.created_at;
     if (A < B) {

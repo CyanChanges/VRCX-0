@@ -12,7 +12,7 @@ const SENTINEL_LOCATION_VALUES = new Set([
     'traveling:traveling'
 ]);
 
-export function normalizeFriendsLocationId(value: any) {
+export function normalizeFriendsLocationId(value: any): string {
     if (typeof value === 'string') {
         return value.trim();
     }

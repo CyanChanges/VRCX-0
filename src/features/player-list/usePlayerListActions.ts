@@ -37,11 +37,16 @@ export function usePlayerListActions({ currentUserEndpoint }: any) {
                     endpoint: currentUserEndpoint
                 });
                 if (resolved?.userId) {
+                    const resolvedSeedData =
+                        resolved.seedData &&
+                        typeof resolved.seedData === 'object'
+                            ? resolved.seedData
+                            : {};
                     openUserDialog({
                         seedData:
                             seedData || resolved.seedData
                                 ? {
-                                      ...((resolved.seedData as any) || {}),
+                                      ...resolvedSeedData,
                                       ...(seedData || {}),
                                       id: resolved.userId,
                                       userId: resolved.userId

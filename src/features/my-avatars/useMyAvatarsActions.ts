@@ -86,7 +86,7 @@ function applyOptimisticCurrentAvatar(avatar: MyAvatarRow, avatarId: string) {
 }
 
 function rollbackOptimisticCurrentAvatar(
-    previousSnapshot: Record<string, any> | null,
+    previousSnapshot: Record<string, unknown> | null,
     optimisticAvatarId: string
 ) {
     if (!previousSnapshot) {
@@ -211,7 +211,7 @@ export function useMyAvatarsActions({
 
     async function saveAvatarPatch(
         avatar: MyAvatarRow,
-        params: Record<string, any>,
+        params: Record<string, unknown>,
         successMessage: string
     ) {
         const avatarId = avatarIdFromValue(avatar);

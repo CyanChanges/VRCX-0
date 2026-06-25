@@ -90,7 +90,7 @@ export async function loadLocationOwner({
     ownerSeed,
     endpoint,
     groupFallback
-}: any) {
+}: any): Promise<{ ownerUser: unknown; ownerGroup: unknown }> {
     if (!ownerId) {
         return { ownerUser: null, ownerGroup: null };
     }

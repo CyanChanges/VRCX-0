@@ -56,7 +56,7 @@ export function formatWidgetExactTime(value: any) {
     }
 }
 
-export function joinCompactParts(values: any[] = []) {
+export function joinCompactParts(values: unknown[] = []) {
     return values.filter(Boolean).join(' • ');
 }
 

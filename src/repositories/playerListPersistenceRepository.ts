@@ -43,6 +43,11 @@ type PlayerCandidate = {
     player: PlayerListPlayer;
 };
 
+type PlayerListRoster = {
+    players: PlayerListPlayer[];
+    observedPlayerEventCount: number;
+};
+
 interface CurrentInstanceSnapshotInput {
     currentUserId?: unknown;
     currentLocation?: unknown;
@@ -281,7 +286,7 @@ async function rebuildInstanceRoster(
     location: string,
     startedAt: string,
     normalizedCurrentUserId: string
-) {
+): Promise<PlayerListRoster> {
     const startedAtMs = parseDateMs(startedAt);
     const rows = await commands.appPlayerListJoinLeaveRows(
         location,
@@ -351,7 +356,10 @@ async function getCurrentInstanceSnapshot({
     currentUserId = '',
     currentLocation = '',
     currentLocationStartedAt = ''
-}: CurrentInstanceSnapshotInput = {}) {
+}: CurrentInstanceSnapshotInput = {}): Promise<{
+    context: PlayerListContext;
+    players: PlayerListPlayer[];
+}> {
     const locationContext =
         await resolveCurrentLocationContext(currentLocation);
     const context = resolveSnapshotContext(

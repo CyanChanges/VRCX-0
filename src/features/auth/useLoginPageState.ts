@@ -1,3 +1,4 @@
+import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
@@ -29,6 +30,17 @@ import {
 } from './loginDisplay';
 import { useLoginAutoLogin } from './useLoginAutoLogin';
 
+type LoginFormState = {
+    password: string;
+    saveCredentials: boolean;
+    username: string;
+};
+
+type LoginErrors = {
+    password: string;
+    username: string;
+};
+
 export function useLoginPageState() {
     const { t } = useTranslation();
     const locale = useShellStore((state: any) => state.locale);
@@ -49,12 +61,12 @@ export function useLoginPageState() {
     const [isSavingProxySettings, setIsSavingProxySettings] = useState(false);
     const isSavingProxySettingsRef = useRef(false);
     const [activeSavedUserId, setActiveSavedUserId] = useState('');
-    const [loginForm, setLoginForm] = useState<any>({
+    const [loginForm, setLoginForm] = useState<LoginFormState>({
         username: '',
         password: '',
         saveCredentials: true
     });
-    const [loginErrors, setLoginErrors] = useState<any>({
+    const [loginErrors, setLoginErrors] = useState<LoginErrors>({
         username: '',
         password: ''
     });
@@ -155,7 +167,7 @@ export function useLoginPageState() {
         await promptLegacyVrcxForceMigration({ confirm, t, toast });
     }
 
-    async function saveProxySettings(event: any) {
+    async function saveProxySettings(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
         if (isSavingProxySettingsRef.current) {
             return;
@@ -202,7 +214,7 @@ export function useLoginPageState() {
     }
 
     function validateLoginForm() {
-        const nextErrors: any = {
+        const nextErrors: LoginErrors = {
             username: loginForm.username.trim()
                 ? ''
                 : t('view.login.validation.username_required'),
@@ -215,7 +227,7 @@ export function useLoginPageState() {
         return !nextErrors.username && !nextErrors.password;
     }
 
-    async function handleManualLoginSubmit(event: any) {
+    async function handleManualLoginSubmit(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
 
         if (!databaseReady) {
@@ -244,8 +256,10 @@ export function useLoginPageState() {
                 t('common.label.authenticated_and_prepared_the_session')
             );
         } catch (error) {
-            if (error?.authSnapshot) {
-                applySnapshot(error.authSnapshot);
+            const snapshot = (error as { authSnapshot?: unknown })
+                ?.authSnapshot;
+            if (snapshot) {
+                applySnapshot(snapshot);
             }
             toast.error(
                 getErrorMessage(
@@ -285,8 +299,10 @@ export function useLoginPageState() {
                 )
             );
         } catch (error) {
-            if (error?.authSnapshot) {
-                applySnapshot(error.authSnapshot);
+            const snapshot = (error as { authSnapshot?: unknown })
+                ?.authSnapshot;
+            if (snapshot) {
+                applySnapshot(snapshot);
             }
             toast.error(
                 getErrorMessage(

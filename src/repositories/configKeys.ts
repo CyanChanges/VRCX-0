@@ -6,7 +6,11 @@ export interface ConfigKeyDefinition {
     default: ConfigDefaultValue;
 }
 
-export const ConfigKeys = {
+const defineConfigKeys = <T extends Record<string, ConfigKeyDefinition>>(
+    keys: T
+): T => keys;
+
+export const ConfigKeys = defineConfigKeys({
     // ── App Core ─────────────────────────────────────
     databaseVersion: { type: 'int', default: 0 },
     appLanguage: { type: 'string', default: null },
@@ -295,7 +299,7 @@ export const ConfigKeys = {
     },
     avatarRemoteDatabaseProvider: { type: 'string', default: '' },
     showConfirmationOnSwitchAvatar: { type: 'bool', default: true }
-} satisfies Record<string, ConfigKeyDefinition>;
+});
 
 export type ConfigKeyName = keyof typeof ConfigKeys;
 

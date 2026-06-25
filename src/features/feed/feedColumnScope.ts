@@ -18,6 +18,19 @@ export type FeedColumnScopeDescriptionOptions = {
     typeLabel(type: string): string;
 };
 
+type FeedRemoteFavorite = {
+    $groupKey?: unknown;
+    favoriteId?: unknown;
+    type?: unknown;
+};
+
+type FeedFavoriteGroup = {
+    displayName?: unknown;
+    id?: unknown;
+    key?: unknown;
+    name?: unknown;
+};
+
 function buildFavoriteIdsForGroupSelection({
     groupKeys,
     localFriendFavorites,
@@ -25,7 +38,7 @@ function buildFavoriteIdsForGroupSelection({
 }: {
     groupKeys: FeedColumnFavoriteGroupSelection;
     localFriendFavorites: Record<string, unknown>;
-    remoteFavoritesById: Record<string, any>;
+    remoteFavoritesById: Record<string, FeedRemoteFavorite>;
 }) {
     const ids = new Set<string>();
     const allGroups = groupKeys === 'all';
@@ -77,7 +90,7 @@ export function buildFeedColumnFavoriteIds({
 }: {
     column: FeedColumnConfig;
     localFriendFavorites: Record<string, unknown>;
-    remoteFavoritesById: Record<string, any>;
+    remoteFavoritesById: Record<string, FeedRemoteFavorite>;
 }) {
     if (column.friendScope.kind !== 'favorites') {
         return new Set<string>();
@@ -96,7 +109,7 @@ export function buildFeedColumnExcludedFavoriteIds({
 }: {
     column: FeedColumnConfig;
     localFriendFavorites: Record<string, unknown>;
-    remoteFavoritesById: Record<string, any>;
+    remoteFavoritesById: Record<string, FeedRemoteFavorite>;
 }) {
     const excludedGroupKeys = column.friendScope.excludedFavoriteGroupKeys;
     if (
@@ -116,7 +129,7 @@ export function buildFeedFavoriteGroupOptions({
     favoriteFriendGroups,
     localFriendFavoriteGroups
 }: {
-    favoriteFriendGroups: any[];
+    favoriteFriendGroups: FeedFavoriteGroup[];
     localFriendFavoriteGroups: unknown[];
 }): FeedFavoriteGroupOption[] {
     const options = new Map<string, FeedFavoriteGroupOption>();

@@ -21,14 +21,14 @@ const SORTING_COLUMN_IDS = COLUMN_IDS.filter(
     (columnId) => columnId !== 'displayName'
 );
 
-const DEFAULT_SORTING = [];
+const DEFAULT_SORTING: { id: string; desc?: boolean }[] = [];
 const STORAGE_KEY = getDataTableStorageKey('friendLog');
 
 export function readPersistedState() {
     return readPersistedTableState(STORAGE_KEY);
 }
 
-export function writePersistedState(patch: any) {
+export function writePersistedState(patch: Record<string, unknown>) {
     writePersistedTableState(STORAGE_KEY, patch);
 }
 
@@ -65,7 +65,7 @@ export function sanitizePageSizes(value: any) {
 }
 
 export function sanitizeColumnVisibility(value: any) {
-    const visibility: any = {};
+    const visibility: Record<string, boolean> = {};
     if (!value || typeof value !== 'object') {
         return visibility;
     }

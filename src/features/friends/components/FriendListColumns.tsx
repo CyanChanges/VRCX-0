@@ -1,5 +1,6 @@
 import { EyeOffIcon, UserIcon, UserMinusIcon } from 'lucide-react';
 import { useMemo } from 'react';
+import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { formatDateFilter, timeToText } from '@/lib/dateTime';
@@ -47,14 +48,14 @@ export function useFriendListColumns({
                 size: 20,
                 enableSorting: false,
                 enableResizing: false,
-                header: () => null,
-                cell: () => null
+                header: (): ReactNode => null,
+                cell: (): ReactNode => null
             },
             {
                 id: 'bulkSelect',
                 size: 55,
                 enableSorting: false,
-                header: () => null,
+                header: (): ReactNode => null,
                 cell: ({ row }: any) => {
                     const friendId = normalizeId(row.original?.id);
                     const friendLabel = row.original?.displayName || friendId;

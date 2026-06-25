@@ -119,8 +119,8 @@ const visibleWorldFeatureTags = [
 
 function visibleWorldTags(world: any, t: any) {
     const tags = Array.isArray(world?.tags) ? world.tags : [];
-    const entries = [];
-    const seen = new Set();
+    const entries: Array<{ key: string; label: string }> = [];
+    const seen = new Set<string>();
     const pushTag = (key: any, label: any) => {
         if (!key || seen.has(key)) {
             return;
@@ -510,7 +510,7 @@ export function WorldDialogTabbedView({
                         location: target.location,
                         instance: response.json
                     }))
-                    .catch(() => null)
+                    .catch((): null => null)
             )
         ).then((entries: any) => {
             if (!active) {
@@ -574,7 +574,7 @@ export function WorldDialogTabbedView({
                         includeRoles: false
                     })
                     .then((groupProfile: any) => [groupId, groupProfile])
-                    .catch(() => null)
+                    .catch((): null => null)
             )
         ).then((entries: any) => {
             if (!active) {
@@ -637,14 +637,14 @@ export function WorldDialogTabbedView({
                     endpoint: currentEndpoint
                 })
                 .then((response: any) => response.json)
-                .catch(() => null),
+                .catch((): null => null),
             isCurrentLiveInstance
                 ? playerListPersistenceRepository
                       .getCurrentInstanceSnapshot({
                           currentUserId,
                           currentLocation: normalizedWorldId
                       })
-                      .catch(() => null)
+                      .catch((): null => null)
                 : Promise.resolve(null)
         ])
             .then(async ([instance, playerSnapshot]: any) => {

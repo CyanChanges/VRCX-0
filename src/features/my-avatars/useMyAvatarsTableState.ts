@@ -96,7 +96,7 @@ export function useMyAvatarsTableState({
                 const resolvedPageSizes =
                     sanitizeMyAvatarsPageSizes(nextPageSizes);
                 const parsedPersistedPageSize = Number.parseInt(
-                    persistedState.pageSize,
+                    String(persistedState.pageSize ?? ''),
                     10
                 );
                 const hasPersistedPageSize =

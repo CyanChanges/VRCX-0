@@ -5,7 +5,19 @@ import {
     extractVariantVersion
 } from '@/shared/utils/fileUtils';
 
-export function defaultAvatarSideData() {
+type AvatarSideData = {
+    galleryRows: unknown[];
+    galleryImages: unknown[];
+    fileAnalysis: Record<string, unknown>;
+    cache: {
+        inCache: boolean;
+        cacheSize: string;
+        cacheLocked: boolean;
+        cachePath: string;
+    };
+};
+
+export function defaultAvatarSideData(): AvatarSideData {
     return {
         galleryRows: [],
         galleryImages: [],

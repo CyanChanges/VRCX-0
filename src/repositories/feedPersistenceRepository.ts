@@ -110,7 +110,7 @@ function ensureFeedTablesForUser(userId: unknown): Promise<void> {
 
     const promise = commands
         .appUserTablesEnsure(normalizeString(userId))
-        .then(() => undefined)
+        .then((): void => undefined)
         .catch((error: unknown) => {
             if (ensuredFeedTablePrefixes.get(userPrefix) === promise) {
                 ensuredFeedTablePrefixes.delete(userPrefix);

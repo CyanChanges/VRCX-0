@@ -29,7 +29,14 @@ function setSelfActionStatus(
     setActionStatus(nextStatus);
 }
 
-function createProfileDetailsDraft() {
+type ProfileDetailsDraft = {
+    languageKeys: string[];
+    bio: string;
+    bioLinks: string[];
+    pronouns: string;
+};
+
+function createProfileDetailsDraft(): ProfileDetailsDraft {
     return {
         languageKeys: [],
         bio: '',
@@ -497,7 +504,8 @@ export function useUserDialogSelfActions({
         const isVrcPlusSupporter = Boolean(
             currentUserSnapshot?.$isVRCPlus ||
             currentUserSnapshot?.tags?.includes?.('system_supporter') ||
-            globalThis?.$debug?.debugVrcPlus
+            (globalThis as typeof globalThis & { $debug?: AppDebug })?.$debug
+                ?.debugVrcPlus
         );
         if (!isVrcPlusSupporter) {
             toast.error(t('message.vrcplus.required'));

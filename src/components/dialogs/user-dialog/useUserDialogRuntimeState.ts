@@ -23,7 +23,8 @@ export function useUserDialogRuntimeState(normalizedUserId: string) {
             state.auth.currentUserSnapshot?.tags?.includes?.(
                 'system_supporter'
             ) ||
-            globalThis?.$debug?.debugVrcPlus
+            (globalThis as typeof globalThis & { $debug?: AppDebug })?.$debug
+                ?.debugVrcPlus
         )
     );
     const currentEndpoint = useRuntimeStore(
@@ -160,7 +161,8 @@ export function useUserDialogTabbedRuntimeState() {
             state.auth.currentUserSnapshot?.tags?.includes?.(
                 'system_supporter'
             ) ||
-            globalThis?.$debug?.debugVrcPlus
+            (globalThis as typeof globalThis & { $debug?: AppDebug })?.$debug
+                ?.debugVrcPlus
         )
     );
     const inGameGroupOrder = useRuntimeStore((state: any) =>

@@ -88,7 +88,7 @@ function buildMinimalCurrentUserSnapshot(
 async function getBackendFrontendSessionSnapshot() {
     return commands
         .appGetBackendRuntimeFrontendSessionSnapshot()
-        .catch(() => null);
+        .catch((): null => null);
 }
 
 function buildCurrentUserSnapshotForResume({
@@ -140,7 +140,7 @@ export async function resumeFrontendSessionFromBackendRuntime(
 
     const userId = normalizeString(snapshot.authUserId);
     const [scope, frontendSessionSnapshot] = await Promise.all([
-        commands.appRuntimeAuthScopeGet().catch(() => null),
+        commands.appRuntimeAuthScopeGet().catch((): null => null),
         getBackendFrontendSessionSnapshot()
     ]);
     const latestSessionState = useSessionStore.getState();

@@ -25,7 +25,7 @@ export function useModerationTableState({
 }: {
     filteredRowsLength: number;
     searchQuery: string;
-    selectedTypes: any[];
+    selectedTypes: string[];
 }) {
     const [persistedState] = useState(() => readModerationPersistedState());
     const hasWrittenSortingRef = useRef(false);
@@ -75,7 +75,7 @@ export function useModerationTableState({
                 const resolvedPageSizes =
                     sanitizeModerationPageSizes(nextPageSizes);
                 const parsedPersistedPageSize = Number.parseInt(
-                    persistedState.pageSize,
+                    String(persistedState.pageSize ?? ''),
                     10
                 );
                 const hasPersistedPageSize =

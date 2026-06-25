@@ -5,6 +5,15 @@ import { PreviousInstancesTableDialog } from '@/components/dialogs/PreviousInsta
 import gameLogRepository from '@/repositories/gameLogRepository';
 import { normalizeString } from '@/shared/utils/string';
 
+type PreviousInstanceDialogRow = Record<string, unknown> & {
+    created_at?: string;
+    createdAt?: string;
+    groupName?: string;
+    location?: string;
+    worldId?: string;
+    worldName?: string;
+};
+
 export function useLocationPreviousInstancesDialog({
     currentLocation,
     groupName,
@@ -15,9 +24,9 @@ export function useLocationPreviousInstancesDialog({
     worldNameHint
 }: any) {
     const [previousInstancesOpen, setPreviousInstancesOpen] = useState(false);
-    const [previousInstancesRows, setPreviousInstancesRows] = useState<any[]>(
-        []
-    );
+    const [previousInstancesRows, setPreviousInstancesRows] = useState<
+        PreviousInstanceDialogRow[]
+    >([]);
     const [previousInstancesTitle, setPreviousInstancesTitle] =
         useState('Instance History');
     const [previousInstancesDetailsOnly, setPreviousInstancesDetailsOnly] =
@@ -26,7 +35,7 @@ export function useLocationPreviousInstancesDialog({
         useState(false);
 
     function showExactPreviousInstanceInfo() {
-        const payload: any = {
+        const payload: PreviousInstanceDialogRow = {
             location: currentLocation,
             worldId: parsedLocation.worldId,
             worldName: worldName || worldNameHint,
@@ -77,7 +86,7 @@ export function useLocationPreviousInstancesDialog({
                     worldId: parsedLocation.worldId
                 });
             const normalizedCurrentLocation = normalizeString(currentLocation);
-            const currentInstanceRow: any = {
+            const currentInstanceRow: PreviousInstanceDialogRow = {
                 location: normalizedCurrentLocation,
                 worldId: parsedLocation.worldId,
                 worldName: worldName || worldNameHint || parsedLocation.worldId
@@ -85,7 +94,7 @@ export function useLocationPreviousInstancesDialog({
             const nextRows = [
                 ...(normalizedCurrentLocation ? [currentInstanceRow] : []),
                 ...instances
-            ].sort((left: any, right: any) => {
+            ].sort((left, right) => {
                 if (normalizedCurrentLocation) {
                     if (
                         normalizeString(left?.location) ===

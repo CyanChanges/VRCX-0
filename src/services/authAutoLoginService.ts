@@ -104,17 +104,29 @@ function waitForAutoLoginDelay(
             signal?.removeEventListener('abort', onAbort);
         }
 
-        function settle(callback: (value?: unknown) => void, value?: unknown) {
+        function markSettled(): boolean {
             if (settled) {
-                return;
+                return false;
             }
             settled = true;
             cleanup();
-            callback(value);
+            return true;
+        }
+
+        function settleResolve() {
+            if (markSettled()) {
+                resolve();
+            }
+        }
+
+        function settleReject(reason: unknown) {
+            if (markSettled()) {
+                reject(reason);
+            }
         }
 
         function onAbort() {
-            settle(reject, createAutoLoginAbortError());
+            settleReject(createAutoLoginAbortError());
         }
 
         function tick() {
@@ -125,7 +137,7 @@ function waitForAutoLoginDelay(
 
             const remainingMs = deadline - Date.now();
             if (remainingMs <= 0) {
-                settle(resolve);
+                settleResolve();
                 return;
             }
 

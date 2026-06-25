@@ -1,3 +1,4 @@
+import type { ColumnDef } from '@tanstack/react-table';
 import { Trash2Icon, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,7 +44,7 @@ export function useModerationColumns({
     const getModerationTypeLabel = (type: any) =>
         resolveModerationTypeLabel(type, t);
 
-    return useMemo(
+    return useMemo<ColumnDef<ModerationRow>[]>(
         () => [
             {
                 id: 'spacer',

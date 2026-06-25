@@ -37,7 +37,7 @@ import { StatusBarFooter } from './status-bar/StatusBarFooter';
 
 const STATUS_PAGE_URL = 'https://status.vrchat.com/';
 
-const DEFAULT_VISIBILITY: any = {
+const DEFAULT_VISIBILITY: Record<string, boolean> = {
     vrchat: true,
     steamvr: true,
     proxy: true,
@@ -112,7 +112,7 @@ function formatUtcHour(offset: any) {
     return `UTC${normalized >= 0 ? '+' : ''}${normalized}`;
 }
 
-const TIMEZONE_OPTIONS = Array.from({ length: 27 }, (_: any, index: any) => {
+const TIMEZONE_OPTIONS = Array.from({ length: 27 }, (_, index) => {
     const value = index - 12;
     return { value, label: formatUtcHour(value) };
 });
@@ -173,7 +173,7 @@ export function AppStatusBar() {
     const [visibility, setVisibility] = useState(DEFAULT_VISIBILITY);
     const [clocks, setClocks] = useState(() => createDefaultClocks());
     const [clockCount, setClockCount] = useState(1);
-    const [clockPopoverOpen, setClockPopoverOpen] = useState<any[]>([
+    const [clockPopoverOpen, setClockPopoverOpen] = useState<boolean[]>([
         false,
         false,
         false

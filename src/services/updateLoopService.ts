@@ -18,7 +18,7 @@ import {
 import i18n from './i18nService';
 import { showSQLiteErrorDialog } from './sqliteErrorDialogService';
 
-let updateLoopTimer = null;
+let updateLoopTimer: ReturnType<typeof window.setTimeout> | null = null;
 let lastGameLogCapabilityRefreshAt = 0;
 let stopped = true;
 let activeTickToken = 0;

@@ -14,7 +14,7 @@ export function finiteLocationNumber(value: any) {
     return Number.isFinite(number) ? number : null;
 }
 
-export function firstFiniteLocationNumber(...values: any[]) {
+export function firstFiniteLocationNumber(...values: unknown[]) {
     for (const value of values) {
         const number = finiteLocationNumber(value);
         if (number !== null) {

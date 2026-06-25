@@ -1,13 +1,82 @@
 import activityPersistenceRepository from '@/repositories/activityPersistenceRepository';
 import gameLogRepository from '@/repositories/gameLogRepository';
+import type { ActivitySession } from '@/shared/utils/activityEngine';
 import { mergeSessions } from '@/shared/utils/activityEngine';
 import { runActivityWorkerTask } from '@/workers/activityWorkerRunner';
+
+interface NormalizeConfig {
+    floorPercentile: number;
+    capPercentile: number;
+    rankWeight: number;
+    targetCoverage: number;
+    targetVolume: number;
+}
+
+type ActivitySnapshot = {
+    userId: any;
+    isSelf: any;
+    sync: {
+        userId: any;
+        updatedAt: string;
+        isSelf: any;
+        sourceLastCreatedAt: string;
+        pendingSessionStartAt: string | null;
+        cachedRangeDays: number;
+        ownerUserId: string;
+    };
+    sessions: ActivitySession[];
+    activityViews: Map<string, ActivityViewCache>;
+    overlapViews: Map<string, ActivityViewCache>;
+};
+
+type ActivitySessionSnapshotResult = {
+    pendingSessionStartAt: number | null;
+    sessions: ActivitySession[];
+};
+
+type ActivityViewCache = Record<string, unknown> & {
+    builtAt?: unknown;
+    builtFromCursor?: unknown;
+    filteredEventCount?: unknown;
+    normalizedBuckets: unknown[];
+    peakDay?: unknown;
+    peakTime?: unknown;
+    rawBuckets: unknown[];
+};
 
 const snapshotMap = new Map();
 const inFlightJobs = new Map();
 const FULL_CACHE_MAX_DAYS = 3650;
 const MAX_SNAPSHOT_ENTRIES = 12;
 let deferredWriteQueue = Promise.resolve();
+
+function recordOrEmpty(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' ? { ...value } : {};
+}
+
+function activitySessionSnapshotResult(
+    value: unknown
+): ActivitySessionSnapshotResult {
+    const result = recordOrEmpty(value);
+    const pendingSessionStartAt = Number(result.pendingSessionStartAt);
+    return {
+        pendingSessionStartAt: Number.isFinite(pendingSessionStartAt)
+            ? pendingSessionStartAt
+            : null,
+        sessions: Array.isArray(result.sessions) ? result.sessions : []
+    };
+}
+
+function activityViewCache(value: unknown): ActivityViewCache {
+    const result = recordOrEmpty(value);
+    return {
+        ...result,
+        rawBuckets: Array.isArray(result.rawBuckets) ? result.rawBuckets : [],
+        normalizedBuckets: Array.isArray(result.normalizedBuckets)
+            ? result.normalizedBuckets
+            : []
+    };
+}
 
 function deferWrite(task: any) {
     const run = () => {
@@ -30,7 +99,7 @@ function snapshotKey(userId: any, isSelf: any, ownerUserId: any = '') {
     return `${String(ownerUserId || '').trim()}:${isSelf ? 'self' : 'friend'}:${String(userId || '').trim()}`;
 }
 
-function createSnapshot(userId: any, isSelf: any) {
+function createSnapshot(userId: any, isSelf: any): ActivitySnapshot {
     return {
         userId,
         isSelf,
@@ -174,14 +243,16 @@ async function fullRefresh(snapshot: any, rangeDays: any) {
     const sourceLastCreatedAt = sourceItems.length
         ? sourceItems[sourceItems.length - 1].created_at
         : '';
-    const result = await runActivityWorkerTask('computeSessionsSnapshot', {
-        sourceType: 'friend_presence',
-        events: sourceItems,
-        initialStart: null,
-        nowMs: Date.now(),
-        mayHaveOpenTail: false,
-        sourceRevision: sourceLastCreatedAt
-    });
+    const result = activitySessionSnapshotResult(
+        await runActivityWorkerTask('computeSessionsSnapshot', {
+            sourceType: 'friend_presence',
+            events: sourceItems,
+            initialStart: null,
+            nowMs: Date.now(),
+            mayHaveOpenTail: false,
+            sourceRevision: sourceLastCreatedAt
+        })
+    );
 
     snapshot.sessions = result.sessions;
     snapshot.sync = {
@@ -247,14 +318,16 @@ async function incrementalRefresh(snapshot: any) {
     }
 
     const sourceLastCreatedAt = sourceItems[sourceItems.length - 1].created_at;
-    const result = await runActivityWorkerTask('computeSessionsSnapshot', {
-        sourceType: 'friend_presence',
-        events: sourceItems,
-        initialStart: snapshot.sync.pendingSessionStartAt,
-        nowMs: Date.now(),
-        mayHaveOpenTail: false,
-        sourceRevision: sourceLastCreatedAt
-    });
+    const result = activitySessionSnapshotResult(
+        await runActivityWorkerTask('computeSessionsSnapshot', {
+            sourceType: 'friend_presence',
+            events: sourceItems,
+            initialStart: snapshot.sync.pendingSessionStartAt,
+            nowMs: Date.now(),
+            mayHaveOpenTail: false,
+            sourceRevision: sourceLastCreatedAt
+        })
+    );
 
     const replaceFromStartAt = snapshot.sessions.length
         ? snapshot.sessions[Math.max(snapshot.sessions.length - 1, 0)].start
@@ -313,14 +386,16 @@ async function expandRange(snapshot: any, rangeDays: any) {
             fromDays: rangeDays,
             toDays: currentDays
         });
-    const result = await runActivityWorkerTask('computeSessionsSnapshot', {
-        sourceType: 'friend_presence',
-        events: sourceItems,
-        initialStart: null,
-        nowMs: Date.now(),
-        mayHaveOpenTail: false,
-        sourceRevision: snapshot.sync.sourceLastCreatedAt
-    });
+    const result = activitySessionSnapshotResult(
+        await runActivityWorkerTask('computeSessionsSnapshot', {
+            sourceType: 'friend_presence',
+            events: sourceItems,
+            initialStart: null,
+            nowMs: Date.now(),
+            mayHaveOpenTail: false,
+            sourceRevision: snapshot.sync.sourceLastCreatedAt
+        })
+    );
 
     if (result.sessions.length > 0) {
         snapshot.sessions = mergeSessions(result.sessions, snapshot.sessions);
@@ -420,30 +495,31 @@ export function pickActivityNormalizeConfig(isSelf: any, rangeDays: any) {
 }
 
 export function pickOverlapNormalizeConfig(rangeDays: any) {
+    const byRange: Record<number, NormalizeConfig> = {
+        7: {
+            floorPercentile: 10,
+            capPercentile: 80,
+            rankWeight: 0.15,
+            targetCoverage: 0.08,
+            targetVolume: 15
+        },
+        30: {
+            floorPercentile: 15,
+            capPercentile: 85,
+            rankWeight: 0.2,
+            targetCoverage: 0.15,
+            targetVolume: 25
+        },
+        90: {
+            floorPercentile: 15,
+            capPercentile: 85,
+            rankWeight: 0.2,
+            targetCoverage: 0.18,
+            targetVolume: 20
+        }
+    };
     return (
-        {
-            7: {
-                floorPercentile: 10,
-                capPercentile: 80,
-                rankWeight: 0.15,
-                targetCoverage: 0.08,
-                targetVolume: 15
-            },
-            30: {
-                floorPercentile: 15,
-                capPercentile: 85,
-                rankWeight: 0.2,
-                targetCoverage: 0.15,
-                targetVolume: 25
-            },
-            90: {
-                floorPercentile: 15,
-                capPercentile: 85,
-                rankWeight: 0.2,
-                targetCoverage: 0.18,
-                targetVolume: 20
-            }
-        }[rangeDays] || {
+        byRange[rangeDays] || {
             floorPercentile: 15,
             capPercentile: 85,
             rankWeight: 0.2,
@@ -511,13 +587,13 @@ async function loadActivityView({
                     activityPersistenceRepository.ACTIVITY_VIEW_KIND.ACTIVITY
             });
         if (persisted?.builtFromCursor === currentCursor) {
-            view = {
-                ...(persisted.summary as Record<string, any>),
+            view = activityViewCache({
+                ...recordOrEmpty(persisted.summary),
                 rawBuckets: persisted.rawBuckets,
                 normalizedBuckets: persisted.normalizedBuckets,
                 builtFromCursor: persisted.builtFromCursor,
                 builtAt: persisted.builtAt
-            };
+            });
             snapshot.activityViews.set(cacheKey, view);
             return {
                 hasAnyData: snapshot.sessions.length > 0,
@@ -530,14 +606,15 @@ async function loadActivityView({
         }
     }
 
-    const computed = await runActivityWorkerTask('computeActivityView', {
-        sessions: snapshot.sessions,
-        dayLabels,
-        rangeDays,
-        normalizeConfig: pickActivityNormalizeConfig(isSelf, rangeDays)
-    });
     view = {
-        ...computed,
+        ...activityViewCache(
+            await runActivityWorkerTask('computeActivityView', {
+                sessions: snapshot.sessions,
+                dayLabels,
+                rangeDays,
+                normalizeConfig: pickActivityNormalizeConfig(isSelf, rangeDays)
+            })
+        ),
         builtFromCursor: currentCursor,
         builtAt: new Date().toISOString()
     };
@@ -625,13 +702,13 @@ async function loadOverlapView({
                 excludeKey
             });
         if (persisted?.builtFromCursor === cursor) {
-            view = {
-                ...(persisted.summary as Record<string, any>),
+            view = activityViewCache({
+                ...recordOrEmpty(persisted.summary),
                 rawBuckets: persisted.rawBuckets,
                 normalizedBuckets: persisted.normalizedBuckets,
                 builtFromCursor: persisted.builtFromCursor,
                 builtAt: persisted.builtAt
-            };
+            });
             targetSnapshot.overlapViews.set(cacheKey, view);
             return {
                 hasOverlapData: view.rawBuckets.some((value: any) => value > 0),
@@ -643,16 +720,17 @@ async function loadOverlapView({
         }
     }
 
-    view = await runActivityWorkerTask('computeOverlapView', {
-        selfSessions: selfSnapshot.sessions,
-        targetSessions: targetSnapshot.sessions,
-        dayLabels,
-        rangeDays,
-        excludeHours: excludeHours?.enabled ? excludeHours : null,
-        normalizeConfig: pickOverlapNormalizeConfig(rangeDays)
-    });
     view = {
-        ...view,
+        ...activityViewCache(
+            await runActivityWorkerTask('computeOverlapView', {
+                selfSessions: selfSnapshot.sessions,
+                targetSessions: targetSnapshot.sessions,
+                dayLabels,
+                rangeDays,
+                excludeHours: excludeHours?.enabled ? excludeHours : null,
+                normalizeConfig: pickOverlapNormalizeConfig(rangeDays)
+            })
+        ),
         builtFromCursor: cursor,
         builtAt: new Date().toISOString()
     };

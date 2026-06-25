@@ -182,7 +182,7 @@ export function createAvatarCacheActions({
         }
         const configResponse = await vrchatAuthRepository
             .getConfig({ endpoint: currentEndpoint })
-            .catch(() => null);
+            .catch((): null => null);
         const args = resolveAssetBundleArgs(
             avatar,
             String(configResponse?.json?.sdkUnityVersion || '')

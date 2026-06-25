@@ -3,6 +3,27 @@ import { normalizeString as normalizeId } from '@/shared/utils/string';
 
 import { resolveCurrentUserStateBucket } from './friendsSidebarModel';
 
+interface SidebarVirtualRow {
+    type:
+        | 'section'
+        | 'friend'
+        | 'skeleton'
+        | 'footer'
+        | 'favorite-group-header'
+        | 'instance-header'
+        | 'message';
+    key?: string;
+    id?: string;
+    title?: string;
+    count?: number;
+    open?: boolean;
+    label?: string;
+    location?: unknown;
+    friend?: unknown;
+    isCurrentUser?: boolean;
+    isGroupByInstance?: boolean;
+}
+
 const STOPPED_GAME_CURRENT_USER_PRESENCE_FIELDS = [
     'location',
     '$location',
@@ -18,7 +39,10 @@ const STOPPED_GAME_CURRENT_USER_PRESENCE_FIELDS = [
     '$travelingToTime'
 ];
 
-function pushSection(nextRows: any, { id, title, count, open }: any) {
+function pushSection(
+    nextRows: SidebarVirtualRow[],
+    { id, title, count, open }: any
+) {
     nextRows.push({
         type: 'section',
         key: `section:${id}`,
@@ -30,7 +54,7 @@ function pushSection(nextRows: any, { id, title, count, open }: any) {
 }
 
 function pushFriendRows(
-    nextRows: any,
+    nextRows: SidebarVirtualRow[],
     sectionKey: any,
     sectionRows: any,
     {
@@ -54,12 +78,16 @@ function pushFriendRows(
 }
 
 function buildFriendRows(sectionKey: any, sectionRows: any, options: any) {
-    const nextRows = [];
+    const nextRows: SidebarVirtualRow[] = [];
     pushFriendRows(nextRows, sectionKey, sectionRows, options);
     return nextRows;
 }
 
-function pushSkeletonRows(nextRows: any, key: any, count: any = 6) {
+function pushSkeletonRows(
+    nextRows: SidebarVirtualRow[],
+    key: any,
+    count: any = 6
+) {
     for (let index = 0; index < count; index += 1) {
         nextRows.push({
             type: 'skeleton',
@@ -74,7 +102,7 @@ function buildFavoriteRows({
     favoriteRows,
     prefs
 }: any) {
-    const nextRows = [];
+    const nextRows: SidebarVirtualRow[] = [];
 
     if (!prefs.isSidebarDivideByFriendGroup) {
         pushFriendRows(nextRows, 'favorites', favoriteRows, { currentUserId });
@@ -111,12 +139,15 @@ function buildCurrentUserRows({
     currentUserId,
     gameState,
     prefs
-}: any) {
+}: any): SidebarVirtualRow[] {
     if (!currentUser) {
-        return Array.from({ length: 1 }, (_: any, index: any) => ({
-            type: 'skeleton',
-            key: `skeleton:me:${index}`
-        }));
+        return Array.from(
+            { length: 1 },
+            (_: any, index: any): SidebarVirtualRow => ({
+                type: 'skeleton',
+                key: `skeleton:me:${index}`
+            })
+        );
     }
 
     const currentUserRow = buildCurrentUserPresenceView(currentUser, {
@@ -158,7 +189,7 @@ export function buildFriendsSidebarVirtualRows({
     sameInstanceGroups,
     t
 }: any) {
-    const nextRows = [];
+    const nextRows: SidebarVirtualRow[] = [];
 
     if (loadStatus === 'running' && !rowsLength) {
         pushSkeletonRows(nextRows, 'loading');

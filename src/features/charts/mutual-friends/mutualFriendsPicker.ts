@@ -66,12 +66,21 @@ export function filterMutualFriendPickerOptions(
         .slice(0, limit);
 }
 
+interface MutualFriendPickerOption {
+    value: string;
+    label: string;
+    displayLabel: string;
+    search: string;
+    user: any;
+    degree: any;
+}
+
 export function buildMutualFriendPickerOption(
     userId: any,
     friendsById: any,
     fallbackName: any = '',
     degree: any = null
-) {
+): MutualFriendPickerOption | null {
     const normalizedId = normalizeMutualFriendId(userId);
     if (!isValidMutualFriendId(normalizedId)) {
         return null;
@@ -112,7 +121,7 @@ export function buildMutualFriendExcludePickerOptions(
     currentUserId: any
 ) {
     const seen = new Set();
-    const items = [];
+    const items: MutualFriendPickerOption[] = [];
 
     function pushOption(userId: any, fallbackName: any = '') {
         const normalizedId = normalizeMutualFriendId(userId);

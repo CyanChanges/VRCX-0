@@ -11,7 +11,12 @@ import { useFavoriteStore } from '@/state/favoriteStore';
 import { useModalStore } from '@/state/modalStore';
 
 import { favoriteGroupType } from './favoritesItems';
-import type { FavoriteKind, FavoriteSource } from './favoritesTypes';
+import type {
+    FavoriteGroup,
+    FavoriteItem,
+    FavoriteKind,
+    FavoriteSource
+} from './favoritesTypes';
 
 export function useFavoritesCollectionActions({
     allItems,
@@ -31,18 +36,20 @@ export function useFavoritesCollectionActions({
     setRemovingFavoriteKey,
     setSelectedGroupKey
 }: {
-    allItems: any[];
+    allItems: FavoriteItem[];
     currentEndpoint: string;
     currentUserId: string;
     currentUserSnapshot: any;
     kind: FavoriteKind;
-    localGroups: any[];
+    localGroups: FavoriteGroup[];
     refreshRemoteDetails(): void;
     refreshing: boolean;
     removingFavoriteKeyRef: MutableRefObject<string>;
     selectedGroupKey: string;
     selectedSource: FavoriteSource;
-    setAvatarHistory(value: any[] | ((current: any[]) => any[])): void;
+    setAvatarHistory(
+        value: unknown[] | ((current: unknown[]) => unknown[])
+    ): void;
     setExportDialogOpen(value: boolean): void;
     setRefreshing(value: boolean): void;
     setRemovingFavoriteKey(value: string | ((current: string) => string)): void;
@@ -97,8 +104,8 @@ export function useFavoritesCollectionActions({
     };
 
     const handleRemoveLocalFavorite = async (
-        item: any,
-        { silent = false }: any = {}
+        item: FavoriteItem,
+        { silent = false }: { silent?: boolean } = {}
     ) => {
         if (
             !item ||
@@ -163,7 +170,7 @@ export function useFavoritesCollectionActions({
         } finally {
             if (!silent) {
                 removingFavoriteKeyRef.current = '';
-                setRemovingFavoriteKey((currentKey: any) =>
+                setRemovingFavoriteKey((currentKey) =>
                     currentKey === item.key ? '' : currentKey
                 );
             }
@@ -171,8 +178,8 @@ export function useFavoritesCollectionActions({
     };
 
     const handleRemoveRemoteFavorite = async (
-        item: any,
-        { silent = false }: any = {}
+        item: FavoriteItem,
+        { silent = false }: { silent?: boolean } = {}
     ) => {
         if (
             !item ||

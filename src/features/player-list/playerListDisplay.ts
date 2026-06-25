@@ -1,4 +1,9 @@
-import { AppleIcon, MonitorIcon, RectangleGogglesIcon } from 'lucide-react';
+import {
+    AppleIcon,
+    type LucideIcon,
+    MonitorIcon,
+    RectangleGogglesIcon
+} from 'lucide-react';
 
 import { convertFileUrlToImageUrl } from '@/services/entityMediaService';
 import { parseLocation } from '@/shared/utils/locationParser';
@@ -158,7 +163,11 @@ export function getWorldImage(world: any) {
     return imageUrl ? convertFileUrlToImageUrl(imageUrl, 256) : '';
 }
 
-export function resolvePlatformBadge(platform: any) {
+export function resolvePlatformBadge(platform: any): {
+    key: any;
+    label: any;
+    icon: LucideIcon | null;
+} {
     const normalized = normalizeString(platform).toLowerCase();
     if (
         normalized === 'pc' ||

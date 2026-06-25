@@ -19,7 +19,7 @@ export function useGalleryRuntimeState() {
     const isVrcPlusSupporter = Boolean(
         currentUserSnapshot?.$isVRCPlus ||
         currentUserSnapshot?.tags?.includes?.('system_supporter') ||
-        globalThis?.$debug?.debugVrcPlus
+        globalThis.$debug?.debugVrcPlus
     );
 
     return {

@@ -32,7 +32,7 @@ function storeAvatarImage(
         avatarName = replaceBioSymbols(avatarNameRegex[1]);
     }
     const ownerId = args.json.ownerId;
-    const avatarInfo: any = {
+    const avatarInfo: CachedAvatarImage = {
         ownerId,
         avatarName,
         fileCreatedAt
@@ -43,7 +43,9 @@ function storeAvatarImage(
 
 const DEFAULT_AVATAR_FILE_ID = 'file_0e8c4e32-7444-44ea-ade4-313c010d4bae';
 
-function stripDefaultAvatarImage<T extends Record<string, any>>(record: T): T {
+function stripDefaultAvatarImage<T extends Record<string, unknown>>(
+    record: T
+): T {
     const imageUrl = record['currentAvatarImageUrl'];
     if (
         typeof imageUrl === 'string' &&

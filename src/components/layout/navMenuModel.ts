@@ -20,7 +20,7 @@ import {
 
 type TranslateKey = (key: string) => string;
 
-type NavDefinition = {
+export type NavDefinition = {
     key: string;
     icon?: string;
     tooltip?: string;
@@ -32,15 +32,15 @@ type NavDefinition = {
     path?: string;
 };
 
-type NavLayoutItem = {
+export type NavLayoutItem = {
     type: 'item';
     key: string;
     icon?: string;
 };
 
-type NavFolderItem = string | { key: string; icon?: string };
+export type NavFolderItem = string | { key: string; icon?: string };
 
-type NavLayoutFolder = {
+export type NavLayoutFolder = {
     type: 'folder';
     id: string;
     name: string;
@@ -49,14 +49,25 @@ type NavLayoutFolder = {
     items: NavFolderItem[];
 };
 
-type NavLayoutEntry = NavLayoutItem | NavLayoutFolder;
+export type NavLayoutEntry = NavLayoutItem | NavLayoutFolder;
 
-type MenuItem = Partial<NavDefinition> & {
+export type NavMenuItem = Partial<NavDefinition> & {
     index: string;
     title?: string;
     titleIsCustom?: boolean;
     label?: string;
-    children?: MenuItem[];
+    children?: NavMenuItem[];
+};
+
+type MenuItem = NavMenuItem;
+
+export type NavMenuModel = {
+    definitions: NavDefinition[];
+    definitionMap: Map<string, NavDefinition>;
+    hiddenKeys: string[];
+    layout: NavLayoutEntry[];
+    defaultLayout: NavLayoutEntry[];
+    menuItems: NavMenuItem[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {

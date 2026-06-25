@@ -2,6 +2,23 @@ import { formatClock as formatAppClock, timeToText } from '@/lib/dateTime';
 
 export const INFO_CHART_BAR_WIDTH = 12;
 
+interface InfoChartRow {
+    userId: string;
+    displayName?: string;
+    joinMs: number;
+    leaveMs: number;
+    durationMs: number;
+    isFavorite?: boolean;
+    isFriend?: boolean;
+}
+
+interface GroupedEntry {
+    offset: number;
+    durationMs: number;
+    tail: number;
+    entry: InfoChartRow;
+}
+
 function formatClock(value: any, hour12: any, includeSeconds: any = false) {
     return formatAppClock(value, { hour12, includeSeconds });
 }
@@ -48,8 +65,8 @@ export function buildInfoChartOption({
         return null;
     }
 
-    const groupedByUser = new Map();
-    const firstEntries = [];
+    const groupedByUser = new Map<string, GroupedEntry[]>();
+    const firstEntries: InfoChartRow[] = [];
     const sortedRows = [...rows].sort((left: any, right: any) => {
         const joinDiff = Math.abs(left.joinMs - right.joinMs);
         return joinDiff < 3000

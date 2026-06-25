@@ -21,9 +21,9 @@ async function findAvatarByImageUrl({ imageUrl, avatarName }: any) {
         return null;
     }
 
-    const cachedAvatars = await favoritePersistenceRepository
+    const cachedAvatars: unknown[] = await favoritePersistenceRepository
         .getAvatarCache()
-        .catch(() => []);
+        .catch((): unknown[] => []);
     const cachedMatch = cachedAvatars.find(
         (avatar: any) =>
             avatar?.id &&

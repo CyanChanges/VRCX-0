@@ -140,6 +140,15 @@ type AppFontKey = keyof typeof APP_FONT_CONFIG;
 type AppCjkFontPackKey = keyof typeof APP_CJK_FONT_PACK_CONFIG;
 type ThemeColorStyleToken = keyof typeof THEME_COLOR_STYLE_PROPERTIES;
 
+const THEME_COLOR_STYLE_ENTRIES: Array<[ThemeColorStyleToken, string]> = [
+    ['primary', THEME_COLOR_STYLE_PROPERTIES.primary],
+    ['primaryDark', THEME_COLOR_STYLE_PROPERTIES.primaryDark],
+    ['foreground', THEME_COLOR_STYLE_PROPERTIES.foreground],
+    ['foregroundDark', THEME_COLOR_STYLE_PROPERTIES.foregroundDark],
+    ['ring', THEME_COLOR_STYLE_PROPERTIES.ring],
+    ['ringDark', THEME_COLOR_STYLE_PROPERTIES.ringDark]
+];
+
 export function resolveThemeColor(value: unknown): string {
     const normalized = String(value || '')
         .trim()
@@ -257,12 +266,10 @@ export function applyThemeColor(themeColor: unknown): string {
         root.getAttribute('data-vrcx-0-community-theme-accent') !== 'theme' &&
         normalized !== DEFAULT_THEME_COLOR_KEY
     ) {
-        Object.entries(THEME_COLOR_STYLE_PROPERTIES).forEach(
-            ([tokenName, propertyName]: any) => {
-                const cssValue = theme[tokenName as ThemeColorStyleToken];
-                root.style.setProperty(propertyName, cssValue as string);
-            }
-        );
+        THEME_COLOR_STYLE_ENTRIES.forEach(([tokenName, propertyName]) => {
+            const cssValue = theme[tokenName];
+            root.style.setProperty(propertyName, String(cssValue));
+        });
     }
 
     useShellStore.getState().setThemeColor(normalized);

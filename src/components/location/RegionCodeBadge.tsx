@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '@/lib/utils';
 
-const regionCodeLabels: any = {
+const regionCodeLabels: Record<string, string> = {
     us: 'US',
     use: 'USE',
     usw: 'USW',

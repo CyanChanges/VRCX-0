@@ -14,8 +14,8 @@ import { Spinner } from '@/ui/shadcn/spinner';
 import { formatScreenshotDateTime } from '../screenshotMetadataValues';
 import { requestScreenshotThumbnail } from '../screenshotThumbnailQueue';
 
-function firstText(...values: any[]) {
-    return values.map((value: any) => String(value || '').trim()).find(Boolean);
+function firstText(...values: unknown[]) {
+    return values.map((value) => String(value || '').trim()).find(Boolean);
 }
 
 const WORLD_REFERENCE_PATTERN =

@@ -146,6 +146,8 @@ export function createGroupOptions({
 }
 
 export function createTimeRule(label: any = '') {
+    const days: number[] = [];
+
     return {
         id: `time-${Date.now()}`,
         enabled: true,
@@ -158,7 +160,7 @@ export function createTimeRule(label: any = '') {
                 type: 'timeWindow',
                 start: '21:00',
                 end: '02:00',
-                days: [],
+                days,
                 timezone: 'local'
             }
         ],

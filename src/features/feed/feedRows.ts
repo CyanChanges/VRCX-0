@@ -164,6 +164,13 @@ export function buildFeedFavoriteIdSet(
     selectedFavoriteGroupIds: any[] = []
 ) {
     const ids = new Set();
+    const remoteFavorites =
+        remoteFavoritesById && typeof remoteFavoritesById === 'object'
+            ? Object.values(remoteFavoritesById).filter(
+                  (favorite): favorite is Record<string, unknown> =>
+                      Boolean(favorite && typeof favorite === 'object')
+              )
+            : [];
     const selectedGroups = Array.isArray(selectedFavoriteGroupIds)
         ? selectedFavoriteGroupIds
         : [];
@@ -171,7 +178,7 @@ export function buildFeedFavoriteIdSet(
         (groupKey: any) => !String(groupKey || '').startsWith('local:')
     );
 
-    for (const favorite of Object.values(remoteFavoritesById ?? {}) as any[]) {
+    for (const favorite of remoteFavorites) {
         if (favorite?.type !== 'friend') {
             continue;
         }

@@ -145,7 +145,7 @@ async function getDashboards(): Promise<Dashboard[]> {
         const source = Array.isArray(parsed?.dashboards)
             ? parsed.dashboards
             : [];
-        return source
+        return (source as unknown[])
             .map((dashboard) =>
                 sanitizeDashboard(dashboard, { generateMissingRowIds: false })
             )

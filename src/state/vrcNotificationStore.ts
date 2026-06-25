@@ -147,7 +147,9 @@ function buildCategories(rows: NotificationRow[]): NotificationCategories {
     const recentCutoff = Date.now() - RECENT_WINDOW_MS;
 
     for (const notification of Array.isArray(rows) ? rows : []) {
-        const category = getNotificationCategory(notification?.type as string);
+        const category = getNotificationCategory(
+            String(notification?.type || '')
+        );
         const bucket = categories[category] || categories.other;
         if (isUnseenNotification(notification)) {
             bucket.unseen.push(notification);

@@ -35,7 +35,23 @@ import { normalizeUserId } from './userProfileFields';
 
 const locationUserProfileFetchConcurrency = 4;
 
-export function createEmptyUserDialogLocationPanel(location: any = '') {
+type UserDialogLocationPanelData = {
+    location: unknown;
+    instance: unknown;
+    ownerUser: unknown;
+    ownerGroup: unknown;
+    users: unknown[];
+    friendCount: number;
+    playerCount: number;
+};
+
+function recordValues(value: unknown): Record<string, unknown>[] {
+    return value && typeof value === 'object' ? Object.values(value) : [];
+}
+
+export function createEmptyUserDialogLocationPanel(
+    location: unknown = ''
+): UserDialogLocationPanelData {
     return {
         location,
         instance: null,
@@ -239,9 +255,7 @@ export function useUserDialogLocationPanel({
 
         addKnownUser(profile);
         addKnownUser(currentUserSnapshot);
-        for (const friend of Object.values(
-            friendsById as Record<string, any>
-        )) {
+        for (const friend of recordValues(friendsById)) {
             addKnownUser(friend);
         }
 
@@ -250,9 +264,7 @@ export function useUserDialogLocationPanel({
             mergeLocationUser(rowsById, currentUserSnapshot);
         }
 
-        for (const friend of Object.values(
-            friendsById as Record<string, any>
-        )) {
+        for (const friend of recordValues(friendsById)) {
             if (!userIsAtLocation(friend)) {
                 continue;
             }
@@ -302,7 +314,7 @@ export function useUserDialogLocationPanel({
                       endpoint: currentEndpoint
                   })
                   .then((response: any) => response.json)
-                  .catch(() => null)
+                  .catch((): null => null)
             : Promise.resolve(null);
         const playerSnapshotPromise = currentLocationMatches
             ? playerListPersistenceRepository
@@ -310,7 +322,7 @@ export function useUserDialogLocationPanel({
                       currentUserId: normalizedCurrentUserId,
                       currentLocation: snapshotLocation
                   })
-                  .catch(() => null)
+                  .catch((): null => null)
             : Promise.resolve(null);
 
         Promise.allSettled([
@@ -600,7 +612,7 @@ export function useUserDialogLocationPanel({
         };
     }, [currentEndpoint, currentInviteLocation, reloadToken]);
 
-    function refreshLocationPanel(requestLocation: any) {
+    function refreshLocationPanel(requestLocation: any): null {
         const activeLocation = resolvePresenceLocation(profile);
         if (
             requestLocation &&

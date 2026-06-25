@@ -69,5 +69,7 @@ export function sanitizeGalleryGridDensity(value: any = '') {
 }
 
 export function getGalleryGridDensityConfig(value: any) {
-    return DENSITY_CONFIGS[sanitizeGalleryGridDensity(value)];
+    return DENSITY_CONFIGS[
+        sanitizeGalleryGridDensity(value) as keyof typeof DENSITY_CONFIGS
+    ];
 }

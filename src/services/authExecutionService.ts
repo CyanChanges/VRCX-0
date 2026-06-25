@@ -163,7 +163,7 @@ function setRuntimeAuthScope(userId: unknown = '', endpoint: unknown = '') {
             endpoint:
                 typeof endpoint === 'string' ? endpoint : String(endpoint ?? '')
         })
-        .catch((error: unknown) => {
+        .catch((error: unknown): null => {
             console.warn('Failed to sync runtime auth scope:', error);
             return null;
         });

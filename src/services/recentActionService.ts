@@ -24,7 +24,7 @@ function normalizeUserId(value: unknown): string {
 }
 
 function normalizeMinutes(value: unknown): number {
-    const parsed = Number.parseInt(value as string, 10);
+    const parsed = Number.parseInt(String(value), 10);
     return Number.isNaN(parsed) ? 60 : Math.min(1440, Math.max(1, parsed));
 }
 

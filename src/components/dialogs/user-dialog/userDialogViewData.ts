@@ -320,7 +320,8 @@ export function buildUserDialogProfileSummary({
     const isLocalUserVrcPlusSupporter = Boolean(
         currentUserSnapshot?.$isVRCPlus ||
         currentUserSnapshot?.tags?.includes?.('system_supporter') ||
-        globalThis?.$debug?.debugVrcPlus
+        (globalThis as typeof globalThis & { $debug?: AppDebug })?.$debug
+            ?.debugVrcPlus
     );
     const ownGroupCountText = formatCountText(
         userGroupSections.ownGroups.length,

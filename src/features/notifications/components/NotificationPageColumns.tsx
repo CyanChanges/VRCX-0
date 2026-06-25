@@ -1,3 +1,4 @@
+import type { ColumnDef } from '@tanstack/react-table';
 import { CheckIcon, SendIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +47,7 @@ export function useNotificationColumns({
 }: any) {
     const { t } = useTranslation();
 
-    return useMemo(
+    return useMemo<ColumnDef<unknown>[]>(
         () => [
             {
                 id: 'created_at',

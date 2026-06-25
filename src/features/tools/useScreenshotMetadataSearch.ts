@@ -3,7 +3,9 @@ import { useMemo, useState } from 'react';
 import {
     DEFAULT_SCREENSHOT_SEARCH_SORT,
     SCREENSHOT_METADATA_SEARCH_TYPES,
-    sortScreenshotSearchRows
+    sortScreenshotSearchRows,
+    type ScreenshotSearchRow,
+    type ScreenshotSearchSort
 } from './screenshotMetadataValues';
 
 export function useScreenshotMetadataSearch() {
@@ -11,7 +13,7 @@ export function useScreenshotMetadataSearch() {
     const [searchType, setSearchType] = useState(
         SCREENSHOT_METADATA_SEARCH_TYPES[0].value
     );
-    const [searchRows, setSearchRows] = useState<any[]>([]);
+    const [searchRows, setSearchRows] = useState<ScreenshotSearchRow[]>([]);
     const [searchViewMode, setSearchViewMode] = useState('detail');
     const [searchSort, setSearchSort] = useState(
         DEFAULT_SCREENSHOT_SEARCH_SORT
@@ -20,7 +22,7 @@ export function useScreenshotMetadataSearch() {
 
     const currentSearchType =
         SCREENSHOT_METADATA_SEARCH_TYPES.find(
-            (type: any) => type.value === searchType
+            (type) => type.value === searchType
         ) ?? SCREENSHOT_METADATA_SEARCH_TYPES[0];
 
     const sortedSearchRows = useMemo(
@@ -29,12 +31,12 @@ export function useScreenshotMetadataSearch() {
     );
 
     const searchNavigationPaths = useMemo(
-        () => sortedSearchRows.map((row: any) => row.filePath),
+        () => sortedSearchRows.map((row) => row.filePath),
         [sortedSearchRows]
     );
     const selectedPathIndex = searchNavigationPaths.indexOf(selectedPath);
 
-    function resetSearchTable({ clearQuery = false }: any = {}) {
+    function resetSearchTable({ clearQuery = false } = {}) {
         setSearchRows([]);
         setSelectedPath('');
         if (clearQuery) {
@@ -43,8 +45,8 @@ export function useScreenshotMetadataSearch() {
         setSearchViewMode('detail');
     }
 
-    function toggleSearchSort(key: any) {
-        setSearchSort((current: any) => {
+    function toggleSearchSort(key: string) {
+        setSearchSort((current: ScreenshotSearchSort) => {
             if (current.key === key) {
                 return {
                     ...current,

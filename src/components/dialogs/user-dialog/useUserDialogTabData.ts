@@ -60,7 +60,7 @@ function normalizeUserDialogAvatarSort(value: any) {
         : 'name';
 }
 
-function emptyDataPatchForTab(tab: any) {
+function emptyDataPatchForTab(tab: any): Record<string, unknown[]> {
     const dataKey = userDialogDataKeyForTab(tab);
     if (!dataKey) {
         return {};

@@ -52,7 +52,7 @@ export function cloneFavoriteLimits(
     };
 }
 
-export const initialFavoriteStoreState = {
+export const initialFavoriteStoreState: FavoriteStoreState = {
     currentUserId: null,
     loadStatus: 'idle',
     detail: '',
@@ -80,7 +80,7 @@ export const initialFavoriteStoreState = {
     localFriendFavoritesList: [],
     localWorldDetailsById: {},
     localAvatarDetailsById: {}
-} satisfies FavoriteStoreState;
+};
 
 export function normalizeFavoriteStoreId(value: unknown): string {
     return typeof value === 'string'
@@ -226,16 +226,14 @@ export function normalizeFavoriteRecordMap(
         if (!recordKey || !isObjectRecord(value)) {
             continue;
         }
-        next[recordKey] = { ...value } as FavoriteRecord;
+        next[recordKey] = { ...value };
     }
     return next;
 }
 
 export function normalizeFavoriteGroups(source: unknown): FavoriteGroup[] {
     return Array.isArray(source)
-        ? source
-              .filter(isObjectRecord)
-              .map((group) => ({ ...group }) as FavoriteGroup)
+        ? source.filter(isObjectRecord).map((group) => ({ ...group }))
         : [];
 }
 

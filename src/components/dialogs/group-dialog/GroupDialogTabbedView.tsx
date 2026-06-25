@@ -368,7 +368,7 @@ export function GroupDialogTabbedView({
                         { n: 100, offset: 0 },
                         { endpoint: currentEndpoint, force }
                     )
-                    .catch(() => [])
+                    .catch((): never[] => [])
             ]);
             if (requestId !== groupEventsRequestRef.current) {
                 return;

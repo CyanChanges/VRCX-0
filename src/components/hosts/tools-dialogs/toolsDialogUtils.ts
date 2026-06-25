@@ -71,7 +71,7 @@ export function updateArrayValue(values: any, value: any, checked: any) {
 export async function getUserMemoMap() {
     const rows = await memoPersistenceRepository
         .getAllUserMemos()
-        .catch(() => []);
+        .catch((): never[] => []);
     return new Map(
         (Array.isArray(rows) ? rows : [])
             .filter((row: any) => typeof row?.userId === 'string' && row.userId)

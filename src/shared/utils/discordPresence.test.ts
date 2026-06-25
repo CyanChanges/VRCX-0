@@ -8,8 +8,8 @@ import {
     isPopcornPalaceWorld
 } from './discordPresence';
 
-const t = (key: any) =>
-    ({
+const t = (key: string) => {
+    const labels: Record<string, string> = {
         'view.settings.discord_presence.rpc.desktop': 'Desktop',
         'view.settings.discord_presence.rpc.vr': 'VR',
         'dialog.user.status.active': 'Active',
@@ -17,7 +17,9 @@ const t = (key: any) =>
         'dialog.user.status.ask_me': 'Ask Me',
         'dialog.user.status.busy': 'Busy',
         'dialog.user.status.offline': 'Offline'
-    })[key] ?? key;
+    };
+    return labels[key] ?? key;
+};
 
 describe('discordPresence utilities', () => {
     it('derives platform labels from game state before profile platform', () => {

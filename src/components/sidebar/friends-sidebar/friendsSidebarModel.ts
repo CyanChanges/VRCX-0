@@ -102,7 +102,10 @@ export function buildFavoriteIdSet(
     const ids = new Set(
         (remoteFavoriteIds || []).map(normalizeId).filter(Boolean)
     );
-    for (const values of Object.values(localFriendFavorites || {}) as any[]) {
+    for (const values of Object.values(localFriendFavorites || {})) {
+        if (!Array.isArray(values)) {
+            continue;
+        }
         for (const id of values || []) {
             const normalized = normalizeId(id);
             if (normalized) {

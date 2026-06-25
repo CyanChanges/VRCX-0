@@ -2,19 +2,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const REALTIME_TRANSPORT_TEST_TIMEOUT_MS = 15_000;
 
-const runtimeState = vi.hoisted(() => ({
-    capabilities: {
+const runtimeState = vi.hoisted(() => {
+    const capabilities: Record<string, boolean> = {
         runtimeRealtimeTransport: true,
         ipc: false
-    },
-    commands: {
-        appIpcAnnounceStart: vi.fn(),
-        appStartRealtimeTransport: vi.fn(),
-        appSyncRealtimeFriendSnapshot: vi.fn(),
-        appStopRealtimeTransport: vi.fn()
-    },
-    eventHandlers: new Map<string, Set<(payload: unknown) => void>>()
-}));
+    };
+    return {
+        capabilities,
+        commands: {
+            appIpcAnnounceStart: vi.fn(),
+            appStartRealtimeTransport: vi.fn(),
+            appSyncRealtimeFriendSnapshot: vi.fn(),
+            appStopRealtimeTransport: vi.fn()
+        },
+        eventHandlers: new Map<string, Set<(payload: unknown) => void>>()
+    };
+});
 
 vi.mock('@/platform/tauri/bindings', () => ({
     commands: runtimeState.commands

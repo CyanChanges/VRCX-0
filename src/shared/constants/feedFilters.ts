@@ -46,7 +46,9 @@ const getOptions = (
             textKey: 'dialog.shared_feed_filters.everyone'
         }
     };
-    return optionTypes.map((type: any) => optionMap[type]);
+    return optionTypes.map(
+        (type: SharedFeedFilterOptionValue) => optionMap[type]
+    );
 };
 
 function feedFiltersOptions(): {

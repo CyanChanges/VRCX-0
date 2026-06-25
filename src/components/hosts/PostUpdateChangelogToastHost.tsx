@@ -9,7 +9,7 @@ import {
 import { formatReleaseDisplayVersion } from '@/shared/utils/releaseVersion';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
-export function PostUpdateChangelogToastHost() {
+export function PostUpdateChangelogToastHost(): null {
     const { t } = useTranslation();
     const hasCheckedRef = useRef(false);
     const backendRuntimeSnapshotHydrated = useRuntimeStore(

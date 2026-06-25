@@ -31,7 +31,7 @@ function asObjectRow(row: ObjectRow | unknown[] | null | undefined): ObjectRow {
 }
 
 function parseInteger(value: unknown, fallback: number) {
-    return Number.parseInt((value ?? fallback) as string, 10) || fallback;
+    return Number.parseInt(String(value ?? fallback), 10) || fallback;
 }
 
 function normalizeAvatarCacheRow(

@@ -79,7 +79,7 @@ function parseResponse(data: unknown): unknown {
     if (typeof data === 'object') {
         return data;
     }
-    return JSON.parse(data as string);
+    return JSON.parse(String(data));
 }
 
 async function getJson(path: string): Promise<VrcStatusResponse | null> {
@@ -222,7 +222,7 @@ async function claimVrcStatusRefreshDue(): Promise<boolean> {
 
 export function handleBrowserFocus(): Promise<void> {
     const { vrcStatus } = useRuntimeStore.getState();
-    const lastFetchedAt = Date.parse((vrcStatus.lastFetchedAt || '') as string);
+    const lastFetchedAt = Date.parse(String(vrcStatus.lastFetchedAt || ''));
     if (
         Number.isFinite(lastFetchedAt) &&
         Date.now() - lastFetchedAt < FOCUS_REFRESH_MS

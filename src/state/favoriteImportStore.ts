@@ -40,11 +40,28 @@ type FavoriteImportStore = {
     resetImportState(): void;
 };
 
-const initialState: any = {
+type FavoriteImportState = Pick<
+    FavoriteImportStore,
+    | 'open'
+    | 'type'
+    | 'input'
+    | 'rows'
+    | 'loading'
+    | 'progress'
+    | 'progressTotal'
+    | 'importProgress'
+    | 'importProgressTotal'
+    | 'errors'
+    | 'remoteGroupName'
+    | 'localGroupName'
+    | 'sessionId'
+>;
+
+const initialState: FavoriteImportState = {
     open: false,
-    type: 'avatar' as FavoriteImportType,
+    type: 'avatar',
     input: '',
-    rows: [] as FavoriteImportRow[],
+    rows: [],
     loading: false,
     progress: 0,
     progressTotal: 0,

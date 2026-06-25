@@ -153,7 +153,7 @@ function instancePresenceKey(endpoint: unknown, location: unknown): string {
 function createRosterRow(
     user: unknown,
     fallback: Record<string, unknown> = {}
-) {
+): RosterUserRow {
     const source = record(user);
     const nested = record(source.user);
     const id = firstText(userId(source), fallback.id, fallback.userId);
@@ -185,9 +185,11 @@ function createRosterRow(
                   $location_at: joinedAt
               }
             : {}),
-        ...(fallback.subtitle ? { $subtitle: fallback.subtitle } : {}),
+        ...(fallback.subtitle
+            ? { $subtitle: firstText(fallback.subtitle) }
+            : {}),
         ...(fallback.isFriend ? { isFriend: true } : {})
-    } as RosterUserRow;
+    };
 }
 
 function rowKey(user: RosterUserRow): string {

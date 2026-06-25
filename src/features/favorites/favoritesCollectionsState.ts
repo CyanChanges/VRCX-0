@@ -1,12 +1,17 @@
 import { normalizeFavoriteEntityId as normalizeEntityId } from './favoritesItems';
 import type { FavoriteKind } from './favoritesTypes';
 
-const EMPTY_ARRAY: any[] = [];
-const EMPTY_OBJECT: Record<string, any> = {};
+const EMPTY_ARRAY: unknown[] = [];
+const EMPTY_OBJECT: Record<string, unknown> = {};
+
+type FavoriteAvatarTagSource = {
+    tags?: unknown[];
+    type?: unknown;
+};
 
 function addNormalizedFavoriteIds(
     ids: Set<string>,
-    idsByGroupKey: Record<string, any>
+    idsByGroupKey: Record<string, unknown>
 ) {
     for (const groupIds of Object.values(idsByGroupKey)) {
         for (const favoriteId of Array.isArray(groupIds) ? groupIds : []) {
@@ -23,9 +28,9 @@ export function buildFavoriteFriendFactIds({
     kind,
     localFriendFavorites = EMPTY_OBJECT
 }: {
-    groupedFavoriteFriendIdsByGroupKey?: Record<string, any>;
+    groupedFavoriteFriendIdsByGroupKey?: Record<string, unknown>;
     kind: FavoriteKind;
-    localFriendFavorites?: Record<string, any>;
+    localFriendFavorites?: Record<string, unknown>;
 }) {
     if (kind !== 'friend') {
         return [];
@@ -42,7 +47,7 @@ export function buildFavoriteAvatarTags({
     remoteFavoritesById = EMPTY_OBJECT
 }: {
     kind: FavoriteKind;
-    remoteFavoritesById?: Record<string, any>;
+    remoteFavoritesById?: Record<string, unknown>;
 }) {
     if (kind !== 'avatar') {
         return [];
@@ -51,9 +56,14 @@ export function buildFavoriteAvatarTags({
     return Array.from(
         new Set(
             Object.values(remoteFavoritesById)
-                .filter((favorite: any) => favorite?.type === 'avatar')
-                .map((favorite: any) =>
-                    typeof favorite?.tags?.[0] === 'string'
+                .filter(
+                    (favorite): favorite is FavoriteAvatarTagSource =>
+                        Boolean(favorite && typeof favorite === 'object') &&
+                        (favorite as FavoriteAvatarTagSource).type === 'avatar'
+                )
+                .map((favorite) =>
+                    Array.isArray(favorite.tags) &&
+                    typeof favorite.tags[0] === 'string'
                         ? favorite.tags[0].trim()
                         : ''
                 )

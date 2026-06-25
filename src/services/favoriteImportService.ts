@@ -13,7 +13,30 @@ import { useRuntimeStore } from '@/state/runtimeStore';
 
 import { bootstrapFavorites } from './favoriteBootstrapService';
 
-const TYPE_CONFIG: Record<string, Record<string, any>> = {
+type FavoriteRemoteGroupsKey =
+    | 'favoriteAvatarGroups'
+    | 'favoriteWorldGroups'
+    | 'favoriteFriendGroups';
+type FavoriteLocalGroupsKey =
+    | 'localAvatarFavoriteGroups'
+    | 'localWorldFavoriteGroups'
+    | 'localFriendFavoriteGroups';
+type FavoriteLocalFavoritesKey =
+    | 'localAvatarFavorites'
+    | 'localWorldFavorites'
+    | 'localFriendFavorites';
+
+interface FavoriteTypeConfig {
+    label: string;
+    regex: RegExp;
+    remoteGroupsKey: FavoriteRemoteGroupsKey;
+    localGroupsKey: FavoriteLocalGroupsKey;
+    localFavoritesKey: FavoriteLocalFavoritesKey;
+    getProfile(id: string, endpoint: string): Promise<any>;
+    addLocal(id: string, groupName: string): Promise<void>;
+}
+
+const TYPE_CONFIG: Record<string, FavoriteTypeConfig> = {
     avatar: {
         label: 'Avatar',
         regex: /avtr_[0-9A-Fa-f]{8}-(?:[0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}/g,

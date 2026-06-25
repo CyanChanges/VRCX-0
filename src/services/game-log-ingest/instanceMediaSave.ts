@@ -30,14 +30,16 @@ type GalleryPrint = {
     timestamp?: string | number | Date;
     id?: string;
     files?: {
-        image?: unknown;
+        image?: string;
     };
 };
 type InventoryItem = Record<string, unknown> & {
     itemType?: unknown;
     flags?: unknown;
-    metadata?: Record<string, unknown>;
-    imageUrl?: unknown;
+    metadata?: Record<string, unknown> & {
+        imageUrl?: string;
+    };
+    imageUrl?: string;
     created_at?: unknown;
     holderDisplayName?: unknown;
     ownerDisplayName?: unknown;
@@ -117,7 +119,7 @@ async function saveInstancePrintToFile(printId: unknown): Promise<void> {
         const monthFolder = createdAt.toISOString().slice(0, 7);
         const fileName = getPrintFileName(print);
         const filePath = await mediaRepository.savePrintToFile(
-            imageUrl as string,
+            imageUrl,
             ugcFolderPath,
             monthFolder,
             fileName
@@ -126,9 +128,7 @@ async function saveInstancePrintToFile(printId: unknown): Promise<void> {
             filePath &&
             (await configRepository.getBool('cropInstancePrints', false))
         ) {
-            const cropped = await mediaRepository.cropPrintImage(
-                filePath as string
-            );
+            const cropped = await mediaRepository.cropPrintImage(filePath);
             if (!cropped) {
                 console.warn('Failed to crop print image:', filePath);
             }
@@ -172,7 +172,7 @@ async function saveInstanceStickerToFile({
             .replace(/Z/g, '');
         const fileName = `${normalizeString(displayName)}_${fileNameDate}_${inventoryId}.png`;
         await mediaRepository.saveStickerToFile(
-            imageUrl as string,
+            imageUrl || '',
             ugcFolderPath,
             monthFolder,
             fileName
@@ -236,7 +236,7 @@ async function saveInstanceEmojiToFile({
             normalizeString(item.created_at) || new Date().toISOString();
         const monthFolder = createdAt.slice(0, 7);
         await mediaRepository.saveEmojiToFile(
-            imageUrl as string,
+            imageUrl || '',
             ugcFolderPath,
             monthFolder,
             getEmojiFileName(emoji)
@@ -250,7 +250,7 @@ function enqueuePrintSave(
     cache: MediaCache,
     requestUrl: unknown
 ): Promise<unknown> | null {
-    const printId = parsePrintFromUrl(requestUrl as string);
+    const printId = parsePrintFromUrl(normalizeString(requestUrl));
     if (!printId) {
         return null;
     }
@@ -263,7 +263,7 @@ function enqueueEmojiSave(
     cache: MediaCache,
     requestUrl: unknown
 ): Promise<unknown> | null {
-    const inventory = parseInventoryFromUrl(requestUrl as string);
+    const inventory = parseInventoryFromUrl(normalizeString(requestUrl));
     if (!inventory) {
         return null;
     }

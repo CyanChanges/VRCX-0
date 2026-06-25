@@ -134,7 +134,12 @@ export function ImageCropDialog({
                 crop.height
             );
         } catch (error) {
-            if ((error as any)?.name === 'InvalidStateError') {
+            if (
+                error &&
+                typeof error === 'object' &&
+                'name' in error &&
+                error.name === 'InvalidStateError'
+            ) {
                 setImageBitmap(null);
                 return;
             }
