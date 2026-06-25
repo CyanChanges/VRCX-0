@@ -29,7 +29,7 @@ pub struct WorldCache {
 }
 
 struct CachedWorld {
-    value: Arc<Value>,
+    name: Option<String>,
 }
 
 impl WorldCache {
@@ -67,7 +67,7 @@ impl WorldCache {
             .unwrap_or_else(|poisoned| poisoned.into_inner());
         favorites.clear();
         for world_id in &favorite_ids {
-            favorites.insert(world_id.clone(), cached_placeholder(world_id));
+            favorites.insert(world_id.clone(), cached_placeholder());
         }
         for row in favorite_rows {
             let world_id = normalize_id(&row.id);
@@ -124,13 +124,13 @@ impl WorldCache {
                     favorites.insert(world_id.clone(), cached);
                     self.working.invalidate(world_id);
                 } else {
-                    favorites.insert(world_id.clone(), cached_placeholder(world_id));
+                    favorites.insert(world_id.clone(), cached_placeholder());
                     missing_ids.push(world_id.clone());
                 }
             }
         }
         for (world_id, cached) in demoted {
-            if world_name(&cached.value).is_some() {
+            if cached.name.is_some() {
                 self.working.insert(world_id, cached);
             }
         }
@@ -161,28 +161,28 @@ impl WorldCache {
         }
         if let Some(name) = self
             .favorite(&world_id)
-            .and_then(|world| world_name(&world.value))
+            .and_then(|world| world.name.clone())
         {
             return Some(name);
         }
         if let Some(name) = self
             .working
             .get(&world_id)
-            .and_then(|world| world_name(&world.value))
+            .and_then(|world| world.name.clone())
         {
             return Some(name);
         }
         None
     }
 
-    pub(crate) fn hydrate_from_payload(&self, world_value: &Value) -> Option<Arc<Value>> {
+    pub(crate) fn hydrate_from_payload(&self, world_value: &Value) -> Option<String> {
         let world_id = world_id(world_value);
         if world_id.is_empty() {
             return None;
         }
         let name = world_name(world_value)?;
         let cached = Arc::new(CachedWorld {
-            value: Arc::new(world_value.clone()),
+            name: Some(name.clone()),
         });
         let mut favorites = self
             .favorites
@@ -203,7 +203,7 @@ impl WorldCache {
                 created_at: value_or_null(world_value, "createdAt"),
                 description: value_or_null(world_value, "description"),
                 image_url: value_or_null(world_value, "imageUrl"),
-                name: Value::String(name),
+                name: Value::String(name.clone()),
                 release_status: value_or_null(world_value, "releaseStatus"),
                 thumbnail_image_url: value_or_null(world_value, "thumbnailImageUrl"),
                 updated_at: value_or_null(world_value, "updatedAt"),
@@ -213,7 +213,7 @@ impl WorldCache {
                 tracing::warn!(world_id = %world_id, "WorldCache upsert failed: {error}");
             }
         }
-        Some(cached.value.clone())
+        Some(name)
     }
 
     pub async fn resolve_name(
@@ -274,8 +274,7 @@ impl WorldCache {
             return None;
         }
         let world = serde_json::from_str::<Value>(&response.data).ok()?;
-        self.hydrate_from_payload(&world);
-        world_name(&world)
+        self.hydrate_from_payload(&world)
     }
 
     fn recently_failed(&self, world_id: &str) -> bool {
@@ -366,32 +365,12 @@ impl WorldCache {
 
 fn cached_summary(row: &WorldSummaryOutput) -> Arc<CachedWorld> {
     Arc::new(CachedWorld {
-        value: Arc::new(summary_to_value(row)),
+        name: Some(row.name.clone()),
     })
 }
 
-fn cached_placeholder(world_id: &str) -> Arc<CachedWorld> {
-    Arc::new(CachedWorld {
-        value: Arc::new(serde_json::json!({ "id": world_id })),
-    })
-}
-
-fn summary_to_value(row: &WorldSummaryOutput) -> Value {
-    serde_json::json!({
-        "id": row.id,
-        "authorId": row.author_id,
-        "authorName": row.author_name,
-        "createdAt": row.created_at,
-        "created_at": row.created_at,
-        "description": row.description,
-        "imageUrl": row.image_url,
-        "name": row.name,
-        "releaseStatus": row.release_status,
-        "thumbnailImageUrl": row.thumbnail_image_url,
-        "updatedAt": row.updated_at,
-        "updated_at": row.updated_at,
-        "version": row.version,
-    })
+fn cached_placeholder() -> Arc<CachedWorld> {
+    Arc::new(CachedWorld { name: None })
 }
 
 fn normalize_id(value: &str) -> String {
@@ -450,7 +429,7 @@ mod tests {
     use serde_json::json;
     use vrcx_0_persistence::cache_entities::CacheEntityInput;
     use vrcx_0_persistence::favorites::favorite_add;
-    use vrcx_0_persistence::worlds::world_cache_upsert;
+    use vrcx_0_persistence::worlds::{world_cache_get, world_cache_upsert};
 
     struct TestDir {
         path: PathBuf,
@@ -494,6 +473,47 @@ mod tests {
             updated_at: json!(updated_at),
             version: json!(1),
         }
+    }
+
+    #[test]
+    fn hydrate_from_payload_caches_name_only_and_persists_summary() {
+        let (_dir, db) = test_db("hydrate-name-only");
+        let cache = WorldCache::new(Arc::clone(&db), 8, Duration::from_secs(60));
+
+        let name = cache.hydrate_from_payload(&json!({
+            "id": "wrld_heavy",
+            "name": "Heavy World",
+            "authorId": "usr_author",
+            "authorName": "Author",
+            "createdAt": "2026-01-01T00:00:00.000Z",
+            "description": "Summary detail",
+            "imageUrl": "image.png",
+            "releaseStatus": "public",
+            "thumbnailImageUrl": "thumb.png",
+            "updatedAt": "2026-01-02T00:00:00.000Z",
+            "version": 7,
+            "unityPackages": [{ "assetUrl": "https://example.test/large.bundle" }],
+            "instances": [["123", 4]],
+            "tags": ["author_tag_large"]
+        }));
+
+        assert_eq!(name.as_deref(), Some("Heavy World"));
+        assert_eq!(cache.get_name("wrld_heavy").as_deref(), Some("Heavy World"));
+        assert_eq!(
+            cache
+                .working
+                .get("wrld_heavy")
+                .and_then(|world| world.name.clone())
+                .as_deref(),
+            Some("Heavy World")
+        );
+
+        let row = world_cache_get(db.as_ref(), "wrld_heavy".into())
+            .unwrap()
+            .unwrap();
+        assert_eq!(row.name, "Heavy World");
+        assert_eq!(row.description, "Summary detail");
+        assert_eq!(row.version, 7);
     }
 
     #[test]
