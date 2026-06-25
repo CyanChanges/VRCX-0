@@ -8,8 +8,7 @@ import type {
 import { links } from '@/shared/constants/link';
 
 export const COMMUNITY_THEME_CATALOG_URL = links.communityThemesIndex;
-export const COMMUNITY_THEME_STATS_API_URL =
-    'https://vrcx0-theme-stats-api.maplenagisa.workers.dev';
+export const COMMUNITY_THEME_STATS_API_URL = links.communityThemesStatsApi;
 
 export const COMMUNITY_THEME_CSS_FILE_NAME = 'theme.css';
 export const COMMUNITY_THEME_MANIFEST_FILE_NAME = 'theme.json';

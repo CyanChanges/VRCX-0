@@ -19,7 +19,8 @@ const links: Record<string, string> = {
     communityThemesRepository:
         'https://github.com/Map1en/VRCX-0-Community-Themes',
     communityThemesIndex:
-        'https://raw.githubusercontent.com/Map1en/VRCX-0-Community-Themes/master/themes/index.json'
+        'https://raw.githubusercontent.com/Map1en/VRCX-0-Community-Themes/master/themes/index.json',
+    communityThemesStatsApi: 'https://theme.vrcx-0.dev'
 };
 
 export { links };

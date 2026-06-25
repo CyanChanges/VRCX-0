@@ -39,8 +39,7 @@ const webkitBuildTarget = {
     vite: 'safari17',
     browserslist: 'Safari 17.0'
 };
-const productionTelemetryEndpoint =
-    'https://vrcx0-telemetry.maplenagisa.workers.dev';
+const productionTelemetryEndpoint = 'https://stats.vrcx-0.dev';
 
 function getPlatformBuildTarget() {
     switch (process.platform) {
