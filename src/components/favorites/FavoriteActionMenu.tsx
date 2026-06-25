@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 
 import favoritePersistenceRepository from '@/repositories/favoritePersistenceRepository';
 import vrchatFavoriteRepository from '@/repositories/vrchatFavoriteRepository';
+import { persistAvatarDetails } from '@/services/favoriteAvatarCacheService';
 import { persistWorldDetails } from '@/services/favoriteWorldCacheService';
 import { useFavoriteStore } from '@/state/favoriteStore';
 import type {
@@ -221,6 +222,8 @@ export function FavoriteActionMenu({
             }
             if (kind === 'world' && isRecord(entity)) {
                 persistWorldDetails(entity, normalizedEntityId);
+            } else if (kind === 'avatar' && isRecord(entity)) {
+                persistAvatarDetails(entity, normalizedEntityId);
             }
             toast.success(t('view.favorite.label.favorite_added'));
         } catch (error) {
@@ -294,6 +297,8 @@ export function FavoriteActionMenu({
         try {
             if (kind === 'world' && isRecord(entity)) {
                 persistWorldDetails(entity, normalizedEntityId);
+            } else if (kind === 'avatar' && isRecord(entity)) {
+                persistAvatarDetails(entity, normalizedEntityId);
             }
             await favoritePersistenceRepository.addLocalFavorite({
                 kind,

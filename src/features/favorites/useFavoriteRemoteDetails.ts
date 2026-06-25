@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import vrchatFavoriteRepository from '@/repositories/vrchatFavoriteRepository';
+import { persistAvatarDetailsById } from '@/services/favoriteAvatarCacheService';
 import {
     deleteFavoriteRemoteDetailsPromise,
     getFavoriteRemoteDetailsCache,
@@ -12,11 +13,11 @@ import {
 import { persistWorldDetailsById } from '@/services/favoriteWorldCacheService';
 import { useRuntimeStore } from '@/state/runtimeStore';
 
-function normalizeValues(values: any) {
+function normalizeValues(values: unknown): string[] {
     return Array.from(
         new Set(
             (Array.isArray(values) ? values : [])
-                .map((value: any) =>
+                .map((value) =>
                     typeof value === 'string'
                         ? value.trim()
                         : String(value ?? '').trim()
@@ -24,6 +25,12 @@ function normalizeValues(values: any) {
                 .filter(Boolean)
         )
     );
+}
+
+function normalizeEntityId(value: unknown) {
+    return typeof value === 'string'
+        ? value.trim()
+        : String(value ?? '').trim();
 }
 
 function buildCacheKey(type: any, endpoint: any, idsKey: any, tagsKey: any) {
@@ -74,10 +81,7 @@ function buildInitialState(
 function mapEntitiesById(items: any): Record<string, unknown> {
     const byId: Record<string, unknown> = {};
     for (const item of Array.isArray(items) ? items : []) {
-        const itemId =
-            typeof item?.id === 'string'
-                ? item.id.trim()
-                : String(item?.id ?? '').trim();
+        const itemId = normalizeEntityId(item?.id);
         if (!itemId) {
             continue;
         }
@@ -92,9 +96,7 @@ async function loadRemoteDetails(type: any, endpoint: any, tags: any) {
             endpoint,
             tags
         });
-        return mapEntitiesById(
-            avatars.filter((avatar: any) => avatar?.releaseStatus !== 'hidden')
-        );
+        return mapEntitiesById(avatars);
     }
 
     const worlds = await vrchatFavoriteRepository.getAllFavoriteWorlds({
@@ -191,6 +193,8 @@ export function useFavoriteRemoteDetails({
                     }
                     if (type === 'world') {
                         persistWorldDetailsById(filtered);
+                    } else if (type === 'avatar') {
+                        persistAvatarDetailsById(filtered);
                     }
 
                     const nextState: RemoteDetailsState = {

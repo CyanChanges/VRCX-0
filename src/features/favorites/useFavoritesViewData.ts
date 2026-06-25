@@ -36,11 +36,14 @@ export function useFavoritesViewData({
     localWorldFavorites,
     remoteEntityDetails,
     remoteFavoritesById,
+    remoteWorldCacheFallbacksById,
+    remoteAvatarCacheFallbacksById,
     searchMode,
     searchQuery,
     selectedGroupKey,
     selectedSource,
-    sortValue
+    sortValue,
+    worldFactsById
 }: any) {
     const { t } = useTranslation();
 
@@ -111,7 +114,11 @@ export function useFavoritesViewData({
             remoteFavoritesById,
             remoteEntityDetailsData: remoteEntityDetails.data,
             remoteEntityDetailsStatus: remoteEntityDetails.status,
+            worldFactsById,
+            remoteWorldCacheFallbacksById,
+            remoteAvatarCacheFallbacksById,
             localWorldDetailsById,
+            localAvatarDetailsById,
             remoteGroupLabelByKey,
             t
         });
@@ -121,14 +128,18 @@ export function useFavoritesViewData({
         groupedFavoriteFriendIdsByGroupKey,
         knownUsersById,
         kind,
+        localAvatarDetailsById,
         localWorldDetailsById,
         remoteEntityDetails.data,
         remoteEntityDetails.status,
         remoteFavoritesById,
+        remoteAvatarCacheFallbacksById,
+        remoteWorldCacheFallbacksById,
         remoteGroupLabelByKey,
         remoteGroups,
         sortValue,
-        t
+        t,
+        worldFactsById
     ]);
 
     const localItemsByGroup = useMemo(() => {

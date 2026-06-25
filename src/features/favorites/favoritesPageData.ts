@@ -1,6 +1,7 @@
 import { userImage } from '@/services/entityMediaService';
 import { resolveFriendPresenceLocation } from '@/shared/utils/location';
 
+import { hasDisplayableEntityDetail } from './favoriteEntityDetails';
 import {
     favoriteGroupType,
     normalizeFavoriteEntityId as normalizeEntityId,
@@ -10,6 +11,12 @@ import {
 import type { FavoriteGroup, FavoriteItem } from './favoritesTypes';
 
 type FavoriteItemsByGroup = Record<string, FavoriteItem[]>;
+
+function firstDisplayableDetail(candidates: unknown[]) {
+    return candidates.find((candidate) =>
+        hasDisplayableEntityDetail(candidate)
+    );
+}
 
 function buildRemoteFavoriteGroups(
     kind: any,
@@ -65,35 +72,6 @@ function defaultFavoriteDetailSubtitle(kind: any, isUnavailable: any, t: any) {
     return isUnavailable
         ? translate('view.favorites.error.avatar_details_unavailable')
         : translate('view.favorites.loading.loading_avatar_details');
-}
-
-function hasNonEmptyString(value: unknown) {
-    return typeof value === 'string' && value.trim().length > 0;
-}
-
-function hasUsableCachedWorldDetail(value: unknown) {
-    if (!value || typeof value !== 'object') {
-        return false;
-    }
-
-    const displayFields = [
-        'name',
-        'authorName',
-        'thumbnailImageUrl',
-        'imageUrl',
-        'description',
-        'releaseStatus'
-    ];
-    if (
-        displayFields.some((field) =>
-            hasNonEmptyString(Reflect.get(value, field))
-        )
-    ) {
-        return true;
-    }
-
-    const tags = Reflect.get(value, 'tags');
-    return Array.isArray(tags) && tags.length > 0;
 }
 
 function resolveFavoriteSubtitle(friend: any, location: any) {
@@ -275,7 +253,11 @@ export function buildFavoriteRemoteItemsByGroup({
     remoteFavoritesById,
     remoteEntityDetailsData,
     remoteEntityDetailsStatus,
+    worldFactsById = {},
+    remoteWorldCacheFallbacksById = {},
+    remoteAvatarCacheFallbacksById = {},
     localWorldDetailsById = {},
+    localAvatarDetailsById = {},
     remoteGroupLabelByKey,
     t
 }: any): FavoriteItemsByGroup {
@@ -326,14 +308,37 @@ export function buildFavoriteRemoteItemsByGroup({
         }
 
         const detail = remoteEntityDetailsData[favoriteId];
-        const cachedWorldDetail =
-            kind === 'world' &&
-            hasUsableCachedWorldDetail(localWorldDetailsById[favoriteId])
-                ? localWorldDetailsById[favoriteId]
-                : null;
-        const displayDetail = detail || cachedWorldDetail;
+        let liveDetail: any = null;
+        let fallbackDetail: any = null;
+
+        if (kind === 'world') {
+            liveDetail = hasDisplayableEntityDetail(detail) ? detail : null;
+            fallbackDetail = firstDisplayableDetail([
+                worldFactsById[favoriteId],
+                remoteWorldCacheFallbacksById[favoriteId],
+                localWorldDetailsById[favoriteId]
+            ]);
+        } else {
+            const isHiddenRemoteAvatar =
+                hasDisplayableEntityDetail(detail) &&
+                String(detail.releaseStatus ?? '').toLowerCase() === 'hidden';
+            liveDetail =
+                hasDisplayableEntityDetail(detail) && !isHiddenRemoteAvatar
+                    ? detail
+                    : null;
+            fallbackDetail = firstDisplayableDetail([
+                isHiddenRemoteAvatar ? detail : null,
+                localAvatarDetailsById[favoriteId],
+                remoteAvatarCacheFallbacksById[favoriteId]
+            ]);
+        }
+
+        const displayDetail = liveDetail || fallbackDetail || null;
+        const usedFallback = !liveDetail && Boolean(displayDetail);
         const isUnavailable =
             remoteEntityDetailsStatus === 'ready' && !displayDetail;
+        const isPrivate =
+            displayDetail?.releaseStatus === 'private' || usedFallback;
         const playerCount = Number(displayDetail?.occupants) || 0;
         const subtitle =
             kind === 'world'
@@ -363,13 +368,13 @@ export function buildFavoriteRemoteItemsByGroup({
                 defaultFavoriteEntityTitle(kind, translate),
             subtitle,
             description: displayDetail?.description || '',
-            seedData: detail || cachedWorldDetail || null,
+            seedData: displayDetail || null,
             imageUrl: shrinkImage(
                 displayDetail?.thumbnailImageUrl ||
                     displayDetail?.imageUrl ||
                     ''
             ),
-            isPrivate: displayDetail?.releaseStatus === 'private',
+            isPrivate,
             isUnavailable,
             tags: displayDetail?.tags || [],
             playerCount,

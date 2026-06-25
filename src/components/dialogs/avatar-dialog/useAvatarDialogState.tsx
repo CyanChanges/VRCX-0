@@ -6,6 +6,7 @@ import avatarProfileRepository from '@/repositories/avatarProfileRepository';
 import vrchatAuthRepository from '@/repositories/vrchatAuthRepository';
 import { getCurrentAvatarLiveWearTime } from '@/services/avatarWearTimeService';
 import { convertFileUrlToImageUrl } from '@/services/entityMediaService';
+import { persistFavoriteAvatarDetails } from '@/services/favoriteAvatarCacheService';
 import { getAvailablePlatforms } from '@/shared/utils/avatarPlatform';
 import { useDialogStore } from '@/state/dialogStore';
 import { useModalStore } from '@/state/modalStore';
@@ -247,6 +248,7 @@ export function useAvatarDialogState({ avatarId, seedData = null }: any) {
                     return;
                 }
 
+                persistFavoriteAvatarDetails(nextAvatar);
                 setAvatar((currentAvatar: any) =>
                     memoRevisionRef.current === memoRevision
                         ? nextAvatar

@@ -5,6 +5,7 @@ import { useKnownUserFacts } from '@/domain/users/useKnownUser';
 import avatarCacheRepository from '@/repositories/avatarCacheRepository';
 import { useFavoriteStore } from '@/state/favoriteStore';
 import { useFriendRosterStore } from '@/state/friendRosterStore';
+import { useWorldFactsStore } from '@/state/worldFactsStore';
 
 import {
     buildFavoriteAvatarTags,
@@ -13,6 +14,10 @@ import {
 } from './favoritesCollectionsState';
 import type { FavoriteKind } from './favoritesTypes';
 import { useFavoriteRemoteDetails } from './useFavoriteRemoteDetails';
+import { useRemoteAvatarCacheFallbacks } from './useRemoteAvatarCacheFallbacks';
+import { useRemoteWorldCacheFallbacks } from './useRemoteWorldCacheFallbacks';
+
+const EMPTY_WORLD_FACTS: Record<string, unknown> = {};
 
 export function useFavoritesCollectionsState({
     currentEndpoint,
@@ -29,6 +34,9 @@ export function useFavoritesCollectionsState({
     );
     const favoriteState = useFavoriteStore(useShallow(favoriteSelector));
     const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const worldFactsById = useWorldFactsStore((state: any) =>
+        kind === 'world' ? state.worldsById : EMPTY_WORLD_FACTS
+    );
     const [avatarHistoryLoading, setAvatarHistoryLoading] = useState(false);
     const [avatarHistory, setAvatarHistory] = useState<any[]>([]);
     const [remoteDetailsRefreshToken, setRemoteDetailsRefreshToken] =
@@ -78,6 +86,21 @@ export function useFavoritesCollectionsState({
             (kind === 'world'
                 ? favoriteState.favoriteWorldIds.length > 0
                 : favoriteState.favoriteAvatarIds.length > 0)
+    });
+    const remoteWorldCacheFallbacksById = useRemoteWorldCacheFallbacks({
+        favoriteWorldIds: favoriteState.favoriteWorldIds,
+        kind,
+        localWorldDetailsById: favoriteState.localWorldDetailsById,
+        remoteEntityDetailsData: remoteEntityDetails.data,
+        remoteEntityDetailsStatus: remoteEntityDetails.status,
+        worldFactsById
+    });
+    const remoteAvatarCacheFallbacksById = useRemoteAvatarCacheFallbacks({
+        favoriteAvatarIds: favoriteState.favoriteAvatarIds,
+        kind,
+        localAvatarDetailsById: favoriteState.localAvatarDetailsById,
+        remoteEntityDetailsData: remoteEntityDetails.data,
+        remoteEntityDetailsStatus: remoteEntityDetails.status
     });
 
     useEffect(() => {
@@ -151,7 +174,10 @@ export function useFavoritesCollectionsState({
             localWorldFavoriteGroups: favoriteState.localWorldFavoriteGroups,
             localWorldFavorites: favoriteState.localWorldFavorites,
             remoteEntityDetails,
-            remoteFavoritesById: favoriteState.remoteFavoritesById
+            remoteFavoritesById: favoriteState.remoteFavoritesById,
+            remoteWorldCacheFallbacksById,
+            remoteAvatarCacheFallbacksById,
+            worldFactsById
         }
     };
 }

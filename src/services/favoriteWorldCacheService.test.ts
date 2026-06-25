@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import favoritePersistenceRepository from '@/repositories/favoritePersistenceRepository';
+import favoritePersistenceRepository, {
+    type FavoriteCacheEntity
+} from '@/repositories/favoritePersistenceRepository';
 import { useFavoriteStore } from '@/state/favoriteStore';
 
 import {
@@ -11,13 +13,17 @@ import {
 
 vi.mock('@/repositories/favoritePersistenceRepository', () => ({
     default: {
-        addWorldToCache: vi.fn()
+        addWorldToCache: vi.fn(),
+        getCachedWorldById: vi.fn()
     }
 }));
 
 describe('favoriteWorldCacheService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(
+            favoritePersistenceRepository.getCachedWorldById
+        ).mockResolvedValue(null);
         useFavoriteStore.getState().resetFavorites();
     });
 
@@ -90,7 +96,7 @@ describe('favoriteWorldCacheService', () => {
             wrld_b: {
                 id: 'wrld_b',
                 name: 'World B',
-                releaseStatus: 'private',
+                releaseStatus: 'unknown',
                 thumbnailImageUrl: 'https://example.test/b.png'
             }
         });
@@ -157,7 +163,49 @@ describe('favoriteWorldCacheService', () => {
         );
     });
 
+    it('inserts complete private world details when no DB cache exists', async () => {
+        await expect(
+            cacheWorldDetails({
+                id: 'wrld_private',
+                name: 'Private World',
+                releaseStatus: 'private',
+                thumbnailImageUrl: 'https://example.test/private.png'
+            })
+        ).resolves.toBe(true);
+
+        expect(
+            favoritePersistenceRepository.getCachedWorldById
+        ).toHaveBeenCalledWith('wrld_private');
+        expect(
+            favoritePersistenceRepository.addWorldToCache
+        ).toHaveBeenCalledWith(
+            expect.objectContaining({
+                id: 'wrld_private',
+                name: 'Private World',
+                releaseStatus: 'private'
+            })
+        );
+    });
+
     it('does not overwrite DB cache with private world details', async () => {
+        const existingWorld: FavoriteCacheEntity = {
+            id: 'wrld_private',
+            authorId: 'usr_author',
+            authorName: 'Cache Author',
+            created_at: '2026-06-01T00:00:00.000Z',
+            description: 'Existing description',
+            imageUrl: 'https://example.test/existing-image.png',
+            name: 'Existing Public World',
+            releaseStatus: 'public',
+            thumbnailImageUrl: 'https://example.test/existing-thumb.png',
+            updated_at: '2026-06-02T00:00:00.000Z',
+            version: 1
+        };
+
+        vi.mocked(
+            favoritePersistenceRepository.getCachedWorldById
+        ).mockResolvedValue(existingWorld);
+
         await expect(
             cacheWorldDetails({
                 id: 'wrld_private',
@@ -167,6 +215,9 @@ describe('favoriteWorldCacheService', () => {
             })
         ).resolves.toBe(false);
 
+        expect(
+            favoritePersistenceRepository.getCachedWorldById
+        ).toHaveBeenCalledWith('wrld_private');
         expect(
             favoritePersistenceRepository.addWorldToCache
         ).not.toHaveBeenCalled();

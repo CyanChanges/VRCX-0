@@ -13,17 +13,30 @@ function normalizeString(value: unknown) {
     return typeof value === 'string' ? value : String(value ?? '');
 }
 
-function canPersistWorldSnapshot(world: any) {
-    const releaseStatus = normalizeEntityId(world?.releaseStatus).toLowerCase();
-    if (releaseStatus !== 'public') {
-        return false;
-    }
+function normalizeReleaseStatus(world: any) {
+    return normalizeEntityId(world?.releaseStatus).toLowerCase();
+}
 
+function hasCompleteWorldSnapshot(world: any) {
     const name = normalizeString(world?.name).trim();
     const imageUrl =
         normalizeString(world?.thumbnailImageUrl).trim() ||
         normalizeString(world?.imageUrl).trim();
     return Boolean(name && imageUrl);
+}
+
+function canUpsertWorldSnapshot(world: any) {
+    return (
+        normalizeReleaseStatus(world) === 'public' &&
+        hasCompleteWorldSnapshot(world)
+    );
+}
+
+function canInsertMissingWorldSnapshot(world: any) {
+    return (
+        normalizeReleaseStatus(world) === 'private' &&
+        hasCompleteWorldSnapshot(world)
+    );
 }
 
 function buildWorldCacheEntry(
@@ -40,7 +53,10 @@ function buildWorldCacheEntry(
         return null;
     }
 
-    if (!canPersistWorldSnapshot(world)) {
+    if (
+        !canUpsertWorldSnapshot(world) &&
+        !canInsertMissingWorldSnapshot(world)
+    ) {
         return null;
     }
 
@@ -63,6 +79,16 @@ export async function cacheWorldDetails(world: any, fallbackWorldId?: unknown) {
     const entry = buildWorldCacheEntry(world, fallbackWorldId);
     if (!entry) {
         return false;
+    }
+
+    const canUpsert = canUpsertWorldSnapshot(world);
+    if (!canUpsert) {
+        const existing = await favoritePersistenceRepository.getCachedWorldById(
+            entry.id
+        );
+        if (existing) {
+            return false;
+        }
     }
 
     await favoritePersistenceRepository.addWorldToCache(entry);
