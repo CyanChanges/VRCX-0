@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
     appVrOverlayConfigReload: vi.fn(),
+    appLanguageChanged: vi.fn(),
     appRestartApplication: vi.fn(),
     appOverlayActivityDefinitionsGet: vi.fn(),
     appOverlayActivityFiltersReload: vi.fn(),
@@ -39,6 +40,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/platform/tauri/bindings', () => ({
     commands: {
         appVrOverlayConfigReload: mocks.appVrOverlayConfigReload,
+        appLanguageChanged: mocks.appLanguageChanged,
         appRestartApplication: mocks.appRestartApplication,
         appOverlayActivityDefinitionsGet:
             mocks.appOverlayActivityDefinitionsGet,
@@ -269,6 +271,7 @@ describe('preferencesService characterization', () => {
         );
         mocks.storageSetString.mockResolvedValue(undefined);
         mocks.appVrOverlayConfigReload.mockResolvedValue(undefined);
+        mocks.appLanguageChanged.mockResolvedValue(undefined);
         mocks.appRestartApplication.mockResolvedValue(undefined);
         mocks.refreshDiscordPresence.mockResolvedValue(undefined);
         mocks.readRecentActionCooldown.mockReturnValue({
@@ -452,6 +455,7 @@ describe('preferencesService characterization', () => {
             locale: 'ko'
         });
         expect(mocks.appVrOverlayConfigReload).toHaveBeenCalledTimes(1);
+        expect(mocks.appLanguageChanged).toHaveBeenCalledTimes(1);
     });
 
     it('updates DOM classes for table and accessibility preferences', async () => {
