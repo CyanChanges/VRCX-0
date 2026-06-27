@@ -19,7 +19,7 @@ import { toast } from 'sonner';
 
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { cn } from '@/lib/utils';
-import { setSidebarCollapsedPreference } from '@/services/preferencesService';
+import { setNavbarCollapsedPreference } from '@/services/preferencesService';
 import {
     closeWindow,
     isWindowMaximized,
@@ -273,11 +273,11 @@ export function AppTitleBar() {
     const notificationActionVisible =
         titleBarActionsVisible && notificationLayout !== 'table';
     const leftSidebarLabel = sidebarOpen
-        ? t('nav_tooltip.collapse_menu')
-        : t('nav_tooltip.expand_menu');
+        ? t('nav_tooltip.collapse_nav')
+        : t('nav_tooltip.expand_nav');
     const rightSidebarLabel = rightSidebarOpen
-        ? t('app_menu.hide_side_panel')
-        : t('app_menu.show_side_panel');
+        ? t('app_menu.hide_friends_sidebar')
+        : t('app_menu.show_friends_sidebar');
     const isMacHost = hostPlatform === 'macos';
     const quickSearchShortcut = getTitleBarShortcut(isMacHost, 'K');
     const directAccessShortcut = getTitleBarShortcut(isMacHost, 'D');
@@ -434,7 +434,7 @@ export function AppTitleBar() {
                             label={leftSidebarLabel}
                             className="size-7 min-w-7 rounded-md px-0"
                             onClick={() => {
-                                setSidebarCollapsedPreference(sidebarOpen);
+                                setNavbarCollapsedPreference(sidebarOpen);
                             }}
                         >
                             {sidebarOpen ? (

@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => ({
     appVrOverlayEnabledSet: vi.fn(),
     appReadConfigFile: vi.fn(),
     appWriteConfigFile: vi.fn(),
-    appCurrentCulture: vi.fn(),
+    appSystemCulture: vi.fn(),
     getRawValue: vi.fn(),
     getBool: vi.fn(),
     getString: vi.fn(),
@@ -46,7 +46,7 @@ vi.mock('@/platform/tauri/bindings', () => ({
         appVrOverlayEnabledSet: mocks.appVrOverlayEnabledSet,
         appReadConfigFile: mocks.appReadConfigFile,
         appWriteConfigFile: mocks.appWriteConfigFile,
-        appCurrentCulture: mocks.appCurrentCulture
+        appSystemCulture: mocks.appSystemCulture
     }
 }));
 
@@ -347,7 +347,7 @@ describe('preferencesService characterization', () => {
                 key === 'VRCX-0_notificationTimeout' ? 9000 : Number(fallback)
             )
         );
-        mocks.appCurrentCulture.mockResolvedValue('ja-JP');
+        mocks.appSystemCulture.mockResolvedValue('ja-JP');
 
         const snapshot = await loadPreferenceSnapshot();
 

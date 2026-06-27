@@ -32,6 +32,109 @@ struct ShellLocaleCatalog {
     locales: BTreeMap<String, BTreeMap<String, String>>,
 }
 
+#[cfg(target_os = "macos")]
+pub(crate) mod macos_menu {
+    use super::text;
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(crate) struct AppMenuLabels {
+        pub(crate) title: String,
+        pub(crate) about: String,
+        pub(crate) settings: String,
+        pub(crate) check_updates: String,
+        pub(crate) restart: String,
+        pub(crate) start_background_mode: String,
+        pub(crate) logout: String,
+        pub(crate) quit: String,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(crate) struct ViewMenuLabels {
+        pub(crate) title: String,
+        pub(crate) notification_center: String,
+        pub(crate) quick_search: String,
+        pub(crate) direct_access: String,
+        pub(crate) toggle_nav: String,
+        pub(crate) toggle_friends_sidebar: String,
+        pub(crate) custom_nav: String,
+        pub(crate) themes: String,
+        pub(crate) zoom_in: String,
+        pub(crate) zoom_out: String,
+        pub(crate) reset_zoom: String,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(crate) struct ToolsMenuLabels {
+        pub(crate) title: String,
+        pub(crate) all_tools: String,
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub(crate) struct HelpMenuLabels {
+        pub(crate) title: String,
+        pub(crate) changelog: String,
+        pub(crate) keyboard_shortcuts: String,
+        pub(crate) report_issue: String,
+        pub(crate) github: String,
+        pub(crate) discord: String,
+        pub(crate) qq_group: String,
+        #[cfg(feature = "devtools")]
+        pub(crate) open_devtools: String,
+        pub(crate) support_vrcx: String,
+    }
+
+    pub(crate) fn app_menu_labels_for_language(language: &str) -> AppMenuLabels {
+        AppMenuLabels {
+            title: text(language, "nativeShell.menu.app.title"),
+            about: text(language, "nativeShell.menu.app.about"),
+            settings: text(language, "nativeShell.menu.app.settings"),
+            check_updates: text(language, "nativeShell.menu.app.checkUpdates"),
+            restart: text(language, "nativeShell.menu.app.restart"),
+            start_background_mode: text(language, "nativeShell.menu.app.startBackgroundMode"),
+            logout: text(language, "nativeShell.menu.app.logout"),
+            quit: text(language, "nativeShell.menu.app.quit"),
+        }
+    }
+
+    pub(crate) fn view_menu_labels_for_language(language: &str) -> ViewMenuLabels {
+        ViewMenuLabels {
+            title: text(language, "nativeShell.menu.view.title"),
+            notification_center: text(language, "nativeShell.menu.view.notificationCenter"),
+            quick_search: text(language, "nativeShell.menu.view.quickSearch"),
+            direct_access: text(language, "nativeShell.menu.view.directAccess"),
+            toggle_nav: text(language, "nativeShell.menu.view.toggleNav"),
+            toggle_friends_sidebar: text(language, "nativeShell.menu.view.toggleFriendsSidebar"),
+            custom_nav: text(language, "nativeShell.menu.view.customNav"),
+            themes: text(language, "nativeShell.menu.view.themes"),
+            zoom_in: text(language, "nativeShell.menu.view.zoomIn"),
+            zoom_out: text(language, "nativeShell.menu.view.zoomOut"),
+            reset_zoom: text(language, "nativeShell.menu.view.resetZoom"),
+        }
+    }
+
+    pub(crate) fn tools_menu_labels_for_language(language: &str) -> ToolsMenuLabels {
+        ToolsMenuLabels {
+            title: text(language, "nativeShell.menu.tools.title"),
+            all_tools: text(language, "nativeShell.menu.tools.allTools"),
+        }
+    }
+
+    pub(crate) fn help_menu_labels_for_language(language: &str) -> HelpMenuLabels {
+        HelpMenuLabels {
+            title: text(language, "nativeShell.menu.help.title"),
+            changelog: text(language, "nativeShell.menu.help.changelog"),
+            keyboard_shortcuts: text(language, "nativeShell.menu.help.keyboardShortcuts"),
+            report_issue: text(language, "nativeShell.menu.help.reportIssue"),
+            github: text(language, "nativeShell.menu.help.github"),
+            discord: text(language, "nativeShell.menu.help.discord"),
+            qq_group: text(language, "nativeShell.menu.help.qqGroup"),
+            #[cfg(feature = "devtools")]
+            open_devtools: text(language, "nativeShell.menu.help.openDevtools"),
+            support_vrcx: text(language, "nativeShell.menu.help.supportVrcx"),
+        }
+    }
+}
+
 pub(crate) fn tray_labels_for_language(language: &str) -> TrayLabels {
     TrayLabels {
         open: text(language, "nativeShell.tray.open"),
@@ -140,5 +243,21 @@ mod tests {
     #[test]
     fn unsupported_locale_falls_back_to_english() {
         assert_eq!(tray_labels_for_language("not-real").open, "Open VRCX-0");
+    }
+
+    #[test]
+    fn routes_menu_translations() {
+        let app_zh_tw = macos_menu::app_menu_labels_for_language("zh-TW");
+        assert_eq!(app_zh_tw.about, "關於 VRCX-0");
+        assert_eq!(app_zh_tw.title, "VRCX-0");
+
+        let view_ja = macos_menu::view_menu_labels_for_language("ja");
+        assert_eq!(view_ja.zoom_in, "拡大");
+
+        let help_en = macos_menu::help_menu_labels_for_language("en");
+        assert_eq!(help_en.discord, "Join our Discord");
+
+        let help_ko = macos_menu::help_menu_labels_for_language("ko");
+        assert_eq!(help_ko.title, "도움말");
     }
 }

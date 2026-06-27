@@ -171,8 +171,8 @@
         "settings": "설정",
         "manage": "관리",
         "help_support": "도움말 및 지원",
-        "expand_menu": "메뉴 펼치기",
-        "collapse_menu": "메뉴 접기",
+        "expand_nav": "네비게이션 펼치기",
+        "collapse_nav": "네비게이션 접기",
         "toggle_theme": "테마 전환"
     },
     "nav_menu": {
@@ -336,9 +336,8 @@
         "quick_search": "빠른 검색",
         "keyboard_shortcuts": "키보드 단축키",
         "notification_center": "알림 센터",
-        "expand_friends_sidebar": "친구 사이드바 표시",
-        "show_side_panel": "측면 패널 표시",
-        "hide_side_panel": "측면 패널 숨기기",
+        "show_friends_sidebar": "친구 사이드바 표시",
+        "hide_friends_sidebar": "친구 사이드바 숨기기",
         "zoom_in": "확대",
         "zoom_out": "축소",
         "reset_zoom": "줌 재설정",

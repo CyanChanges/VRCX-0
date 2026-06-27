@@ -172,8 +172,8 @@
         "settings": "設定",
         "manage": "管理",
         "help_support": "ヘルプ & サポート",
-        "expand_menu": "メニューを展開",
-        "collapse_menu": "メニューを折りたたむ",
+        "expand_nav": "ナビを展開",
+        "collapse_nav": "ナビを折りたたむ",
         "toggle_theme": "テーマを切り替える"
     },
     "nav_menu": {
@@ -340,8 +340,8 @@
         "quick_search": "クイック検索",
         "keyboard_shortcuts": "キーボードショートカット",
         "notification_center": "通知センター",
-        "expand_friends_sidebar": "フレンドサイドバーを表示",
-        "collapse_friends_sidebar": "フレンドサイドバーを非表示",
+        "show_friends_sidebar": "フレンドサイドバーを表示",
+        "hide_friends_sidebar": "フレンドサイドバーを非表示",
         "show_side_panel": "サイドパネルを表示",
         "hide_side_panel": "サイドパネルを非表示",
         "zoom_in": "拡大",
