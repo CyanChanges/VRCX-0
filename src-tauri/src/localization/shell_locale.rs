@@ -245,8 +245,9 @@ mod tests {
         assert_eq!(tray_labels_for_language("not-real").open, "Open VRCX-0");
     }
 
+    #[cfg(target_os = "macos")]
     #[test]
-    fn routes_menu_translations() {
+    fn routes_macos_menu_translations() {
         let app_zh_tw = macos_menu::app_menu_labels_for_language("zh-TW");
         assert_eq!(app_zh_tw.about, "關於 VRCX-0");
         assert_eq!(app_zh_tw.title, "VRCX-0");
