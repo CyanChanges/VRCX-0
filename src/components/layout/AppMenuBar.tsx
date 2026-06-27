@@ -115,7 +115,7 @@ export function AppMenuBar({
     const [supportOpen, setSupportOpen] = useState(false);
     const [quickAccessKeys, setQuickAccessKeys] = useState<string[]>([]);
     const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
+    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
     const notificationLayout = usePreferencesStore(
         (state: any) => state.notificationLayout
     );
@@ -330,11 +330,11 @@ export function AppMenuBar({
                             </MenuItem>
                             <MenuItem
                                 onSelect={() => {
-                                    setNavbarCollapsedPreference(sidebarOpen);
+                                    setNavbarCollapsedPreference(navbarOpen);
                                 }}
                             >
                                 {t(
-                                    sidebarOpen
+                                    navbarOpen
                                         ? 'nav_tooltip.collapse_nav'
                                         : 'nav_tooltip.expand_bar'
                                 )}

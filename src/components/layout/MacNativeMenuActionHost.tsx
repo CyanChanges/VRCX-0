@@ -76,7 +76,7 @@ export function MacNativeMenuActionHost() {
     const openVrcNotificationCenter = useVrcNotificationStore(
         (state: any) => state.openCenter
     );
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
+    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
     const zoomLevel = useShellStore((state: any) => state.zoomLevel);
     const { toggleSidePanelOpen: toggleFriendsSidebar } =
         useRightSidePanelVisibility(location.pathname);
@@ -204,7 +204,7 @@ export function MacNativeMenuActionHost() {
                     openDirectAccessFromClipboard();
                     break;
                 case 'toggle-nav':
-                    setNavbarCollapsedPreference(sidebarOpen);
+                    setNavbarCollapsedPreference(navbarOpen);
                     break;
                 case 'toggle-friends-sidebar':
                     toggleFriendsSidebar();
@@ -270,7 +270,7 @@ export function MacNativeMenuActionHost() {
             runStartBackgroundMode,
             sessionReady,
             setSystemHostOpen,
-            sidebarOpen,
+            navbarOpen,
             toggleFriendsSidebar
         ]
     );

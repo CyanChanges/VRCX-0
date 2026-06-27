@@ -208,7 +208,7 @@ export function AppTitleBar() {
     const hasAvailableUpdate = useRuntimeStore((state: any) =>
         Boolean(state.updateLoop.hasAvailableUpdate)
     );
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
+    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
     const {
         sidePanelOpen: rightSidebarOpen,
         toggleSidePanelOpen: toggleRightSidebar
@@ -272,7 +272,7 @@ export function AppTitleBar() {
     const titleBarActionsVisible = isSessionReady;
     const notificationActionVisible =
         titleBarActionsVisible && notificationLayout !== 'table';
-    const leftSidebarLabel = sidebarOpen
+    const leftSidebarLabel = navbarOpen
         ? t('nav_tooltip.collapse_nav')
         : t('nav_tooltip.expand_nav');
     const rightSidebarLabel = rightSidebarOpen
@@ -434,10 +434,10 @@ export function AppTitleBar() {
                             label={leftSidebarLabel}
                             className="size-7 min-w-7 rounded-md px-0"
                             onClick={() => {
-                                setNavbarCollapsedPreference(sidebarOpen);
+                                setNavbarCollapsedPreference(navbarOpen);
                             }}
                         >
-                            {sidebarOpen ? (
+                            {navbarOpen ? (
                                 <PanelLeftIcon data-icon="icon" />
                             ) : (
                                 <PanelLeftOpenIcon data-icon="icon" />
