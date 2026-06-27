@@ -455,7 +455,7 @@ describe('preferencesService characterization', () => {
             locale: 'ko'
         });
         expect(mocks.appVrOverlayConfigReload).toHaveBeenCalledTimes(1);
-        expect(mocks.appLanguageChanged).toHaveBeenCalledTimes(1);
+        expect(mocks.appLanguageChanged).toHaveBeenCalledWith('ko');
     });
 
     it('updates DOM classes for table and accessibility preferences', async () => {
