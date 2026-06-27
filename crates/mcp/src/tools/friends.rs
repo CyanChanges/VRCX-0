@@ -18,13 +18,33 @@ use super::common::{
 
 #[tool_router(router = friends_tool_router, vis = "pub(crate)")]
 impl VrcxMcpServer {
-    #[tool(description = "Return observed friend relationship events for this profile.")]
+    #[tool(
+        description = "Return observed friend relationship events (friend added/removed, friend requests, display-name and trust-level changes) for this profile."
+    )]
     async fn get_friend_log(
         &self,
         Parameters(input): Parameters<FriendLogParams>,
     ) -> Result<CallToolResult, String> {
         let owner_user_id = require_current_user_id(&self.runtime)?;
         structured_result(self.get_friend_log_output(owner_user_id, input)?)
+    }
+
+    #[tool(
+        description = "Resolve a VRChat display name (or fragment) to user id(s). ALWAYS call this to obtain a userId before any tool that needs one when you only have a name; NEVER invent or guess a usr_ id — a wrong id silently returns another person's data. Returns ranked candidates (exact name, then friends, then most-seen) with userId, displayName, matchedName, isFriend, encounterCount, lastSeen. Multiple people can share a name; disambiguate, then pass the chosen userId onward."
+    )]
+    async fn find_user(
+        &self,
+        Parameters(input): Parameters<FindUserParams>,
+    ) -> Result<CallToolResult, String> {
+        let owner_user_id = require_current_user_id(&self.runtime)?;
+        social_aggregates_result(social_aggregates::resolve_user_by_name(
+            self.runtime.db.as_ref(),
+            social_aggregates::ResolveUserInput {
+                owner_user_id,
+                name_query: input.name,
+                limit: input.limit,
+            },
+        ))
     }
 
     #[tool(description = "Read private local friend notes; note text is returned to the AI.")]
@@ -75,12 +95,28 @@ impl VrcxMcpServer {
         owner_user_id: String,
         input: FriendLogParams,
     ) -> Result<social_aggregates::FriendLogOutput, String> {
+        if let Some(target) = input
+            .target_user_id
+            .as_deref()
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+        {
+            if !target.starts_with("usr_") {
+                return Err("get_friend_log targetUserId must be a VRChat user id (usr_...); resolve the display name to a user id first".into());
+            }
+        }
+        let types = input
+            .types
+            .unwrap_or_default()
+            .into_iter()
+            .map(|kind| kind.as_str().to_string())
+            .collect();
         social_aggregates::get_friend_log(
             self.runtime.db.as_ref(),
             social_aggregates::FriendLogInput {
                 owner_user_id,
                 target_user_id: input.target_user_id,
-                types: input.types.unwrap_or_default(),
+                types,
                 time_window: input.time_window.unwrap_or_default().into(),
                 limit: input.limit,
                 cursor: input.cursor,
@@ -91,11 +127,12 @@ impl VrcxMcpServer {
 
     fn get_friend_note_output(&self, input: FriendNoteParams) -> Result<FriendNoteOutput, String> {
         if let Some(user_id) = normalize_optional_text(input.user_id) {
-            let rows = memos::memo_get_user(self.runtime.db.as_ref(), user_id)
+            let mut rows = memos::memo_get_user(self.runtime.db.as_ref(), user_id)
                 .map_err(map_persistence_error)?
                 .into_iter()
                 .map(FriendNoteRow::from)
                 .collect::<Vec<_>>();
+            self.enrich_note_display_names(&mut rows)?;
             return Ok(FriendNoteOutput {
                 total_rows: rows.len(),
                 returned_rows: rows.len(),
@@ -135,6 +172,7 @@ impl VrcxMcpServer {
         let next_cursor = truncated
             .then(|| rows.last().map(friend_note_cursor))
             .flatten();
+        self.enrich_note_display_names(&mut rows)?;
         let returned_rows = rows.len();
         Ok(FriendNoteOutput {
             rows,
@@ -144,6 +182,29 @@ impl VrcxMcpServer {
             next_cursor,
             caveats: friend_note_caveats(),
         })
+    }
+
+    fn enrich_note_display_names(&self, rows: &mut [FriendNoteRow]) -> Result<(), String> {
+        if rows.is_empty() {
+            return Ok(());
+        }
+        let owner_user_id = require_current_user_id(&self.runtime)?;
+        let user_ids = rows
+            .iter()
+            .map(|row| row.user_id.clone())
+            .collect::<Vec<_>>();
+        let names = persistence_friends::friend_display_names(
+            self.runtime.db.as_ref(),
+            owner_user_id,
+            &user_ids,
+        )
+        .map_err(map_persistence_error)?;
+        for row in rows.iter_mut() {
+            if let Some(name) = names.get(&row.user_id) {
+                row.display_name = name.clone();
+            }
+        }
+        Ok(())
     }
 
     fn set_friend_note_output(
@@ -248,6 +309,7 @@ impl VrcxMcpServer {
                 user_id: Some(user_id.clone()),
                 time_window: time_window.clone(),
                 bucket: social_aggregates::ActivityBucket::HourOfDay,
+                utc_offset_minutes: None,
             },
         )
         .map_err(map_persistence_error)?
@@ -417,14 +479,49 @@ impl From<FriendChangeKindParam> for social_aggregates::FriendChangeKind {
         }
     }
 }
+#[derive(Clone, Copy, Debug, Deserialize, schemars::JsonSchema)]
+enum FriendLogTypeParam {
+    Friend,
+    Unfriend,
+    FriendRequest,
+    CancelFriendRequest,
+    DisplayName,
+    TrustLevel,
+}
+
+impl FriendLogTypeParam {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::Friend => "Friend",
+            Self::Unfriend => "Unfriend",
+            Self::FriendRequest => "FriendRequest",
+            Self::CancelFriendRequest => "CancelFriendRequest",
+            Self::DisplayName => "DisplayName",
+            Self::TrustLevel => "TrustLevel",
+        }
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct FriendLogParams {
+    /// VRChat user id (usr_...) to filter to one friend. Must be a user id, not a
+    /// display name — resolve names to a user id first.
     target_user_id: Option<String>,
-    types: Option<Vec<String>>,
+    /// Relationship event types to include. Omit to include every type.
+    types: Option<Vec<FriendLogTypeParam>>,
     time_window: Option<TimeWindowParams>,
     limit: Option<i64>,
     cursor: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "camelCase")]
+struct FindUserParams {
+    /// Display name (or fragment) to resolve to a VRChat user id.
+    name: String,
+    /// Maximum ranked candidates to return.
+    limit: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
@@ -473,6 +570,7 @@ struct FriendNoteOutput {
 #[serde(rename_all = "camelCase")]
 struct FriendNoteRow {
     user_id: String,
+    display_name: String,
     memo: String,
     edited_at: String,
 }
@@ -481,6 +579,7 @@ impl From<memos::UserMemoOutput> for FriendNoteRow {
     fn from(value: memos::UserMemoOutput) -> Self {
         Self {
             user_id: value.user_id,
+            display_name: String::new(),
             memo: value.memo,
             edited_at: value.edited_at,
         }
@@ -614,6 +713,7 @@ mod friend_note_tests {
     fn note(user_id: &str, edited_at: &str) -> FriendNoteRow {
         FriendNoteRow {
             user_id: user_id.into(),
+            display_name: String::new(),
             memo: "memo".into(),
             edited_at: edited_at.into(),
         }

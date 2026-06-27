@@ -39,6 +39,7 @@ mod router_tests {
             vec![
                 "favorite_local",
                 "favorite_vrchat",
+                "find_user",
                 "get_best_time_to_play",
                 "get_companions_of",
                 "get_copresence_summary",

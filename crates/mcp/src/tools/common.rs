@@ -91,7 +91,8 @@ fn parse_relative_window(text: &str) -> TimeWindowParams {
     let window = |from, to| TimeWindowParams { from, to };
 
     match normalized.as_str() {
-        "" | "all" | "all time" | "alltime" | "any" | "anytime" | "ever" | "always" => {
+        "" | "all" | "all time" | "alltime" | "all history" | "all-history" | "entire history"
+        | "any" | "anytime" | "ever" | "always" | "so far" | "forever" | "lifetime" => {
             return TimeWindowParams::default();
         }
         "today" => return window(rfc(start_of_day(now)), None),

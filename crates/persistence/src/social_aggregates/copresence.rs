@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::common::{row_i64, row_string, ParamsBuilder};
 use crate::database::DatabaseService;
@@ -7,8 +7,8 @@ use crate::Error;
 
 use super::caveats::copresence_caveats;
 use super::helpers::{
-    append_time_window_filter, clamped_optional_limit, millis_to_minutes, normalize_access_bucket,
-    table_exists,
+    append_time_window_filter, clamped_optional_limit, current_friend_id_set, millis_to_minutes,
+    normalize_access_bucket, table_exists, world_names_for_ids,
 };
 use super::types::{
     CopresenceGroupBy, CopresenceSummaryInput, CopresenceSummaryOutput, CopresenceSummaryRow,
@@ -177,7 +177,7 @@ pub fn get_copresence_summary(
     params = params
         .set("min_millis", min_millis)
         .set("limit", limit)
-        .set("owner_user_id", owner_user_id);
+        .set("owner_user_id", owner_user_id.clone());
 
     let mut rows = Vec::new();
     let mut current_key: Option<CopresenceKey> = None;
@@ -200,6 +200,7 @@ pub fn get_copresence_summary(
             current_row = Some(CopresenceSummaryRow {
                 user_id,
                 display_name,
+                is_friend: false,
                 world_id: key.world_id,
                 world_name: None,
                 total_minutes: millis_to_minutes(row_i64(&row, 3)),
@@ -222,6 +223,36 @@ pub fn get_copresence_summary(
     }
     if let Some(row) = current_row {
         rows.push(row);
+    }
+
+    // When friends_only is set the query already restricted rows to current
+    // friends, so skip the extra friend-set read and mark them directly.
+    let friend_ids = if input.friends_only {
+        None
+    } else {
+        Some(current_friend_id_set(db, &owner_user_id)?)
+    };
+    for row in &mut rows {
+        row.is_friend = match &friend_ids {
+            None => true,
+            Some(friend_ids) => !row.user_id.is_empty() && friend_ids.contains(&row.user_id),
+        };
+    }
+
+    let world_ids = rows
+        .iter()
+        .filter_map(|row| row.world_id.clone())
+        .filter(|world_id| !world_id.is_empty())
+        .collect::<BTreeSet<_>>();
+    if !world_ids.is_empty() {
+        let world_names = world_names_for_ids(db, &world_ids)?;
+        for row in &mut rows {
+            if let Some(world_id) = row.world_id.as_ref() {
+                if let Some(name) = world_names.get(world_id) {
+                    row.world_name = Some(name.clone());
+                }
+            }
+        }
     }
     let returned_rows = rows.len();
 

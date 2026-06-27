@@ -8,9 +8,9 @@ use crate::Error;
 use super::caveats::social_graph_caveats;
 use super::types::{SocialGraphEdge, SocialGraphInput, SocialGraphNode, SocialGraphOutput};
 
-const DEFAULT_MAX_NODES: usize = 100;
+const DEFAULT_MAX_NODES: usize = 40;
 const MAX_MAX_NODES: usize = 250;
-const DEFAULT_MAX_EDGES: usize = 500;
+const DEFAULT_MAX_EDGES: usize = 100;
 const MAX_MAX_EDGES: usize = 1_000;
 
 pub fn get_social_graph(
@@ -19,7 +19,13 @@ pub fn get_social_graph(
 ) -> Result<SocialGraphOutput, Error> {
     let owner_user_id = input.owner_user_id;
     let snapshot = mutual_graph_snapshot_get(db, owner_user_id.clone())?;
-    let display_name_by_user_id = friend_log_current_list(db, owner_user_id)?
+    let friends = friend_log_current_list(db, owner_user_id)?;
+    let friend_ids = friends
+        .iter()
+        .map(|friend| friend.user_id.clone())
+        .filter(|user_id| !user_id.trim().is_empty())
+        .collect::<BTreeSet<_>>();
+    let display_name_by_user_id = friends
         .into_iter()
         .filter(|friend| !friend.display_name.trim().is_empty())
         .map(|friend| (friend.user_id, friend.display_name))
@@ -96,6 +102,7 @@ pub fn get_social_graph(
                 .get(&user_id)
                 .cloned()
                 .unwrap_or_default(),
+            is_friend: friend_ids.contains(&user_id),
             user_id,
             connection_degree: connections.len(),
         })

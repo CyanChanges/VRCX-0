@@ -17,7 +17,7 @@ use super::common::{
 #[tool_router(router = activity_tool_router, vis = "pub(crate)")]
 impl VrcxMcpServer {
     #[tool(
-        description = "Return ranked observed co-presence summary facts for friends in a time window. Results are already ranked and limited; pass a small `limit` to widen or narrow the ranking. Output includes totalRows/returnedRows/truncated."
+        description = "Return ranked observed co-presence (time-spent-together) facts, defaulting to current friends. Use this for \"who do I play/spend the most time with\". group_by=friend (default) ranks total minutes per person; only use friend_world to break one person's time down by world. For all-time/\"ever\"/\"so far\" questions OMIT time_window entirely — never pass a narrow window for an all-time question. Results are already ranked and limited; output includes totalRows/returnedRows/truncated and per-row isFriend."
     )]
     async fn get_copresence_summary(
         &self,
@@ -32,12 +32,14 @@ impl VrcxMcpServer {
                 min_minutes: input.min_minutes,
                 limit: input.limit,
                 owner_user_id: Some(owner_user_id),
-                friends_only: input.friends_only,
+                friends_only: input.friends_only.unwrap_or(true),
             },
         ))
     }
 
-    #[tool(description = "Return observed friend online activity buckets by hour or weekday.")]
+    #[tool(
+        description = "Return observed friend online activity buckets by hour or weekday. Hour/weekday buckets are computed in UTC unless you pass utcOffsetMinutes (the user's offset, e.g. 540 for UTC+9) — pass it so the buckets are already in the user's local time and need no conversion."
+    )]
     async fn get_friend_activity_pattern(
         &self,
         Parameters(input): Parameters<FriendActivityPatternParams>,
@@ -50,6 +52,7 @@ impl VrcxMcpServer {
                 user_id: input.user_id,
                 time_window: input.time_window.into(),
                 bucket: input.bucket.into(),
+                utc_offset_minutes: input.utc_offset_minutes,
             },
         ))
     }
@@ -90,7 +93,7 @@ impl VrcxMcpServer {
     }
 
     #[tool(
-        description = "Return the hour-of-day or weekday buckets where the most friends are observed coming online (best time to catch people)."
+        description = "Return the hour-of-day or weekday buckets where the most friends are observed coming online (best time to catch people). Buckets are computed in UTC unless you pass utcOffsetMinutes (the user's offset, e.g. 540 for UTC+9) — pass it so the buckets are already in the user's local time and need no conversion."
     )]
     async fn get_best_time_to_play(
         &self,
@@ -104,6 +107,7 @@ impl VrcxMcpServer {
                 time_window: input.time_window.into(),
                 bucket: input.bucket.into(),
                 limit: input.limit,
+                utc_offset_minutes: input.utc_offset_minutes,
             },
         ))
     }
@@ -282,6 +286,7 @@ impl VrcxMcpServer {
                 time_window: time_window.clone(),
                 bucket: social_aggregates::ActivityBucket::HourOfDay,
                 limit: Some(3),
+                utc_offset_minutes: None,
             },
         )
         .map_err(map_persistence_error)?
@@ -379,15 +384,17 @@ struct CopresenceSummaryParams {
     /// UTC; weeks start Monday. Omit only for all history ("ever", "so far").
     #[serde(default)]
     time_window: TimeWindowParams,
+    /// friend (default) ranks total time per person; friend_world breaks one
+    /// person's time down per world (use only for a per-world breakdown).
     #[serde(default)]
     group_by: CopresenceGroupByParam,
     /// Minimum co-presence minutes to include after aggregation.
     min_minutes: Option<i64>,
     /// Maximum ranked rows to return for a top/most ranking.
     limit: Option<i64>,
-    /// Restrict results to current friends.
-    #[serde(default)]
-    friends_only: bool,
+    /// Restrict to current friends. Defaults to true; set false only to include
+    /// strangers/acquaintances you are not friends with.
+    friends_only: Option<bool>,
 }
 
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
@@ -398,6 +405,9 @@ struct FriendActivityPatternParams {
     time_window: TimeWindowParams,
     #[serde(default)]
     bucket: ActivityBucketParam,
+    /// The user's UTC offset in minutes (e.g. 540 for UTC+9, -300 for UTC-5).
+    /// Pass it so hour/weekday buckets come back in the user's local time.
+    utc_offset_minutes: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
@@ -428,6 +438,9 @@ struct BestTimeToPlayParams {
     #[serde(default)]
     bucket: ActivityBucketParam,
     limit: Option<i64>,
+    /// The user's UTC offset in minutes (e.g. 540 for UTC+9, -300 for UTC-5).
+    /// Pass it so hour/weekday buckets come back in the user's local time.
+    utc_offset_minutes: Option<i64>,
 }
 
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]

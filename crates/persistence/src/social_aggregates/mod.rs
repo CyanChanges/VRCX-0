@@ -10,6 +10,7 @@ mod graph;
 mod helpers;
 mod invites;
 mod recall;
+mod resolve;
 mod types;
 mod worlds;
 
@@ -25,6 +26,7 @@ pub use graph::get_social_graph;
 pub use helpers::normalize_access_bucket;
 pub use invites::get_invite_history;
 pub use recall::recall_encounter;
+pub use resolve::resolve_user_by_name;
 pub use types::{
     ActivityBucket, BestTimeBucketRow, BestTimeFriend, BestTimeToPlayInput, BestTimeToPlayOutput,
     CompanionOfRow, CompanionWorldRow, CompanionsOfInput, CompanionsOfOutput, CopresenceGroupBy,
@@ -34,8 +36,9 @@ pub use types::{
     FriendChangeEvent, FriendChangeKind, FriendChangeRow, FriendChangesInput, FriendChangesOutput,
     FriendLogInput, FriendLogOutput, FriendLogRow, InviteDirection, InviteHistoryInput,
     InviteHistoryOutput, InviteHistoryRow, RecallEncounterInput, RecallEncounterOutput,
-    RecallEncounterRow, SearchWorldsVisitedInput, SearchWorldsVisitedOutput, SocialGraphEdge,
-    SocialGraphInput, SocialGraphNode, SocialGraphOutput, TimeWindow, VisitedWorldRow,
+    RecallEncounterRow, ResolveUserInput, ResolveUserOutput, ResolvedUserRow,
+    SearchWorldsVisitedInput, SearchWorldsVisitedOutput, SocialGraphEdge, SocialGraphInput,
+    SocialGraphNode, SocialGraphOutput, TimeWindow, VisitedWorldRow,
 };
 pub use worlds::{favorite_local, search_worlds_visited};
 

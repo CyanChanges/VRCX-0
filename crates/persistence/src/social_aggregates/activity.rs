@@ -6,7 +6,10 @@ use crate::realtime::normalize_user_table_prefix;
 use crate::Error;
 
 use super::caveats::friend_activity_caveats;
-use super::helpers::{append_time_window_filter, table_exists, typical_online_window, LatestName};
+use super::helpers::{
+    append_time_window_filter, table_exists, typical_online_window, tz_offset_modifier,
+    with_tz_caveat, LatestName,
+};
 use super::types::{
     ActivityBucket, FriendActivityPatternInput, FriendActivityPatternOutput,
     FriendActivityPatternRow,
@@ -25,9 +28,11 @@ pub fn get_friend_activity_pattern(
         });
     }
 
+    let offset_minutes = input.utc_offset_minutes.unwrap_or(0);
+    let tz_modifier = tz_offset_modifier(offset_minutes);
     let bucket_expr = match input.bucket {
-        ActivityBucket::HourOfDay => "strftime('%H', created_at)",
-        ActivityBucket::DayOfWeek => "strftime('%w', created_at)",
+        ActivityBucket::HourOfDay => "strftime('%H', created_at, @tz)",
+        ActivityBucket::DayOfWeek => "strftime('%w', created_at, @tz)",
     };
     let mut sql = format!(
         "WITH filtered AS (
@@ -35,7 +40,7 @@ pub fn get_friend_activity_pattern(
             FROM {table_name}
             WHERE type = 'Online'"
     );
-    let mut params = ParamsBuilder::new();
+    let mut params = ParamsBuilder::new().set("tz", tz_modifier);
     append_time_window_filter(&mut sql, &mut params, &input.time_window, "created_at");
     if let Some(user_id) = input
         .user_id
@@ -114,7 +119,7 @@ pub fn get_friend_activity_pattern(
                 buckets: entry.buckets,
             })
             .collect(),
-        caveats: friend_activity_caveats(),
+        caveats: with_tz_caveat(friend_activity_caveats(), offset_minutes),
     })
 }
 

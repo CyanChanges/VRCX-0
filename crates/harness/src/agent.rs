@@ -197,14 +197,18 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
 
 fn current_time_directive(now_local: DateTime<FixedOffset>) -> String {
     let now_utc = now_local.with_timezone(&Utc);
+    let offset_minutes = now_local.offset().local_minus_utc() / 60;
     format!(
         "The current date is {date} ({weekday}), UTC — resolve relative time windows \
 (\"today\", \"this week\", \"7d\", etc.) against this UTC date. The user's local timezone \
 is UTC{offset}; when you show or describe timestamps to the user, convert the UTC times \
-returned by tools into this local timezone.",
+returned by tools into this local timezone. For any tool that accepts a utcOffsetMinutes \
+parameter (hour/weekday activity buckets), pass utcOffsetMinutes={offset_minutes} so the \
+buckets come back already in the user's local time.",
         date = now_utc.format("%Y-%m-%d"),
         weekday = now_utc.weekday(),
         offset = now_local.format("%:z"),
+        offset_minutes = offset_minutes,
     )
 }
 

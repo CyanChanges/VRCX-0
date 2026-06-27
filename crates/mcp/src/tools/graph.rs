@@ -26,7 +26,9 @@ impl VrcxMcpServer {
         structured_result(self.refresh_mutual_graph_output(owner_user_id, input)?)
     }
 
-    #[tool(description = "Return mutual-friend graph edges and connection degrees.")]
+    #[tool(
+        description = "Return mutual-friend graph edges and connection degrees. Nodes include friends-of-friends (second-degree mutuals), not only your own friends — use each node's isFriend flag to tell them apart; never call a node a friend unless isFriend is true."
+    )]
     async fn get_social_graph(
         &self,
         Parameters(input): Parameters<SocialGraphParams>,
@@ -44,7 +46,9 @@ impl VrcxMcpServer {
         ))
     }
 
-    #[tool(description = "Infer visible companions of a friend from feed_gps overlap.")]
+    #[tool(
+        description = "Infer who a given user is most often co-present with, from the local game log (instances the signed-in user attended). Ranked by shared instances. For \"who does X usually/often play with\" OMIT timeWindow so it covers all history — a narrow window will miss their regular companions. Third-party social circles are undercounted for instances you were not in."
+    )]
     async fn get_companions_of(
         &self,
         Parameters(input): Parameters<CompanionsOfParams>,

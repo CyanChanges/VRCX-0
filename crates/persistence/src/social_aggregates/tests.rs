@@ -311,6 +311,160 @@ fn copresence_renamed_user_does_not_inflate_total_rows() {
 }
 
 #[test]
+fn copresence_marks_is_friend_against_current_friends() {
+    let (_dir, db) = test_db("copresence-is-friend");
+    create_game_log_tables(&db);
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES ('usr_alice', 'Alice', 'Trusted', 1)",
+        &Default::default(),
+    )
+    .unwrap();
+    for (display_name, user_id, millis) in [
+        ("Alice", "usr_alice", 1_200_000),
+        ("Stranger", "usr_stranger", 600_000),
+    ] {
+        insert_join_leave(
+            &db,
+            "2026-06-01T20:00:00Z",
+            "OnPlayerLeft",
+            display_name,
+            user_id,
+            "wrld_a:1",
+            millis,
+        );
+    }
+
+    let output = get_copresence_summary(
+        &db,
+        CopresenceSummaryInput {
+            time_window: TimeWindow::all(),
+            group_by: CopresenceGroupBy::Friend,
+            min_minutes: None,
+            limit: None,
+            owner_user_id: Some("usr_self".into()),
+            friends_only: false,
+        },
+    )
+    .unwrap();
+
+    let alice = output
+        .rows
+        .iter()
+        .find(|row| row.user_id == "usr_alice")
+        .unwrap();
+    assert!(alice.is_friend);
+    let stranger = output
+        .rows
+        .iter()
+        .find(|row| row.user_id == "usr_stranger")
+        .unwrap();
+    assert!(!stranger.is_friend);
+}
+
+#[test]
+fn copresence_enriches_world_name_from_game_log_location() {
+    let (_dir, db) = test_db("copresence-world-name");
+    create_game_log_tables(&db);
+    insert_join_leave(
+        &db,
+        "2026-06-01T20:00:00Z",
+        "OnPlayerLeft",
+        "Alice",
+        "usr_alice",
+        "wrld_party:1",
+        600_000,
+    );
+    db.execute_non_query(
+        "INSERT INTO gamelog_location (created_at, location, world_id, world_name, time, group_name)
+             VALUES ('2026-06-01T19:59:00Z', 'wrld_party:1', 'wrld_party', 'Party World', 600000, '')",
+        &Default::default(),
+    )
+    .unwrap();
+
+    let output = get_copresence_summary(
+        &db,
+        CopresenceSummaryInput {
+            time_window: TimeWindow::all(),
+            group_by: CopresenceGroupBy::FriendWorld,
+            min_minutes: None,
+            limit: None,
+            owner_user_id: None,
+            friends_only: false,
+        },
+    )
+    .unwrap();
+
+    let row = output
+        .rows
+        .iter()
+        .find(|row| row.world_id.as_deref() == Some("wrld_party"))
+        .unwrap();
+    assert_eq!(row.world_name.as_deref(), Some("Party World"));
+}
+
+#[test]
+fn resolve_user_ranks_exact_then_friend_then_seen() {
+    let (_dir, db) = test_db("resolve-user");
+    create_game_log_tables(&db);
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES ('usr_alice', 'Alice', 'Trusted', 1)",
+        &Default::default(),
+    )
+    .unwrap();
+    // Alice (friend, seen twice), Alicia (stranger, seen once), and an exact
+    // "Alic" stranger that must rank first on exact match.
+    for (created_at, display_name, user_id) in [
+        ("2026-06-01T20:00:00Z", "Alice", "usr_alice"),
+        ("2026-06-02T20:00:00Z", "Alice", "usr_alice"),
+        ("2026-06-03T20:00:00Z", "Alicia", "usr_alicia"),
+        ("2026-06-04T20:00:00Z", "Alic", "usr_exact"),
+    ] {
+        insert_join_leave(
+            &db,
+            created_at,
+            "OnPlayerJoined",
+            display_name,
+            user_id,
+            "wrld_a:1",
+            0,
+        );
+    }
+
+    let output = resolve_user_by_name(
+        &db,
+        ResolveUserInput {
+            owner_user_id: "usr_self".into(),
+            name_query: "Alic".into(),
+            limit: None,
+        },
+    )
+    .unwrap();
+
+    let ids = output
+        .rows
+        .iter()
+        .map(|row| row.user_id.as_str())
+        .collect::<Vec<_>>();
+    // Exact "Alic" first, then friend Alice, then stranger Alicia.
+    assert_eq!(ids, ["usr_exact", "usr_alice", "usr_alicia"]);
+    let alice = output
+        .rows
+        .iter()
+        .find(|row| row.user_id == "usr_alice")
+        .unwrap();
+    assert!(alice.is_friend);
+    assert_eq!(alice.encounter_count, 2);
+    assert!(output
+        .rows
+        .iter()
+        .all(|row| !row.user_id.is_empty() && row.user_id.starts_with("usr_")));
+}
+
+#[test]
 fn copresence_friend_world_keeps_tied_worlds_separate() {
     let (_dir, db) = test_db("copresence-world-tie");
     create_game_log_tables(&db);
@@ -486,6 +640,7 @@ fn friend_activity_pattern_counts_online_events_by_hour() {
             user_id: Some("usr_alice".into()),
             time_window: TimeWindow::all(),
             bucket: ActivityBucket::HourOfDay,
+            utc_offset_minutes: None,
         },
     )
     .unwrap();
@@ -495,6 +650,39 @@ fn friend_activity_pattern_counts_online_events_by_hour() {
     assert_eq!(output.rows[0].buckets.get("18"), Some(&2));
     assert_eq!(output.rows[0].buckets.get("21"), Some(&1));
     assert_eq!(output.rows[0].typical_online_window, "18:00-19:00");
+}
+
+#[test]
+fn friend_activity_pattern_buckets_in_local_time_with_offset() {
+    let (_dir, db) = test_db("activity-pattern-offset");
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_feed_online_offline
+            (created_at, user_id, display_name, type, location, world_name, time, group_name)
+         VALUES ('2026-06-01T18:05:00Z', 'usr_alice', 'Alice', 'Online', '', '', 0, '')",
+        &Default::default(),
+    )
+    .unwrap();
+
+    let output = get_friend_activity_pattern(
+        &db,
+        FriendActivityPatternInput {
+            owner_user_id: "usr_self".into(),
+            user_id: Some("usr_alice".into()),
+            time_window: TimeWindow::all(),
+            bucket: ActivityBucket::HourOfDay,
+            utc_offset_minutes: Some(540),
+        },
+    )
+    .unwrap();
+
+    // 18:05 UTC shifted by +9h lands at 03:05 local -> bucket "03", not "18".
+    assert_eq!(output.rows[0].buckets.get("03"), Some(&1));
+    assert!(output.rows[0].buckets.get("18").is_none());
+    assert!(output
+        .caveats
+        .iter()
+        .any(|caveat| caveat.contains("UTC+09:00")));
 }
 
 #[test]
@@ -524,6 +712,7 @@ fn friend_activity_pattern_merges_renamed_user_buckets() {
             user_id: Some("usr_alice".into()),
             time_window: TimeWindow::all(),
             bucket: ActivityBucket::HourOfDay,
+            utc_offset_minutes: None,
         },
     )
     .unwrap();
@@ -758,6 +947,7 @@ fn social_graph_uses_mutual_graph_edges_without_implying_coplay() {
         .find(|node| node.user_id == "usr_a")
         .unwrap();
     assert_eq!(alice.display_name, "Alice");
+    assert!(alice.is_friend);
     assert_eq!(output.fetched_friends, 2);
     assert_eq!(output.opted_out_friends, 1);
     assert_eq!(
@@ -776,6 +966,79 @@ fn social_graph_uses_mutual_graph_edges_without_implying_coplay() {
         .caveats
         .iter()
         .any(|caveat| caveat.contains("refresh_mutual_graph")));
+}
+
+#[test]
+fn social_graph_marks_first_degree_friends_apart_from_mutuals() {
+    let (_dir, db) = test_db("social-graph-is-friend");
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_friends (friend_id TEXT PRIMARY KEY)",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_links (friend_id TEXT NOT NULL, mutual_id TEXT NOT NULL, PRIMARY KEY(friend_id, mutual_id))",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_meta (friend_id TEXT PRIMARY KEY, last_fetched_at TEXT, opted_out INTEGER DEFAULT 0)",
+        &Default::default(),
+    )
+    .unwrap();
+    // usr_a is my friend; usr_stranger is a friend-of-friend, not mine.
+    db.execute_non_query(
+        "INSERT INTO usrself_mutual_graph_friends (friend_id) VALUES ('usr_a')",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_mutual_graph_links (friend_id, mutual_id) VALUES ('usr_a', 'usr_stranger')",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_mutual_graph_meta (friend_id, last_fetched_at, opted_out) VALUES ('usr_a', '2026-06-01T10:00:00Z', 0)",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES ('usr_a', 'Alice', 'Trusted', 1)",
+        &Default::default(),
+    )
+    .unwrap();
+
+    let output = get_social_graph(
+        &db,
+        SocialGraphInput {
+            owner_user_id: "usr_self".into(),
+            user_id: None,
+            depth: 1,
+            max_nodes: None,
+            max_edges: None,
+        },
+    )
+    .unwrap();
+
+    let alice = output
+        .nodes
+        .iter()
+        .find(|node| node.user_id == "usr_a")
+        .unwrap();
+    assert!(alice.is_friend);
+    let stranger = output
+        .nodes
+        .iter()
+        .find(|node| node.user_id == "usr_stranger")
+        .unwrap();
+    assert!(!stranger.is_friend);
+    assert!(stranger.display_name.is_empty());
+    assert!(output
+        .caveats
+        .iter()
+        .any(|caveat| caveat.contains("isFriend")));
 }
 
 #[test]
@@ -901,66 +1164,65 @@ fn favorite_friend_input(action: &str, dry_run: bool) -> FavoriteLocalInput {
 }
 
 #[test]
-fn companions_of_uses_visible_gps_overlap_and_excludes_private_rows() {
+fn companions_of_uses_gamelog_overlap_and_excludes_owner_and_non_overlap() {
     let (_dir, db) = test_db("companions-of");
-    ensure_realtime_tables(&db, "usrself").unwrap();
-    for (created_at, user_id, display_name, location, world_name, time) in [
+    create_game_log_tables(&db);
+    // Target stayed wrld_public:1 [20:00,20:15]; Alice overlaps [20:00,20:10];
+    // the owner overlaps too but must be excluded; Charlie was there later with
+    // no overlap; Bob shared no instance with the target.
+    for (created_at, user_id, display_name, location, millis) in [
         (
-            "2026-06-01T20:00:00Z",
+            "2026-06-01T20:15:00Z",
             "usr_target",
             "Target",
             "wrld_public:1",
-            "Public World",
             900_000,
         ),
         (
-            "2026-06-01T20:05:00Z",
+            "2026-06-01T20:10:00Z",
             "usr_alice",
             "Alice",
             "wrld_public:1",
-            "Public World",
             600_000,
         ),
         (
-            "2026-06-01T21:00:00Z",
-            "usr_target",
-            "Target",
-            "private",
-            "",
-            900_000,
-        ),
-        (
-            "2026-06-01T21:05:00Z",
-            "usr_bob",
-            "Bob",
-            "private",
-            "",
+            "2026-06-01T20:12:00Z",
+            "usr_self",
+            "Self",
+            "wrld_public:1",
             600_000,
         ),
         (
-            "2026-06-01T20:45:00Z",
+            "2026-06-01T20:40:00Z",
             "usr_charlie",
             "Charlie",
             "wrld_public:1",
-            "Public World",
+            300_000,
+        ),
+        (
+            "2026-06-01T20:10:00Z",
+            "usr_bob",
+            "Bob",
+            "wrld_other:1",
             600_000,
         ),
     ] {
-        db.execute_non_query(
-                "INSERT INTO usrself_feed_gps
-                    (created_at, user_id, display_name, location, world_name, previous_location, time, group_name)
-                 VALUES (@created_at, @user_id, @display_name, @location, @world_name, '', @time, '')",
-                &crate::common::ParamsBuilder::new()
-                    .set("created_at", created_at)
-                    .set("user_id", user_id)
-                    .set("display_name", display_name)
-                    .set("location", location)
-                    .set("world_name", world_name)
-                    .set("time", time)
-                    .build(),
-            )
-            .unwrap();
+        insert_join_leave(
+            &db,
+            created_at,
+            "OnPlayerLeft",
+            display_name,
+            user_id,
+            location,
+            millis,
+        );
     }
+    db.execute_non_query(
+        "INSERT INTO gamelog_location (created_at, location, world_id, world_name, time, group_name)
+             VALUES ('2026-06-01T20:00:00Z', 'wrld_public:1', 'wrld_public', 'Public World', 900000, '')",
+        &Default::default(),
+    )
+    .unwrap();
 
     let output = get_companions_of(
         &db,
@@ -978,34 +1240,30 @@ fn companions_of_uses_visible_gps_overlap_and_excludes_private_rows() {
     assert_eq!(output.rows[0].overlap_minutes, 10);
     assert_eq!(output.rows[0].shared_instances, 1);
     assert_eq!(output.rows[0].worlds[0].world_id, "wrld_public");
-    assert!(output
-        .caveats
-        .iter()
-        .any(|caveat| caveat.contains("Private instances")));
+    assert_eq!(output.rows[0].worlds[0].world_name, "Public World");
 }
 
 #[test]
 fn companions_of_renamed_user_shows_latest_name() {
     let (_dir, db) = test_db("companions-of-renamed");
-    ensure_realtime_tables(&db, "usrself").unwrap();
-    for (created_at, user_id, display_name, time) in [
-        ("2026-06-04T20:00:00Z", "usr_target", "Target", 600_000),
-        ("2026-06-01T20:00:00Z", "usr_alice", "AliceOld", 345_600_000),
-        ("2026-06-03T20:00:00Z", "usr_target", "Target", 600_000),
-        ("2026-06-03T20:00:00Z", "usr_alice", "AliceNew", 600_000),
+    create_game_log_tables(&db);
+    // Target and Alice overlapped on two days; Alice was renamed in between, so
+    // the companion row must surface her latest observed name.
+    for (created_at, user_id, display_name) in [
+        ("2026-06-01T20:10:00Z", "usr_target", "Target"),
+        ("2026-06-03T20:10:00Z", "usr_target", "Target"),
+        ("2026-06-01T20:10:00Z", "usr_alice", "AliceOld"),
+        ("2026-06-03T20:10:00Z", "usr_alice", "AliceNew"),
     ] {
-        db.execute_non_query(
-            "INSERT INTO usrself_feed_gps
-                (created_at, user_id, display_name, location, world_name, previous_location, time, group_name)
-             VALUES (@created_at, @user_id, @display_name, 'wrld_public:1', 'Public World', '', @time, '')",
-            &crate::common::ParamsBuilder::new()
-                .set("created_at", created_at)
-                .set("user_id", user_id)
-                .set("display_name", display_name)
-                .set("time", time)
-                .build(),
-        )
-        .unwrap();
+        insert_join_leave(
+            &db,
+            created_at,
+            "OnPlayerLeft",
+            display_name,
+            user_id,
+            "wrld_public:1",
+            600_000,
+        );
     }
 
     let output = get_companions_of(
@@ -1325,6 +1583,7 @@ fn best_time_to_play_ranks_buckets_by_distinct_friends() {
             time_window: TimeWindow::all(),
             bucket: ActivityBucket::HourOfDay,
             limit: None,
+            utc_offset_minutes: None,
         },
     )
     .unwrap();
@@ -1366,6 +1625,7 @@ fn best_time_renamed_user_shows_latest_name() {
             time_window: TimeWindow::all(),
             bucket: ActivityBucket::HourOfDay,
             limit: None,
+            utc_offset_minutes: None,
         },
     )
     .unwrap();
@@ -1408,6 +1668,7 @@ fn best_time_renamed_user_shows_latest_name_across_buckets() {
             time_window: TimeWindow::all(),
             bucket: ActivityBucket::HourOfDay,
             limit: None,
+            utc_offset_minutes: None,
         },
     )
     .unwrap();

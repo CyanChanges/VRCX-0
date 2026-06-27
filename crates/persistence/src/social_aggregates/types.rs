@@ -56,6 +56,7 @@ pub struct CopresenceSummaryOutput {
 pub struct CopresenceSummaryRow {
     pub user_id: String,
     pub display_name: String,
+    pub is_friend: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub world_id: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -84,6 +85,8 @@ pub struct FriendActivityPatternInput {
     pub time_window: TimeWindow,
     #[serde(default)]
     pub bucket: ActivityBucket,
+    #[serde(default)]
+    pub utc_offset_minutes: Option<i64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
@@ -128,6 +131,33 @@ pub struct VisitedWorldRow {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct ResolveUserInput {
+    pub owner_user_id: String,
+    pub name_query: String,
+    #[serde(default)]
+    pub limit: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolveUserOutput {
+    pub rows: Vec<ResolvedUserRow>,
+    pub caveats: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolvedUserRow {
+    pub user_id: String,
+    pub display_name: String,
+    pub matched_name: String,
+    pub is_friend: bool,
+    pub encounter_count: i64,
+    pub last_seen: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct SocialGraphInput {
     pub owner_user_id: String,
     #[serde(default)]
@@ -161,6 +191,7 @@ pub struct SocialGraphOutput {
 pub struct SocialGraphNode {
     pub user_id: String,
     pub display_name: String,
+    pub is_friend: bool,
     pub connection_degree: usize,
 }
 
@@ -378,6 +409,8 @@ pub struct BestTimeToPlayInput {
     pub bucket: ActivityBucket,
     #[serde(default)]
     pub limit: Option<i64>,
+    #[serde(default)]
+    pub utc_offset_minutes: Option<i64>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
