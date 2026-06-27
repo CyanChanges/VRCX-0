@@ -39,7 +39,7 @@ describe('MessageBubble', () => {
         expect(html).not.toContain('Calling');
     });
 
-    it('does not render a standalone streaming cursor while only tool calls exist', () => {
+    it('renders the tool-only streaming cursor after tool calls', () => {
         const html = renderToStaticMarkup(
             <MessageBubble
                 message={assistantMessage({
@@ -57,7 +57,10 @@ describe('MessageBubble', () => {
             />
         );
 
-        expect(html).not.toContain('animate-pulse');
+        expect(html).toContain('animate-pulse');
+        expect(html.indexOf('Get friend profile')).toBeLessThan(
+            html.indexOf('animate-pulse')
+        );
     });
 
     it('keeps the streaming cursor when assistant text is visible', () => {
@@ -73,7 +76,7 @@ describe('MessageBubble', () => {
         expect(html).toContain('animate-pulse');
     });
 
-    it('keeps assistant text before tool calls so new tools do not push the cursor down', () => {
+    it('keeps tool calls before assistant text so the cursor stays below tools', () => {
         const html = renderToStaticMarkup(
             <MessageBubble
                 message={assistantMessage({
@@ -92,8 +95,33 @@ describe('MessageBubble', () => {
             />
         );
 
-        expect(html.indexOf('Reading local social data')).toBeLessThan(
-            html.indexOf('Get friend profile')
+        expect(html.indexOf('Get friend profile')).toBeLessThan(
+            html.indexOf('Reading local social data')
+        );
+    });
+
+    it('treats whitespace-only streaming text as a cursor below tools', () => {
+        const html = renderToStaticMarkup(
+            <MessageBubble
+                message={assistantMessage({
+                    text: '\n\n',
+                    toolCalls: [
+                        {
+                            id: 'tool_1',
+                            name: 'get_friend_profile',
+                            args: '{}',
+                            status: 'pending',
+                            summary: '',
+                            entities: []
+                        }
+                    ]
+                })}
+            />
+        );
+
+        expect(html).not.toContain('whitespace-pre-wrap');
+        expect(html.indexOf('Get friend profile')).toBeLessThan(
+            html.indexOf('animate-pulse')
         );
     });
 });
