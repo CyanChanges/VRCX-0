@@ -4,7 +4,6 @@ use tauri::{AppHandle, State};
 use tauri_plugin_autostart::ManagerExt as _;
 
 use crate::error::AppError;
-use crate::macos_menu::configure_macos_app_menu;
 use crate::state::AppState;
 
 const TRAY_ICON_DEFAULT: &[u8] = include_bytes!("../../../icons/icon.png");
@@ -61,9 +60,12 @@ pub fn app__change_theme(app_handle: AppHandle, value: i32) -> Result<(), AppErr
 
 #[tauri::command]
 #[specta::specta]
+#[allow(unused_variables)]
 pub fn app__language_changed(app_handle: AppHandle, language: String) -> Result<(), AppError> {
     #[cfg(target_os = "macos")]
-    let _ = configure_macos_app_menu(&app_handle, &language);
+    let _ = crate::macos_menu::configure_macos_app_menu(&app_handle, &language);
+    drop(app_handle);
+    drop(language);
     Ok(())
 }
 

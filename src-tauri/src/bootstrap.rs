@@ -786,6 +786,8 @@ pub fn setup_app_with_data_dir(
         .record_phase("tray", "completed", "System tray configured.");
     #[cfg(target_os = "macos")]
     crate::macos_menu::configure_macos_app_menu(app.handle(), &language)?;
+    #[cfg(not(target_os = "macos"))]
+    let _ = language;
     sync_autostart_from_db(app, &state);
     apply_autostart_window_state_if_needed(app, &state);
     start_host_services(app.handle(), &state);
