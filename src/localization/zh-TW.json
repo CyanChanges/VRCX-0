@@ -3419,7 +3419,8 @@
                 "friend": "好友 #",
                 "muted": "已靜音",
                 "order_by": "排序方式",
-                "group_by": "分組方式"
+                "group_by": "分組方式",
+                "deleted": "已刪除帳號"
             },
             "success": {
                 "status_preset_saved": "狀態預設已儲存",

@@ -92,6 +92,7 @@ pub struct FriendLogCurrentOutput {
     pub display_name: String,
     pub trust_level: String,
     pub friend_number: i64,
+    pub is_deleted: bool,
 }
 
 #[derive(Debug, Deserialize, specta::Type)]
@@ -130,7 +131,7 @@ pub fn friend_log_current_list(
     ensure_realtime_tables(db, &user_prefix)?;
     Ok(db
         .execute(
-            &format!("SELECT user_id, display_name, trust_level, friend_number FROM {user_prefix}_friend_log_current ORDER BY friend_number ASC, display_name COLLATE NOCASE ASC, user_id ASC"),
+            &format!("SELECT user_id, display_name, trust_level, friend_number, COALESCE(is_deleted, 0) FROM {user_prefix}_friend_log_current ORDER BY friend_number ASC, display_name COLLATE NOCASE ASC, user_id ASC"),
             &Default::default(),
         )?
         .into_iter()
@@ -139,6 +140,7 @@ pub fn friend_log_current_list(
             display_name: row_string(&row, 1),
             trust_level: row_string(&row, 2),
             friend_number: row_i64(&row, 3),
+            is_deleted: row_i64(&row, 4) != 0,
         })
         .filter(|row| !row.user_id.trim().is_empty())
         .collect())

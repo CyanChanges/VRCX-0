@@ -47,6 +47,8 @@ pub struct RealtimePersistenceBatch {
     pub avatar_time_spent_upserts: Vec<AvatarTimeSpentUpsert>,
     #[serde(default)]
     pub game_log_locations: Vec<GameLogLocationEntry>,
+    #[serde(default)]
+    pub friend_log_marks_deleted: Vec<String>,
 }
 
 impl RealtimePersistenceBatch {
@@ -62,6 +64,7 @@ impl RealtimePersistenceBatch {
             && self.avatar_history_upserts.is_empty()
             && self.avatar_time_spent_upserts.is_empty()
             && self.game_log_locations.is_empty()
+            && self.friend_log_marks_deleted.is_empty()
     }
 }
 

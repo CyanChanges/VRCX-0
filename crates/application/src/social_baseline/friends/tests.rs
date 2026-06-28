@@ -127,6 +127,7 @@ fn fast_roster_snapshot_uses_current_user_ids_and_remote_profiles_without_friend
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot
@@ -175,6 +176,7 @@ fn placeholder_friend_uses_realtime_list_bucket() {
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot
@@ -203,6 +205,7 @@ fn placeholder_active_friend_is_kept_active() {
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot
@@ -247,6 +250,7 @@ fn online_friend_in_private_world_stays_online() {
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot
@@ -283,6 +287,7 @@ fn list_bucket_decides_state_not_location() {
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot
@@ -321,6 +326,7 @@ fn active_list_bucket_ignores_location() {
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &[],
     );
 
     let friends_by_id = snapshot

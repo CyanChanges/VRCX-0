@@ -1,4 +1,5 @@
 use super::*;
+use vrcx_0_persistence::friends::FriendLogCurrentOutput;
 
 pub(super) fn collect_suspicious_friend_ids(
     expected_ids: &[String],
@@ -102,6 +103,10 @@ pub async fn build_friend_roster_baseline(
         return Ok(stale_friend_output(user_id, String::new()));
     }
 
+    let existing_friend_log =
+        friend_log_current_list(deps.db.as_ref(), user_id.clone()).unwrap_or_default();
+    let expected_set: HashSet<&str> = expected_ids.iter().map(String::as_str).collect();
+
     let mut refetch_ids =
         collect_suspicious_friend_ids(&expected_ids, &state_by_id, &fetched_friends_by_id);
     if input.is_first_load {
@@ -111,31 +116,55 @@ pub async fn build_friend_roster_baseline(
             }
         }
     }
-    if !refetch_ids.is_empty() {
-        let repaired = refetch_users_concurrent(&deps, &input.endpoint, refetch_ids).await;
-        for (repaired_id, user) in repaired {
-            let repaired_bucket = normalize_state_bucket(&object_field_string(&user, &["state"]));
-            let Some(mut profile) = RemoteFriendProfile::from_raw(user, None) else {
+
+    let mut check_deleted_ids: Vec<String> = Vec::new();
+    for row in &existing_friend_log {
+        if row.is_deleted {
+            continue;
+        }
+        if row.user_id == user_id || expected_set.contains(row.user_id.as_str()) {
+            continue;
+        }
+        refetch_ids.push(row.user_id.clone());
+        check_deleted_ids.push(row.user_id.clone());
+    }
+
+    let repaired: HashMap<String, Value> = if !refetch_ids.is_empty() {
+        let results = refetch_users_concurrent(&deps, &input.endpoint, refetch_ids).await;
+        for (repaired_id, user) in &results {
+            let repaired_bucket = normalize_state_bucket(&object_field_string(user, &["state"]));
+            let Some(mut profile) = RemoteFriendProfile::from_raw(user.clone(), None) else {
                 continue;
             };
             profile.source_state_bucket = fetched_friends_by_id
-                .get(&repaired_id)
+                .get(repaired_id)
                 .and_then(|existing| existing.source_state_bucket.clone());
             fetched_friends_by_id.insert(repaired_id.clone(), profile);
             if !repaired_bucket.is_empty() {
-                state_by_id.insert(repaired_id, repaired_bucket);
+                state_by_id.insert(repaired_id.clone(), repaired_bucket);
             }
         }
-    }
+        results
+    } else {
+        HashMap::new()
+    };
 
     let snapshot = build_fast_roster_snapshot(
         &user_id,
         &expected_ids,
         &state_by_id,
         &fetched_friends_by_id,
+        &existing_friend_log,
     );
-    let friend_log_changed =
-        reconcile_friend_log_against_current(&deps, &user_id, &expected_ids, &snapshot);
+    let friend_log_changed = reconcile_friend_log_against_current(
+        &deps,
+        &user_id,
+        &expected_ids,
+        &snapshot,
+        &existing_friend_log,
+        &check_deleted_ids,
+        &repaired,
+    );
     let detail = String::new();
     let count = snapshot
         .get("orderedFriendIds")
@@ -157,6 +186,9 @@ fn reconcile_friend_log_against_current(
     user_id: &str,
     expected_ids: &[String],
     snapshot: &Value,
+    existing: &[FriendLogCurrentOutput],
+    check_deleted_ids: &[String],
+    repaired: &HashMap<String, Value>,
 ) -> bool {
     let initialized = config_get_bool(deps.db.as_ref(), &format!("friendLogInit_{user_id}"), false)
         .unwrap_or(false);
@@ -164,21 +196,15 @@ fn reconcile_friend_log_against_current(
         return false;
     }
 
-    let existing = match friend_log_current_list(deps.db.as_ref(), user_id.to_string()) {
-        Ok(rows) => rows,
-        Err(error) => {
-            tracing::warn!("friend-log reconciliation read failed: {error}");
-            return false;
-        }
-    };
-
     let existing_ids: HashSet<&str> = existing.iter().map(|row| row.user_id.as_str()).collect();
     let expected_set: HashSet<&str> = expected_ids.iter().map(String::as_str).collect();
+    let check_deleted_set: HashSet<&str> = check_deleted_ids.iter().map(String::as_str).collect();
 
     let created_at = chrono::Utc::now().to_rfc3339();
     let friends_by_id = snapshot.get("friendsById").and_then(Value::as_object);
     let mut batch = RealtimePersistenceBatch::default();
 
+    // Add newly-seen friends that aren't yet in the DB log.
     for friend_id in expected_ids {
         if friend_id == user_id || existing_ids.contains(friend_id.as_str()) {
             continue;
@@ -200,17 +226,25 @@ fn reconcile_friend_log_against_current(
         });
     }
 
-    for row in &existing {
+    for row in existing {
         if row.user_id == user_id || expected_set.contains(row.user_id.as_str()) {
             continue;
         }
-        batch.friend_log_deletes.push(FriendLogDelete {
-            target_user_id: row.user_id.clone(),
-            created_at: created_at.clone(),
-        });
+        if check_deleted_set.contains(row.user_id.as_str()) {
+            if repaired.contains_key(&row.user_id) {
+                batch.friend_log_deletes.push(FriendLogDelete {
+                    target_user_id: row.user_id.clone(),
+                    created_at: created_at.clone(),
+                });
+            } else {
+                if !row.is_deleted {
+                    batch.friend_log_marks_deleted.push(row.user_id.clone());
+                }
+            }
+        }
     }
 
-    if batch.friend_log_upserts.is_empty() && batch.friend_log_deletes.is_empty() {
+    if batch.is_empty() {
         return false;
     }
 

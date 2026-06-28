@@ -3423,7 +3423,8 @@
                 "friend": "Friend #",
                 "muted": "Muted",
                 "order_by": "Order By",
-                "group_by": "Group By"
+                "group_by": "Group By",
+                "deleted": "Deleted Account"
             },
             "success": {
                 "status_preset_saved": "Status preset saved",

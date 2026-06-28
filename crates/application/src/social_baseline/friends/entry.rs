@@ -1,4 +1,5 @@
 use super::*;
+use vrcx_0_persistence::friends::FriendLogCurrentOutput;
 
 fn normalize_friend_entry(
     friend: Option<&Value>,
@@ -220,12 +221,19 @@ pub(super) fn build_fast_roster_snapshot(
     expected_ids: &[String],
     state_by_id: &HashMap<String, String>,
     fetched_friends_by_id: &HashMap<String, RemoteFriendProfile>,
+    existing_friend_log: &[FriendLogCurrentOutput],
 ) -> Value {
     let friend_order_numbers = expected_ids
         .iter()
         .enumerate()
         .map(|(index, friend_id)| (friend_id.clone(), (index + 1) as i64))
         .collect::<HashMap<_, _>>();
+
+    let deleted_ids: HashSet<&str> = existing_friend_log
+        .iter()
+        .filter(|row| row.is_deleted)
+        .map(|row| row.user_id.as_str())
+        .collect();
 
     let mut friends_by_id = Map::new();
     for friend_id in expected_ids {
@@ -251,13 +259,44 @@ pub(super) fn build_fast_roster_snapshot(
                     "placeholder".into()
                 }),
             );
+            if deleted_ids.contains(friend_id.as_str()) {
+                object.insert("isDeleted".into(), Value::Bool(true));
+            }
         }
         friends_by_id.insert(friend_id.clone(), normalized_friend);
     }
 
-    let online_ids = build_bucket_ids(expected_ids, &friends_by_id, "online");
-    let active_ids = build_bucket_ids(expected_ids, &friends_by_id, "active");
-    let offline_ids = build_bucket_ids(expected_ids, &friends_by_id, "offline");
+    for row in existing_friend_log {
+        if !row.is_deleted || expected_ids.iter().any(|id| id == &row.user_id) {
+            continue;
+        }
+        let existing_row = json!({
+            "userId": row.user_id,
+            "displayName": row.display_name,
+            "trustLevel": row.trust_level,
+            "friendNumber": row.friend_number,
+        });
+        let mut normalized = normalize_friend_entry(None, "offline", &existing_row);
+        if let Some(object) = normalized.as_object_mut() {
+            object.insert("$profileSource".into(), Value::String("placeholder".into()));
+            object.insert("isDeleted".into(), Value::Bool(true));
+        }
+        friends_by_id.insert(row.user_id.clone(), normalized);
+    }
+
+    let all_ids: Vec<String> = {
+        let mut ids = expected_ids.to_vec();
+        for row in existing_friend_log {
+            if row.is_deleted && !expected_ids.iter().any(|id| id == &row.user_id) {
+                ids.push(row.user_id.clone());
+            }
+        }
+        ids
+    };
+
+    let online_ids = build_bucket_ids(&all_ids, &friends_by_id, "online");
+    let active_ids = build_bucket_ids(&all_ids, &friends_by_id, "active");
+    let offline_ids = build_bucket_ids(&all_ids, &friends_by_id, "offline");
     let mut ordered_friend_ids = Vec::new();
     ordered_friend_ids.extend(online_ids.clone());
     ordered_friend_ids.extend(active_ids.clone());

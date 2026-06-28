@@ -3418,7 +3418,8 @@
                 "friend": "フレンド #",
                 "muted": "ミュート中",
                 "order_by": "並び順",
-                "group_by": "グループ化"
+                "group_by": "グループ化",
+                "deleted": "削除されたアカウント"
             },
             "success": {
                 "status_preset_saved": "ステータスプリセットを保存しました",

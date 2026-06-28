@@ -34,6 +34,7 @@ export type FriendRecord = Record<string, unknown> & {
     friendNumber?: unknown;
     $friendNumber?: unknown;
     $profileSource?: unknown;
+    isDeleted?: boolean;
 };
 export type FriendLogRow = FriendLogCurrentRow & {
     user_id?: unknown;

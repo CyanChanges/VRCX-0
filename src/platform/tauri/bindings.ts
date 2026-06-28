@@ -3138,6 +3138,7 @@ export type FriendLogCurrentOutput = {
     displayName: string;
     trustLevel: string;
     friendNumber: number;
+    isDeleted: boolean;
 };
 export type FriendLogDeleteOptionsInput = {
     historyEntries?: FriendLogHistoryEntryInput[];

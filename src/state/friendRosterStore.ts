@@ -23,6 +23,7 @@ type FriendRecord = Record<string, unknown> & {
     $trustLevel?: unknown;
     friendNumber?: unknown;
     $friendNumber?: unknown;
+    isDeleted?: boolean;
 };
 type FriendRosterOrdering = {
     onlineIds: string[];

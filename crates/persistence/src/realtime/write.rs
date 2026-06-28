@@ -82,6 +82,9 @@ pub fn write_realtime_batch(
         for entry in &batch.game_log_locations {
             counts.add_game_log_rows(insert_game_log_location_if_changed(tx, entry)?);
         }
+        for target_user_id in &batch.friend_log_marks_deleted {
+            counts.add_realtime_rows(mark_friend_log_deleted(tx, &user_prefix, target_user_id)?);
+        }
         Ok(counts)
     })
 }
@@ -126,7 +129,7 @@ fn upsert_friend_log_current(
     let trust_level = first_non_empty([entry.trust_level.as_str(), "Visitor"]);
     let insert_count = tx.execute_non_query(
         &format!(
-            "INSERT OR IGNORE INTO {user_prefix}_friend_log_current (user_id, display_name, trust_level, friend_number) VALUES (@user_id, @display_name, @trust_level, @friend_number)"
+            "INSERT OR IGNORE INTO {user_prefix}_friend_log_current (user_id, display_name, trust_level, friend_number, is_deleted) VALUES (@user_id, @display_name, @trust_level, @friend_number, 0)"
         ),
         &ParamsBuilder::new()
             .set("user_id", target_user_id.clone())
@@ -135,11 +138,12 @@ fn upsert_friend_log_current(
             .set("friend_number", friend_number)
             .build(),
     )?;
+
     let mut affected = affected_count(insert_count);
     if insert_count <= 0 {
         affected = affected.saturating_add(affected_count(tx.execute_non_query(
             &format!(
-                "UPDATE {user_prefix}_friend_log_current SET display_name = @display_name, trust_level = @trust_level, friend_number = CASE WHEN @friend_number > 0 THEN @friend_number ELSE friend_number END WHERE user_id = @user_id"
+                "UPDATE {user_prefix}_friend_log_current SET display_name = @display_name, trust_level = @trust_level, friend_number = CASE WHEN @friend_number > 0 THEN @friend_number ELSE friend_number END, is_deleted = 0 WHERE user_id = @user_id"
             ),
             &ParamsBuilder::new()
                 .set("user_id", target_user_id.clone())
@@ -226,6 +230,24 @@ fn delete_friend_log_current(
         )?);
     }
     Ok(affected)
+}
+
+fn mark_friend_log_deleted(
+    tx: &mut DatabaseWriteTransaction<'_>,
+    user_prefix: &str,
+    target_user_id: &str,
+) -> Result<u64, Error> {
+    let target_user_id = normalize_user_id(target_user_id);
+    if target_user_id.is_empty() {
+        return Ok(0);
+    }
+    let count = tx.execute_non_query(
+        &format!(
+            "UPDATE {user_prefix}_friend_log_current SET is_deleted = 1 WHERE user_id = @user_id AND COALESCE(is_deleted, 0) = 0"
+        ),
+        &ParamsBuilder::new().set("user_id", target_user_id).build(),
+    )?;
+    Ok(affected_count(count))
 }
 
 fn add_friend_log_history(

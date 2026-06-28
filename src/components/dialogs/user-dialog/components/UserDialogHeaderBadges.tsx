@@ -58,6 +58,11 @@ export function UserDialogHeaderBadges({
 
     return (
         <>
+            {profile.isDeleted ? (
+                <Badge variant="destructive">
+                    {t('dialog.user.label.deleted')}
+                </Badge>
+            ) : null}
             {profile.$isModerator ? (
                 <Badge variant="secondary">
                     <ShieldCheckIcon data-icon="inline-start" />
