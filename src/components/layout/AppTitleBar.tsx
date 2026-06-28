@@ -48,7 +48,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 import { AppMenuBar } from './AppMenuBar';
 import { useDirectAccessAction } from './directAccessAction';
 import { TitleBarUpdateButton } from './TitleBarUpdateButton';
-import { useRightSidePanelVisibility } from './useRightSidePanelVisibility';
+import { useRightFriendsSidebarVisibility } from './useRightFriendsSidebarVisibility';
 
 function TitleBarButton({
     label,
@@ -179,40 +179,36 @@ export function AppTitleBar() {
     const [quickSearchOpen, setQuickSearchOpen] = useState(false);
     const { openDirectAccessFromClipboard } = useDirectAccessAction();
     const isSessionReady = useSessionStore(
-        (state: any) => state.sessionPhase === 'ready'
+        (state) => state.sessionPhase === 'ready'
     );
     const notificationLayout = usePreferencesStore(
-        (state: any) => state.notificationLayout
+        (state) => state.notificationLayout
     );
     const vrcUnseenNotificationCount = useVrcNotificationStore(
-        (state: any) => state.unseenCount
+        (state) => state.unseenCount
     );
     const isVrcNotificationCenterOpen = useVrcNotificationStore(
-        (state: any) => state.isCenterOpen
+        (state) => state.isCenterOpen
     );
     const openVrcNotificationCenter = useVrcNotificationStore(
-        (state: any) => state.openCenter
+        (state) => state.openCenter
     );
     const setVrcNotificationCenterOpen = useVrcNotificationStore(
-        (state: any) => state.setCenterOpen
+        (state) => state.setCenterOpen
     );
     const markAllVrcNotificationsSeen = useVrcNotificationStore(
-        (state: any) => state.markAllSeen
+        (state) => state.markAllSeen
     );
-    const removeNavNotification = useShellStore(
-        (state: any) => state.removeNotify
-    );
+    const removeNavNotification = useShellStore((state) => state.removeNotify);
     const hostPlatform = useRuntimeStore(
-        (state: any) => state.hostCapabilities.platform
+        (state) => state.hostCapabilities.platform
     );
-    const hasAvailableUpdate = useRuntimeStore((state: any) =>
+    const hasAvailableUpdate = useRuntimeStore((state) =>
         Boolean(state.updateLoop.hasAvailableUpdate)
     );
-    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
-    const {
-        sidePanelOpen: rightSidebarOpen,
-        toggleSidePanelOpen: toggleRightSidebar
-    } = useRightSidePanelVisibility(location.pathname);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
+    const { open: friendsSidebarOpen, toggle: toggleFriendsSidebar } =
+        useRightFriendsSidebarVisibility(location.pathname);
 
     async function syncMaximizedState() {
         try {
@@ -275,7 +271,7 @@ export function AppTitleBar() {
     const leftSidebarLabel = navbarOpen
         ? t('nav_tooltip.collapse_nav')
         : t('nav_tooltip.expand_nav');
-    const rightSidebarLabel = rightSidebarOpen
+    const rightSidebarLabel = friendsSidebarOpen
         ? t('app_menu.hide_friends_sidebar')
         : t('app_menu.show_friends_sidebar');
     const isMacHost = hostPlatform === 'macos';
@@ -361,7 +357,7 @@ export function AppTitleBar() {
                             }}
                         >
                             <AppMenuBar
-                                rightSidebarOpen={rightSidebarOpen}
+                                rightSidebarOpen={friendsSidebarOpen}
                                 onOpenQuickSearch={() =>
                                     setQuickSearchOpen(true)
                                 }
@@ -371,7 +367,7 @@ export function AppTitleBar() {
                                 onOpenNotificationCenter={() =>
                                     openVrcNotificationCenter()
                                 }
-                                onToggleRightSidebar={toggleRightSidebar}
+                                onToggleRightSidebar={toggleFriendsSidebar}
                             />
                         </div>
                     ) : null}
@@ -446,9 +442,9 @@ export function AppTitleBar() {
                         <TitleBarButton
                             label={rightSidebarLabel}
                             className="size-7 min-w-7 rounded-md px-0"
-                            onClick={toggleRightSidebar}
+                            onClick={toggleFriendsSidebar}
                         >
-                            {rightSidebarOpen ? (
+                            {friendsSidebarOpen ? (
                                 <PanelRightIcon data-icon="icon" />
                             ) : (
                                 <PanelRightOpenIcon data-icon="icon" />

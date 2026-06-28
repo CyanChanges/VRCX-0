@@ -58,7 +58,7 @@ export function ToolsDialogsHost() {
         <>
             <AppLauncherDialog
                 open={Boolean(appLauncherOpen)}
-                onOpenChange={(open: any) =>
+                onOpenChange={(open) =>
                     setSystemHostOpen('appLauncherOpen', open)
                 }
             />

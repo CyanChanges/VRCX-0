@@ -24,7 +24,7 @@ export function useSettingsEffects({
     setPrefs,
     setTtsVoices,
     setZoomInput,
-    sidebarOpen,
+    navbarOpen,
     zoomLevel
 }: any) {
     const { t } = useTranslation();
@@ -138,9 +138,9 @@ export function useSettingsEffects({
     useEffect(() => {
         setPrefs((current: any) => ({
             ...current,
-            navIsCollapsed: !sidebarOpen
+            navIsCollapsed: !navbarOpen
         }));
-    }, [sidebarOpen]);
+    }, [navbarOpen]);
     useEffect(() => {
         if (typeof window === 'undefined' || !window.speechSynthesis) {
             return undefined;

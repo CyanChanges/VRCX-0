@@ -5,7 +5,7 @@ import { SidePanel } from '@/components/sidebar/SidePanel';
 
 import { AppSidebar } from './AppSidebar';
 import { AppStatusBar } from './AppStatusBar';
-import { useRightSidePanelVisibility } from './useRightSidePanelVisibility';
+import { useRightFriendsSidebarVisibility } from './useRightFriendsSidebarVisibility';
 
 const sidePanelStorageKey = 'vrcx-main-layout-right-sidebar-width';
 
@@ -32,12 +32,12 @@ function loadSidePanelWidth() {
 
 export function AppShellLayout() {
     const location = useLocation();
-    const { sidePanelOpen } = useRightSidePanelVisibility(location.pathname);
+    const { open } = useRightFriendsSidebarVisibility(location.pathname);
     const [sidePanelWidth, setSidePanelWidth] = useState(loadSidePanelWidth);
     const sidePanelWidthRef = useRef(sidePanelWidth);
     const sidePanelElementRef = useRef<HTMLDivElement | null>(null);
     const resizeCleanupRef = useRef<((commit?: boolean) => void) | null>(null);
-    const sidePanelVisible = sidePanelOpen;
+    const sidePanelVisible = open;
 
     useEffect(() => {
         sidePanelWidthRef.current = sidePanelWidth;

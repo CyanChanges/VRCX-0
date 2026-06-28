@@ -24,7 +24,7 @@ import {
     normalizeTrustColors
 } from '@/shared/utils/trustColors';
 
-import { normalizeNavWidth, normalizeTableDensity } from './shellStore';
+import { normalizeNavbarWidth, normalizeTableDensity } from './shellStore';
 
 export const DEFAULT_TABLE_PAGE_SIZE = 20;
 export const DEFAULT_TABLE_PAGE_SIZES = Object.freeze([
@@ -479,7 +479,7 @@ export function normalizePreferenceSnapshot(snapshot: unknown = {}) {
         isStartAtWindowsStartup: normalizeBool(next.isStartAtWindowsStartup),
         isStartAsMinimizedState: normalizeBool(next.isStartAsMinimizedState),
         isCloseToTray: normalizeBool(next.isCloseToTray),
-        navPanelWidth: normalizeNavWidth(next.navPanelWidth),
+        navPanelWidth: normalizeNavbarWidth(next.navPanelWidth),
         navIsCollapsed: normalizeBool(next.navIsCollapsed),
         proxyServer: String(next.proxyServer || ''),
         tablePageSize: normalizeTablePageSize(next.tablePageSize),

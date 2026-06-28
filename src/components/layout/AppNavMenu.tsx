@@ -349,37 +349,35 @@ export function AppNavMenu({ isCollapsed }: any) {
     const navigate = useNavigate();
     const location = useLocation();
     const { t } = useTranslation();
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
-    const themeMode = useShellStore((state: any) => state.themeMode);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
+    const themeMode = useShellStore((state) => state.themeMode);
     const communityThemeEnabled = useCommunityThemeStore(
-        (state: any) => state.enabled
+        (state) => state.enabled
     );
     const installedCommunityTheme = useCommunityThemeStore(
-        (state: any) => state.installedTheme
+        (state) => state.installedTheme
     );
     const localCommunityThemePreview = useCommunityThemeStore(
-        (state: any) => state.localPreview
+        (state) => state.localPreview
     );
     const backgroundImageEnabled = useBackgroundImageStore(
-        (state: any) => state.enabled
+        (state) => state.enabled
     );
     const dashboards = useDashboardStore((state: any) => state.dashboards);
     const ensureDashboardsLoaded = useDashboardStore(
-        (state: any) => state.ensureLoaded
+        (state) => state.ensureLoaded
     );
     const sessionPhase = useSessionStore((state: any) => state.sessionPhase);
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const preferencesHydrated = usePreferencesStore(
-        (state: any) => state.preferencesHydrated
+        (state) => state.preferencesHydrated
     );
     const notificationLayout = usePreferencesStore(
-        (state: any) => state.notificationLayout
+        (state) => state.notificationLayout
     );
     const [customNavDialogOpen, setCustomNavDialogOpen] = useState(false);
     const showNewDashboardButton = usePreferencesStore(
-        (state: any) => state.showNewDashboardButton
+        (state) => state.showNewDashboardButton
     );
     const {
         defaultNavLayout,
@@ -521,13 +519,11 @@ export function AppNavMenu({ isCollapsed }: any) {
             />
 
             <AppNavFooter
-                sidebarOpen={sidebarOpen}
+                navbarOpen={navbarOpen}
                 themeMode={themeMode}
                 showThemeToggle={!customThemeAppearanceControlled}
                 onNavigateSettings={() => navigate(routePathByName.settings)}
-                onToggleSidebar={() =>
-                    setNavbarCollapsedPreference(sidebarOpen)
-                }
+                onToggleSidebar={() => setNavbarCollapsedPreference(navbarOpen)}
                 onToggleTheme={() => {
                     if (customThemeAppearanceControlled) {
                         return;

@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useRuntimeStore } from '@/state/runtimeStore';
 import { useSessionStore } from '@/state/sessionStore';
 
-import { useRightSidePanelVisibility } from './useRightSidePanelVisibility';
+import { useRightFriendsSidebarVisibility } from './useRightFriendsSidebarVisibility';
 
 function isEditableTarget(target: any) {
     if (!target || typeof target.tagName !== 'string') {
@@ -22,9 +22,7 @@ function isEditableTarget(target: any) {
 export function useGlobalKeyboardShortcuts() {
     const navigate = useNavigate();
     const location = useLocation();
-    const { toggleSidePanelOpen } = useRightSidePanelVisibility(
-        location.pathname
-    );
+    const { toggle } = useRightFriendsSidebarVisibility(location.pathname);
     const setSystemHostOpen = useRuntimeStore(
         (state: any) => state.setSystemHostOpen
     );
@@ -68,11 +66,11 @@ export function useGlobalKeyboardShortcuts() {
 
             if (key === 'b' && event.shiftKey) {
                 event.preventDefault();
-                toggleSidePanelOpen();
+                toggle();
             }
         }
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [navigate, setSystemHostOpen, toggleSidePanelOpen]);
+    }, [navigate, setSystemHostOpen, toggle]);
 }

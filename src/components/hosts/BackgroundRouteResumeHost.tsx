@@ -25,10 +25,10 @@ export function BackgroundRouteResumeHost(): null {
     const location = useLocation();
     const consumedRef = useRef(false);
     const sessionReady = useSessionStore(
-        (state: any) => state.sessionPhase === 'ready'
+        (state) => state.sessionPhase === 'ready'
     );
     const canResume = useRuntimeStore(
-        (state: any) =>
+        (state) =>
             state.shell.backendRuntimeSnapshotHydrated &&
             !state.shell.backendRuntimeSessionHydrating
     );
@@ -44,7 +44,7 @@ export function BackgroundRouteResumeHost(): null {
         let cancelled = false;
         storageRepository
             .getString(BACKGROUND_MODE_RESUME_ROUTE_STORAGE_KEY, '')
-            .then((storedRoute: any) => {
+            .then((storedRoute) => {
                 if (cancelled) {
                     return;
                 }

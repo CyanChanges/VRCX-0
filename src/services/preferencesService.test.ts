@@ -240,8 +240,8 @@ describe('preferencesService characterization', () => {
             locale: 'en',
             tableDensity: 'standard',
             notificationLayout: 'notification-center',
-            navWidth: 240
-        } as any);
+            navbarWidth: 240
+        });
 
         mocks.getRawValue.mockResolvedValue(null);
         mocks.getBool.mockImplementation((_key: string, fallback = false) =>

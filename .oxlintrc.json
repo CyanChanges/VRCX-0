@@ -777,7 +777,8 @@
     },
     "rules": {
         "no-unused-vars": "warn",
-        "no-control-regex": "warn"
+        "no-control-regex": "warn",
+        "@typescript-eslint/no-explicit-any": "error"
     },
     "overrides": [
         {

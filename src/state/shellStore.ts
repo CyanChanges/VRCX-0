@@ -15,9 +15,9 @@ type TableDensity = 'standard' | 'compact';
 type NotificationLayout = 'notification-center' | 'table';
 type TimeUnitLabels = typeof DEFAULT_TIME_UNIT_LABELS;
 type ShellStore = {
-    sidebarOpen: boolean;
-    rightSidebarOpen: boolean;
-    navWidth: number;
+    navbarOpen: boolean;
+    friendsSidebarOpen: boolean;
+    navbarWidth: number;
     locale: string;
     themeMode: ThemeMode;
     themeColor: string;
@@ -34,11 +34,11 @@ type ShellStore = {
     notifiedMenus: string[];
     vrcUnseenNotificationCount: number;
     trayIconNotify: boolean;
-    setSidebarOpen(sidebarOpen: unknown): void;
-    setNavWidth(navWidth: unknown): void;
-    toggleSidebar(): void;
-    setRightSidebarOpen(rightSidebarOpen: unknown): void;
-    toggleRightSidebar(): void;
+    setNavbarOpen(navbarOpen: unknown): void;
+    setNavbarWidth(navbarWidth: unknown): void;
+    toggleNavbar(): void;
+    setFriendsSidebarOpen(friendsSidebarOpen: unknown): void;
+    toggleFriendsSidebar(): void;
     setLocale(locale: string): void;
     setThemeMode(themeMode: unknown): void;
     setThemeColor(themeColor: unknown): void;
@@ -65,11 +65,11 @@ type ShellStore = {
 
 type ShellStoreState = Omit<
     ShellStore,
-    | 'setSidebarOpen'
-    | 'setNavWidth'
-    | 'toggleSidebar'
-    | 'setRightSidebarOpen'
-    | 'toggleRightSidebar'
+    | 'setNavbarOpen'
+    | 'setNavbarWidth'
+    | 'toggleNavbar'
+    | 'setFriendsSidebarOpen'
+    | 'toggleFriendsSidebar'
     | 'setLocale'
     | 'setThemeMode'
     | 'setThemeColor'
@@ -88,9 +88,9 @@ type ShellStoreState = Omit<
 >;
 
 const initialState: ShellStoreState = {
-    sidebarOpen: true,
-    rightSidebarOpen: true,
-    navWidth: 240,
+    navbarOpen: true,
+    friendsSidebarOpen: true,
+    navbarWidth: 240,
     locale: 'en',
     themeMode: 'system',
     themeColor: DEFAULT_THEME_COLOR_KEY,
@@ -136,7 +136,7 @@ export function normalizeTableDensity(value: unknown): TableDensity {
     return tableDensityValues.has(value) ? (value as TableDensity) : 'standard';
 }
 
-export function normalizeNavWidth(value: unknown): number {
+export function normalizeNavbarWidth(value: unknown): number {
     const width = Number.parseInt(String(value), 10);
     if (!Number.isFinite(width)) {
         return 240;
@@ -182,22 +182,24 @@ function resolveTrayIconNotify(state: ShellStore): boolean {
     );
 }
 
-export const useShellStore = create<ShellStore>((set: any, get: any) => ({
+export const useShellStore = create<ShellStore>((set, get) => ({
     ...initialState,
-    setSidebarOpen(sidebarOpen: any) {
-        set({ sidebarOpen: Boolean(sidebarOpen) });
+    setNavbarOpen(navbarOpen: any) {
+        set({ navbarOpen: Boolean(navbarOpen) });
     },
-    setNavWidth(navWidth: any) {
-        set({ navWidth: normalizeNavWidth(navWidth) });
+    setNavbarWidth(navbarWidth: any) {
+        set({ navbarWidth: normalizeNavbarWidth(navbarWidth) });
     },
-    toggleSidebar() {
-        set((state: any) => ({ sidebarOpen: !state.sidebarOpen }));
+    toggleNavbar() {
+        set((state: any) => ({ navbarOpen: !state.navbarOpen }));
     },
-    setRightSidebarOpen(rightSidebarOpen: any) {
-        set({ rightSidebarOpen: Boolean(rightSidebarOpen) });
+    setFriendsSidebarOpen(friendsSidebarOpen: any) {
+        set({ friendsSidebarOpen: Boolean(friendsSidebarOpen) });
     },
-    toggleRightSidebar() {
-        set((state: any) => ({ rightSidebarOpen: !state.rightSidebarOpen }));
+    toggleFriendsSidebar() {
+        set((state: any) => ({
+            friendsSidebarOpen: !state.friendsSidebarOpen
+        }));
     },
     setLocale(locale: any) {
         set({ locale: locale || 'en' });

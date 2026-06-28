@@ -51,9 +51,9 @@ const FEED_FILTER_OPTIONS = feedFiltersOptions();
 const SETTINGS_PREFERENCE_KEYS = Object.keys(DEFAULT_PREFERENCES);
 
 export function useSettingsPageState() {
-    const locale = useShellStore((state: any) => state.locale);
-    const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
+    const locale = useShellStore((state) => state.locale);
+    const zoomLevel = useShellStore((state) => state.zoomLevel);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
     const favoriteFriendGroups = useFavoriteStore(
         (state: any) => state.favoriteFriendGroups
     );
@@ -262,7 +262,7 @@ export function useSettingsPageState() {
         setPrefs,
         setTtsVoices,
         setZoomInput,
-        sidebarOpen,
+        navbarOpen,
         zoomLevel
     });
     const feedFilterOptions = FEED_FILTER_OPTIONS;

@@ -115,7 +115,7 @@ export function AppMenuBar({
     const [supportOpen, setSupportOpen] = useState(false);
     const [quickAccessKeys, setQuickAccessKeys] = useState<string[]>([]);
     const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
+    const navbarOpen = useShellStore((state: any) => state.navbarOpen);
     const notificationLayout = usePreferencesStore(
         (state: any) => state.notificationLayout
     );

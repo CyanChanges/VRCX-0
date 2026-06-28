@@ -4,14 +4,14 @@ import {
     setNavWidthPreference,
     setNavbarCollapsedPreference
 } from '@/services/preferencesService';
-import { normalizeNavWidth, useShellStore } from '@/state/shellStore';
+import { normalizeNavbarWidth, useShellStore } from '@/state/shellStore';
 import { Sidebar, SidebarInset, SidebarProvider } from '@/ui/shadcn/sidebar';
 
 import { AppNavMenu } from './AppNavMenu';
 
 export function AppSidebar({ children }: any) {
-    const sidebarOpen = useShellStore((state: any) => state.sidebarOpen);
-    const navWidth = useShellStore((state: any) => state.navWidth);
+    const navbarOpen = useShellStore((state: any) => state.navbarOpen);
+    const navbarWidth = useShellStore((state: any) => state.navbarWidth);
     const resizeCleanupRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
@@ -21,13 +21,13 @@ export function AppSidebar({ children }: any) {
     }, []);
 
     useEffect(() => {
-        if (!sidebarOpen) {
+        if (!navbarOpen) {
             resizeCleanupRef.current?.();
         }
-    }, [sidebarOpen]);
+    }, [navbarOpen]);
 
     function startNavResize(event: any) {
-        if (!sidebarOpen) {
+        if (!navbarOpen) {
             return;
         }
 
@@ -45,7 +45,7 @@ export function AppSidebar({ children }: any) {
         document.body.style.userSelect = 'none';
         document.body.style.cursor = 'col-resize';
         let cleanedUp = false;
-        let latestWidth = normalizeNavWidth(event.clientX);
+        let latestWidth = normalizeNavbarWidth(event.clientX);
 
         const transitionTargets = wrapperElement
             ? Array.from(
@@ -62,7 +62,7 @@ export function AppSidebar({ children }: any) {
         });
 
         const applyWidth = (clientX: any) => {
-            latestWidth = normalizeNavWidth(clientX);
+            latestWidth = normalizeNavbarWidth(clientX);
             wrapperElement?.style.setProperty(
                 '--sidebar-width',
                 `${latestWidth}px`
@@ -107,10 +107,10 @@ export function AppSidebar({ children }: any) {
 
     return (
         <SidebarProvider
-            open={sidebarOpen}
+            open={navbarOpen}
             data-vrcx-0-surface="sidebar-layout"
             className="vrcx-0-sidebar-layout relative h-full min-h-0 w-full overflow-hidden"
-            style={{ '--sidebar-width': `${navWidth}px` }}
+            style={{ '--sidebar-width': `${navbarWidth}px` }}
             onOpenChange={(open: any) => {
                 setNavbarCollapsedPreference(!open);
             }}
@@ -122,9 +122,9 @@ export function AppSidebar({ children }: any) {
                 data-vrcx-0-surface="sidebar"
                 style={{ top: '2rem', bottom: 0, height: 'auto' }}
             >
-                <AppNavMenu isCollapsed={!sidebarOpen} />
+                <AppNavMenu isCollapsed={!navbarOpen} />
             </Sidebar>
-            {sidebarOpen ? (
+            {navbarOpen ? (
                 <div
                     className="absolute top-0 bottom-0 z-30 w-1 cursor-ew-resize select-none"
                     style={{ left: 'var(--sidebar-width)' }}

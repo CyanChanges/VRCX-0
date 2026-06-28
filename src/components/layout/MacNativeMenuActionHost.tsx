@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useDirectAccessAction } from '@/components/layout/directAccessAction';
-import { useRightSidePanelVisibility } from '@/components/layout/useRightSidePanelVisibility';
+import { useRightFriendsSidebarVisibility } from '@/components/layout/useRightFriendsSidebarVisibility';
 import { QuickSearchDialog } from '@/components/sidebar/QuickSearchDialog';
 import { SupportVrcxDialog } from '@/components/support/SupportVrcxDialog';
 import { OpenSourceNoticeDialog } from '@/features/settings/components/OpenSourceNoticeDialog';
@@ -76,10 +76,11 @@ export function MacNativeMenuActionHost() {
     const openVrcNotificationCenter = useVrcNotificationStore(
         (state: any) => state.openCenter
     );
-    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
-    const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const { toggleSidePanelOpen: toggleFriendsSidebar } =
-        useRightSidePanelVisibility(location.pathname);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
+    const zoomLevel = useShellStore((state) => state.zoomLevel);
+    const { toggle: toggleFriendsSidebar } = useRightFriendsSidebarVisibility(
+        location.pathname
+    );
     const currentZoom = normalizeZoomLevel(zoomLevel);
     // oxlint-disable-next-line no-undef
     const appVersion = formatReleaseDisplayVersion(VERSION || '') || '-';

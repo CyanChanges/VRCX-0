@@ -12,7 +12,7 @@ import { normalizeSharedFeedFilters } from '@/state/preferencesStore';
 import type { TrustColorKey } from '@/state/preferencesStore';
 import { usePreferencesStore } from '@/state/preferencesStore';
 import {
-    normalizeNavWidth,
+    normalizeNavbarWidth,
     normalizeTableDensity,
     useShellStore
 } from '@/state/shellStore';
@@ -129,7 +129,7 @@ export async function setRightSidebarOpenPreference(open: boolean) {
 }
 
 export async function setNavWidthPreference(value: string | number) {
-    const width = normalizeNavWidth(value);
+    const width = normalizeNavbarWidth(value);
     useShellStore.getState().setNavWidth(width);
     await configRepository.setInt('VRCX_navPanelWidth', width);
     patchPreferences({ navPanelWidth: width });

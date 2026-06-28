@@ -23,7 +23,7 @@ import {
     usePreferencesStore
 } from '@/state/preferencesStore';
 import {
-    normalizeNavWidth,
+    normalizeNavbarWidth,
     normalizeTableDensity,
     useShellStore
 } from '@/state/shellStore';
@@ -416,7 +416,7 @@ export async function loadPreferenceSnapshot() {
         dtIsoFormat: Boolean(dtIsoFormat),
         dtHour12: Boolean(dtHour12),
         trustColor: normalizeTrustColors(trustColor),
-        navPanelWidth: normalizeNavWidth(navPanelWidth),
+        navPanelWidth: normalizeNavbarWidth(navPanelWidth),
         navIsCollapsed: Boolean(navIsCollapsed),
         proxyServer: proxyServer || '',
         tablePageSize: normalizeTablePageSize(tablePageSize),

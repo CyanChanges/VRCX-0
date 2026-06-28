@@ -129,7 +129,7 @@ function AppNavMenuContent({
 }
 
 function AppNavFooter({
-    sidebarOpen,
+    navbarOpen,
     themeMode,
     showThemeToggle = true,
     onNavigateSettings,
@@ -172,7 +172,7 @@ function AppNavFooter({
                     <SidebarMenuButton
                         type="button"
                         tooltip={
-                            sidebarOpen
+                            navbarOpen
                                 ? t('nav_tooltip.collapse_nav')
                                 : t('nav_tooltip.expand_nav')
                         }
@@ -182,7 +182,7 @@ function AppNavFooter({
                     >
                         <PanelLeftIcon />
                         <span>
-                            {sidebarOpen
+                            {navbarOpen
                                 ? t('nav_tooltip.collapse_nav')
                                 : t('nav_tooltip.expand_nav')}
                         </span>

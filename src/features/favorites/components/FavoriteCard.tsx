@@ -7,7 +7,7 @@ import {
     UserIcon,
     UsersIcon
 } from 'lucide-react';
-import { memo, useMemo } from 'react';
+import { KeyboardEventHandler, memo, ReactEventHandler, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 
@@ -203,14 +203,14 @@ const FavoriteCard = memo(function FavoriteCard({
         await copyTextToClipboard(item.id);
         toast.success(t('message.world.id_copied'));
     };
-    const handleCardKeyDown = (event: any) => {
+    const handleCardKeyDown: KeyboardEventHandler = (event) => {
         if (!openHandler || (event.key !== 'Enter' && event.key !== ' ')) {
             return;
         }
         event.preventDefault();
         openHandler();
     };
-    const stopCardInteraction = (event: any) => {
+    const stopCardInteraction: ReactEventHandler = (event) => {
         event.stopPropagation();
     };
 
@@ -281,7 +281,7 @@ const FavoriteCard = memo(function FavoriteCard({
                 {friendShowsLocation ? (
                     <div
                         className="text-muted-foreground truncate text-xs"
-                        onClick={(event: any) => event.stopPropagation()}
+                        onClick={(event) => event.stopPropagation()}
                     >
                         <Location
                             location={friendLocation}
@@ -318,7 +318,7 @@ const FavoriteCard = memo(function FavoriteCard({
                     checked={selected}
                     onClick={stopCardInteraction}
                     onKeyDown={stopCardInteraction}
-                    onCheckedChange={(checked: any) =>
+                    onCheckedChange={(checked) =>
                         onToggleSelect?.(item.key, Boolean(checked))
                     }
                 />

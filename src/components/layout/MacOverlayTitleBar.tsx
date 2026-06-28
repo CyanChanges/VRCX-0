@@ -36,7 +36,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/ui/shadcn/tooltip';
 
 import { useDirectAccessAction } from './directAccessAction';
 import { TitleBarUpdateButton } from './TitleBarUpdateButton';
-import { useRightSidePanelVisibility } from './useRightSidePanelVisibility';
+import { useRightFriendsSidebarVisibility } from './useRightFriendsSidebarVisibility';
 
 function MacTitleBarButton({
     label,
@@ -108,14 +108,12 @@ export function MacOverlayTitleBar() {
     const removeNavNotification = useShellStore(
         (state: any) => state.removeNotify
     );
-    const hasAvailableUpdate = useRuntimeStore((state: any) =>
+    const hasAvailableUpdate = useRuntimeStore((state) =>
         Boolean(state.updateLoop.hasAvailableUpdate)
     );
-    const navbarOpen = useShellStore((state: any) => state.sidebarOpen);
-    const {
-        sidePanelOpen: rightSidebarOpen,
-        toggleSidePanelOpen: toggleRightSidebar
-    } = useRightSidePanelVisibility(location.pathname);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
+    const { open: rightSidebarOpen, toggle: toggleRightSidebar } =
+        useRightFriendsSidebarVisibility(location.pathname);
     const buildBadgeLabel = getBuildBadgeLabel(t);
     const notificationActionVisible =
         isSessionReady && notificationLayout !== 'table';
