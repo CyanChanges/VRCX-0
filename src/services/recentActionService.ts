@@ -109,7 +109,7 @@ export function recordRecentAction(userId: unknown, actionType: unknown): void {
     if (!key) {
         return;
     }
-    const actions: any = { ...readActions(), [key]: Date.now() };
+    const actions = { ...readActions(), [key]: Date.now() };
     writeActions(actions);
     notifyRecentActionListeners();
 }
@@ -131,7 +131,7 @@ export function isActionRecent(userId: unknown, actionType: unknown): boolean {
     if (Date.now() - timestamp < cooldownMs) {
         return true;
     }
-    const nextActions: any = { ...actions };
+    const nextActions = { ...actions };
     delete nextActions[key];
     writeActions(nextActions);
     return false;

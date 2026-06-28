@@ -45,7 +45,7 @@ export function avatarGalleryImageUrl(file: any) {
 
 export function isCacheCandidatePackage(
     unityPackage: any,
-    sdkUnityVersion: any = ''
+    sdkUnityVersion = ''
 ) {
     if (!unityPackage || unityPackage.platform !== 'standalonewindows') {
         return false;
@@ -67,7 +67,7 @@ export function isCacheCandidatePackage(
     return true;
 }
 
-export function resolveAssetBundleArgs(avatar: any, sdkUnityVersion: any = '') {
+export function resolveAssetBundleArgs(avatar: any, sdkUnityVersion = '') {
     const unityPackages = Array.isArray(avatar?.unityPackages)
         ? avatar.unityPackages
         : [];

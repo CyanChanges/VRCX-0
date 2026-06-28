@@ -174,7 +174,7 @@ describe('screenshotMetadataValues', () => {
         ).toEqual(['new', 'middle', 'old']);
         expect(
             sortScreenshotRowsByNewest([null, ...rows]).map(
-                (row: any) => row.filePath
+                (row) => row.filePath
             )
         ).toEqual(['new', 'middle', 'old']);
     });

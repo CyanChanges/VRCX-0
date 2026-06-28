@@ -41,16 +41,15 @@ function normalizeStyleName(value: any) {
 function resolveAuthorTags(tags: any) {
     return (Array.isArray(tags) ? tags : [])
         .filter(
-            (tag: any) =>
-                typeof tag === 'string' && tag.startsWith('author_tag_')
+            (tag) => typeof tag === 'string' && tag.startsWith('author_tag_')
         )
-        .map((tag: any) => tag.slice('author_tag_'.length))
+        .map((tag) => tag.slice('author_tag_'.length))
         .join(',');
 }
 
 function buildTags(initialTags: any, authorTags: any) {
     const tags = (Array.isArray(initialTags) ? initialTags : []).filter(
-        (tag: any) => typeof tag === 'string' && !tag.startsWith('author_tag_')
+        (tag) => typeof tag === 'string' && !tag.startsWith('author_tag_')
     );
     for (const tag of String(authorTags || '').split(',')) {
         const normalized = tag.trim();
@@ -74,7 +73,7 @@ function arraysMatch(left: any, right: any) {
         return false;
     }
 
-    return left.every((entry: any, index: any) => entry === right[index]);
+    return left.every((entry, index) => entry === right[index]);
 }
 
 function applyStyleParam(
@@ -156,14 +155,14 @@ export function AvatarStylesDialog({
         setLoadStatus('running');
         myAvatarRepository
             .getAvailableAvatarStyles({ endpoint })
-            .then((styles: any) => {
+            .then((styles) => {
                 if (!active) {
                     return;
                 }
                 setAvailableStyles(styles);
                 setLoadStatus('ready');
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }
@@ -211,7 +210,7 @@ export function AvatarStylesDialog({
             return;
         }
 
-        const authTarget: any = {
+        const authTarget = {
             currentUserId,
             currentEndpoint: endpoint || ''
         };
@@ -232,7 +231,7 @@ export function AvatarStylesDialog({
 
         setSaving(true);
         try {
-            const params: any = { tags: nextTags };
+            const params = { tags: nextTags };
             const hasPrimaryStyleParam = applyStyleParam(
                 params,
                 'primaryStyle',
@@ -296,7 +295,7 @@ export function AvatarStylesDialog({
                         </FieldLabel>
                         <Select
                             value={primaryStyle || CLEAR_STYLE_VALUE}
-                            onValueChange={(value: any) =>
+                            onValueChange={(value) =>
                                 setPrimaryStyle(
                                     value === CLEAR_STYLE_VALUE ? '' : value
                                 )
@@ -314,7 +313,7 @@ export function AvatarStylesDialog({
                                     <SelectItem value={CLEAR_STYLE_VALUE}>
                                         {t('view.my_avatars.label.none')}
                                     </SelectItem>
-                                    {styleNames.map((styleName: any) => (
+                                    {styleNames.map((styleName) => (
                                         <SelectItem
                                             key={styleName}
                                             value={styleName}
@@ -332,7 +331,7 @@ export function AvatarStylesDialog({
                         </FieldLabel>
                         <Select
                             value={secondaryStyle || CLEAR_STYLE_VALUE}
-                            onValueChange={(value: any) =>
+                            onValueChange={(value) =>
                                 setSecondaryStyle(
                                     value === CLEAR_STYLE_VALUE ? '' : value
                                 )
@@ -350,7 +349,7 @@ export function AvatarStylesDialog({
                                     <SelectItem value={CLEAR_STYLE_VALUE}>
                                         {t('view.my_avatars.label.none')}
                                     </SelectItem>
-                                    {styleNames.map((styleName: any) => (
+                                    {styleNames.map((styleName) => (
                                         <SelectItem
                                             key={styleName}
                                             value={styleName}
@@ -369,7 +368,7 @@ export function AvatarStylesDialog({
                         <Textarea
                             id="avatar-styles-author-tags"
                             value={authorTags}
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 setAuthorTags(event.target.value)
                             }
                             rows={3}

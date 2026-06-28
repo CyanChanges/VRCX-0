@@ -29,6 +29,6 @@ async function bootstrap() {
     );
 }
 
-bootstrap().catch((error: any) => {
+bootstrap().catch((error) => {
     console.error(error);
 });

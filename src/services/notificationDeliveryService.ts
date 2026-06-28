@@ -31,8 +31,8 @@ let unsubscribePreferences: (() => void) | null = null;
 function normalizeInteger(
     value: any,
     fallback: any,
-    min: any = Number.MIN_SAFE_INTEGER,
-    max: any = Number.MAX_SAFE_INTEGER
+    min = Number.MIN_SAFE_INTEGER,
+    max = Number.MAX_SAFE_INTEGER
 ) {
     const parsed = Number.parseInt(value, 10);
     if (!Number.isFinite(parsed)) {
@@ -56,7 +56,7 @@ function initTtsPreferenceSubscription() {
     }
     unsubscribePreferences = onPreferenceChanged(
         Object.keys(DEFAULT_TTS_PREFERENCES),
-        (value: any, detail: any) => {
+        (value, detail) => {
             const key = detail.normalizedKey as TtsPreferenceKey;
             if (
                 !Object.prototype.hasOwnProperty.call(
@@ -90,7 +90,7 @@ async function loadTtsPreferences() {
                 DEFAULT_TTS_PREFERENCES.notificationTTSNickName
             )
         ])
-            .then(([notificationTTSVoice, notificationTTSNickName]: any) => {
+            .then(([notificationTTSVoice, notificationTTSNickName]) => {
                 cachedPreferences = {
                     notificationTTSVoice,
                     notificationTTSNickName
@@ -164,7 +164,7 @@ export async function executeNotificationTts(
     if (!directive) {
         return;
     }
-    const preferences: any = await loadTtsPreferences();
+    const preferences = await loadTtsPreferences();
     const title = String(directive.title ?? '');
     const body = String(directive.body ?? '');
     const overlayText =

@@ -129,7 +129,7 @@ async function persistVrcxMessage(data: IpcVrcxMessagePayload) {
                 return;
             }
 
-            const entry: any = {
+            const entry = {
                 created_at: new Date().toJSON(),
                 type: 'Event',
                 data: normalizeString(data.Data)
@@ -143,7 +143,7 @@ async function persistVrcxMessage(data: IpcVrcxMessagePayload) {
             break;
         }
         case 'External': {
-            const entry: any = {
+            const entry = {
                 created_at: new Date().toJSON(),
                 type: 'External',
                 message: normalizeString(data.Data),

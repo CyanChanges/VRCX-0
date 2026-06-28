@@ -83,7 +83,7 @@ describe('runtimeEventBridgeService', () => {
     it('records GameLog persistence fallback as telemetry without frontend ingest', async () => {
         const handlers = new Map<string, (payload: unknown) => void>();
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-        mocks.subscribe.mockImplementation((name: any, handler: any) => {
+        mocks.subscribe.mockImplementation((name, handler) => {
             handlers.set(name, handler);
             return Promise.resolve(() => {});
         });
@@ -127,7 +127,7 @@ describe('runtimeEventBridgeService', () => {
 
     it('records runtime-persisted GameLog mirrors without frontend ingest', async () => {
         const handlers = new Map<string, (payload: unknown) => void>();
-        mocks.subscribe.mockImplementation((name: any, handler: any) => {
+        mocks.subscribe.mockImplementation((name, handler) => {
             handlers.set(name, handler);
             return Promise.resolve(() => {});
         });
@@ -135,7 +135,7 @@ describe('runtimeEventBridgeService', () => {
 
         await bindRuntimeEvents();
 
-        const payload: any = {
+        const payload = {
             runtimePersisted: true,
             raw: [
                 'runtime-game-log',
@@ -146,7 +146,7 @@ describe('runtimeEventBridgeService', () => {
             ]
         };
         handlers.get('addGameLogEvent')?.(payload);
-        await new Promise((resolve: any) => {
+        await new Promise((resolve) => {
             setTimeout(resolve, 0);
         });
 
@@ -158,17 +158,17 @@ describe('runtimeEventBridgeService', () => {
 
     it('applies runtime GameLog projection when runtime ingest is active', async () => {
         const handlers = new Map<string, (payload: unknown) => void>();
-        mocks.subscribe.mockImplementation((name: any, handler: any) => {
+        mocks.subscribe.mockImplementation((name, handler) => {
             handlers.set(name, handler);
             return Promise.resolve(() => {});
         });
         mocks.isHostCapabilityAvailable.mockImplementation(
-            (name: any) => name === 'runtimeGameLogIngest'
+            (name) => name === 'runtimeGameLogIngest'
         );
 
         await bindRuntimeEvents();
 
-        const payload: any = {
+        const payload = {
             currentLocation: 'wrld_test:1',
             currentWorldName: 'Test World',
             currentLocationPlayers: []

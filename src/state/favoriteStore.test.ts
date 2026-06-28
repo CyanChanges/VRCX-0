@@ -37,7 +37,7 @@ describe('favoriteStore', () => {
 
     it('keeps local entity details until the entity is removed from every group', () => {
         const store = useFavoriteStore.getState();
-        const world: any = {
+        const world = {
             name: 'Test World'
         };
 

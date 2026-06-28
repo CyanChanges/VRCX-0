@@ -44,12 +44,12 @@ export function FriendListSearchFilterDropdown({ value, onChange }: any) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
                 <DropdownMenuGroup>
-                    {SEARCH_FILTERS.map((filter: any) => (
+                    {SEARCH_FILTERS.map((filter) => (
                         <DropdownMenuCheckboxItem
                             key={filter.id}
                             checked={activeFilters.has(filter.id)}
-                            onSelect={(event: any) => event.preventDefault()}
-                            onCheckedChange={(checked: any) => {
+                            onSelect={(event) => event.preventDefault()}
+                            onCheckedChange={(checked) => {
                                 const next = new Set(activeFilters);
                                 if (checked) {
                                     next.add(filter.id);

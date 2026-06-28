@@ -33,14 +33,14 @@ export function CommunityThemeSafetyHost(): null {
             .subscribe('communityThemeDisableRequested', () => {
                 void disableThemeFromTray();
             })
-            .then((unsubscribe: any) => {
+            .then((unsubscribe) => {
                 if (disposed) {
                     unsubscribe();
                     return;
                 }
                 unlisten = unsubscribe;
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 console.warn(
                     'Unable to subscribe community theme tray event:',
                     error

@@ -47,14 +47,14 @@ type LoginErrors = {
 
 export function useLoginPageState() {
     const { t } = useTranslation();
-    const locale = useShellStore((state: any) => state.locale);
-    const proxyServer = usePreferencesStore((state: any) => state.proxyServer);
-    const confirm = useModalStore((state: any) => state.confirm);
+    const locale = useShellStore((state) => state.locale);
+    const proxyServer = usePreferencesStore((state) => state.proxyServer);
+    const confirm = useModalStore((state) => state.confirm);
     const preferencesHydrated = usePreferencesStore(
-        (state: any) => state.preferencesHydrated
+        (state) => state.preferencesHydrated
     );
-    const sessionPhase = useSessionStore((state: any) => state.sessionPhase);
-    const databaseReady = useSessionStore((state: any) => state.databaseReady);
+    const sessionPhase = useSessionStore((state) => state.sessionPhase);
+    const databaseReady = useSessionStore((state) => state.databaseReady);
     const [snapshot, setSnapshot] = useState<SavedAuthSnapshot | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [deleteTarget, setDeleteTarget] =
@@ -115,12 +115,12 @@ export function useLoginPageState() {
         let active = true;
 
         refreshSavedAuthSnapshot()
-            .then((nextSnapshot: any) => {
+            .then((nextSnapshot) => {
                 if (active) {
                     applySnapshot(nextSnapshot);
                 }
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 toast.error(
                     error instanceof Error
                         ? error.message

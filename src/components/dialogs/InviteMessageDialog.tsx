@@ -49,7 +49,7 @@ function InviteMessageDialog({
     return (
         <Dialog
             open={Boolean(open)}
-            onOpenChange={(nextOpen: any) => {
+            onOpenChange={(nextOpen) => {
                 if (nextOpen) {
                     onOpenChange?.(true);
                 } else {
@@ -130,7 +130,7 @@ function InviteMessageTemplatesDialog({
                         className="min-h-0"
                     >
                         <TabsList className="flex-wrap">
-                            {INVITE_MESSAGE_TYPES.map((entry: any) => (
+                            {INVITE_MESSAGE_TYPES.map((entry) => (
                                 <TabsTrigger
                                     key={entry.type}
                                     value={entry.type}

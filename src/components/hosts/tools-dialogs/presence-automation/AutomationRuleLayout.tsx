@@ -240,7 +240,7 @@ export function CompactCheckList({
                     : 'sm:grid-cols-2 xl:grid-cols-3'
             )}
         >
-            {options.map((option: any) => {
+            {options.map((option) => {
                 const id = `${idPrefix}-${option.value}`;
                 return (
                     <Field
@@ -253,7 +253,7 @@ export function CompactCheckList({
                             id={id}
                             checked={values.includes(option.value)}
                             disabled={disabled}
-                            onCheckedChange={(checked: any) =>
+                            onCheckedChange={(checked) =>
                                 onChange(
                                     updateArrayValue(
                                         values,

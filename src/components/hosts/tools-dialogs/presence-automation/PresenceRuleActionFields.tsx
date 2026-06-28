@@ -77,7 +77,7 @@ export function PresenceRuleActionFields({
                                 <SelectItem value="no-change">
                                     {t(`${I18N_ROOT}.do_not_change`)}
                                 </SelectItem>
-                                {statusOptions.map((statusOption: any) => (
+                                {statusOptions.map((statusOption) => (
                                     <SelectItem
                                         key={statusOption}
                                         value={statusOption}
@@ -114,7 +114,7 @@ export function PresenceRuleActionFields({
                                 'view.settings.general.automation.status_description_placeholder'
                             )}
                             aria-label={t(`${I18N_ROOT}.signature`)}
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 onStatusDescriptionChange(event.target.value)
                             }
                         />

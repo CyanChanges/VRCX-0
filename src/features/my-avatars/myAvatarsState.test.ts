@@ -21,9 +21,9 @@ import {
 
 const STORAGE_KEY = 'vrcx-0:table:my-avatars';
 
-function installLocalStorage(initial: any = {}) {
+function installLocalStorage(initial = {}) {
     const store = new Map(
-        Object.entries(initial).map(([key, value]: any) => [key, String(value)])
+        Object.entries(initial).map(([key, value]) => [key, String(value)])
     );
 
     globalThis.window = {
@@ -163,7 +163,7 @@ describe('myAvatarsState', () => {
             'actions',
             'name',
             ...MY_AVATARS_COLUMN_IDS.filter(
-                (columnId: any) => columnId !== 'actions' && columnId !== 'name'
+                (columnId) => columnId !== 'actions' && columnId !== 'name'
             )
         ]);
 

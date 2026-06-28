@@ -73,7 +73,7 @@ export function SettingsPage() {
                 className="flex min-h-0 flex-1 gap-4"
             >
                 <TabsList className="h-fit w-44 shrink-0 gap-0.5 self-start">
-                    {shell.settingsTabs.map(([value, labelKey]: any) => {
+                    {shell.settingsTabs.map(([value, labelKey]) => {
                         const Icon = SETTINGS_TAB_ICONS[value];
                         return (
                             <TabsTrigger

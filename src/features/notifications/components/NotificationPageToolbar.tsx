@@ -32,9 +32,7 @@ export function NotificationPageToolbar({
             />
             <Input
                 value={searchQuery}
-                onChange={(event: any) =>
-                    onSearchQueryChange(event.target.value)
-                }
+                onChange={(event) => onSearchQueryChange(event.target.value)}
                 placeholder={t('common.actions.search')}
                 className="h-9 min-w-36 flex-1 sm:max-w-52"
             />

@@ -16,9 +16,9 @@ import {
 
 const STORAGE_KEY = 'vrcx-0:table:friendList';
 
-function installLocalStorage(initial: any = {}) {
+function installLocalStorage(initial = {}) {
     const store = new Map(
-        Object.entries(initial).map(([key, value]: any) => [key, String(value)])
+        Object.entries(initial).map(([key, value]) => [key, String(value)])
     );
 
     globalThis.window = {
@@ -138,8 +138,7 @@ describe('friendListState', () => {
             'status',
             'avatar',
             ...FRIEND_LIST_COLUMN_IDS.filter(
-                (columnId: any) =>
-                    columnId !== 'status' && columnId !== 'avatar'
+                (columnId) => columnId !== 'status' && columnId !== 'avatar'
             )
         ]);
 

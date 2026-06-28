@@ -75,9 +75,7 @@ function uniqueStrings(values: unknown): string[] {
         return [];
     }
     return Array.from(
-        new Set(
-            values.map((value: any) => normalizeText(value)).filter(Boolean)
-        )
+        new Set(values.map((value) => normalizeText(value)).filter(Boolean))
     );
 }
 
@@ -100,7 +98,7 @@ function normalizeSystemTab(
     source?: Partial<SidebarSystemTabLayoutItem>
 ): SidebarSystemTabLayoutItem {
     const fallback = DEFAULT_SIDEBAR_TAB_LAYOUT.find(
-        (item: any) => item.type === 'system' && item.systemTab === systemTab
+        (item) => item.type === 'system' && item.systemTab === systemTab
     ) as SidebarSystemTabLayoutItem;
     const visible =
         systemTab === SYSTEM_TAB_FRIENDS ? true : source?.visible !== false;
@@ -198,11 +196,11 @@ export function normalizeSidebarTabDisplayMode(
 
 export function createFavoriteCollectionTab(
     existingLayout: SidebarTabLayout,
-    label: any = 'Favorite Collection'
+    label = 'Favorite Collection'
 ): SidebarFavoriteCollectionTabLayoutItem {
-    const existingIds = new Set(existingLayout.map((item: any) => item.id));
+    const existingIds = new Set(existingLayout.map((item) => item.id));
     let index = existingLayout.filter(
-        (item: any) => item.type === 'favoriteCollection'
+        (item) => item.type === 'favoriteCollection'
     ).length;
     let id = '';
     do {
@@ -223,9 +221,7 @@ export function createFavoriteCollectionTab(
 export function getVisibleSidebarTabs(
     layout: SidebarTabLayout
 ): SidebarTabLayout {
-    return normalizeSidebarTabLayout(layout).filter(
-        (item: any) => item.visible
-    );
+    return normalizeSidebarTabLayout(layout).filter((item) => item.visible);
 }
 
 export function getVisibleFavoriteCollectionSourceGroupKeys(
@@ -235,12 +231,10 @@ export function getVisibleFavoriteCollectionSourceGroupKeys(
         new Set(
             normalizeSidebarTabLayout(layout)
                 .filter(
-                    (
-                        item: any
-                    ): item is SidebarFavoriteCollectionTabLayoutItem =>
+                    (item): item is SidebarFavoriteCollectionTabLayoutItem =>
                         item.type === 'favoriteCollection' && item.visible
                 )
-                .flatMap((item: any) => item.sourceGroupKeys)
+                .flatMap((item) => item.sourceGroupKeys)
                 .filter(Boolean)
         )
     );

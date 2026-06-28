@@ -38,7 +38,7 @@ export function useFriendListPageController() {
         total: 0
     });
     const randomUserColours = usePreferencesStore(
-        (state: any) => state.randomUserColours
+        (state) => state.randomUserColours
     );
     const actions = useFriendListRowActions({
         cancelUserLoadRef: userLoad.cancelUserLoadRef,

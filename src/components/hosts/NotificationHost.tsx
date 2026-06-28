@@ -16,16 +16,14 @@ import {
 export function NotificationHost() {
     const { t } = useTranslation();
 
-    const items = useNotificationStore((state: any) => state.items);
-    const isPanelOpen = useNotificationStore((state: any) => state.isPanelOpen);
-    const setPanelOpen = useNotificationStore(
-        (state: any) => state.setPanelOpen
-    );
+    const items = useNotificationStore((state) => state.items);
+    const isPanelOpen = useNotificationStore((state) => state.isPanelOpen);
+    const setPanelOpen = useNotificationStore((state) => state.setPanelOpen);
     const dismissNotification = useNotificationStore(
-        (state: any) => state.dismissNotification
+        (state) => state.dismissNotification
     );
-    const markAllRead = useNotificationStore((state: any) => state.markAllRead);
-    const unreadCount = items.filter((item: any) => !item.read).length;
+    const markAllRead = useNotificationStore((state) => state.markAllRead);
+    const unreadCount = items.filter((item) => !item.read).length;
 
     return (
         <Sheet open={isPanelOpen} onOpenChange={setPanelOpen}>
@@ -61,7 +59,7 @@ export function NotificationHost() {
                 <Separator className="my-4" />
                 <div className="mt-4 flex flex-col gap-3">
                     {items.length > 0 ? (
-                        items.map((item: any) => (
+                        items.map((item) => (
                             <div
                                 key={item.id}
                                 className="rounded-md border p-3 shadow-sm"

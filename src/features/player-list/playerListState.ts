@@ -39,7 +39,7 @@ export function sanitizePlayerListSorting(value: any) {
     }
 
     const filtered = value.filter(
-        (entry: any) =>
+        (entry) =>
             entry &&
             typeof entry.id === 'string' &&
             PLAYER_LIST_COLUMN_IDS.includes(entry.id)
@@ -76,7 +76,7 @@ export function sanitizePlayerListColumnOrder(value: any) {
         seen.add(columnId);
     }
     const missing = PLAYER_LIST_COLUMN_IDS.filter(
-        (columnId: any) => !ordered.includes(columnId)
+        (columnId) => !ordered.includes(columnId)
     );
     return [...ordered, ...missing];
 }

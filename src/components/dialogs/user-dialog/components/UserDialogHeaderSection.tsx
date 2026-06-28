@@ -280,7 +280,7 @@ export function UserDialogHeaderSection(props: any) {
         onToggleSelfSharedConnections,
         onUnfriend
     } = commands;
-    const actionMenuModel: any = {
+    const actionMenuModel = {
         actionStatus,
         avatarOverrideState,
         canInviteFromCurrentLocation,
@@ -297,7 +297,7 @@ export function UserDialogHeaderSection(props: any) {
         profile,
         recentDialogShortcut
     };
-    const actionMenuCommands: any = {
+    const actionMenuCommands = {
         onAvatarOverride,
         onBoop,
         onEditMemo,
@@ -320,13 +320,13 @@ export function UserDialogHeaderSection(props: any) {
         onShowInstanceHistory,
         onUnfriend
     };
-    const factsModel: any = {
+    const factsModel = {
         actionStatus,
         isCurrentUser,
         profile,
         userUrl
     };
-    const factsCommands: any = {
+    const factsCommands = {
         onCopyUserId,
         onCopyUserUrl,
         onOpenUserUrl,

@@ -91,7 +91,7 @@ export function findGroupOption(groups: any, groupId: any) {
     }
     return (
         (Array.isArray(groups) ? groups : []).find(
-            (group: any) => groupOptionId(group) === normalizedGroupId
+            (group) => groupOptionId(group) === normalizedGroupId
         ) || null
     );
 }

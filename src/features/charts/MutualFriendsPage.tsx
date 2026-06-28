@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/ui/shadcn/spinner';
 
 const MutualFriendsPageImpl = lazy(() =>
-    import('./MutualFriendsPageImpl').then((module: any) => ({
+    import('./MutualFriendsPageImpl').then((module) => ({
         default: module.MutualFriendsPage
     }))
 );

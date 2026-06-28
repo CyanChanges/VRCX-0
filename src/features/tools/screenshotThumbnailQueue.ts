@@ -73,11 +73,11 @@ export function requestScreenshotThumbnail(path: any) {
         cancelled: false,
         sequence: (requestSequence += 1)
     };
-    const promise = new Promise((resolve: any, reject: any) => {
+    const promise = new Promise((resolve, reject) => {
         task.resolve = resolve;
         task.reject = reject;
         queue.push(task);
-        queue.sort((left: any, right: any) => left.sequence - right.sequence);
+        queue.sort((left, right) => left.sequence - right.sequence);
         runNextThumbnailRequest();
     });
     task.promise = promise;

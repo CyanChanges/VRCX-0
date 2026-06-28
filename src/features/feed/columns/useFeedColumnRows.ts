@@ -83,17 +83,15 @@ function appendUniqueRows(currentRows: FeedRow[], nextRows: FeedRow[]) {
 }
 
 export function useFeedColumnRows(column: FeedColumnConfig) {
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const isFavoritesLoaded = useSessionStore(
-        (state: any) => state.isFavoritesLoaded
+        (state) => state.isFavoritesLoaded
     );
     const remoteFavoritesById = useFavoriteStore(
-        (state: any) => state.remoteFavoritesById
+        (state) => state.remoteFavoritesById
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
     const [rows, setRows] = useState<FeedRow[]>([]);
     const [loadStatus, setLoadStatus] = useState<FeedLoadStatus>('idle');
@@ -336,7 +334,7 @@ export function useFeedColumnRows(column: FeedColumnConfig) {
         if (loadStatus !== 'ready' || !normalizeId(currentUserId)) {
             return undefined;
         }
-        return useFeedLiveStore.subscribe((state: any, previousState: any) => {
+        return useFeedLiveStore.subscribe((state, previousState) => {
             if (
                 state.version === previousState?.version ||
                 state.entries.length === 0 ||

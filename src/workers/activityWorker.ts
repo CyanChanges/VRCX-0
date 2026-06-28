@@ -9,7 +9,7 @@ import {
     normalizeBuckets
 } from '../shared/utils/activityEngine';
 
-self.addEventListener('message', (event: any) => {
+self.addEventListener('message', (event) => {
     const { type, seq, payload } = event.data;
 
     try {
@@ -105,7 +105,7 @@ function computeSessionsSnapshot(payload: any) {
             payload.rows,
             payload.mergeGapMs,
             payload.nowMs
-        ).map((session: any, index: any, list: any) => ({
+        ).map((session, index, list) => ({
             ...session,
             isOpenTail:
                 index === list.length - 1 && payload.mayHaveOpenTail === true,
@@ -123,7 +123,7 @@ function computeSessionsSnapshot(payload: any) {
     );
     return {
         pendingSessionStartAt: result.pendingSessionStartAt,
-        sessions: result.sessions.map((session: any) => ({
+        sessions: result.sessions.map((session) => ({
             ...session,
             isOpenTail: false,
             sourceRevision

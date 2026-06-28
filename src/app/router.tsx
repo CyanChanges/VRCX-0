@@ -38,18 +38,18 @@ function RouteErrorFallback() {
 }
 
 const AppShellLayout = lazy(() =>
-    import('@/components/layout/AppShellLayout').then((module: any) => ({
+    import('@/components/layout/AppShellLayout').then((module) => ({
         default: module.AppShellLayout
     }))
 );
 
 function RequireAuth() {
-    const sessionPhase = useSessionStore((state: any) => state.sessionPhase);
+    const sessionPhase = useSessionStore((state) => state.sessionPhase);
     const isSessionReady = sessionPhase === 'ready';
     const isSessionPending =
         sessionPhase === 'authenticating' || sessionPhase === 'bootstrapping';
     const backendRuntimeReady = useRuntimeStore(
-        (state: any) =>
+        (state) =>
             state.shell.backendRuntimeSnapshotHydrated &&
             !state.shell.backendRuntimeSessionHydrating
     );
@@ -65,12 +65,12 @@ function RequireAuth() {
 }
 
 function RedirectIfAuthenticated() {
-    const sessionPhase = useSessionStore((state: any) => state.sessionPhase);
+    const sessionPhase = useSessionStore((state) => state.sessionPhase);
     const isSessionReady = sessionPhase === 'ready';
     const isSessionPending =
         sessionPhase === 'authenticating' || sessionPhase === 'bootstrapping';
     const backendRuntimeReady = useRuntimeStore(
-        (state: any) =>
+        (state) =>
             state.shell.backendRuntimeSnapshotHydrated &&
             !state.shell.backendRuntimeSessionHydrating
     );
@@ -95,7 +95,7 @@ function AppShellRoute() {
 
 function AppRouterContent() {
     const isMacHost = useRuntimeStore(
-        (state: any) => state.hostCapabilities.platform === 'macos'
+        (state) => state.hostCapabilities.platform === 'macos'
     );
     const { pathname } = useLocation();
     useGlobalKeyboardShortcuts();
@@ -119,7 +119,7 @@ function AppRouterContent() {
                 >
                     <Routes>
                         <Route element={<RedirectIfAuthenticated />}>
-                            {publicRoutes.map((route: any) => (
+                            {publicRoutes.map((route) => (
                                 <Route
                                     key={route.path}
                                     path={route.path}
@@ -134,7 +134,7 @@ function AppRouterContent() {
                                     index
                                     element={<Navigate to="/feed" replace />}
                                 />
-                                {protectedRoutes.map((route: any) => (
+                                {protectedRoutes.map((route) => (
                                     <Route
                                         key={route.path}
                                         path={route.path}

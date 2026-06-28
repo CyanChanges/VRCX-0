@@ -43,7 +43,7 @@ export function UserGroupCard({ group, currentEndpoint }: any) {
                 endpoint: currentEndpoint,
                 includeRoles: false
             })
-            .then((groupProfile: any) => {
+            .then((groupProfile) => {
                 if (active) {
                     setProfile(groupProfile);
                 }

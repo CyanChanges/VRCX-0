@@ -127,7 +127,7 @@ describe('openOrInstallLatestAvailableUpdate', () => {
 
     it('installs a passed Tauri update release and restarts', async () => {
         mocks.downloadAndInstallUpdate.mockImplementation(
-            async (_release: unknown, options: any) => {
+            async (_release: unknown, options) => {
                 options.onDownloadProgress({
                     downloadedBytes: 50,
                     totalBytes: 100,

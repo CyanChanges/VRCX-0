@@ -61,7 +61,7 @@ describe('friendListRows', () => {
     });
 
     it('matches friends by the search filters users can toggle', () => {
-        const friend: any = {
+        const friend = {
             id: 'usr_friend',
             displayName: 'Ａｌｉｃｅ Star',
             username: 'alice_user',

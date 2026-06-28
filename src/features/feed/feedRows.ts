@@ -54,7 +54,7 @@ export function resolveFeedUserId(row: any) {
 export function resolveFeedUserDisplayName(
     row: any,
     friend: any,
-    cachedDisplayName: any = ''
+    cachedDisplayName = ''
 ) {
     const userId = resolveFeedUserId(row);
     const rowDisplayName = resolveDisplayNameCandidate(
@@ -175,7 +175,7 @@ export function buildFeedFavoriteIdSet(
         ? selectedFavoriteGroupIds
         : [];
     const hasRemoteGroupFilter = selectedGroups.some(
-        (groupKey: any) => !String(groupKey || '').startsWith('local:')
+        (groupKey) => !String(groupKey || '').startsWith('local:')
     );
 
     for (const favorite of remoteFavorites) {
@@ -253,7 +253,7 @@ export function parseDateInput(value: any) {
     }
     const [year, month, day] = normalizedValue
         .split('-')
-        .map((part: any) => Number.parseInt(part, 10));
+        .map((part) => Number.parseInt(part, 10));
     const date = new Date(year, month - 1, day);
     return Number.isNaN(date.valueOf()) ? undefined : date;
 }

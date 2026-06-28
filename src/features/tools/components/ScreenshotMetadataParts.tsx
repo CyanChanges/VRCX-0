@@ -62,7 +62,7 @@ export function MetadataAuthorLink({ author, endpoint }: any) {
 
         userProfileRepository
             .getUserProfile({ userId, endpoint })
-            .then((profile: any) => {
+            .then((profile) => {
                 if (active) {
                     setDisplayName(
                         profile?.displayName || profile?.username || userId

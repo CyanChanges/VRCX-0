@@ -112,7 +112,7 @@ export function PlayerListTableSection({
         onColumnSizingChange: tableState.setColumnSizing,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
-        getRowId: (row: any) =>
+        getRowId: (row) =>
             `${row?.userId || row?.id || ''}:${row?.displayName || ''}`,
         enableColumnResizing: true,
         columnResizeMode: 'onChange',

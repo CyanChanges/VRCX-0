@@ -41,7 +41,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
         if (!query) {
             return entries;
         }
-        return entries.filter((entry: any) =>
+        return entries.filter((entry) =>
             [
                 entry.name,
                 entry.version,
@@ -56,7 +56,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
         );
     }, [entries, searchQuery]);
     const selectedEntry =
-        filteredEntries.find((entry: any) => entry.id === selectedEntryId) ||
+        filteredEntries.find((entry) => entry.id === selectedEntryId) ||
         filteredEntries[0] ||
         null;
 
@@ -70,7 +70,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
         fetch(buildAssetUrl('licenses/third-party-licenses.json'), {
             cache: 'no-store'
         })
-            .then((response: any) => {
+            .then((response) => {
                 if (!response.ok) {
                     throw new Error(
                         `Failed to load third-party license manifest: ${response.status}`
@@ -78,7 +78,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
                 }
                 return response.json();
             })
-            .then((manifest: any) => {
+            .then((manifest) => {
                 if (!active) {
                     return;
                 }
@@ -108,9 +108,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
     }, [loaded, open]);
 
     useEffect(() => {
-        if (
-            !filteredEntries.some((entry: any) => entry.id === selectedEntryId)
-        ) {
+        if (!filteredEntries.some((entry) => entry.id === selectedEntryId)) {
             setSelectedEntryId(filteredEntries[0]?.id || '');
         }
     }, [filteredEntries, selectedEntryId]);
@@ -129,9 +127,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
                     <Input
                         value={searchQuery}
                         placeholder={t('dialog.open_source.search_placeholder')}
-                        onChange={(event: any) =>
-                            setSearchQuery(event.target.value)
-                        }
+                        onChange={(event) => setSearchQuery(event.target.value)}
                     />
                     {loading ? (
                         <Empty className="min-h-24">
@@ -150,7 +146,7 @@ export function OpenSourceNoticeDialog({ open, onOpenChange }: any) {
                     ) : (
                         <div className="grid min-h-0 gap-4 md:grid-cols-[minmax(0,18rem)_minmax(0,1fr)]">
                             <div className="flex max-h-[30rem] flex-col gap-2 overflow-y-auto pr-1">
-                                {filteredEntries.map((entry: any) => (
+                                {filteredEntries.map((entry) => (
                                     <Button
                                         key={entry.id}
                                         type="button"

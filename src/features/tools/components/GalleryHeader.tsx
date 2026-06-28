@@ -49,14 +49,14 @@ function GalleryGridSettingsMenu({ gridDensity, onGridDensityChange }: any) {
                             size="sm"
                             spacing={1}
                             value={gridDensity}
-                            onValueChange={(nextValue: any) => {
+                            onValueChange={(nextValue) => {
                                 if (nextValue) {
                                     onGridDensityChange(nextValue);
                                 }
                             }}
                             className="grid w-full grid-cols-3"
                         >
-                            {GALLERY_GRID_DENSITY_OPTIONS.map((option: any) => (
+                            {GALLERY_GRID_DENSITY_OPTIONS.map((option) => (
                                 <ToggleGroupItem
                                     key={option.value}
                                     value={option.value}

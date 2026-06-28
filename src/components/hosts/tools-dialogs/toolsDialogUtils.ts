@@ -18,7 +18,7 @@ export const instanceTypes = [
     'groupOnly'
 ];
 
-export function getAuthSnapshot(): any {
+export function getAuthSnapshot() {
     return useRuntimeStore.getState().auth || {};
 }
 
@@ -74,8 +74,8 @@ export async function getUserMemoMap() {
         .catch((): never[] => []);
     return new Map(
         (Array.isArray(rows) ? rows : [])
-            .filter((row: any) => typeof row?.userId === 'string' && row.userId)
-            .map((row: any) => [row.userId, row.memo || ''])
+            .filter((row) => typeof row?.userId === 'string' && row.userId)
+            .map((row) => [row.userId, row.memo || ''])
     );
 }
 

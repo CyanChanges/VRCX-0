@@ -4,7 +4,7 @@ import { PlayerListTableSection } from './components/PlayerListTableSection';
 import { PlayerListWorldHeader } from './components/PlayerListWorldHeader';
 import { usePlayerListPageController } from './usePlayerListPageController';
 
-export function PlayerListPage({ embedded = false }: any = {}) {
+export function PlayerListPage({ embedded = false } = {}) {
     const {
         actions,
         clockNow,

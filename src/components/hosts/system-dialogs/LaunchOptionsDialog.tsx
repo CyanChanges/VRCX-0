@@ -45,7 +45,7 @@ export function LaunchOptionsDialog({ open, onOpenChange }: any) {
             configRepository.getString('launchArguments', ''),
             configRepository.getString('vrcLaunchPathOverride', '')
         ])
-            .then(([nextLaunchArguments, nextLaunchPath]: any) => {
+            .then(([nextLaunchArguments, nextLaunchPath]) => {
                 if (!active) {
                     return;
                 }
@@ -59,7 +59,7 @@ export function LaunchOptionsDialog({ open, onOpenChange }: any) {
                     configRepository.setString('vrcLaunchPathOverride', '');
                 }
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 toast.error(
                     userFacingErrorMessage(
                         error,
@@ -174,7 +174,7 @@ export function LaunchOptionsDialog({ open, onOpenChange }: any) {
                             rows={3}
                             value={launchArguments}
                             placeholder="e.g. --fps=144 --enable-sdk-log-levels"
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 setLaunchArguments(event.target.value)
                             }
                         />
@@ -189,7 +189,7 @@ export function LaunchOptionsDialog({ open, onOpenChange }: any) {
                                 value={vrcLaunchPathOverride}
                                 placeholder="C:\\Program Files (x86)\\Steam\\steamapps\\common\\VRChat\\launch.exe"
                                 spellCheck={false}
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     setVrcLaunchPathOverride(event.target.value)
                                 }
                             />

@@ -88,16 +88,16 @@ describe('instancePresence domain model', () => {
             instanceCreatorLabel: 'Creator'
         });
 
-        expect(roster.rows.map((row: any) => row.id)).toEqual([
+        expect(roster.rows.map((row) => row.id)).toEqual([
             'usr_owner',
             'usr_self',
             'usr_ask',
             'usr_api'
         ]);
         expect(roster.rows[0].$subtitle).toBe('Creator');
-        expect(
-            roster.rows.some((row: any) => row.id === 'usr_busy_private')
-        ).toBe(false);
+        expect(roster.rows.some((row) => row.id === 'usr_busy_private')).toBe(
+            false
+        );
         expect(roster.friendCount).toBe(1);
         expect(roster.playerCount).toBe(4);
     });
@@ -119,6 +119,6 @@ describe('instancePresence domain model', () => {
 
         expect(roster.ownerId).toBe('grp_owner');
         expect(roster.ownerIsGroup).toBe(true);
-        expect(roster.rows.map((row: any) => row.id)).toEqual(['usr_friend']);
+        expect(roster.rows.map((row) => row.id)).toEqual(['usr_friend']);
     });
 });

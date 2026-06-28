@@ -436,7 +436,7 @@ export function DashboardGameLogWidget({
             <div className="min-h-0 flex-1 overflow-auto">
                 <Table className="app-data-table table-fixed">
                     <TableBody>
-                        {annotatedRows.map((row: any, index: any) => {
+                        {annotatedRows.map((row: any, index) => {
                             return (
                                 <TableRow
                                     key={`${row.type || 'gamelog'}-${row.created_at || index}-${index}`}

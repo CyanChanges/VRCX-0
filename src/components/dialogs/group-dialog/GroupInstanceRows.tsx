@@ -159,7 +159,7 @@ export function GroupInstanceRows({ instances, currentUserId }: any) {
 
     return (
         <div className="flex flex-col gap-2">
-            {rows.map((instance: any, index: any) => {
+            {rows.map((instance, index) => {
                 const location = getInstanceLocation(instance);
                 const parsedLocation = parseLocation(location);
                 const users = getInstanceUsers(instance);

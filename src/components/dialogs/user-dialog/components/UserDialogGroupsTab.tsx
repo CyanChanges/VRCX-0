@@ -62,7 +62,7 @@ export function UserDialogGroupsTab({
                     <SelectContent>
                         <SelectGroup>
                             {Object.entries(userDialogGroupSortingOptions).map(
-                                ([key, option]: any) => (
+                                ([key, option]) => (
                                     <SelectItem
                                         key={key}
                                         value={option.value}

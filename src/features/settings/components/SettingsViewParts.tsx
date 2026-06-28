@@ -68,7 +68,7 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
 
     async function persist(
         nextSizes: any,
-        { close = false, showToast = false }: any = {}
+        { close = false, showToast = false } = {}
     ) {
         const normalizedSizes = normalizeTablePageSizes(nextSizes);
         setDraft(normalizedSizes);
@@ -92,7 +92,7 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
         }
     }
 
-    function addPageSize(value: any = input, opts: any = {}) {
+    function addPageSize(value = input, opts = {}) {
         const parsed = Number.parseInt(value, 10);
         if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1000) {
             toast.error(
@@ -105,7 +105,7 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
     }
 
     function removePageSize(value: any) {
-        const next = draft.filter((entry: any) => entry !== value);
+        const next = draft.filter((entry) => entry !== value);
         persist(next.length ? next : [...TABLE_PAGE_SIZE_DEFAULTS]);
     }
 
@@ -145,7 +145,7 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
                 </DialogHeader>
                 <FieldGroup>
                     <div className="flex flex-wrap gap-2">
-                        {draft.map((size: any) => (
+                        {draft.map((size) => (
                             <Badge
                                 key={size}
                                 variant="secondary"
@@ -183,10 +183,10 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
                                 placeholder={t(
                                     'view.settings.appearance.appearance.table_page_sizes'
                                 )}
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     setInput(event.target.value)
                                 }
-                                onKeyDown={(event: any) => {
+                                onKeyDown={(event) => {
                                     if (event.key === 'Enter') {
                                         event.preventDefault();
                                         addPageSize();
@@ -207,7 +207,7 @@ export function TablePageSizesDialog({ open, onOpenChange, onSaved }: any) {
                     </Field>
                     <div className="max-h-64 overflow-y-auto rounded-md border p-1">
                         <FieldGroup>
-                            {filteredOptions.map((size: any) => {
+                            {filteredOptions.map((size) => {
                                 const optionId = `settings-table-page-size-option-${size}`;
                                 return (
                                     <ShadcnField

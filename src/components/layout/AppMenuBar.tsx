@@ -114,17 +114,15 @@ export function AppMenuBar({
     const [openSourceNoticeOpen, setOpenSourceNoticeOpen] = useState(false);
     const [supportOpen, setSupportOpen] = useState(false);
     const [quickAccessKeys, setQuickAccessKeys] = useState<string[]>([]);
-    const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const navbarOpen = useShellStore((state: any) => state.navbarOpen);
+    const zoomLevel = useShellStore((state) => state.zoomLevel);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
     const notificationLayout = usePreferencesStore(
-        (state: any) => state.notificationLayout
+        (state) => state.notificationLayout
     );
     const setSystemHostOpen = useRuntimeStore(
-        (state: any) => state.setSystemHostOpen
+        (state) => state.setSystemHostOpen
     );
-    const hostCapabilities = useRuntimeStore(
-        (state: any) => state.hostCapabilities
-    );
+    const hostCapabilities = useRuntimeStore((state) => state.hostCapabilities);
     const currentZoom = normalizeZoomLevel(zoomLevel);
     // oxlint-disable-next-line no-undef
     const appVersion = formatReleaseDisplayVersion(VERSION || '') || '-';
@@ -163,7 +161,7 @@ export function AppMenuBar({
         const loadQuickAccessTools = () => {
             configRepository
                 .getString(quickAccessConfigKey, '[]')
-                .then((value: any) => {
+                .then((value) => {
                     if (active) {
                         setQuickAccessKeys(parseQuickAccessToolKeys(value));
                     }
@@ -419,7 +417,7 @@ export function AppMenuBar({
                                     <MenuGroupLabel>
                                         {t('view.tools.quick_access.header')}
                                     </MenuGroupLabel>
-                                    {quickAccessTools.map((tool: any) => (
+                                    {quickAccessTools.map((tool) => (
                                         <ToolMenuItem
                                             key={tool.key}
                                             tool={tool}
@@ -431,13 +429,13 @@ export function AppMenuBar({
                         {availableToolCategories.length > 0 ? (
                             <MenubarSeparator />
                         ) : null}
-                        {availableToolCategories.map((category: any) => (
+                        {availableToolCategories.map((category) => (
                             <MenubarSub key={category.key}>
                                 <MenubarSubTrigger className="min-h-7 min-w-48 text-xs">
                                     {t(category.labelKey)}
                                 </MenubarSubTrigger>
                                 <MenubarSubContent className="w-56">
-                                    {category.tools.map((tool: any) => (
+                                    {category.tools.map((tool) => (
                                         <ToolMenuItem
                                             key={tool.key}
                                             tool={tool}

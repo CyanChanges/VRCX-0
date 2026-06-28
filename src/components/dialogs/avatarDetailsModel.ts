@@ -13,7 +13,7 @@ export function authorTagsFromCsv(value: any) {
         new Set(
             String(value || '')
                 .split(',')
-                .map((entry: any) => normalizeTagName(entry, 'author_tag_'))
+                .map((entry) => normalizeTagName(entry, 'author_tag_'))
                 .filter(Boolean)
         )
     );
@@ -22,10 +22,9 @@ export function authorTagsFromCsv(value: any) {
 export function authorTagsCsv(tags: any) {
     return (Array.isArray(tags) ? tags : [])
         .filter(
-            (tag: any) =>
-                typeof tag === 'string' && tag.startsWith('author_tag_')
+            (tag) => typeof tag === 'string' && tag.startsWith('author_tag_')
         )
-        .map((tag: any) => tag.replace(/^author_tag_/, ''))
+        .map((tag) => tag.replace(/^author_tag_/, ''))
         .join(',');
 }
 

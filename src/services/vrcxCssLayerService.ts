@@ -28,7 +28,7 @@ function renderCssLayers(): void {
 
     document
         .querySelectorAll(`style[${VRCX_CSS_LAYER_ATTR}]`)
-        .forEach((styleElement: any) => {
+        .forEach((styleElement) => {
             if (isKnownLayer(styleElement.getAttribute(VRCX_CSS_LAYER_ATTR))) {
                 styleElement.remove();
             }

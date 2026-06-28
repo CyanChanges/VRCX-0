@@ -40,7 +40,7 @@ export function LoginPageHeader({
                     </SelectTrigger>
                     <SelectContent>
                         <SelectGroup>
-                            {languageCodes.map((code: any) => (
+                            {languageCodes.map((code) => (
                                 <SelectItem key={code} value={code}>
                                     {getLanguageName(code)}
                                 </SelectItem>

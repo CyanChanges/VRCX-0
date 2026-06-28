@@ -21,21 +21,19 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
 
     const normalizedGroupId = normalizeEntityId(groupId);
     const currentEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
     const currentLocation = useRuntimeStore(
-        (state: any) => state.gameState.currentLocation
+        (state) => state.gameState.currentLocation
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
-    const confirm = useModalStore((state: any) => state.confirm);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
+    const confirm = useModalStore((state) => state.confirm);
     const updateEntityDialogMetadata = useDialogStore(
-        (state: any) => state.updateEntityDialogMetadata
+        (state) => state.updateEntityDialogMetadata
     );
     const [group, setGroup] = useState(() =>
         seedData ? groupProfileRepository.normalize(seedData) : null
@@ -112,7 +110,7 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
                 endpoint: currentEndpoint,
                 dialog: true
             })
-            .then((nextGroup: any) => {
+            .then((nextGroup) => {
                 if (!active) {
                     return;
                 }
@@ -120,7 +118,7 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
                 setGroup(nextGroup);
                 setLoadStatus('ready');
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }
@@ -172,7 +170,7 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
 
         gameLogRepository
             .getPreviousInstancesByGroupId(normalizedGroupId)
-            .then((rows: any) => {
+            .then((rows) => {
                 if (!active) {
                     return;
                 }
@@ -207,7 +205,7 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
                 userId: currentUserId,
                 endpoint: currentEndpoint
             })
-            .then((response: any) => {
+            .then((response) => {
                 if (!active) {
                     return;
                 }
@@ -218,7 +216,7 @@ export function useGroupDialogState({ groupId, seedData = null }: any) {
                       : [];
                 recordLocationHintsFromInstances({
                     endpoint: currentEndpoint,
-                    instances: rows.map((row: any) => ({
+                    instances: rows.map((row) => ({
                         ...row,
                         groupId: normalizedGroupId,
                         groupName: group?.name || group?.displayName || ''

@@ -36,7 +36,7 @@ export function getNotificationMessage(notification: any) {
         notification?.details?.responseMessage,
         notification?.details?.worldName
     ]
-        .map((value: any) => String(value || '').trim())
+        .map((value) => String(value || '').trim())
         .filter(Boolean)
         .join(' ');
 }

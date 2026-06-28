@@ -124,7 +124,7 @@ export function useCurrentPlayerRows({
                 currentLocationStartedAt: playerListStartedAt,
                 currentUserId
             })
-            .then(async (result: any) => {
+            .then(async (result) => {
                 if (!active) {
                     return;
                 }
@@ -133,7 +133,7 @@ export function useCurrentPlayerRows({
                     ? result.players
                     : [];
 
-                const nextContext: any = {
+                const nextContext = {
                     ...result.context,
                     playerCount: players.length || result.context.playerCount
                 };
@@ -165,7 +165,7 @@ export function useCurrentPlayerRows({
                         : 'Using the current runtime location while waiting for local game-log player events.'
                 );
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }

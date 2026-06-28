@@ -60,7 +60,7 @@ describe('gameLog utilities', () => {
             ]
         );
 
-        expect(result.segments.map((segment: any) => segment.worldId)).toEqual([
+        expect(result.segments.map((segment) => segment.worldId)).toEqual([
             'wrld_new',
             'wrld_old'
         ]);
@@ -91,7 +91,7 @@ describe('gameLog utilities', () => {
                 }
             ],
             [
-                ...Array.from({ length: 5 }, (_: any, index: any) => ({
+                ...Array.from({ length: 5 }, (_, index) => ({
                     rowId: 10 + index,
                     type: 'OnPlayerJoined',
                     created_at: `2024-01-01T10:00:0${index}.000Z`,
@@ -176,13 +176,9 @@ describe('gameLog utilities', () => {
 
         const [segB, segA] = result.segments;
         expect(segB.worldId).toBe('wrld_b');
-        expect(segB.events.map((event: any) => event.userId)).toEqual([
-            'usr_b'
-        ]);
+        expect(segB.events.map((event) => event.userId)).toEqual(['usr_b']);
         expect(segA.worldId).toBe('wrld_a');
-        expect(segA.events.map((event: any) => event.userId)).toEqual([
-            'usr_a'
-        ]);
+        expect(segA.events.map((event) => event.userId)).toEqual(['usr_a']);
     });
 
     it('brackets events into sessions by stream order, ignoring stale event locations', () => {
@@ -230,11 +226,12 @@ describe('gameLog utilities', () => {
 
         const [newSegment, oldSegment] = result.segments;
         expect(newSegment.worldId).toBe('wrld_new');
-        expect(
-            newSegment.events.map((event: any) => event.userId).sort()
-        ).toEqual(['usr_empty', 'usr_stale']);
+        expect(newSegment.events.map((event) => event.userId).sort()).toEqual([
+            'usr_empty',
+            'usr_stale'
+        ]);
         expect(oldSegment.worldId).toBe('wrld_old');
-        expect(oldSegment.events.map((event: any) => event.userId)).toEqual([
+        expect(oldSegment.events.map((event) => event.userId)).toEqual([
             'usr_old'
         ]);
     });

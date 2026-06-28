@@ -78,7 +78,7 @@ function initSharedFeedFilterSubscription(): void {
     }
     unsubscribeSharedFeedFilters = onPreferenceChanged(
         'sharedFeedFilters',
-        (value: any) => {
+        (value) => {
             cachedSharedFeedFilters = parseSharedFeedFilters(value);
             sharedFeedFiltersLoaded = true;
             sharedFeedFiltersLoadPromise = null;
@@ -97,7 +97,7 @@ async function loadSharedFeedFilters(): Promise<SharedFeedFilters> {
                 'sharedFeedFilters',
                 JSON.stringify(sharedFeedFiltersDefaults)
             )
-            .then((value: any) => {
+            .then((value) => {
                 cachedSharedFeedFilters = parseSharedFeedFilters(value);
                 sharedFeedFiltersLoaded = true;
                 sharedFeedFiltersLoadPromise = null;
@@ -125,9 +125,9 @@ function isLocalFavoriteFriend(userId: unknown): boolean {
     const localFriendFavorites =
         useFavoriteStore.getState().localFriendFavorites;
     return Object.values(localFriendFavorites ?? {}).some(
-        (ids: any) =>
+        (ids) =>
             Array.isArray(ids) &&
-            ids.some((id: any) => normalizeString(id) === normalizedUserId)
+            ids.some((id) => normalizeString(id) === normalizedUserId)
     );
 }
 

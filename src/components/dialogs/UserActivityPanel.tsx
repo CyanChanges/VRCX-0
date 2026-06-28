@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Spinner } from '@/ui/shadcn/spinner';
 
 const UserActivityPanelImpl = lazy(() =>
-    import('./UserActivityPanelImpl').then((module: any) => ({
+    import('./UserActivityPanelImpl').then((module) => ({
         default: module.UserActivityPanel
     }))
 );

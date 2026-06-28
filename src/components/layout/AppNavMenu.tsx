@@ -104,7 +104,7 @@ function useAppNavModel({
             applyModel(model);
         }
 
-        loadModel().catch((error: any) => {
+        loadModel().catch((error) => {
             console.warn('Failed to load navigation layout:', error);
             if (active) {
                 setMenuItems([]);
@@ -112,7 +112,7 @@ function useAppNavModel({
         });
 
         const handleNavLayoutUpdated = () => {
-            loadModel().catch((error: any) => {
+            loadModel().catch((error) => {
                 console.warn('Failed to reload navigation layout:', error);
             });
         };
@@ -160,18 +160,16 @@ function useAppNavNotifications({
     sessionPhase,
     t
 }: any) {
-    const notifiedMenus = useShellStore((state: any) => state.notifiedMenus);
-    const removeNavNotification = useShellStore(
-        (state: any) => state.removeNotify
-    );
+    const notifiedMenus = useShellStore((state) => state.notifiedMenus);
+    const removeNavNotification = useShellStore((state) => state.removeNotify);
     const vrcUnseenNotificationCount = useVrcNotificationStore(
-        (state: any) => state.unseenCount
+        (state) => state.unseenCount
     );
     const markAllVrcNotificationsSeen = useVrcNotificationStore(
-        (state: any) => state.markAllSeen
+        (state) => state.markAllSeen
     );
     const loadVrcNotifications = useVrcNotificationStore(
-        (state: any) => state.loadForCurrentUser
+        (state) => state.loadForCurrentUser
     );
     const notifiedKeys = new Set(notifiedMenus);
     if (vrcUnseenNotificationCount > 0) {
@@ -220,16 +218,12 @@ function useAppNavNotifications({
 }
 
 function useAppNavDashboardActions({ location, navigate, t }: any) {
-    const createDashboard = useDashboardStore(
-        (state: any) => state.createDashboard
-    );
-    const deleteDashboard = useDashboardStore(
-        (state: any) => state.deleteDashboard
-    );
+    const createDashboard = useDashboardStore((state) => state.createDashboard);
+    const deleteDashboard = useDashboardStore((state) => state.deleteDashboard);
     const setEditingDashboardId = useDashboardStore(
-        (state: any) => state.setEditingDashboardId
+        (state) => state.setEditingDashboardId
     );
-    const confirm = useModalStore((state: any) => state.confirm);
+    const confirm = useModalStore((state) => state.confirm);
     const [isCreatingDashboard, setIsCreatingDashboard] = useState(false);
 
     async function createDashboardFromNav() {
@@ -363,11 +357,11 @@ export function AppNavMenu({ isCollapsed }: any) {
     const backgroundImageEnabled = useBackgroundImageStore(
         (state) => state.enabled
     );
-    const dashboards = useDashboardStore((state: any) => state.dashboards);
+    const dashboards = useDashboardStore((state) => state.dashboards);
     const ensureDashboardsLoaded = useDashboardStore(
         (state) => state.ensureLoaded
     );
-    const sessionPhase = useSessionStore((state: any) => state.sessionPhase);
+    const sessionPhase = useSessionStore((state) => state.sessionPhase);
     const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const preferencesHydrated = usePreferencesStore(
         (state) => state.preferencesHydrated

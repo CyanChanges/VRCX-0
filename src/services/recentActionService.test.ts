@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-function createLocalStorage(initial: any = {}) {
+function createLocalStorage(initial = {}) {
     const data = new Map(Object.entries(initial));
     return {
-        getItem: vi.fn((key: any) => data.get(key) ?? null),
-        setItem: vi.fn((key: any, value: any) => {
+        getItem: vi.fn((key) => data.get(key) ?? null),
+        setItem: vi.fn((key, value) => {
             data.set(key, String(value));
         }),
-        removeItem: vi.fn((key: any) => {
+        removeItem: vi.fn((key) => {
             data.delete(key);
         }),
         clear: vi.fn(() => {
@@ -19,7 +19,7 @@ function createLocalStorage(initial: any = {}) {
     };
 }
 
-async function loadRecentActionService(initialStorage: any = {}) {
+async function loadRecentActionService(initialStorage = {}) {
     vi.resetModules();
     const localStorage = createLocalStorage(initialStorage);
     globalThis.window = { localStorage } as any;

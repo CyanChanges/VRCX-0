@@ -64,7 +64,7 @@ export function groupDrawerEntries(
         groups[bucket].push(entry);
     }
     for (const bucket of NOTIFICATION_LIFECYCLE_ORDER) {
-        groups[bucket].sort((left: any, right: any) => {
+        groups[bucket].sort((left, right) => {
             if (bucket === 'action') {
                 const leftQueue =
                     left.notification?.type === 'group.queueReady' ? 0 : 1;

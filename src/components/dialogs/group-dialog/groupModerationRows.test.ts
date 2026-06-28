@@ -23,7 +23,7 @@ describe('groupModerationRows', () => {
     };
 
     it('builds moderation tab metadata from locale keys', () => {
-        expect(getGroupModerationTabs(t).map((tab: any) => tab.value)).toEqual([
+        expect(getGroupModerationTabs(t).map((tab) => tab.value)).toEqual([
             'members',
             'bans',
             'invites',

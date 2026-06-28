@@ -66,7 +66,7 @@ export function UserDialogMutualTab({
                         <SelectGroup>
                             {Object.entries(
                                 userDialogMutualFriendSortingOptions
-                            ).map(([key, option]: any) => (
+                            ).map(([key, option]) => (
                                 <SelectItem key={key} value={option.value}>
                                     {t(option.name)}
                                 </SelectItem>
@@ -324,7 +324,7 @@ export function UserDialogInstanceHistoryTab({
 }: any) {
     const { t } = useTranslation();
     const navigate = useNavigate();
-    const closeDialog = useDialogStore((state: any) => state.closeDialog);
+    const closeDialog = useDialogStore((state) => state.closeDialog);
     const userId = profile?.id || profile?.userId || '';
     const openFullLabel = t('view.instance_history.action.open_full');
 

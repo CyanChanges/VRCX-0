@@ -18,7 +18,7 @@ export const OVERLAP_EXCLUDE_END_KEY =
 export const VALID_ACTIVITY_PERIODS = new Set(['7', '30', '90']);
 export const USER_ACTIVITY_HOUR_LABELS = Array.from(
     { length: 24 },
-    (_: any, index: any) => `${String(index).padStart(2, '0')}:00`
+    (_, index) => `${String(index).padStart(2, '0')}:00`
 );
 export const TOP_WORLDS_LOADING_DELAY_MS = 150;
 export const OVERLAP_LOADING_DELAY_MS = 120;
@@ -31,7 +31,7 @@ export function getRangeDays(period: any) {
 export function getDisplayDayLabels(dayLabels: any, weekStartsOn: any) {
     return Array.from(
         { length: 7 },
-        (_: any, index: any) => dayLabels[(weekStartsOn + index) % 7]
+        (_, index) => dayLabels[(weekStartsOn + index) % 7]
     );
 }
 

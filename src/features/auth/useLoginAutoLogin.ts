@@ -37,7 +37,7 @@ export function useLoginAutoLogin({
 }: any) {
     const { t } = useTranslation();
     const backendRuntimeSnapshotHydrated = useRuntimeStore(
-        (state: any) => state.shell.backendRuntimeSnapshotHydrated
+        (state) => state.shell.backendRuntimeSnapshotHydrated
     );
     const [autoLoginState, setAutoLoginState] = useState<AutoLoginState>({
         status: 'idle',
@@ -76,7 +76,7 @@ export function useLoginAutoLogin({
             ? 'destructive'
             : 'default';
 
-    function getAutoLoginSnapshotKey(nextSnapshot: any = snapshot) {
+    function getAutoLoginSnapshotKey(nextSnapshot = snapshot) {
         const userId = nextSnapshot?.lastUserLoggedIn || '';
         const savedCredential = userId
             ? nextSnapshot?.savedCredentials?.[userId]
@@ -226,7 +226,7 @@ export function useLoginAutoLogin({
                 }));
             }
         })
-            .then((result: any) => {
+            .then((result) => {
                 if (!active) {
                     return;
                 }
@@ -308,7 +308,7 @@ export function useLoginAutoLogin({
                         break;
                 }
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }

@@ -102,12 +102,11 @@ async function fetchSummaryIssue(): Promise<{
         ? (data.components as VrcStatusComponent[])
         : [];
     const issueComponents = components.filter(
-        (component: any) =>
-            component?.status && component.status !== 'operational'
+        (component) => component?.status && component.status !== 'operational'
     );
     return {
         indicator: issueComponents.reduce(
-            (current: string, component: any) =>
+            (current: string, component) =>
                 strongerStatusIndicator(
                     current,
                     componentStatusIndicator(component.status)
@@ -115,7 +114,7 @@ async function fetchSummaryIssue(): Promise<{
             ''
         ),
         summary: issueComponents
-            .map((component: any) => component.name)
+            .map((component) => component.name)
             .filter(Boolean)
             .join(', ')
     };
@@ -132,7 +131,7 @@ async function runVrcStatusRefresh(): Promise<void> {
         const description = data?.status?.description || '';
         const indicator = data?.status?.indicator || '';
         const updatedAt = data?.page?.updated_at || null;
-        const summaryIssue = await fetchSummaryIssue().catch((error: any) => {
+        const summaryIssue = await fetchSummaryIssue().catch((error) => {
             console.warn('Failed to fetch VRChat status summary:', error);
             return {
                 indicator: '',
@@ -202,7 +201,7 @@ async function deferNextVrcStatusRefresh(): Promise<void> {
             name: VRC_STATUS_REFRESH_JOB,
             delaySeconds: pollingCadenceSeconds(interval)
         })
-        .catch((error: any) => {
+        .catch((error) => {
             console.warn('Failed to defer VRC status refresh:', error);
         });
 }
@@ -215,7 +214,7 @@ async function claimVrcStatusRefreshDue(): Promise<boolean> {
             cadenceSeconds: pollingCadenceSeconds(interval),
             initialDelaySeconds: 0
         })
-        .catch((error: any) => {
+        .catch((error) => {
             console.warn('Failed to claim VRC status refresh schedule:', error);
             return true;
         });

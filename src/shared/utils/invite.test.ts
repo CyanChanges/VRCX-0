@@ -4,7 +4,7 @@ import { checkCanInvite, checkCanInviteSelf } from './invite';
 
 describe('invite permissions', () => {
     it('allows invite actions for public, group, and owned private instances', () => {
-        const deps: any = {
+        const deps = {
             currentUserId: 'usr_me',
             lastLocationStr: '',
             cachedInstances: new Map()
@@ -24,7 +24,7 @@ describe('invite permissions', () => {
 
     it('blocks invite actions for closed or inaccessible private instances', () => {
         const friendsPlusLocation = 'wrld_hidden:12345~hidden(usr_owner)';
-        const deps: any = {
+        const deps = {
             currentUserId: 'usr_me',
             lastLocationStr: '',
             cachedInstances: new Map([
@@ -49,7 +49,7 @@ describe('invite permissions', () => {
     });
 
     it('allows self-invite only when the target instance is joinable by the current user', () => {
-        const deps: any = {
+        const deps = {
             currentUserId: 'usr_me',
             friends: new Map([['usr_friend', {}]]),
             cachedInstances: new Map()

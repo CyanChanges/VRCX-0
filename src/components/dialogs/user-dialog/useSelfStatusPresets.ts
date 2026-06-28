@@ -17,7 +17,7 @@ export function useSelfStatusPresets({ socialStatusDraft, t }: any) {
 
         configRepository
             .getArray(statusPresetsConfigKey, [])
-            .then((presets: any) => {
+            .then((presets) => {
                 if (active) {
                     setStatusPresets(Array.isArray(presets) ? presets : []);
                 }
@@ -42,7 +42,7 @@ export function useSelfStatusPresets({ socialStatusDraft, t }: any) {
             return;
         }
 
-        const nextPreset: any = {
+        const nextPreset = {
             status: nextStatus,
             statusDescription: String(
                 socialStatusDraft.statusDescription || ''
@@ -50,7 +50,7 @@ export function useSelfStatusPresets({ socialStatusDraft, t }: any) {
         };
         if (
             statusPresets.some(
-                (preset: any) =>
+                (preset) =>
                     preset?.status === nextPreset.status &&
                     String(preset?.statusDescription || '') ===
                         nextPreset.statusDescription
@@ -90,7 +90,7 @@ export function useSelfStatusPresets({ socialStatusDraft, t }: any) {
     async function removeSelfStatusPreset(index: any) {
         const previousPresets = statusPresets;
         const nextPresets = previousPresets.filter(
-            (_: any, presetIndex: any) => presetIndex !== index
+            (_, presetIndex) => presetIndex !== index
         );
         setStatusPresets(nextPresets);
         try {

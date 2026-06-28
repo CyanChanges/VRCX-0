@@ -25,7 +25,7 @@ export function AccentColorPicker({
                 ) : null}
             </div>
             <div className="flex flex-wrap gap-1.5">
-                {THEME_COLORS.map((color: any) => (
+                {THEME_COLORS.map((color) => (
                     <Button
                         key={color.key}
                         type="button"

@@ -210,13 +210,11 @@ export function SettingsInterfaceDisplayCards({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                {weekStartOptions.map(
-                                    ([value, labelKey]: any) => (
-                                        <SelectItem key={value} value={value}>
-                                            {t(labelKey)}
-                                        </SelectItem>
-                                    )
-                                )}
+                                {weekStartOptions.map(([value, labelKey]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {t(labelKey)}
+                                    </SelectItem>
+                                ))}
                             </SelectGroup>
                         </SelectContent>
                     </Select>

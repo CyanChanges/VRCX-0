@@ -89,7 +89,7 @@ export async function loadQuickSearchCatalog({ currentUserId, endpoint }: any) {
         groups,
         userMemos,
         userNotes
-    ].filter((result: any) => result.status === 'rejected').length;
+    ].filter((result) => result.status === 'rejected').length;
 
     return {
         ...createEmptyCatalog(

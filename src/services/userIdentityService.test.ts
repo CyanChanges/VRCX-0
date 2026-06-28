@@ -17,7 +17,7 @@ import { resolveUserByDisplayName } from './userIdentityService';
 function ingestedEntryFor(userId: string) {
     return tauriMock.commands.appIngestUserFacts.mock.calls
         .flatMap((call) => (Array.isArray(call[0]) ? call[0] : []))
-        .find((entry: any) => entry?.user?.id === userId);
+        .find((entry) => entry?.user?.id === userId);
 }
 
 describe('userIdentityService', () => {
@@ -49,7 +49,7 @@ describe('userIdentityService', () => {
             stateBucket: 'online'
         });
 
-        const repositories: any = {
+        const repositories = {
             gameLogRepository: {
                 getUserIdFromDisplayName: vi.fn()
             },
@@ -87,7 +87,7 @@ describe('userIdentityService', () => {
     });
 
     it('uses game log and search fallbacks and ingests resolved users to Rust', async () => {
-        const repositories: any = {
+        const repositories = {
             gameLogRepository: {
                 getUserIdFromDisplayName: vi
                     .fn()

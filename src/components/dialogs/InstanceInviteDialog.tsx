@@ -63,30 +63,28 @@ export function InstanceInviteDialog({
     const { t } = useTranslation();
 
     const currentUser = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentLocationPlayerIds = useRuntimeStore(
-        (state: any) => state.gameState.currentLocationPlayerIds
+        (state) => state.gameState.currentLocationPlayerIds
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
-    const onlineIds = useFriendRosterStore((state: any) => state.onlineIds);
-    const activeIds = useFriendRosterStore((state: any) => state.activeIds);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
+    const onlineIds = useFriendRosterStore((state) => state.onlineIds);
+    const activeIds = useFriendRosterStore((state) => state.activeIds);
     const favoriteFriendGroups = useFavoriteStore(
-        (state: any) => state.favoriteFriendGroups
+        (state) => state.favoriteFriendGroups
     );
     const groupedFavoriteFriendIdsByGroupKey = useFavoriteStore(
-        (state: any) => state.groupedFavoriteFriendIdsByGroupKey
+        (state) => state.groupedFavoriteFriendIdsByGroupKey
     );
     const localFriendFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localFriendFavoriteGroups
+        (state) => state.localFriendFavoriteGroups
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
-    const confirm = useModalStore((state: any) => state.confirm);
+    const confirm = useModalStore((state) => state.confirm);
     const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
     const [search, setSearch] = useState('');
     const [sending, setSending] = useState(false);
@@ -122,7 +120,7 @@ export function InstanceInviteDialog({
                 worldId: parsedLocation.worldId,
                 endpoint
             })
-            .then((world: any) => {
+            .then((world) => {
                 if (active) {
                     setResolvedWorldName(normalizeId(world?.name));
                 }
@@ -408,36 +406,32 @@ export function InstanceInviteDialog({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="start" className="w-56">
                                 <DropdownMenuGroup>
-                                    {favoriteGroupItems.remote.map(
-                                        (group: any) => (
-                                            <DropdownMenuItem
-                                                key={group.key}
-                                                onSelect={() =>
-                                                    addUserIds(group.userIds)
-                                                }
-                                            >
-                                                {group.label}
-                                            </DropdownMenuItem>
-                                        )
-                                    )}
+                                    {favoriteGroupItems.remote.map((group) => (
+                                        <DropdownMenuItem
+                                            key={group.key}
+                                            onSelect={() =>
+                                                addUserIds(group.userIds)
+                                            }
+                                        >
+                                            {group.label}
+                                        </DropdownMenuItem>
+                                    ))}
                                 </DropdownMenuGroup>
                                 {favoriteGroupItems.remote.length &&
                                 favoriteGroupItems.local.length ? (
                                     <DropdownMenuSeparator />
                                 ) : null}
                                 <DropdownMenuGroup>
-                                    {favoriteGroupItems.local.map(
-                                        (group: any) => (
-                                            <DropdownMenuItem
-                                                key={group.key}
-                                                onSelect={() =>
-                                                    addUserIds(group.userIds)
-                                                }
-                                            >
-                                                {group.label}
-                                            </DropdownMenuItem>
-                                        )
-                                    )}
+                                    {favoriteGroupItems.local.map((group) => (
+                                        <DropdownMenuItem
+                                            key={group.key}
+                                            onSelect={() =>
+                                                addUserIds(group.userIds)
+                                            }
+                                        >
+                                            {group.label}
+                                        </DropdownMenuItem>
+                                    ))}
                                 </DropdownMenuGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -448,11 +442,11 @@ export function InstanceInviteDialog({
                         placeholder={t(
                             'dialog.invite.action.search_online_friends'
                         )}
-                        onChange={(event: any) => setSearch(event.target.value)}
+                        onChange={(event) => setSearch(event.target.value)}
                     />
                     <div className="max-h-72 overflow-auto rounded-md border">
                         {sortedFilteredUserIds.length ? (
-                            sortedFilteredUserIds.map((userId: any) => {
+                            sortedFilteredUserIds.map((userId) => {
                                 const friend = friendsById[userId];
                                 const displayName = displayNameForUser(
                                     userId,
@@ -508,7 +502,7 @@ export function InstanceInviteDialog({
                                             {favoriteGroupLabels.length ? (
                                                 <span className="ml-auto flex max-w-[45%] shrink-0 flex-wrap justify-end gap-1">
                                                     {favoriteGroupLabels.map(
-                                                        (label: any) => (
+                                                        (label) => (
                                                             <Badge
                                                                 key={label}
                                                                 variant="outline"

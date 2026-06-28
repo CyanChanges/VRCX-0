@@ -42,26 +42,24 @@ export function useFeedRows({
     favoritesOnly,
     preferencesReady
 }: UseFeedRowsOptions) {
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const isFavoritesLoaded = useSessionStore(
-        (state: any) => state.isFavoritesLoaded
+        (state) => state.isFavoritesLoaded
     );
     const remoteFavoritesById = useFavoriteStore(
-        (state: any) => state.remoteFavoritesById
+        (state) => state.remoteFavoritesById
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
     const favoriteGroupFilterIds = usePreferencesStore(
-        (state: any) => state.localFavoriteFriendsGroups
+        (state) => state.localFavoriteFriendsGroups
     );
     const maxFeedRows = usePreferencesStore(
-        (state: any) => state.tableLimits.maxTableSize
+        (state) => state.tableLimits.maxTableSize
     );
     const friendRosterLastLoadedAt = useFriendRosterStore(
-        (state: any) => state.lastLoadedAt
+        (state) => state.lastLoadedAt
     );
     const [rows, setRows] = useState<FeedRow[]>([]);
     const [friendLogNamesById, setFriendLogNamesById] = useState<
@@ -358,7 +356,7 @@ export function useFeedRows({
         if (!preferencesReady || !currentUserId) {
             return undefined;
         }
-        return useFeedLiveStore.subscribe((state: any, previousState: any) => {
+        return useFeedLiveStore.subscribe((state, previousState) => {
             if (
                 state.version === previousState?.version ||
                 state.entries.length === 0

@@ -62,13 +62,13 @@ function nonEmptyFeedPatch(fields: FeedEntryPatch): FeedEntryPatch {
     ) as FeedEntryPatch;
 }
 
-export const useFeedLiveStore = create<FeedLiveStoreState>((set: any) => ({
+export const useFeedLiveStore = create<FeedLiveStoreState>((set) => ({
     ...initialState,
-    pushEntry(entry: any, { ownerUserId = '' }: any = {}) {
+    pushEntry(entry, { ownerUserId = '' } = {}) {
         if (!entry || typeof entry !== 'object') {
             return;
         }
-        set((state: any) => ({
+        set((state) => ({
             version: state.version + 1,
             entries: [
                 ...state.entries,
@@ -80,12 +80,12 @@ export const useFeedLiveStore = create<FeedLiveStoreState>((set: any) => ({
             ].slice(-100)
         }));
     },
-    patchEntry(id: any, fields: any) {
+    patchEntry(id, fields) {
         const normalizedId = normalizeString(id);
         if (!normalizedId || !fields || typeof fields !== 'object') {
             return;
         }
-        set((state: any) => {
+        set((state) => {
             let changed = false;
             const entries = state.entries.map((entry: FeedLiveEntry) => {
                 if (feedEntryCorrectionId(entry.entry) !== normalizedId) {

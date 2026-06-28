@@ -24,7 +24,7 @@ export function useGlobalKeyboardShortcuts() {
     const location = useLocation();
     const { toggle } = useRightFriendsSidebarVisibility(location.pathname);
     const setSystemHostOpen = useRuntimeStore(
-        (state: any) => state.setSystemHostOpen
+        (state) => state.setSystemHostOpen
     );
 
     useEffect(() => {

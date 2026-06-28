@@ -8,13 +8,13 @@ import {
     writePersistedTableState
 } from './dataTablePersistence';
 
-function installLocalStorage(initial: any = {}) {
+function installLocalStorage(initial = {}) {
     const values = new Map(
-        Object.entries(initial).map(([key, value]: any) => [key, String(value)])
+        Object.entries(initial).map(([key, value]) => [key, String(value)])
     );
-    const localStorage: any = {
-        getItem: vi.fn((key: any) => values.get(key) ?? null),
-        setItem: vi.fn((key: any, value: any) => {
+    const localStorage = {
+        getItem: vi.fn((key) => values.get(key) ?? null),
+        setItem: vi.fn((key, value) => {
             values.set(key, String(value));
         })
     };

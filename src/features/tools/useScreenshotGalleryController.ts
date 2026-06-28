@@ -266,7 +266,7 @@ export function useScreenshotGalleryController({
                         loadGalleryTree({ preferPopulated: true });
                     }
                 })
-                .catch((error: any) => {
+                .catch((error) => {
                     if (!active) {
                         return;
                     }
@@ -313,7 +313,7 @@ export function useScreenshotGalleryController({
                     setGalleryImagesFolder(requestedFolder);
                 }
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (galleryRequestRef.current === requestId) {
                     const message =
                         error instanceof Error

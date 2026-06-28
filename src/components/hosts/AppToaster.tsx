@@ -14,7 +14,7 @@ import { useShellStore } from '@/state/shellStore';
 import { Toaster } from '@/ui/shadcn/sonner';
 import { Spinner } from '@/ui/shadcn/spinner';
 
-const TITLE_BAR_TOAST_OFFSET: any = { top: 'calc(2rem + 32px)' };
+const TITLE_BAR_TOAST_OFFSET = { top: 'calc(2rem + 32px)' };
 const APP_TOASTER_PORTAL_ID = 'vrcx-0-toast-root';
 const APP_TOASTER_Z_INDEX = 70;
 const VRCHAT_API_UNAVAILABLE_TOAST_DURATION_MS = 12000;
@@ -71,7 +71,7 @@ function patchSonnerErrorToast() {
 
     const originalErrorToast = toast.error.bind(toast);
     try {
-        toast.error = (message: any, options: any) => {
+        toast.error = (message, options) => {
             const nextMessage =
                 typeof message === 'string' || message instanceof Error
                     ? userFacingErrorMessage(message, 'Action failed.')
@@ -126,7 +126,7 @@ function getAppToasterPortalContainer() {
 }
 
 export function AppToaster(props: any) {
-    const themeMode = useShellStore((state: any) => state.themeMode);
+    const themeMode = useShellStore((state) => state.themeMode);
     const theme = resolveSonnerTheme(themeMode);
     const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(
         null

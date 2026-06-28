@@ -94,8 +94,7 @@ function parseClockOffset(entry: any) {
             timeZoneName: 'longOffset'
         }).formatToParts(new Date());
         const timeZoneName =
-            parts.find((part: any) => part.type === 'timeZoneName')?.value ||
-            '';
+            parts.find((part) => part.type === 'timeZoneName')?.value || '';
         const offsetMatch = timeZoneName.match(
             /^GMT([+-])(\d{1,2})(?::(\d{2}))?$/
         );
@@ -188,91 +187,85 @@ export function AppStatusBar() {
         false
     ]);
     const websocketConnected = useRuntimeStore(
-        (state: any) => state.transport.websocketConnected
+        (state) => state.transport.websocketConnected
     );
     const lastGameStartedAt = useRuntimeStore(
-        (state: any) => state.gameState.lastGameStartedAt
+        (state) => state.gameState.lastGameStartedAt
     );
     const currentLocationStartedAt = useRuntimeStore(
-        (state: any) => state.gameState.currentLocationStartedAt
+        (state) => state.gameState.currentLocationStartedAt
     );
     const currentWorldName = useRuntimeStore(
-        (state: any) => state.gameState.currentWorldName
+        (state) => state.gameState.currentWorldName
     );
     const currentWorldId = useRuntimeStore(
-        (state: any) => state.gameState.currentWorldId
+        (state) => state.gameState.currentWorldId
     );
     const lastGameLogAt = useRuntimeStore(
-        (state: any) => state.gameState.lastGameLogAt
+        (state) => state.gameState.lastGameLogAt
     );
     const lastGameLogType = useRuntimeStore(
-        (state: any) => state.gameState.lastGameLogType
+        (state) => state.gameState.lastGameLogType
     );
-    const nowPlayingUrl = useRuntimeStore((state: any) => state.nowPlaying.url);
-    const nowPlayingName = useRuntimeStore(
-        (state: any) => state.nowPlaying.name
-    );
+    const nowPlayingUrl = useRuntimeStore((state) => state.nowPlaying.url);
+    const nowPlayingName = useRuntimeStore((state) => state.nowPlaying.name);
     const nowPlayingStartedAt = useRuntimeStore(
-        (state: any) => state.nowPlaying.startedAt
+        (state) => state.nowPlaying.startedAt
     );
     const nowPlayingPosition = useRuntimeStore(
-        (state: any) => state.nowPlaying.position
+        (state) => state.nowPlaying.position
     );
     const nowPlayingLength = useRuntimeStore(
-        (state: any) => state.nowPlaying.length
+        (state) => state.nowPlaying.length
     );
-    const instanceQueue = useRuntimeStore((state: any) => state.instanceQueue);
+    const instanceQueue = useRuntimeStore((state) => state.instanceQueue);
     const mutualGraphRunId = useRuntimeStore(
-        (state: any) => state.mutualGraph.runId
+        (state) => state.mutualGraph.runId
     );
     const mutualGraphStatus = useRuntimeStore(
-        (state: any) => state.mutualGraph.status
+        (state) => state.mutualGraph.status
     );
     const mutualGraphProcessedFriends = useRuntimeStore(
-        (state: any) => state.mutualGraph.processedFriends
+        (state) => state.mutualGraph.processedFriends
     );
     const mutualGraphTotalFriends = useRuntimeStore(
-        (state: any) => state.mutualGraph.totalFriends
+        (state) => state.mutualGraph.totalFriends
     );
     const mutualGraphCancelRequested = useRuntimeStore(
-        (state: any) => state.mutualGraph.cancelRequested
+        (state) => state.mutualGraph.cancelRequested
     );
     const mutualGraphFailedFriends = useRuntimeStore(
-        (state: any) => state.mutualGraph.failedFriends
+        (state) => state.mutualGraph.failedFriends
     );
     const mutualGraphLastError = useRuntimeStore(
-        (state: any) => state.mutualGraph.lastError
+        (state) => state.mutualGraph.lastError
     );
     const isGameRunning = useRuntimeStore(
-        (state: any) => state.gameState.isGameRunning
+        (state) => state.gameState.isGameRunning
     );
     const isSteamVRRunning = useRuntimeStore(
-        (state: any) => state.gameState.isSteamVRRunning
+        (state) => state.gameState.isSteamVRRunning
     );
     const vrcStatusIndicator = useRuntimeStore(
-        (state: any) => state.vrcStatus.indicator
+        (state) => state.vrcStatus.indicator
     );
     const vrcStatusSummary = useRuntimeStore(
-        (state: any) => state.vrcStatus.summary
+        (state) => state.vrcStatus.summary
     );
-    const vrcStatusStatus = useRuntimeStore(
-        (state: any) => state.vrcStatus.status
-    );
+    const vrcStatusStatus = useRuntimeStore((state) => state.vrcStatus.status);
     const vrcStatusLastFetchedAt = useRuntimeStore(
-        (state: any) => state.vrcStatus.lastFetchedAt
+        (state) => state.vrcStatus.lastFetchedAt
     );
     const vrcStatusRefreshing = useRuntimeStore(
-        (state: any) => state.vrcStatus.refreshing
+        (state) => state.vrcStatus.refreshing
     );
-    const vrcStatusError = useRuntimeStore(
-        (state: any) => state.vrcStatus.error
-    );
+    const vrcStatusError = useRuntimeStore((state) => state.vrcStatus.error);
     const preferencesHydrated = usePreferencesStore(
-        (state: any) => state.preferencesHydrated
+        (state) => state.preferencesHydrated
     );
-    const proxyServer = usePreferencesStore((state: any) => state.proxyServer);
-    const zoomLevel = useShellStore((state: any) => state.zoomLevel);
-    const prompt = useModalStore((state: any) => state.prompt);
+    const proxyServer = usePreferencesStore((state) => state.proxyServer);
+    const zoomLevel = useShellStore((state) => state.zoomLevel);
+    const prompt = useModalStore((state) => state.prompt);
     const visibleClocks = clocks.slice(
         0,
         Math.max(0, Math.min(3, Number(clockCount) || 0))
@@ -437,7 +430,7 @@ export function AppStatusBar() {
             configRepository.getString(STATUS_BAR_CONFIG_KEYS.clocks, null),
             configRepository.getString(STATUS_BAR_CONFIG_KEYS.clockCount, null)
         ])
-            .then(([savedVisibility, savedClocks, savedClockCount]: any) => {
+            .then(([savedVisibility, savedClocks, savedClockCount]) => {
                 if (!active) {
                     return;
                 }
@@ -459,7 +452,7 @@ export function AppStatusBar() {
                         if (Array.isArray(parsed) && parsed.length > 0) {
                             const defaults = createDefaultClocks();
                             const nextClocks = defaults.map(
-                                (defaultClock: any, index: any) => {
+                                (defaultClock, index) => {
                                     const entry = parsed[index];
                                     return entry
                                         ? { offset: parseClockOffset(entry) }
@@ -494,7 +487,7 @@ export function AppStatusBar() {
                 STATUS_BAR_CONFIG_KEYS.visibility,
                 JSON.stringify(nextVisibility)
             )
-            .catch((error: any) => {
+            .catch((error) => {
                 toast.error(
                     error instanceof Error
                         ? error.message
@@ -506,7 +499,7 @@ export function AppStatusBar() {
     }
 
     function toggleVisibility(key: any, checked: any) {
-        const nextVisibility: any = {
+        const nextVisibility = {
             ...visibility,
             [key]: Boolean(checked)
         };
@@ -524,7 +517,7 @@ export function AppStatusBar() {
         }
         configRepository
             .setString(STATUS_BAR_CONFIG_KEYS.clockCount, String(parsed))
-            .catch((error: any) => {
+            .catch((error) => {
                 toast.error(
                     error instanceof Error
                         ? error.message
@@ -536,7 +529,7 @@ export function AppStatusBar() {
     }
 
     function setClockPopoverValue(index: any, open: any) {
-        setClockPopoverOpen((current: any) => {
+        setClockPopoverOpen((current) => {
             const next = [...current];
             next[index] = open;
             return next;
@@ -544,10 +537,10 @@ export function AppStatusBar() {
     }
 
     function updateClockTimezone(index: any, offsetValue: any) {
-        setClocks((current: any) => {
+        setClocks((current) => {
             const defaults = createDefaultClocks();
             const nextClocks = defaults.map(
-                (defaultClock: any, clockIndex: any) =>
+                (defaultClock, clockIndex) =>
                     current[clockIndex] ?? defaultClock
             );
             nextClocks[index] = { offset: parseClockOffset(offsetValue) };
@@ -556,7 +549,7 @@ export function AppStatusBar() {
                     STATUS_BAR_CONFIG_KEYS.clocks,
                     JSON.stringify(nextClocks)
                 )
-                .catch((error: any) => {
+                .catch((error) => {
                     toast.error(
                         error instanceof Error
                             ? error.message
@@ -571,11 +564,9 @@ export function AppStatusBar() {
     }
 
     async function openStatusPage() {
-        const refreshStatusPromise = refreshVrcStatusNow().catch(
-            (error: any) => {
-                console.warn('VRChat status refresh failed:', error);
-            }
-        );
+        const refreshStatusPromise = refreshVrcStatusNow().catch((error) => {
+            console.warn('VRChat status refresh failed:', error);
+        });
 
         try {
             await openExternalLink(links.vrchatStatus);
@@ -623,7 +614,7 @@ export function AppStatusBar() {
     }
 
     function startBackgroundMode() {
-        startBackgroundModeForCurrentSession().catch((error: any) => {
+        startBackgroundModeForCurrentSession().catch((error) => {
             console.warn('Failed to start background mode:', error);
             toast.error(
                 error instanceof Error
@@ -668,7 +659,7 @@ export function AppStatusBar() {
         zoomLabel: formatZoomPercentage(currentZoomLevel),
         zoomLevel: currentZoomLevel,
         onOpenMediaLink: () => {
-            openExternalLink(nowPlaying.url).catch((error: any) => {
+            openExternalLink(nowPlaying.url).catch((error) => {
                 toast.error(
                     error instanceof Error
                         ? error.message
@@ -681,7 +672,7 @@ export function AppStatusBar() {
         onOpenStatusPage: openStatusPage,
         onStartBackgroundMode: startBackgroundMode,
         onPromptProxySettings: () => {
-            promptProxySettings().catch((error: any) => {
+            promptProxySettings().catch((error) => {
                 toast.error(
                     error instanceof Error
                         ? error.message

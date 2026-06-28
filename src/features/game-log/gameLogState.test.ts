@@ -16,9 +16,9 @@ import {
 
 const STORAGE_KEY = 'vrcx-0:table:gameLog';
 
-function installLocalStorage(initial: any = {}) {
+function installLocalStorage(initial = {}) {
     const store = new Map(
-        Object.entries(initial).map(([key, value]: any) => [key, String(value)])
+        Object.entries(initial).map(([key, value]) => [key, String(value)])
     );
 
     globalThis.window = {
@@ -135,7 +135,7 @@ describe('gameLogState', () => {
             'detail',
             'type',
             ...GAME_LOG_COLUMN_IDS.filter(
-                (columnId: any) =>
+                (columnId) =>
                     columnId !== 'spacer' &&
                     columnId !== 'detail' &&
                     columnId !== 'type'

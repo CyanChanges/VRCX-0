@@ -80,7 +80,7 @@ export function ManageAvatarTagsDialog({
         }
     }, [avatar, open]);
 
-    const tagNames = new Set(tagEntries.map((entry: any) => entry.tag));
+    const tagNames = new Set(tagEntries.map((entry) => entry.tag));
 
     function addTag() {
         const tag = normalizeTagName(newTagName);
@@ -89,19 +89,19 @@ export function ManageAvatarTagsDialog({
             return;
         }
 
-        setTagEntries((current: any) => [...current, { tag, color: null }]);
+        setTagEntries((current) => [...current, { tag, color: null }]);
         setNewTagName('');
     }
 
     function removeTag(tag: any) {
-        setTagEntries((current: any) =>
-            current.filter((entry: any) => entry.tag !== tag)
+        setTagEntries((current) =>
+            current.filter((entry) => entry.tag !== tag)
         );
     }
 
     function setTagColor(tag: any, color: any) {
-        setTagEntries((current: any) =>
-            current.map((entry: any) => {
+        setTagEntries((current) =>
+            current.map((entry) => {
                 if (entry.tag !== tag) {
                     return entry;
                 }
@@ -135,10 +135,10 @@ export function ManageAvatarTagsDialog({
                                 <Input
                                     id="avatar-tag-name"
                                     value={newTagName}
-                                    onChange={(event: any) =>
+                                    onChange={(event) =>
                                         setNewTagName(event.target.value)
                                     }
-                                    onKeyDown={(event: any) => {
+                                    onKeyDown={(event) => {
                                         if (event.key === 'Enter') {
                                             event.preventDefault();
                                             addTag();
@@ -164,7 +164,7 @@ export function ManageAvatarTagsDialog({
 
                     <div className="flex flex-col gap-3">
                         {tagEntries.length > 0 ? (
-                            tagEntries.map((entry: any) => {
+                            tagEntries.map((entry) => {
                                 const tagColor = resolveTagColor(entry);
                                 return (
                                     <div
@@ -197,7 +197,7 @@ export function ManageAvatarTagsDialog({
                                             </Button>
                                         </div>
                                         <div className="mt-3 flex flex-wrap gap-2">
-                                            {TAG_COLORS.map((color: any) => {
+                                            {TAG_COLORS.map((color) => {
                                                 const selected =
                                                     (entry.color &&
                                                         entry.color ===

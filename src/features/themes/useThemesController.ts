@@ -85,7 +85,7 @@ export function useThemesController() {
         activeSource === 'built-in' ? selectedSource : activeSource;
 
     useEffect(() => {
-        loadCatalog().catch((loadError: any) => {
+        loadCatalog().catch((loadError) => {
             toast.error(
                 loadError instanceof Error
                     ? loadError.message

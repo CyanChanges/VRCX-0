@@ -51,7 +51,7 @@ function pushFriendRows(
 function pushSkeletonRows(
     nextRows: Array<Record<string, unknown>>,
     key: string,
-    count: any = 6
+    count = 6
 ) {
     for (let index = 0; index < count; index += 1) {
         nextRows.push({
@@ -146,7 +146,7 @@ export function buildFavoriteCollectionSidebarVirtualRows({
             open: openGroups.sameInstance
         });
         if (openGroups.sameInstance) {
-            sameInstanceGroups.forEach((group: any, index: any) => {
+            sameInstanceGroups.forEach((group, index) => {
                 nextRows.push({
                     type: 'instance-header',
                     key: `instance:${group.location}:${index}`,

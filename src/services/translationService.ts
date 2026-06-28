@@ -65,11 +65,11 @@ export async function getTranslationConfig(): Promise<TranslationConfig> {
 
 export async function translateText(
     text: string,
-    targetLanguage: any = '',
+    targetLanguage = '',
     overrides: TranslationOverrides = {}
 ): Promise<string> {
     const storedConfig = await getTranslationConfig();
-    const config: any = {
+    const config = {
         ...storedConfig,
         ...overrides
     };

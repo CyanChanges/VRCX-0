@@ -18,7 +18,7 @@ export function usePlayerListModeration(currentUserId: any) {
 
         vrchatModerationRepository
             .getAllLocalModerations(currentUserId)
-            .then((rows: any) => {
+            .then((rows) => {
                 if (!active) {
                     return;
                 }
@@ -26,11 +26,8 @@ export function usePlayerListModeration(currentUserId: any) {
                 setModerationByUserId(
                     Object.fromEntries(
                         (Array.isArray(rows) ? rows : [])
-                            .filter((row: any) => normalizeString(row?.userId))
-                            .map((row: any) => [
-                                normalizeString(row.userId),
-                                row
-                            ])
+                            .filter((row) => normalizeString(row?.userId))
+                            .map((row) => [normalizeString(row.userId), row])
                     )
                 );
             })

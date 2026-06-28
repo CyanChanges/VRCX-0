@@ -7,7 +7,7 @@ export async function resolveCreatedInstanceDetails(
     location: any,
     instance: any,
     endpoint: any,
-    fallback: any = {}
+    fallback = {}
 ) {
     const parsedLocation = parseLocation(location);
     if (
