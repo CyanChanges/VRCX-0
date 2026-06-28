@@ -132,6 +132,7 @@ fn copresence_summary_groups_minutes_days_instances_and_access_type() {
     assert_eq!(row.last_seen_together, "2026-06-02T11:00:00Z");
     assert_eq!(row.minutes_by_access.get("invite"), Some(&10));
     assert_eq!(row.minutes_by_access.get("group"), Some(&5));
+    assert!(output.summary.contains("Alice"));
     assert!(output
         .caveats
         .iter()
@@ -1118,6 +1119,84 @@ fn social_graph_applies_node_and_edge_caps_with_total_counts() {
 }
 
 #[test]
+fn friend_circles_groups_mutually_linked_friends_and_excludes_second_degree_nodes() {
+    let (_dir, db) = test_db("friend-circles");
+    ensure_realtime_tables(&db, "usrself").unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_friends (friend_id TEXT PRIMARY KEY)",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_links (friend_id TEXT NOT NULL, mutual_id TEXT NOT NULL, PRIMARY KEY(friend_id, mutual_id))",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "CREATE TABLE usrself_mutual_graph_meta (friend_id TEXT PRIMARY KEY, last_fetched_at TEXT, opted_out INTEGER DEFAULT 0)",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_friend_log_current (user_id, display_name, trust_level, friend_number)
+             VALUES
+                ('usr_a', 'Alice', 'Trusted', 1),
+                ('usr_b', 'Bob', 'Known', 2),
+                ('usr_c', 'Carol', 'Known', 3),
+                ('usr_d', 'Delta', 'Known', 4),
+                ('usr_e', 'Echo', 'Known', 5),
+                ('usr_f', 'Foxtrot', 'Known', 6)",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_mutual_graph_friends (friend_id)
+             VALUES ('usr_a'), ('usr_b'), ('usr_c'), ('usr_d'), ('usr_e'), ('usr_stranger')",
+        &Default::default(),
+    )
+    .unwrap();
+    db.execute_non_query(
+        "INSERT INTO usrself_mutual_graph_links (friend_id, mutual_id)
+             VALUES
+                ('usr_a', 'usr_b'),
+                ('usr_b', 'usr_c'),
+                ('usr_d', 'usr_e'),
+                ('usr_e', 'usr_d'),
+                ('usr_a', 'usr_stranger')",
+        &Default::default(),
+    )
+    .unwrap();
+
+    let output = get_friend_circles(
+        &db,
+        FriendCirclesInput {
+            owner_user_id: "usr_self".into(),
+            max_circles: Some(6),
+            max_members_per_circle: Some(8),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(output.circle_count, 2);
+    assert_eq!(output.circles.len(), 2);
+    assert_eq!(output.friends_analyzed, 6);
+    assert_eq!(output.isolated_friend_count, 1);
+    assert_eq!(output.circles[0].member_count, 3);
+    assert_eq!(output.circles[0].members, vec!["Alice", "Bob", "Carol"]);
+    assert_eq!(output.circles[1].members, vec!["Delta", "Echo"]);
+    assert!(output
+        .circles
+        .iter()
+        .all(|circle| !circle.members.iter().any(|name| name == "usr_stranger")));
+    assert!(!output.circles[0].sample_pairs.is_empty());
+    assert!(output.summary.contains("6 friends"));
+    assert!(output
+        .caveats
+        .iter()
+        .any(|caveat| caveat.contains("Connected circles")));
+}
+
+#[test]
 fn favorite_local_supports_kind_action_and_dry_run() {
     let (_dir, db) = test_db("favorite-local-dry-run");
 
@@ -1239,8 +1318,10 @@ fn companions_of_uses_gamelog_overlap_and_excludes_owner_and_non_overlap() {
     assert_eq!(output.rows[0].user_id, "usr_alice");
     assert_eq!(output.rows[0].overlap_minutes, 10);
     assert_eq!(output.rows[0].shared_instances, 1);
+    assert_eq!(output.rows[0].world_count, 1);
     assert_eq!(output.rows[0].worlds[0].world_id, "wrld_public");
     assert_eq!(output.rows[0].worlds[0].world_name, "Public World");
+    assert!(output.summary.contains("Target"));
 }
 
 #[test]
@@ -1280,6 +1361,66 @@ fn companions_of_renamed_user_shows_latest_name() {
     assert_eq!(output.rows.len(), 1);
     assert_eq!(output.rows[0].user_id, "usr_alice");
     assert_eq!(output.rows[0].display_name, "AliceNew");
+}
+
+#[test]
+fn companions_of_reports_world_count_and_truncates_world_samples() {
+    let (_dir, db) = test_db("companions-of-world-count");
+    create_game_log_tables(&db);
+    for (index, location, world_id, world_name) in [
+        ("1", "wrld_a:1", "wrld_a", "A World"),
+        ("2", "wrld_b:1", "wrld_b", "B World"),
+        ("3", "wrld_c:1", "wrld_c", "C World"),
+        ("4", "wrld_d:1", "wrld_d", "D World"),
+    ] {
+        let target_time = format!("2026-06-0{index}T20:15:00Z");
+        let alice_time = format!("2026-06-0{index}T20:10:00Z");
+        insert_join_leave(
+            &db,
+            &target_time,
+            "OnPlayerLeft",
+            "Target",
+            "usr_target",
+            location,
+            900_000,
+        );
+        insert_join_leave(
+            &db,
+            &alice_time,
+            "OnPlayerLeft",
+            "Alice",
+            "usr_alice",
+            location,
+            600_000,
+        );
+        db.execute_non_query(
+            "INSERT INTO gamelog_location (created_at, location, world_id, world_name, time, group_name)
+                 VALUES (@created_at, @location, @world_id, @world_name, 900000, '')",
+            &crate::common::ParamsBuilder::new()
+                .set("created_at", target_time)
+                .set("location", location)
+                .set("world_id", world_id)
+                .set("world_name", world_name)
+                .build(),
+        )
+        .unwrap();
+    }
+
+    let output = get_companions_of(
+        &db,
+        CompanionsOfInput {
+            owner_user_id: "usr_self".into(),
+            user_id: "usr_target".into(),
+            time_window: TimeWindow::all(),
+            limit: Some(10),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(output.rows.len(), 1);
+    assert_eq!(output.rows[0].world_count, 4);
+    assert_eq!(output.rows[0].worlds.len(), 3);
+    assert!(output.summary.contains("Alice"));
 }
 
 #[test]

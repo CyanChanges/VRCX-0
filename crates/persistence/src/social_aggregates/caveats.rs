@@ -50,6 +50,14 @@ pub(crate) fn social_graph_caveats() -> Vec<String> {
     ]
 }
 
+pub(crate) fn friend_circles_caveats() -> Vec<String> {
+    vec![
+        "Friend circles use only mutual graph snapshots that VRCX-0 has fetched.".into(),
+        "Connected circles are graph components: members are connected through known friendship paths, not necessarily all pairwise friends.".into(),
+        "Friends who opt out of Shared Connections or have not been fetched can make circles look smaller or isolated.".into(),
+    ]
+}
+
 pub(crate) fn companions_caveats() -> Vec<String> {
     vec![
         "Companions are inferred from the local game log: players observed in the same instances the signed-in user attended.".into(),

@@ -48,6 +48,7 @@ pub struct CopresenceSummaryOutput {
     pub total_rows: usize,
     pub returned_rows: usize,
     pub truncated: bool,
+    pub summary: String,
     pub caveats: Vec<String>,
 }
 
@@ -204,6 +205,42 @@ pub struct SocialGraphEdge {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
 #[serde(rename_all = "camelCase")]
+pub struct FriendCirclesInput {
+    pub owner_user_id: String,
+    #[serde(default)]
+    pub max_circles: Option<i64>,
+    #[serde(default)]
+    pub max_members_per_circle: Option<i64>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendCirclesOutput {
+    pub circles: Vec<FriendCircleRow>,
+    pub circle_count: usize,
+    pub isolated_friend_count: usize,
+    pub friends_analyzed: usize,
+    pub summary: String,
+    pub caveats: Vec<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendCircleRow {
+    pub members: Vec<String>,
+    pub member_count: usize,
+    pub sample_pairs: Vec<FriendCirclePair>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
+pub struct FriendCirclePair {
+    pub a: String,
+    pub b: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, specta::Type)]
+#[serde(rename_all = "camelCase")]
 pub struct CompanionsOfInput {
     pub owner_user_id: String,
     pub user_id: String,
@@ -216,6 +253,7 @@ pub struct CompanionsOfInput {
 #[serde(rename_all = "camelCase")]
 pub struct CompanionsOfOutput {
     pub rows: Vec<CompanionOfRow>,
+    pub summary: String,
     pub caveats: Vec<String>,
 }
 
@@ -228,6 +266,7 @@ pub struct CompanionOfRow {
     pub overlap_events: i64,
     pub shared_instances: usize,
     pub last_seen_together: String,
+    pub world_count: usize,
     pub worlds: Vec<CompanionWorldRow>,
 }
 

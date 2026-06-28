@@ -194,6 +194,19 @@ pub(crate) fn millis_to_minutes(millis: i64) -> i64 {
     millis / 60_000
 }
 
+pub(crate) fn format_minutes(minutes: i64) -> String {
+    if minutes < 60 {
+        return format!("{minutes}m");
+    }
+    let hours = minutes / 60;
+    let remainder = minutes % 60;
+    if remainder == 0 {
+        format!("{hours}h")
+    } else {
+        format!("{hours}h {remainder}m")
+    }
+}
+
 pub(crate) fn clamped_optional_limit(limit: Option<i64>, default: i64, max: i64) -> i64 {
     limit.unwrap_or(default).clamp(1, max)
 }

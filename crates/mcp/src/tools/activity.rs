@@ -10,8 +10,9 @@ use vrcx_0_persistence::{activity, social_aggregates};
 use crate::server::VrcxMcpServer;
 
 use super::common::{
-    map_persistence_error, ms_to_rfc3339_z, require_current_user_id, rfc3339_z,
-    social_aggregates_result, structured_result, time_window_bounds_ms, TimeWindowParams,
+    map_persistence_error, ms_to_rfc3339_z, require_current_user_id,
+    resolve_optional_target_or_result, rfc3339_z, social_aggregates_result, structured_result,
+    time_window_bounds_ms, TargetResolutionOutcome, TimeWindowParams, WithResolution,
 };
 
 #[tool_router(router = activity_tool_router, vis = "pub(crate)")]
@@ -45,16 +46,29 @@ impl VrcxMcpServer {
         Parameters(input): Parameters<FriendActivityPatternParams>,
     ) -> Result<CallToolResult, String> {
         let owner_user_id = require_current_user_id(&self.runtime)?;
-        social_aggregates_result(social_aggregates::get_friend_activity_pattern(
+        let (user_id, resolved_user) =
+            match resolve_optional_target_or_result(&self.runtime, input.user.as_deref())? {
+                Some(TargetResolutionOutcome::Resolved(target)) => {
+                    (Some(target.user_id), target.echo)
+                }
+                Some(TargetResolutionOutcome::ToolResult(result)) => return Ok(result),
+                None => (None, None),
+            };
+        let output = social_aggregates::get_friend_activity_pattern(
             self.runtime.db.as_ref(),
             social_aggregates::FriendActivityPatternInput {
                 owner_user_id,
-                user_id: input.user_id,
+                user_id,
                 time_window: input.time_window.into(),
                 bucket: input.bucket.into(),
                 utc_offset_minutes: input.utc_offset_minutes,
             },
-        ))
+        )
+        .map_err(map_persistence_error)?;
+        structured_result(WithResolution {
+            inner: output,
+            resolved_user,
+        })
     }
 
     #[tool(description = "Search recently visited worlds from the local game log.")]
@@ -120,17 +134,30 @@ impl VrcxMcpServer {
         Parameters(input): Parameters<RecallEncounterParams>,
     ) -> Result<CallToolResult, String> {
         let owner_user_id = require_current_user_id(&self.runtime)?;
-        social_aggregates_result(social_aggregates::recall_encounter(
+        let (co_present_with_user_id, resolved_user) = match resolve_optional_target_or_result(
+            &self.runtime,
+            input.co_present_with.as_deref(),
+        )? {
+            Some(TargetResolutionOutcome::Resolved(target)) => (Some(target.user_id), target.echo),
+            Some(TargetResolutionOutcome::ToolResult(result)) => return Ok(result),
+            None => (None, None),
+        };
+        let output = social_aggregates::recall_encounter(
             self.runtime.db.as_ref(),
             social_aggregates::RecallEncounterInput {
                 owner_user_id,
                 name_query: input.name_query,
                 world_id: input.world_id,
-                co_present_with_user_id: input.co_present_with_user_id,
+                co_present_with_user_id,
                 time_window: input.time_window.unwrap_or_default().into(),
                 limit: input.limit,
             },
-        ))
+        )
+        .map_err(map_persistence_error)?;
+        structured_result(WithResolution {
+            inner: output,
+            resolved_user,
+        })
     }
 
     #[tool(
@@ -400,7 +427,8 @@ struct CopresenceSummaryParams {
 #[derive(Clone, Debug, Deserialize, schemars::JsonSchema)]
 #[serde(rename_all = "camelCase")]
 struct FriendActivityPatternParams {
-    user_id: Option<String>,
+    #[serde(alias = "userId", alias = "user_id")]
+    user: Option<String>,
     #[serde(default)]
     time_window: TimeWindowParams,
     #[serde(default)]
@@ -448,7 +476,8 @@ struct BestTimeToPlayParams {
 struct RecallEncounterParams {
     name_query: Option<String>,
     world_id: Option<String>,
-    co_present_with_user_id: Option<String>,
+    #[serde(alias = "coPresentWithUserId", alias = "co_present_with_user_id")]
+    co_present_with: Option<String>,
     time_window: Option<TimeWindowParams>,
     limit: Option<i64>,
 }

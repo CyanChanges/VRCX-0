@@ -70,6 +70,7 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
     let mut collected: Vec<Entity> = Vec::new();
     let mut final_answer = String::new();
     let mut used_tools = false;
+    let mut last_tool_summary: Option<String> = None;
     let user_text = latest_user_message(&ctx).unwrap_or_default();
     let mut dispatched_tools = HashSet::new();
 
@@ -135,6 +136,11 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
                     "assistant: tool call failed"
                 );
             }
+            if resolved.ok {
+                if let Some(summary) = resolved.fact_summary.clone() {
+                    last_tool_summary = Some(summary);
+                }
+            }
             collected.extend(resolved.entities.iter().cloned());
             ctx.emitter
                 .tool_result(&call.id, resolved.ok, &resolved.summary, &resolved.entities);
@@ -167,7 +173,9 @@ pub(crate) async fn run_turn(ctx: TurnContext) {
         return;
     }
 
-    if final_answer.trim().is_empty() {
+    if final_answer.trim().is_empty()
+        && !apply_tool_summary_fallback(&mut final_answer, last_tool_summary)
+    {
         return finish_error(
             &ctx,
             "no_answer",
@@ -295,6 +303,7 @@ struct ResolvedTool {
     ok: bool,
     content: String,
     summary: String,
+    fact_summary: Option<String>,
     entities: Vec<Entity>,
 }
 
@@ -312,7 +321,10 @@ fn resolve_tool_outcome(outcome: Result<ToolCallOutcome, vrcx_0_mcp::McpError>) 
                 })
                 .unwrap_or_default();
             let content = tool_content(&result);
-            let summary = truncate(if result.text.is_empty() {
+            let fact_summary = tool_fact_summary(&result, &content);
+            let summary = truncate(if let Some(summary) = fact_summary.as_deref() {
+                summary
+            } else if result.text.is_empty() {
                 &content
             } else {
                 &result.text
@@ -321,6 +333,7 @@ fn resolve_tool_outcome(outcome: Result<ToolCallOutcome, vrcx_0_mcp::McpError>) 
                 ok: !result.is_error,
                 content,
                 summary,
+                fact_summary,
                 entities,
             }
         }
@@ -330,6 +343,7 @@ fn resolve_tool_outcome(outcome: Result<ToolCallOutcome, vrcx_0_mcp::McpError>) 
                 ok: false,
                 content: message.clone(),
                 summary: truncate(&message),
+                fact_summary: None,
                 entities: Vec::new(),
             }
         }
@@ -343,6 +357,7 @@ fn duplicate_tool_call_result(tool_name: &str) -> ResolvedTool {
             "VRCX-0 skipped a duplicate call to `{tool_name}` with the same arguments in this turn. Use the previous tool result and compose the answer now."
         ),
         summary: "Skipped duplicate tool call; use the previous result.".into(),
+        fact_summary: None,
         entities: Vec::new(),
     }
 }
@@ -425,6 +440,49 @@ fn tool_content(result: &ToolCallOutcome) -> String {
         Some(value) if !value.is_null() => budget_json_tool_content(value),
         _ => budget_text_tool_content(&result.text),
     }
+}
+
+fn tool_fact_summary(result: &ToolCallOutcome, content: &str) -> Option<String> {
+    result
+        .structured
+        .as_ref()
+        .and_then(summary_from_value)
+        .or_else(|| {
+            serde_json::from_str::<Value>(&result.text)
+                .ok()
+                .and_then(|value| summary_from_value(&value))
+        })
+        .or_else(|| {
+            serde_json::from_str::<Value>(content)
+                .ok()
+                .and_then(|value| summary_from_value(&value))
+        })
+}
+
+fn summary_from_value(value: &Value) -> Option<String> {
+    value
+        .get("summary")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|summary| !summary.is_empty())
+        .map(ToOwned::to_owned)
+}
+
+fn apply_tool_summary_fallback(
+    final_answer: &mut String,
+    last_tool_summary: Option<String>,
+) -> bool {
+    if !final_answer.trim().is_empty() {
+        return false;
+    }
+    let Some(summary) = last_tool_summary
+        .map(|summary| summary.trim().to_string())
+        .filter(|summary| !summary.is_empty())
+    else {
+        return false;
+    };
+    *final_answer = summary;
+    true
 }
 
 fn budget_json_tool_content(value: &Value) -> String {
@@ -706,5 +764,24 @@ mod tests {
             tool_call_signature("get_copresence_summary", Some(&first)),
             tool_call_signature("get_copresence_summary", Some(&second))
         );
+    }
+
+    #[test]
+    fn empty_final_answer_falls_back_to_last_tool_summary() {
+        let resolved = resolve_tool_outcome(Ok(ToolCallOutcome {
+            is_error: false,
+            text: String::new(),
+            structured: Some(serde_json::json!({
+                "summary": "Alice is your top companion.",
+                "rows": []
+            })),
+        }));
+        let mut final_answer = String::new();
+
+        assert!(apply_tool_summary_fallback(
+            &mut final_answer,
+            resolved.fact_summary
+        ));
+        assert_eq!(final_answer, "Alice is your top companion.");
     }
 }

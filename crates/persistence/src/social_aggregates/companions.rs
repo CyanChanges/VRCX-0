@@ -8,8 +8,8 @@ use crate::Error;
 
 use super::caveats::companions_caveats;
 use super::helpers::{
-    append_time_window_filter, clamped_optional_limit, latest_display_names_for_users,
-    millis_to_minutes, world_names_for_ids,
+    append_time_window_filter, clamped_optional_limit, format_minutes,
+    latest_display_names_for_users, millis_to_minutes, world_names_for_ids,
 };
 use super::types::{CompanionOfRow, CompanionWorldRow, CompanionsOfInput, CompanionsOfOutput};
 
@@ -21,6 +21,7 @@ pub fn get_companions_of(
     if target_user_id.is_empty() {
         return Ok(CompanionsOfOutput {
             rows: Vec::new(),
+            summary: companions_summary("", &[]),
             caveats: companions_caveats(),
         });
     }
@@ -89,7 +90,7 @@ pub fn get_companions_of(
         if user_id.is_empty() {
             continue;
         }
-        let worlds = row_string(&row, 5)
+        let mut worlds = row_string(&row, 5)
             .split(',')
             .filter(|location| !location.is_empty())
             .map(|location| {
@@ -104,6 +105,8 @@ pub fn get_companions_of(
                 }
             })
             .collect::<Vec<_>>();
+        let world_count = worlds.len();
+        worlds.truncate(3);
         rows.push(CompanionOfRow {
             user_id,
             display_name: String::new(),
@@ -111,14 +114,16 @@ pub fn get_companions_of(
             overlap_events: row_i64(&row, 2).max(0),
             shared_instances: usize::try_from(row_i64(&row, 3).max(0)).unwrap_or(0),
             last_seen_together: row_string(&row, 4),
+            world_count,
             worlds,
         });
     }
 
-    let user_ids = rows
+    let mut user_ids = rows
         .iter()
         .map(|row| row.user_id.clone())
         .collect::<Vec<_>>();
+    user_ids.push(target_user_id.clone());
     let display_names = latest_display_names_for_users(db, &user_ids)?;
     let world_names = world_names_for_ids(db, &world_ids)?;
     for row in &mut rows {
@@ -131,9 +136,42 @@ pub fn get_companions_of(
             }
         }
     }
+    let target_display_name = display_names
+        .get(&target_user_id)
+        .cloned()
+        .unwrap_or(target_user_id);
 
     Ok(CompanionsOfOutput {
+        summary: companions_summary(&target_display_name, &rows),
         rows,
         caveats: companions_caveats(),
     })
+}
+
+fn companions_summary(target: &str, rows: &[CompanionOfRow]) -> String {
+    let target = if target.trim().is_empty() {
+        "This user"
+    } else {
+        target
+    };
+    let Some(top) = rows.first() else {
+        return format!("{target} has no observed companions in the selected local history.");
+    };
+    let mut parts = Vec::new();
+    parts.push(format!(
+        "{} is most often with {} ({} instance(s), {})",
+        target,
+        top.display_name,
+        top.shared_instances,
+        format_minutes(top.overlap_minutes)
+    ));
+    for row in rows.iter().skip(1).take(2) {
+        parts.push(format!(
+            "{} ({} instance(s), {})",
+            row.display_name,
+            row.shared_instances,
+            format_minutes(row.overlap_minutes)
+        ));
+    }
+    format!("{}.", parts.join(", then "))
 }

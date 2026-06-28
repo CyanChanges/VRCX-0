@@ -7,8 +7,8 @@ use crate::Error;
 
 use super::caveats::copresence_caveats;
 use super::helpers::{
-    append_time_window_filter, clamped_optional_limit, current_friend_id_set, millis_to_minutes,
-    normalize_access_bucket, table_exists, world_names_for_ids,
+    append_time_window_filter, clamped_optional_limit, current_friend_id_set, format_minutes,
+    millis_to_minutes, normalize_access_bucket, table_exists, world_names_for_ids,
 };
 use super::types::{
     CopresenceGroupBy, CopresenceSummaryInput, CopresenceSummaryOutput, CopresenceSummaryRow,
@@ -91,6 +91,7 @@ pub fn get_copresence_summary(
                     total_rows: 0,
                     returned_rows: 0,
                     truncated: false,
+                    summary: copresence_summary(&[]),
                     caveats: copresence_caveats(),
                 });
             }
@@ -257,6 +258,7 @@ pub fn get_copresence_summary(
     let returned_rows = rows.len();
 
     Ok(CopresenceSummaryOutput {
+        summary: copresence_summary(&rows),
         rows,
         total_rows,
         returned_rows,
@@ -269,4 +271,26 @@ pub fn get_copresence_summary(
 struct CopresenceKey {
     group_key: String,
     world_id: Option<String>,
+}
+
+fn copresence_summary(rows: &[CopresenceSummaryRow]) -> String {
+    let Some(top) = rows.first() else {
+        return "No co-presence rows match this query.".into();
+    };
+    let mut parts = Vec::new();
+    parts.push(format!(
+        "You spend the most time with {} ({}, {} instance(s))",
+        top.display_name,
+        format_minutes(top.total_minutes),
+        top.instances
+    ));
+    for row in rows.iter().skip(1).take(2) {
+        parts.push(format!(
+            "{} ({}, {} instance(s))",
+            row.display_name,
+            format_minutes(row.total_minutes),
+            row.instances
+        ));
+    }
+    format!("{}.", parts.join(", then "))
 }

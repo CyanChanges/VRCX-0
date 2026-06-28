@@ -22,7 +22,7 @@ pub use companions::get_companions_of;
 pub use copresence::get_copresence_summary;
 pub use fading::get_fading_friends;
 pub use friend_log::{get_friend_log, get_friend_log_first_created_at};
-pub use graph::get_social_graph;
+pub use graph::{get_friend_circles, get_social_graph};
 pub use helpers::normalize_access_bucket;
 pub use invites::get_invite_history;
 pub use recall::recall_encounter;
@@ -34,11 +34,12 @@ pub use types::{
     FadingFriendsInput, FadingFriendsOutput, FavoriteLocalInput, FavoriteOutput,
     FriendActivityPatternInput, FriendActivityPatternOutput, FriendActivityPatternRow,
     FriendChangeEvent, FriendChangeKind, FriendChangeRow, FriendChangesInput, FriendChangesOutput,
-    FriendLogInput, FriendLogOutput, FriendLogRow, InviteDirection, InviteHistoryInput,
-    InviteHistoryOutput, InviteHistoryRow, RecallEncounterInput, RecallEncounterOutput,
-    RecallEncounterRow, ResolveUserInput, ResolveUserOutput, ResolvedUserRow,
-    SearchWorldsVisitedInput, SearchWorldsVisitedOutput, SocialGraphEdge, SocialGraphInput,
-    SocialGraphNode, SocialGraphOutput, TimeWindow, VisitedWorldRow,
+    FriendCirclePair, FriendCircleRow, FriendCirclesInput, FriendCirclesOutput, FriendLogInput,
+    FriendLogOutput, FriendLogRow, InviteDirection, InviteHistoryInput, InviteHistoryOutput,
+    InviteHistoryRow, RecallEncounterInput, RecallEncounterOutput, RecallEncounterRow,
+    ResolveUserInput, ResolveUserOutput, ResolvedUserRow, SearchWorldsVisitedInput,
+    SearchWorldsVisitedOutput, SocialGraphEdge, SocialGraphInput, SocialGraphNode,
+    SocialGraphOutput, TimeWindow, VisitedWorldRow,
 };
 pub use worlds::{favorite_local, search_worlds_visited};
 

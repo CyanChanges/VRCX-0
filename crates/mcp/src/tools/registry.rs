@@ -47,6 +47,7 @@ mod router_tests {
                 "get_favorites",
                 "get_friend_activity_pattern",
                 "get_friend_changes",
+                "get_friend_circles",
                 "get_friend_log",
                 "get_friend_note",
                 "get_friend_profile",
