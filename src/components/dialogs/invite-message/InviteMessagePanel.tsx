@@ -227,7 +227,7 @@ export function InviteMessagePanel({
         }
     }
 
-    async function useRow(row: any, message: any = row?.message || '') {
+    async function useRow(row: any, message = row?.message || '') {
         if (!row || sending) {
             return;
         }
@@ -294,7 +294,7 @@ export function InviteMessagePanel({
                         accept={IMAGE_UPLOAD_ACCEPT}
                         className="max-w-sm"
                         disabled={sending}
-                        onChange={(event: any) => {
+                        onChange={(event) => {
                             handleImageChange(event);
                         }}
                     />
@@ -362,7 +362,7 @@ export function InviteMessagePanel({
                                 </TableCell>
                             </TableRow>
                         ) : rows.length ? (
-                            rows.map((row: any) => {
+                            rows.map((row) => {
                                 const cooldownLabel = getInviteCooldownLabel(
                                     rowUpdatedAt(row),
                                     nowMs
@@ -406,7 +406,7 @@ export function InviteMessagePanel({
                                                                 editDisabled
                                                             }
                                                             onClick={(
-                                                                event: any
+                                                                event
                                                             ) => {
                                                                 event.stopPropagation();
                                                                 beginEdit(row);
@@ -423,7 +423,7 @@ export function InviteMessagePanel({
                                                             size="sm"
                                                             disabled={sending}
                                                             onClick={(
-                                                                event: any
+                                                                event
                                                             ) => {
                                                                 event.stopPropagation();
                                                                 useRow(row);
@@ -484,9 +484,7 @@ export function InviteMessagePanel({
                         maxLength={64}
                         rows={2}
                         disabled={sending}
-                        onChange={(event: any) =>
-                            setEditMessage(event.target.value)
-                        }
+                        onChange={(event) => setEditMessage(event.target.value)}
                     />
                     <div className="flex items-center justify-between gap-3">
                         <span className="text-muted-foreground text-xs">

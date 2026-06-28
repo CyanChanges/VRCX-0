@@ -49,10 +49,8 @@ export function useNotificationActions({
     setInviteResponseRequest: (request: NotificationDialogRequest) => void;
 }) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const openImagePreview = useModalStore(
-        (state: any) => state.openImagePreview
-    );
+    const confirm = useModalStore((state) => state.confirm);
+    const openImagePreview = useModalStore((state) => state.openImagePreview);
     const openUser = useCallback((params: any) => {
         openUserDialog(params);
     }, []);

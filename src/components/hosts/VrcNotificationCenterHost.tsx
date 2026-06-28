@@ -42,20 +42,16 @@ import {
 
 export function VrcNotificationCenterHost() {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
+    const confirm = useModalStore((state) => state.confirm);
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId)!;
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
     const currentUserLocationTag = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot?.$locationTag
+        (state) => state.auth.currentUserSnapshot?.$locationTag
     );
     const currentUserLocation = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot?.location
+        (state) => state.auth.currentUserSnapshot?.location
     );
-    const isLocalUserVrcPlusSupporter = useRuntimeStore((state: any) =>
+    const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
             state.auth.currentUserSnapshot?.tags?.includes?.(
@@ -65,45 +61,35 @@ export function VrcNotificationCenterHost() {
         )
     );
     const currentLocation = useRuntimeStore(
-        (state: any) => state.gameState.currentLocation
+        (state) => state.gameState.currentLocation
     );
     const currentDestination = useRuntimeStore(
-        (state: any) => state.gameState.currentDestination
+        (state) => state.gameState.currentDestination
     );
     const groupInstancesEndpoint = useRuntimeStore(
-        (state: any) => state.groupInstances.endpoint
+        (state) => state.groupInstances.endpoint
     );
     const groupInstancesUserId = useRuntimeStore(
-        (state: any) => state.groupInstances.userId
+        (state) => state.groupInstances.userId
     );
     const groupInstances = useRuntimeStore(
-        (state: any) => state.groupInstances.instances
+        (state) => state.groupInstances.instances
     );
-    const isCenterOpen = useVrcNotificationStore(
-        (state: any) => state.isCenterOpen
-    );
-    const categories = useVrcNotificationStore(
-        (state: any) => state.categories
-    );
-    const unseenCount = useVrcNotificationStore(
-        (state: any) => state.unseenCount
-    );
-    const loadStatus = useVrcNotificationStore(
-        (state: any) => state.loadStatus
-    );
-    const detail = useVrcNotificationStore((state: any) => state.detail);
+    const isCenterOpen = useVrcNotificationStore((state) => state.isCenterOpen);
+    const categories = useVrcNotificationStore((state) => state.categories);
+    const unseenCount = useVrcNotificationStore((state) => state.unseenCount);
+    const loadStatus = useVrcNotificationStore((state) => state.loadStatus);
+    const detail = useVrcNotificationStore((state) => state.detail);
     const setCenterOpen = useVrcNotificationStore(
-        (state: any) => state.setCenterOpen
+        (state) => state.setCenterOpen
     );
     const loadForCurrentUser = useVrcNotificationStore(
-        (state: any) => state.loadForCurrentUser
+        (state) => state.loadForCurrentUser
     );
     const markNotificationSeen = useVrcNotificationStore(
-        (state: any) => state.markNotificationSeen
+        (state) => state.markNotificationSeen
     );
-    const markAllSeen = useVrcNotificationStore(
-        (state: any) => state.markAllSeen
-    );
+    const markAllSeen = useVrcNotificationStore((state) => state.markAllSeen);
     const [inviteResponseRequest, setInviteResponseRequest] = useState<{
         notification: any;
         messageType: any;

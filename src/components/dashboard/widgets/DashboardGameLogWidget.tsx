@@ -216,17 +216,15 @@ export function DashboardGameLogWidget({
     configUpdater = null
 }: any) {
     const { t } = useTranslation();
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const addGameLogEventCount = useRuntimeStore(
-        (state: any) => state.runtimeEvents.addGameLogEvent.count
+        (state) => state.runtimeEvents.addGameLogEvent.count
     );
     const remoteFavoriteFriendIds = useFavoriteStore(
-        (state: any) => state.favoriteFriendIds
+        (state) => state.favoriteFriendIds
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
 
     const [rows, setRows] = useState<any[]>([]);

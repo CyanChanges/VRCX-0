@@ -21,12 +21,12 @@ export function useFriendListSelection({
     useEffect(() => {
         const visibleFriendIds = new Set(
             filteredRows
-                .map((friend: any) => normalizeId(friend?.id))
+                .map((friend) => normalizeId(friend?.id))
                 .filter(Boolean)
         );
         setSelectedFriendIds((current: any) => {
             const next = new Set(
-                [...current].filter((friendId: any) =>
+                [...current].filter((friendId) =>
                     visibleFriendIds.has(friendId)
                 )
             );

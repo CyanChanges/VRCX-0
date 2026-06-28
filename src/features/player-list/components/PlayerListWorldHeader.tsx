@@ -23,14 +23,12 @@ export function PlayerListWorldHeader({
     startedAt
 }: any) {
     const currentUserEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
-    const openImagePreview = useModalStore(
-        (state: any) => state.openImagePreview
-    );
+    const openImagePreview = useModalStore((state) => state.openImagePreview);
     const parsedLocation = parseLocation(
         instanceSnapshot.location || currentUserLocation || ''
     );

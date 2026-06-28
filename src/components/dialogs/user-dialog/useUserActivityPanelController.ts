@@ -183,7 +183,7 @@ export function useUserActivityPanelController({
             }
         }
         const profileByWorldId = new Map();
-        results.forEach((result: any, index: any) => {
+        results.forEach((result, index) => {
             if (result.status === 'fulfilled' && result.value?.id) {
                 profileByWorldId.set(
                     missingWorlds[index].worldId,
@@ -195,7 +195,7 @@ export function useUserActivityPanelController({
             return;
         }
 
-        setTopWorlds((currentRows: any) =>
+        setTopWorlds((currentRows) =>
             currentRows.map((world: any) => {
                 const profileWorld = profileByWorldId.get(world.worldId);
                 if (!profileWorld) {
@@ -259,7 +259,7 @@ export function useUserActivityPanelController({
         sortBy = topWorldsSortBy,
         excludeHomeWorld = excludeHomeWorldEnabled,
         period = selectedPeriod
-    }: any = {}) {
+    } = {}) {
         if (!active || !isCurrentUser || !hasAnyData || !userId) {
             return;
         }
@@ -275,7 +275,7 @@ export function useUserActivityPanelController({
         excludeOverlap = excludeHoursEnabled,
         excludeStart = excludeStartHour,
         excludeEnd = excludeEndHour
-    }: any = {}) {
+    } = {}) {
         if (
             !active ||
             isCurrentUser ||
@@ -328,7 +328,7 @@ export function useUserActivityPanelController({
         excludeOverlap = excludeHoursEnabled,
         excludeStart = excludeStartHour,
         excludeEnd = excludeEndHour
-    }: any = {}) {
+    } = {}) {
         if (!active || !userId) {
             return;
         }

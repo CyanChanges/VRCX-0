@@ -660,7 +660,7 @@ export function NotificationDrawerRow({
                                         ) : null}
                                     </Button>
                                 ) : null}
-                                {inlineActions.map((action: any) => (
+                                {inlineActions.map((action) => (
                                     <NotificationActionButton
                                         key={action.key}
                                         label={action.label}
@@ -698,17 +698,15 @@ export function NotificationDrawerRow({
                                                     )}
                                                 </DropdownMenuItem>
                                             ) : null}
-                                            {overflowActions.map(
-                                                (action: any) => (
-                                                    <DropdownMenuItem
-                                                        key={action.key}
-                                                        onClick={action.onClick}
-                                                    >
-                                                        <action.Icon data-icon="inline-start" />
-                                                        {action.label}
-                                                    </DropdownMenuItem>
-                                                )
-                                            )}
+                                            {overflowActions.map((action) => (
+                                                <DropdownMenuItem
+                                                    key={action.key}
+                                                    onClick={action.onClick}
+                                                >
+                                                    <action.Icon data-icon="inline-start" />
+                                                    {action.label}
+                                                </DropdownMenuItem>
+                                            ))}
                                             {showDelete ? (
                                                 <>
                                                     {showMarkRead ||

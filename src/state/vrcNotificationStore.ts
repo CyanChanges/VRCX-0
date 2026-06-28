@@ -233,7 +233,7 @@ function syncShellUnseenCount(unseenCount: unknown) {
 }
 
 export const useVrcNotificationStore = create<VrcNotificationStore>(
-    (set: any, get: any) => ({
+    (set, get) => ({
         rows: [],
         categories: createEmptyCategories(),
         unseenCount: 0,
@@ -299,7 +299,7 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
             if (!notification?.id) {
                 return;
             }
-            set((state: any) => {
+            set((state) => {
                 const existing =
                     state.rows.find((row: any) => row.id === notification.id) ||
                     {};
@@ -318,7 +318,7 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
             if (!normalizedId || !fields || typeof fields !== 'object') {
                 return;
             }
-            set((state: any) => {
+            set((state) => {
                 let changed = false;
                 const rows = state.rows.map((row: NotificationRow) => {
                     if (row.id !== normalizedId) {
@@ -356,7 +356,7 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
                 return;
             }
             const expiresAt = new Date().toISOString();
-            set((state: any) =>
+            set((state) =>
                 createNotificationState(
                     state.rows.map((row: any) =>
                         idSet.has(row.id)
@@ -380,7 +380,7 @@ export const useVrcNotificationStore = create<VrcNotificationStore>(
             if (!idSet.size) {
                 return;
             }
-            set((state: any) =>
+            set((state) =>
                 createNotificationState(
                     state.rows.map((row: any) =>
                         idSet.has(row.id)

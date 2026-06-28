@@ -251,7 +251,7 @@ export function UserDialogProfileMediaPanel({
         try {
             await onSetProfileMediaField(fieldName, fileId);
         } finally {
-            setMutatingKey((current: any) => (current === key ? '' : current));
+            setMutatingKey((current) => (current === key ? '' : current));
         }
     }
 
@@ -261,7 +261,7 @@ export function UserDialogProfileMediaPanel({
         try {
             await onSetProfileMediaField(fieldName, '');
         } finally {
-            setMutatingKey((current: any) => (current === key ? '' : current));
+            setMutatingKey((current) => (current === key ? '' : current));
         }
     }
 
@@ -282,7 +282,7 @@ export function UserDialogProfileMediaPanel({
             </PageToolbar>
             <div className="min-h-0 flex-1 overflow-y-auto pr-1">
                 <div className="flex flex-col gap-3">
-                    {MEDIA_SECTIONS.map((section: any) => (
+                    {MEDIA_SECTIONS.map((section) => (
                         <ProfileMediaSection
                             key={section.key}
                             section={section}

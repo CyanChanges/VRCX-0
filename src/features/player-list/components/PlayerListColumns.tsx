@@ -349,7 +349,7 @@ function BioLinksCell({ row }: any) {
 export function usePlayerListColumns() {
     const { t } = useTranslation();
     const randomUserColours = usePreferencesStore(
-        (state: any) => state.randomUserColours
+        (state) => state.randomUserColours
     );
     const isDarkMode =
         typeof document !== 'undefined' &&

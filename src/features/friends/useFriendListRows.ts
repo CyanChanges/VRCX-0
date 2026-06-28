@@ -26,31 +26,27 @@ export function useFriendListRows({
     favoritesOnly: boolean;
     searchQuery: string;
 }) {
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
     const isFavoritesLoaded = useSessionStore(
-        (state: any) => state.isFavoritesLoaded
+        (state) => state.isFavoritesLoaded
     );
-    const friendLoadStatus = useFriendRosterStore(
-        (state: any) => state.loadStatus
-    );
-    const friendDetail = useFriendRosterStore((state: any) => state.detail);
+    const friendLoadStatus = useFriendRosterStore((state) => state.loadStatus);
+    const friendDetail = useFriendRosterStore((state) => state.detail);
     const orderedFriendIds = useFriendRosterStore(
-        (state: any) => state.orderedFriendIds
+        (state) => state.orderedFriendIds
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
     const applyFriendPatches = useFriendRosterStore(
-        (state: any) => state.applyFriendPatches
+        (state) => state.applyFriendPatches
     );
     const remoteFavoriteFriendIds = useFavoriteStore(
-        (state: any) => state.favoriteFriendIds
+        (state) => state.favoriteFriendIds
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
     const statsHydrationRequestRef = useRef(0);
     const [userMemoById, setUserMemoById] = useState(() => new Map());

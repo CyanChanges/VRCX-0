@@ -67,14 +67,14 @@ export function ModalHost() {
     const { t } = useTranslation();
 
     const alertDialog = useModalStore((state) => state.alertDialog);
-    const promptDialog = useModalStore((state: any) => state.promptDialog);
+    const promptDialog = useModalStore((state) => state.promptDialog);
     const boopDialog = useModalStore((state) => state.boopDialog);
     const otpDialog = useModalStore((state) => state.otpDialog);
     const imageDialog = useModalStore((state) => state.imageDialog);
     const currentEndpoint = useRuntimeStore(
         (state) => state.auth.currentUserEndpoint
     );
-    const isLocalUserVrcPlusSupporter = useRuntimeStore((state: any) =>
+    const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
             state.auth.currentUserSnapshot?.tags?.includes?.(
@@ -166,7 +166,7 @@ export function ModalHost() {
                     </DialogHeader>
                     {promptDialog.multiline ? (
                         <Textarea
-                            value={promptDialog.value}
+                            value={promptDialog.value as any}
                             onChange={(event) =>
                                 updatePromptValue(event.target.value)
                             }
@@ -176,7 +176,7 @@ export function ModalHost() {
                     ) : (
                         <Input
                             type={promptDialog.inputType}
-                            value={promptDialog.value}
+                            value={promptDialog.value as any}
                             onChange={(event) =>
                                 updatePromptValue(event.target.value)
                             }

@@ -80,58 +80,56 @@ function openRowDialog(type: any, row: any) {
 export function FavoriteImportHost() {
     const { t } = useTranslation();
 
-    const open = useFavoriteImportStore((state: any) => state.open);
-    const type = useFavoriteImportStore((state: any) => state.type);
-    const input = useFavoriteImportStore((state: any) => state.input);
-    const rows = useFavoriteImportStore((state: any) => state.rows);
-    const loading = useFavoriteImportStore((state: any) => state.loading);
-    const progress = useFavoriteImportStore((state: any) => state.progress);
+    const open = useFavoriteImportStore((state) => state.open);
+    const type = useFavoriteImportStore((state) => state.type);
+    const input = useFavoriteImportStore((state) => state.input);
+    const rows = useFavoriteImportStore((state) => state.rows);
+    const loading = useFavoriteImportStore((state) => state.loading);
+    const progress = useFavoriteImportStore((state) => state.progress);
     const progressTotal = useFavoriteImportStore(
-        (state: any) => state.progressTotal
+        (state) => state.progressTotal
     );
     const importProgress = useFavoriteImportStore(
-        (state: any) => state.importProgress
+        (state) => state.importProgress
     );
     const importProgressTotal = useFavoriteImportStore(
-        (state: any) => state.importProgressTotal
+        (state) => state.importProgressTotal
     );
-    const errors = useFavoriteImportStore((state: any) => state.errors);
+    const errors = useFavoriteImportStore((state) => state.errors);
     const remoteGroupName = useFavoriteImportStore(
-        (state: any) => state.remoteGroupName
+        (state) => state.remoteGroupName
     );
     const localGroupName = useFavoriteImportStore(
-        (state: any) => state.localGroupName
+        (state) => state.localGroupName
     );
-    const closeDialog = useFavoriteImportStore(
-        (state: any) => state.closeDialog
-    );
-    const setInput = useFavoriteImportStore((state: any) => state.setInput);
+    const closeDialog = useFavoriteImportStore((state) => state.closeDialog);
+    const setInput = useFavoriteImportStore((state) => state.setInput);
     const setRemoteGroupName = useFavoriteImportStore(
-        (state: any) => state.setRemoteGroupName
+        (state) => state.setRemoteGroupName
     );
     const setLocalGroupName = useFavoriteImportStore(
-        (state: any) => state.setLocalGroupName
+        (state) => state.setLocalGroupName
     );
-    const removeRow = useFavoriteImportStore((state: any) => state.removeRow);
-    const setErrors = useFavoriteImportStore((state: any) => state.setErrors);
+    const removeRow = useFavoriteImportStore((state) => state.removeRow);
+    const setErrors = useFavoriteImportStore((state) => state.setErrors);
     const config = getFavoriteImportTypeConfig(type);
     const favoriteAvatarGroups = useFavoriteStore(
-        (state: any) => state.favoriteAvatarGroups
+        (state) => state.favoriteAvatarGroups
     );
     const favoriteWorldGroups = useFavoriteStore(
-        (state: any) => state.favoriteWorldGroups
+        (state) => state.favoriteWorldGroups
     );
     const favoriteFriendGroups = useFavoriteStore(
-        (state: any) => state.favoriteFriendGroups
+        (state) => state.favoriteFriendGroups
     );
     const localAvatarFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localAvatarFavoriteGroups
+        (state) => state.localAvatarFavoriteGroups
     );
     const localWorldFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localWorldFavoriteGroups
+        (state) => state.localWorldFavoriteGroups
     );
     const localFriendFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localFriendFavoriteGroups
+        (state) => state.localFriendFavoriteGroups
     );
     const { remoteGroups, localGroups } = useMemo(() => {
         if (type === 'avatar') {

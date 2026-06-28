@@ -24,15 +24,13 @@ import {
 } from '@/ui/shadcn/dialog';
 
 export function DialogHost() {
-    const activeDialog = useDialogStore((state: any) => state.activeDialog);
-    const breadcrumbs = useDialogStore((state: any) => state.breadcrumbs);
-    const closeDialog = useDialogStore((state: any) => state.closeDialog);
-    const popToBreadcrumb = useDialogStore(
-        (state: any) => state.popToBreadcrumb
-    );
+    const activeDialog = useDialogStore((state) => state.activeDialog);
+    const breadcrumbs = useDialogStore((state) => state.breadcrumbs);
+    const closeDialog = useDialogStore((state) => state.closeDialog);
+    const popToBreadcrumb = useDialogStore((state) => state.popToBreadcrumb);
 
     const dialogKind = activeDialog?.kind || '';
-    const dialogPayload = activeDialog?.payload || null;
+    const dialogPayload = activeDialog?.payload || (null as any);
     const isUserDialog = dialogKind === 'user';
     const isOwnerDialog =
         isUserDialog && activeDialog?.entityId === OWNER_USER_ID;
@@ -152,7 +150,8 @@ export function DialogHost() {
                     />
                 ) : (
                     <div className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
-                        {activeDialog?.body ?? 'Unsupported dialog type.'}
+                        {(activeDialog?.body as any) ??
+                            'Unsupported dialog type.'}
                     </div>
                 )}
             </DialogContent>

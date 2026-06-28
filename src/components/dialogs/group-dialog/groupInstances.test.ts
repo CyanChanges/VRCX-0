@@ -74,7 +74,7 @@ describe('groupInstances', () => {
             }
         );
 
-        expect(rows.map((row: any) => row.location)).toEqual([
+        expect(rows.map((row) => row.location)).toEqual([
             currentLocation,
             'wrld_base:base~group(grp_target)'
         ]);
@@ -93,7 +93,7 @@ describe('groupInstances', () => {
         ]);
         expect(rows[1].friendCount).toBe(3);
         expect(
-            rows.some((row: any) =>
+            rows.some((row) =>
                 row.users.some((user: any) => user.id === 'usr_wrong_group')
             )
         ).toBe(false);
@@ -122,7 +122,7 @@ describe('groupInstances', () => {
             }
         );
 
-        expect(rows.map((row: any) => row.location)).toEqual([
+        expect(rows.map((row) => row.location)).toEqual([
             'wrld_big:1~group(grp_target)',
             'wrld_small:1~group(grp_target)'
         ]);
@@ -134,7 +134,7 @@ describe('groupInstances', () => {
 
     it('keeps existing users and counts when duplicate base instances merge', () => {
         const location = 'wrld_dup:1~group(grp_target)';
-        const explicitRef: any = { source: 'repository' };
+        const explicitRef = { source: 'repository' };
         const rows = mergeGroupInstances(
             [
                 {

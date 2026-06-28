@@ -33,8 +33,8 @@ export function useFavoritesCollectionsState({
         [kind]
     );
     const favoriteState = useFavoriteStore(useShallow(favoriteSelector));
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
-    const worldFactsById = useWorldFactsStore((state: any) =>
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
+    const worldFactsById = useWorldFactsStore((state) =>
         kind === 'world' ? state.worldsById : EMPTY_WORLD_FACTS
     );
     const [avatarHistoryLoading, setAvatarHistoryLoading] = useState(false);

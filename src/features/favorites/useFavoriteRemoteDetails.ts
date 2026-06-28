@@ -112,9 +112,7 @@ export function useFavoriteRemoteDetails({
     enabled = true,
     refreshToken = 0
 }: any) {
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
     const normalizedIds = useMemo(
         () => normalizeValues(favoriteIds),
         [favoriteIds]

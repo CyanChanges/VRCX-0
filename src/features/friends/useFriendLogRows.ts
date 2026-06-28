@@ -16,12 +16,8 @@ export function useFriendLogRows({
     searchQuery: string;
     selectedTypes: any[];
 }) {
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
-    const hideUnfriends = usePreferencesStore(
-        (state: any) => state.hideUnfriends
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
+    const hideUnfriends = usePreferencesStore((state) => state.hideUnfriends);
     const [rows, setRows] = useState<any[]>([]);
     const [rowsOwnerUserId, setRowsOwnerUserId] = useState('');
     const [loadStatus, setLoadStatus] = useState('idle');
@@ -54,7 +50,7 @@ export function useFriendLogRows({
 
         friendLogHistoryRepository
             .getFriendLogHistory(currentUserId)
-            .then((nextRows: any) => {
+            .then((nextRows) => {
                 if (!active) {
                     return;
                 }

@@ -101,7 +101,7 @@ export function useUserDialogMemoState({
             : nextNote;
 
         memoRevisionRef.current += 1;
-        setMemoDialog((current: any) => ({
+        setMemoDialog((current) => ({
             ...current,
             saving: true
         }));
@@ -166,7 +166,7 @@ export function useUserDialogMemoState({
                     ? error.message
                     : t('dialog.user.toast.failed_to_save_memo')
             );
-            setMemoDialog((current: any) => ({
+            setMemoDialog((current) => ({
                 ...current,
                 saving: false
             }));
@@ -189,13 +189,13 @@ export function useUserDialogMemoState({
                 }
             },
             onMemoChange(nextMemo: string) {
-                setMemoDialog((current: any) => ({
+                setMemoDialog((current) => ({
                     ...current,
                     memo: nextMemo
                 }));
             },
             onNoteChange(nextNote: string) {
-                setMemoDialog((current: any) => ({
+                setMemoDialog((current) => ({
                     ...current,
                     note: nextNote.slice(0, 256)
                 }));

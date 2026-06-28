@@ -108,7 +108,7 @@ export function DashboardFeedWidgetView({
         minLiveSequence,
         requestIsCurrent
     }: any) {
-        let result: any = {
+        let result = {
             rows,
             maxSequence: minLiveSequence
         };
@@ -187,7 +187,7 @@ export function DashboardFeedWidgetView({
                 minLiveSequence: liveFeedSequenceAtRequestStart,
                 maxRows: FEED_WIDGET_MAX_ROWS
             })
-            .then(async (result: any) => {
+            .then(async (result) => {
                 if (!active) {
                     return;
                 }
@@ -220,7 +220,7 @@ export function DashboardFeedWidgetView({
                 setLoadStatus('ready');
                 setDetail('');
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }
@@ -251,7 +251,7 @@ export function DashboardFeedWidgetView({
             requestIsCurrent: () =>
                 liveMergeRequestIdRef.current === mergeRequestId
         })
-            .then((result: any) => {
+            .then((result) => {
                 if (!result) {
                     return;
                 }
@@ -264,7 +264,7 @@ export function DashboardFeedWidgetView({
                 rowsRef.current = result.rows;
                 setRows(result.rows);
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 setDetail(
                     userFacingErrorMessage(
                         error,
@@ -276,7 +276,7 @@ export function DashboardFeedWidgetView({
 
     const annotatedRows = useMemo(
         () =>
-            rows.map((row: any) => {
+            rows.map((row) => {
                 const normalizedUserId = normalizeString(row?.userId);
                 return {
                     ...row,
@@ -303,14 +303,14 @@ export function DashboardFeedWidgetView({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
-                    {FEED_FILTER_TYPES.map((filterType: any) => (
+                    {FEED_FILTER_TYPES.map((filterType) => (
                         <DropdownMenuCheckboxItem
                             key={filterType}
                             checked={isDashboardWidgetFilterActive(
                                 config,
                                 filterType
                             )}
-                            onSelect={(event: any) => event.preventDefault()}
+                            onSelect={(event) => event.preventDefault()}
                             onCheckedChange={() =>
                                 configUpdater(
                                     getNextDashboardWidgetFilterConfig(
@@ -329,8 +329,8 @@ export function DashboardFeedWidgetView({
                 <DropdownMenuGroup>
                     <DropdownMenuCheckboxItem
                         checked={showType}
-                        onSelect={(event: any) => event.preventDefault()}
-                        onCheckedChange={(checked: any) =>
+                        onSelect={(event) => event.preventDefault()}
+                        onCheckedChange={(checked) =>
                             configUpdater({
                                 ...config,
                                 showType: Boolean(checked)
@@ -419,7 +419,7 @@ export function DashboardFeedWidgetView({
             <div className="min-h-0 flex-1 overflow-auto">
                 <Table className="app-data-table table-fixed">
                     <TableBody>
-                        {annotatedRows.map((row: any) => (
+                        {annotatedRows.map((row) => (
                             <TableRow key={getFeedRowKey(row)}>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -477,24 +477,24 @@ export function DashboardFeedWidget({
     configUpdater = null
 }: DashboardFeedWidgetProps) {
     const { currentUserId, addGameLogEventCount } = useRuntimeStore(
-        useShallow((state: any) => ({
+        useShallow((state) => ({
             currentUserId: state.auth.currentUserId,
             addGameLogEventCount: state.runtimeEvents.addGameLogEvent.count
         }))
     );
     const { liveFeedEntries, liveFeedVersion } = useFeedLiveStore(
-        useShallow((state: any) => ({
+        useShallow((state) => ({
             liveFeedEntries: state.entries,
             liveFeedVersion: state.version
         }))
     );
     const { remoteFavoriteFriendIds, localFriendFavorites } = useFavoriteStore(
-        useShallow((state: any) => ({
+        useShallow((state) => ({
             remoteFavoriteFriendIds: state.favoriteFriendIds,
             localFriendFavorites: state.localFriendFavorites
         }))
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
 
     return (
         <DashboardFeedWidgetView

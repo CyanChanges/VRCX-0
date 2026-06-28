@@ -56,19 +56,19 @@ export function useFavoritesCollectionActions({
     setSelectedGroupKey(value: string): void;
 }) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const prompt = useModalStore((state: any) => state.prompt);
+    const confirm = useModalStore((state) => state.confirm);
+    const prompt = useModalStore((state) => state.prompt);
     const removeLocalFavorite = useFavoriteStore(
-        (state: any) => state.removeLocalFavorite
+        (state) => state.removeLocalFavorite
     );
     const removeRemoteFavorite = useFavoriteStore(
-        (state: any) => state.removeRemoteFavorite
+        (state) => state.removeRemoteFavorite
     );
     const renameLocalFavoriteGroup = useFavoriteStore(
-        (state: any) => state.renameLocalFavoriteGroup
+        (state) => state.renameLocalFavoriteGroup
     );
     const deleteLocalFavoriteGroup = useFavoriteStore(
-        (state: any) => state.deleteLocalFavoriteGroup
+        (state) => state.deleteLocalFavoriteGroup
     );
 
     const refreshFavorites = async ({

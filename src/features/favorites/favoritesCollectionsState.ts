@@ -1,3 +1,5 @@
+import { FavoriteStoreState } from '@/state/favoriteStoreTypes';
+
 import { normalizeFavoriteEntityId as normalizeEntityId } from './favoritesItems';
 import type { FavoriteKind } from './favoritesTypes';
 
@@ -73,7 +75,7 @@ export function buildFavoriteAvatarTags({
 }
 
 export function selectFavoritesCollectionsState(kind: FavoriteKind) {
-    return (state: any) => {
+    return (state: FavoriteStoreState) => {
         const isFriend = kind === 'friend';
         const isAvatar = kind === 'avatar';
         const isWorld = kind === 'world';

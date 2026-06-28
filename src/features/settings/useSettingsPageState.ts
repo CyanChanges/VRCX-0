@@ -55,13 +55,13 @@ export function useSettingsPageState() {
     const zoomLevel = useShellStore((state) => state.zoomLevel);
     const navbarOpen = useShellStore((state) => state.navbarOpen);
     const favoriteFriendGroups = useFavoriteStore(
-        (state: any) => state.favoriteFriendGroups
+        (state) => state.favoriteFriendGroups
     );
     const localFriendFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localFriendFavoriteGroups
+        (state) => state.localFriendFavoriteGroups
     );
     const preferenceState = usePreferencesStore(
-        useShallow((state: any) => {
+        useShallow((state) => {
             const snapshot: any = {
                 preferencesHydrated: state.preferencesHydrated
             };

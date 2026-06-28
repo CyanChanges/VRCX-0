@@ -7,22 +7,20 @@ import { resolveCurrentInviteLocation } from './favoritesItems';
 
 export function useFavoritesRuntime() {
     const currentEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
     const runtimeCurrentLocation = useRuntimeStore(
-        (state: any) => state.gameState.currentLocation
+        (state) => state.gameState.currentLocation
     );
     const runtimeCurrentDestination = useRuntimeStore(
-        (state: any) => state.gameState.currentDestination
+        (state) => state.gameState.currentDestination
     );
     const isGameRunning = useRuntimeStore(
-        (state: any) => state.gameState.isGameRunning
+        (state) => state.gameState.isGameRunning
     );
     const gameState = useMemo(
         () => ({

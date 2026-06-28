@@ -23,7 +23,7 @@ export function useFriendLogRowActions({
     setRows(updater: any): void;
 }) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
+    const confirm = useModalStore((state) => state.confirm);
     const [deletingRowKey, setDeletingRowKey] = useState('');
 
     async function handleDeleteRow(

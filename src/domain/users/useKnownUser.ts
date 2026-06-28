@@ -31,21 +31,19 @@ function normalizeUserIdList(userIds: unknown): string[] {
 
 function useKnownUserFact(userId: unknown, options: UseKnownUserOptions = {}) {
     const storeEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const endpoint = normalizeEndpoint(options.endpoint || storeEndpoint);
     const normalizedUserId = normalizeUserId(userId);
     const key = useMemo(
         () => userFactKey(endpoint, normalizedUserId),
         [endpoint, normalizedUserId]
     );
-    const fact = useUserFactsStore((state: any) =>
+    const fact = useUserFactsStore((state) =>
         key ? state.usersByKey[key] || null : null
     );
-    const currentUserSnapshot = useRuntimeStore((state: any) =>
+    const currentUserSnapshot = useRuntimeStore((state) =>
         normalizedUserId && normalizedUserId === currentUserId
             ? state.auth.currentUserSnapshot
             : null
@@ -58,16 +56,14 @@ function useKnownUserFacts(
     options: UseKnownUserOptions = {}
 ) {
     const storeEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
     const endpoint = normalizeEndpoint(options.endpoint || storeEndpoint);
-    const version = useUserFactsStore((state: any) => state.version);
+    const version = useUserFactsStore((state) => state.version);
     const normalizedUserIds = useMemo(
         () => normalizeUserIdList(userIds),
         [userIds]

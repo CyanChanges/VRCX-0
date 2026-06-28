@@ -139,13 +139,13 @@ export function AvatarDetailsDialog({
         setLoadStatus('running');
         avatarProfileRepository
             .getAvatarStyles({ endpoint })
-            .then((rows: any) => {
+            .then((rows) => {
                 if (active) {
                     setStyles(Array.isArray(rows) ? rows : []);
                     setLoadStatus('ready');
                 }
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (active) {
                     setStyles([]);
                     setLoadStatus('error');
@@ -203,7 +203,7 @@ export function AvatarDetailsDialog({
             return;
         }
 
-        const fallbackAvatar: any = {
+        const fallbackAvatar = {
             ...avatar,
             ...(hasOwn(params, 'name') ? { name } : {}),
             ...(hasOwn(params, 'description') ? { description } : {}),
@@ -272,9 +272,7 @@ export function AvatarDetailsDialog({
                             id="avatar-details-name"
                             value={name}
                             disabled={saving}
-                            onChange={(event: any) =>
-                                setName(event.target.value)
-                            }
+                            onChange={(event) => setName(event.target.value)}
                         />
                     </Field>
                     <Field>
@@ -287,7 +285,7 @@ export function AvatarDetailsDialog({
                             value={description}
                             disabled={saving}
                             className="resize-none"
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 setDescription(event.target.value)
                             }
                         />
@@ -300,7 +298,7 @@ export function AvatarDetailsDialog({
                             <Select
                                 value={primaryStyle || noneValue}
                                 disabled={controlsDisabled}
-                                onValueChange={(value: any) =>
+                                onValueChange={(value) =>
                                     setPrimaryStyle(
                                         value === noneValue ? '' : value
                                     )
@@ -318,16 +316,14 @@ export function AvatarDetailsDialog({
                                         <SelectItem value={noneValue}>
                                             {t('dialog.avatar.label.none')}
                                         </SelectItem>
-                                        {styleNames.map(
-                                            (styleNameValue: any) => (
-                                                <SelectItem
-                                                    key={styleNameValue}
-                                                    value={styleNameValue}
-                                                >
-                                                    {styleNameValue}
-                                                </SelectItem>
-                                            )
-                                        )}
+                                        {styleNames.map((styleNameValue) => (
+                                            <SelectItem
+                                                key={styleNameValue}
+                                                value={styleNameValue}
+                                            >
+                                                {styleNameValue}
+                                            </SelectItem>
+                                        ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -339,7 +335,7 @@ export function AvatarDetailsDialog({
                             <Select
                                 value={secondaryStyle || noneValue}
                                 disabled={controlsDisabled}
-                                onValueChange={(value: any) =>
+                                onValueChange={(value) =>
                                     setSecondaryStyle(
                                         value === noneValue ? '' : value
                                     )
@@ -357,16 +353,14 @@ export function AvatarDetailsDialog({
                                         <SelectItem value={noneValue}>
                                             {t('dialog.avatar.label.none')}
                                         </SelectItem>
-                                        {styleNames.map(
-                                            (styleNameValue: any) => (
-                                                <SelectItem
-                                                    key={styleNameValue}
-                                                    value={styleNameValue}
-                                                >
-                                                    {styleNameValue}
-                                                </SelectItem>
-                                            )
-                                        )}
+                                        {styleNames.map((styleNameValue) => (
+                                            <SelectItem
+                                                key={styleNameValue}
+                                                value={styleNameValue}
+                                            >
+                                                {styleNameValue}
+                                            </SelectItem>
+                                        ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -383,7 +377,7 @@ export function AvatarDetailsDialog({
                             value={authorTags}
                             disabled={saving}
                             placeholder="tag_one,tag_two"
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 setAuthorTags(event.target.value)
                             }
                         />

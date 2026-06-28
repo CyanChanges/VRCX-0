@@ -15,7 +15,7 @@ export function useUserDialogRuntimeState(normalizedUserId: string) {
     const currentUserSnapshot = useRuntimeStore(
         (state) => state.auth.currentUserSnapshot
     );
-    const isLocalUserVrcPlusSupporter = useRuntimeStore((state: any) =>
+    const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
             state.auth.currentUserSnapshot?.tags?.includes?.(
@@ -147,7 +147,7 @@ export function useUserDialogTabbedRuntimeState() {
         (state) =>
             Number(state.auth.currentUserSnapshot?.$previousAvatarSwapTime) || 0
     );
-    const isLocalUserVrcPlusSupporter = useRuntimeStore((state: any) =>
+    const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
             state.auth.currentUserSnapshot?.tags?.includes?.(

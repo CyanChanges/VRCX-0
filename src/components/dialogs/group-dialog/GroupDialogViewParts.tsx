@@ -9,7 +9,7 @@ import { firstText } from './groupDialogUtils';
 
 export function normalizeGroupLanguages(
     group: any,
-    languageOptionMap: any = new Map()
+    languageOptionMap = new Map()
 ) {
     return normalizeProfileLanguageRows(group, languageOptionMap);
 }

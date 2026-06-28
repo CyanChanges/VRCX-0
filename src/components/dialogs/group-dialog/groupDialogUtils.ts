@@ -5,7 +5,7 @@ import {
 } from '@/services/entityMediaService';
 
 export function firstArray(...values: any[]) {
-    return values.find((value: any) => Array.isArray(value)) || [];
+    return values.find((value) => Array.isArray(value)) || [];
 }
 
 export function firstText(...values: any[]) {

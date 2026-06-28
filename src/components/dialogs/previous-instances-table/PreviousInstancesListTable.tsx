@@ -151,9 +151,7 @@ export function PreviousInstancesListTable({
                 <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                     <Input
                         value={search}
-                        onChange={(event: any) =>
-                            onSearchChange(event.target.value)
-                        }
+                        onChange={(event) => onSearchChange(event.target.value)}
                         placeholder={t(
                             'dialog.previous_instances.search_placeholder'
                         )}
@@ -167,7 +165,7 @@ export function PreviousInstancesListTable({
                     </span>
                     <Select
                         value={String(pageSize)}
-                        onValueChange={(value: any) =>
+                        onValueChange={(value) =>
                             onPageSizeChange(Number.parseInt(value, 10) || 10)
                         }
                     >
@@ -176,7 +174,7 @@ export function PreviousInstancesListTable({
                         </SelectTrigger>
                         <SelectContent>
                             <SelectGroup>
-                                {[10, 25, 50, 100].map((size: any) => (
+                                {[10, 25, 50, 100].map((size) => (
                                     <SelectItem key={size} value={String(size)}>
                                         {size}
                                     </SelectItem>

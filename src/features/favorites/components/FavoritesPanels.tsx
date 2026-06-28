@@ -313,7 +313,7 @@ export function FavoritesContentPanel({
                             height: `${virtualGrid.totalHeight}px`
                         }}
                     >
-                        {virtualGrid.visibleRows.map((row: any) => (
+                        {virtualGrid.visibleRows.map((row) => (
                             <div
                                 key={row.key}
                                 className="absolute right-0 left-0 grid min-w-0"

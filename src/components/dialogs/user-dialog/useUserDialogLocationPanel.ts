@@ -65,7 +65,7 @@ export function createEmptyUserDialogLocationPanel(
 }
 
 function sortLocationUsers(users: any) {
-    return [...users].sort((left: any, right: any) =>
+    return [...users].sort((left, right) =>
         userDisplayName(left).localeCompare(userDisplayName(right), undefined, {
             sensitivity: 'base'
         })
@@ -288,7 +288,7 @@ export function useUserDialogLocationPanel({
                 locationMetadata.players,
                 locationMetadata.friends
             ],
-            (user: any) => mergeLocationUser(rowsById, user)
+            (user) => mergeLocationUser(rowsById, user)
         );
 
         const canFetchInstance = Boolean(
@@ -317,7 +317,7 @@ export function useUserDialogLocationPanel({
                       instanceId: parsedLocation.instanceId,
                       endpoint: currentEndpoint
                   })
-                  .then((response: any) => response.json)
+                  .then((response) => response.json)
                   .catch((): null => null)
             : Promise.resolve(null);
         const playerSnapshotPromise = currentLocationMatches
@@ -450,7 +450,7 @@ export function useUserDialogLocationPanel({
                             instance?.userIds,
                             instance?.usersById
                         ],
-                        (user: any) => mergeLocationUser(rowsById, user)
+                        (user) => mergeLocationUser(rowsById, user)
                     );
 
                     for (const player of playerSnapshot?.players || []) {
@@ -476,7 +476,7 @@ export function useUserDialogLocationPanel({
                     const users = sortLocationUsers(
                         Array.from(rowsById.values())
                     );
-                    const friendCount = users.filter((user: any) => {
+                    const friendCount = users.filter((user) => {
                         const userId = normalizeUserId(
                             user?.id || user?.userId
                         );
@@ -511,11 +511,11 @@ export function useUserDialogLocationPanel({
                         knownUsersById,
                         shouldContinue: () => active,
                         users
-                    }).then((enrichedUsers: any) => {
+                    }).then((enrichedUsers) => {
                         if (!active) {
                             return;
                         }
-                        setLocationPanel((current: any) => {
+                        setLocationPanel((current) => {
                             if (
                                 !isSameLocationTag(
                                     current.location,
@@ -541,7 +541,7 @@ export function useUserDialogLocationPanel({
                 setLocationPanel({
                     ...createEmptyUserDialogLocationPanel(activeLocation),
                     users,
-                    friendCount: users.filter((user: any) => {
+                    friendCount: users.filter((user) => {
                         const userId = normalizeUserId(
                             user?.id || user?.userId
                         );
@@ -626,7 +626,7 @@ export function useUserDialogLocationPanel({
             return null;
         }
 
-        setLocationRefreshToken((value: any) => value + 1);
+        setLocationRefreshToken((value) => value + 1);
         return null;
     }
 

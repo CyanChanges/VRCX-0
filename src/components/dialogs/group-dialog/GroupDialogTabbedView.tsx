@@ -46,7 +46,7 @@ let lastGroupDialogTab = 'overview';
 function resolveGroupDialogTab(
     tabs: any,
     preferred: any,
-    fallback: any = 'overview'
+    fallback = 'overview'
 ) {
     return tabs.some((tab: any) => tab.value === preferred)
         ? preferred
@@ -74,7 +74,7 @@ function followingEventIds(value: any) {
 
 function normalizeGroupEvent(
     event: any,
-    fallbackGroupId: any = '',
+    fallbackGroupId = '',
     { followingIds = null, isFollowing = null }: any = {}
 ) {
     const eventId = getEventId(event);
@@ -256,7 +256,7 @@ export function GroupDialogTabbedView({
         );
     }
 
-    async function loadTab(tab: any, { force = false }: any = {}) {
+    async function loadTab(tab: any, { force = false } = {}) {
         if (
             !group.id ||
             (!force &&
@@ -269,7 +269,7 @@ export function GroupDialogTabbedView({
             return;
         }
 
-        const loadContext: any = {
+        const loadContext = {
             endpoint: currentEndpoint,
             groupId: group.id,
             gallerySignature,
@@ -326,7 +326,7 @@ export function GroupDialogTabbedView({
                     })
                 );
                 rows = galleryResults
-                    .filter((result: any) => result.status === 'fulfilled')
+                    .filter((result) => result.status === 'fulfilled')
                     .flatMap((result: any) => result.value);
             }
             if (!isCurrentLoadContext(loadContext)) {
@@ -349,7 +349,7 @@ export function GroupDialogTabbedView({
         }
     }
 
-    async function loadGroupEvents({ force = false }: any = {}) {
+    async function loadGroupEvents({ force = false } = {}) {
         if (!group.id) {
             return;
         }
@@ -411,7 +411,7 @@ export function GroupDialogTabbedView({
                 },
                 { endpoint: currentEndpoint }
             );
-            setGroupEvents((current: any) =>
+            setGroupEvents((current) =>
                 current.map((row: any) =>
                     getEventId(row) === eventId
                         ? normalizeGroupEvent(
@@ -472,7 +472,7 @@ export function GroupDialogTabbedView({
     }, [memberRoleId, memberSort]);
 
     async function loadAllMembers() {
-        const loadContext: any = {
+        const loadContext = {
             endpoint: currentEndpoint,
             groupId: group.id,
             gallerySignature,
@@ -617,7 +617,7 @@ export function GroupDialogTabbedView({
         setMemberRoleId(value === 'all' ? '' : value);
     }
 
-    function handleOpenUser(userId: any, title: any, seedData: any = null) {
+    function handleOpenUser(userId: any, title: any, seedData = null) {
         if (!userId) {
             return;
         }
@@ -645,7 +645,7 @@ export function GroupDialogTabbedView({
         t
     });
 
-    const headerModel: any = {
+    const headerModel = {
         actionStatus,
         canInviteToGroup,
         canJoin,
@@ -671,7 +671,7 @@ export function GroupDialogTabbedView({
         showMembershipBadge,
         showPrivacyBadge
     };
-    const headerCommands: any = {
+    const headerCommands = {
         onBlockToggle: () => onBlock(!isBlocked),
         onCancelRequest,
         onCopyGroupId: () => copyGroupText(group.id, 'Group ID'),
@@ -690,7 +690,7 @@ export function GroupDialogTabbedView({
         onInviteUserToGroup: inviteUserToGroup,
         onVisibilityChange: onVisibility
     };
-    const tabModel: any = {
+    const tabModel = {
         activeInstances,
         activeTab,
         bannerUrl,
@@ -721,7 +721,7 @@ export function GroupDialogTabbedView({
         search,
         tabs
     };
-    const tabCommands: any = {
+    const tabCommands = {
         onChangeTab: changeTab,
         onCopyGroupUrl: () => copyGroupText(groupUrl, 'Group URL'),
         onDeletePost: (post: any) => {

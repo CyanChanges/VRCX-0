@@ -3,7 +3,7 @@ import { normalizeString as normalizeId } from '@/shared/utils/string';
 export function onlineFriendIdsFromGroup(userIds: any, friendsById: any) {
     return (Array.isArray(userIds) ? userIds : [])
         .map(normalizeId)
-        .filter((userId: any, index: any, source: any) => {
+        .filter((userId, index, source) => {
             const friend = friendsById[userId];
             return (
                 userId &&
@@ -61,7 +61,7 @@ export function sortInviteUserIdsWithSelectedFirst(
     filteredUserIds: any,
     selectedUserIdSet: any
 ) {
-    return [...filteredUserIds].sort((left: any, right: any) => {
+    return [...filteredUserIds].sort((left, right) => {
         const leftSelected = selectedUserIdSet.has(normalizeId(left));
         const rightSelected = selectedUserIdSet.has(normalizeId(right));
         if (leftSelected !== rightSelected) {
@@ -127,7 +127,7 @@ export function buildFriendsInCurrentInstanceIds({
             : []
         ).map(normalizeId)
     );
-    return [...ids].filter((userId: any) => userId && friendsById[userId]);
+    return [...ids].filter((userId) => userId && friendsById[userId]);
 }
 
 export function buildFavoriteGroupItems({
@@ -140,7 +140,7 @@ export function buildFavoriteGroupItems({
     const remote = (
         Array.isArray(favoriteFriendGroups) ? favoriteFriendGroups : []
     )
-        .map((group: any) => {
+        .map((group) => {
             const key = normalizeId(group?.key);
             const userIds = onlineFriendIdsFromGroup(
                 groupedFavoriteFriendIdsByGroupKey?.[key],
@@ -152,14 +152,14 @@ export function buildFavoriteGroupItems({
                 userIds
             };
         })
-        .filter((group: any) => group.key && group.userIds.length);
+        .filter((group) => group.key && group.userIds.length);
 
     const local = (
         Array.isArray(localFriendFavoriteGroups)
             ? localFriendFavoriteGroups
             : []
     )
-        .map((groupName: any) => {
+        .map((groupName) => {
             const key = normalizeId(groupName);
             const userIds = onlineFriendIdsFromGroup(
                 localFriendFavorites?.[key],
@@ -171,7 +171,7 @@ export function buildFavoriteGroupItems({
                 userIds
             };
         })
-        .filter((group: any) => group.key && group.userIds.length);
+        .filter((group) => group.key && group.userIds.length);
 
     return { remote, local };
 }

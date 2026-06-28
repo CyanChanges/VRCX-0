@@ -97,12 +97,12 @@ export function GroupPostEditorDialog({
     const roleIds = Array.isArray(form.roleIds) ? form.roleIds : [];
     const isEdit = form.mode === 'edit';
     const galleryOptions = galleryRows
-        .map((row: any) => ({
+        .map((row) => ({
             id: row?.id || row?.fileId || row?.file_id || '',
             label: getGroupRowLabel(row),
             image: getGroupRowImage(row, 'gallery')
         }))
-        .filter((option: any) => option.id);
+        .filter((option) => option.id);
 
     function updateForm(patch: any) {
         onFormChange?.({ ...form, ...patch });
@@ -134,7 +134,7 @@ export function GroupPostEditorDialog({
                         <Input
                             id="group-post-title"
                             value={form.title}
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 updateForm({ title: event.target.value })
                             }
                             disabled={submitting}
@@ -148,7 +148,7 @@ export function GroupPostEditorDialog({
                             id="group-post-text"
                             rows={4}
                             value={form.text}
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 updateForm({ text: event.target.value })
                             }
                             disabled={submitting}
@@ -164,7 +164,7 @@ export function GroupPostEditorDialog({
                                 id="group-post-send-notification"
                                 checked={Boolean(form.sendNotification)}
                                 disabled={submitting}
-                                onCheckedChange={(checked: any) =>
+                                onCheckedChange={(checked) =>
                                     updateForm({
                                         sendNotification: checked === true
                                     })
@@ -184,14 +184,14 @@ export function GroupPostEditorDialog({
                             variant="outline"
                             size="sm"
                             value={form.visibility}
-                            onValueChange={(visibility: any) => {
+                            onValueChange={(visibility) => {
                                 if (visibility) {
                                     updateForm({ visibility });
                                 }
                             }}
                             disabled={submitting}
                         >
-                            {['public', 'group'].map((visibility: any) => (
+                            {['public', 'group'].map((visibility) => (
                                 <ToggleGroupItem
                                     key={visibility}
                                     value={visibility}
@@ -229,9 +229,7 @@ export function GroupPostEditorDialog({
                                                 disabled={
                                                     submitting || !role.id
                                                 }
-                                                onCheckedChange={(
-                                                    checked: any
-                                                ) =>
+                                                onCheckedChange={(checked) =>
                                                     toggleRole(
                                                         role.id,
                                                         checked === true
@@ -264,7 +262,7 @@ export function GroupPostEditorDialog({
                             <InputGroupInput
                                 id="group-post-image-id"
                                 value={form.imageId || ''}
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     updateForm({ imageId: event.target.value })
                                 }
                                 disabled={submitting}
@@ -296,7 +294,7 @@ export function GroupPostEditorDialog({
                         </InputGroup>
                         {galleryOptions.length ? (
                             <div className="grid max-h-56 gap-2 overflow-auto rounded-md border p-2 sm:grid-cols-2">
-                                {galleryOptions.map((option: any) => (
+                                {galleryOptions.map((option) => (
                                     <Button
                                         key={option.id}
                                         type="button"

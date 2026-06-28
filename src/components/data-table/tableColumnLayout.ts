@@ -34,7 +34,7 @@ export function isSpacerColumn(column: any) {
 
 export function getColumnOrder(
     table: any,
-    leafColumns: any = table?.getAllLeafColumns?.() ?? []
+    leafColumns = table?.getAllLeafColumns?.() ?? []
 ) {
     const leafColumnIds = leafColumns.map((column: any) => column.id);
     const leafColumnIdSet = new Set(leafColumnIds);
@@ -55,7 +55,7 @@ export function getColumnOrder(
 }
 
 export function getToggleableColumns(columns: any[] = []) {
-    return columns.filter((column: any) => {
+    return columns.filter((column) => {
         if (!column?.getCanHide?.()) {
             return false;
         }

@@ -57,7 +57,7 @@ function applyFriendChange(userId: string, friend: any) {
     }
 }
 
-function ingestRosterState(state: any) {
+function ingestRosterState(state) {
     const friendsById = state?.friendsById;
     if (!friendsById || friendsById === previousFriendsById) {
         return;

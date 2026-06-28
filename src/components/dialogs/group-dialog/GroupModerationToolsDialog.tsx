@@ -27,7 +27,7 @@ export function GroupModerationToolsDialog({
     endpoint
 }: any) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
+    const confirm = useModalStore((state) => state.confirm);
     const [activeTab, setActiveTab] = useState('members');
     const [rowsByTab, setRowsByTab] = useState<any>({});
     const [statusByTab, setStatusByTab] = useState<any>({});
@@ -106,7 +106,7 @@ export function GroupModerationToolsDialog({
                           });
 
         request
-            .then((nextRows: any) => {
+            .then((nextRows) => {
                 if (!active) {
                     return;
                 }
@@ -119,7 +119,7 @@ export function GroupModerationToolsDialog({
                     [activeTab]: 'ready'
                 }));
             })
-            .catch((requestError: any) => {
+            .catch((requestError) => {
                 if (!active) {
                     return;
                 }
@@ -265,7 +265,7 @@ export function GroupModerationToolsDialog({
                         variant="line"
                         className="h-auto w-full justify-start overflow-x-auto rounded-none border-b px-0 pb-1"
                     >
-                        {moderationTabs.map((tab: any) => (
+                        {moderationTabs.map((tab) => (
                             <TabsTrigger
                                 key={tab.value}
                                 value={tab.value}
@@ -275,7 +275,7 @@ export function GroupModerationToolsDialog({
                             </TabsTrigger>
                         ))}
                     </TabsList>
-                    {moderationTabs.map((tab: any) => (
+                    {moderationTabs.map((tab) => (
                         <GroupModerationTabPanel
                             key={tab.value}
                             actionKey={actionKey}
@@ -289,7 +289,7 @@ export function GroupModerationToolsDialog({
                                 setPageIndex(0);
                             }}
                             onReload={() =>
-                                setReloadToken((value: any) => value + 1)
+                                setReloadToken((value) => value + 1)
                             }
                             onRunAction={runModerationAction}
                             onSearchChange={(nextSearch: any) => {

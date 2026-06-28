@@ -19,47 +19,58 @@ import { UpdateAvailableToastHost } from './UpdateAvailableToastHost';
 
 export function SystemDialogsHost() {
     const updaterOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.updaterOpen
+        (state) => state.systemHosts.updaterOpen
     );
     const changelogOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.changelogOpen
+        (state) => state.systemHosts.changelogOpen
     );
     const keyboardShortcutsOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.keyboardShortcutsOpen
+        (state) => state.systemHosts.keyboardShortcutsOpen
     );
     const changelogTargetVersion = useRuntimeStore(
-        (state: any) => state.changelogTargetVersion
+        (state) => state.changelogTargetVersion
     );
     const registryBackupOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.registryBackupOpen
+        (state) => state.systemHosts.registryBackupOpen
     );
     const launchOptionsOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.launchOptionsOpen
+        (state) => state.systemHosts.launchOptionsOpen
     );
     const vrchatConfigOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.vrchatConfigOpen
+        (state) => state.systemHosts.vrchatConfigOpen
     );
     const databaseUpgradeOpen = useRuntimeStore(
-        (state: any) => state.databaseUpgrade.open
+        (state) => state.databaseUpgrade.open
     );
     const systemHostDatabaseUpgradeOpen = useRuntimeStore(
-        (state: any) => state.systemHosts.databaseUpgradeOpen
+        (state) => state.systemHosts.databaseUpgradeOpen
     );
     const setSystemHostOpen = useRuntimeStore(
-        (state: any) => state.setSystemHostOpen
+        (state) => state.setSystemHostOpen
     );
     const setChangelogTargetVersion = useRuntimeStore(
-        (state: any) => state.setChangelogTargetVersion
+        (state) => state.setChangelogTargetVersion
     );
-    const hostCapabilities = useRuntimeStore(
-        (state: any) => state.hostCapabilities
-    );
+    const hostCapabilities = useRuntimeStore((state) => state.hostCapabilities);
 
     useEffect(() => {
         const guards = [
-            ['registryBackupOpen', registryBackupOpen, 'registryPrefs'],
-            ['launchOptionsOpen', launchOptionsOpen, 'gameLaunch', 'supported'],
-            ['vrchatConfigOpen', vrchatConfigOpen, 'vrchatPathDiscovery']
+            [
+                'registryBackupOpen',
+                registryBackupOpen,
+                'registryPrefs'
+            ] as const,
+            [
+                'launchOptionsOpen',
+                launchOptionsOpen,
+                'gameLaunch',
+                'supported'
+            ] as const,
+            [
+                'vrchatConfigOpen',
+                vrchatConfigOpen,
+                'vrchatPathDiscovery'
+            ] as const
         ];
 
         for (const [hostKey, open, capability, mode] of guards) {

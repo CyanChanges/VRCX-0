@@ -90,7 +90,7 @@ vi.mock('@/ui/shadcn/tooltip', async () => {
 
 import { LocationWorld } from './LocationWorld';
 
-function renderLocationWorld(props: any = {}) {
+function renderLocationWorld(props = {}) {
     return renderToStaticMarkup(React.createElement(LocationWorld, props));
 }
 

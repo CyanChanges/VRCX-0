@@ -71,7 +71,7 @@ export function mergeGroupInstances(
             });
         }
 
-        const row: any = {
+        const row = {
             ...seed,
             id:
                 seed.instanceId ||
@@ -94,7 +94,7 @@ export function mergeGroupInstances(
         ensureInstance(instanceLocation(instance), instance);
     }
 
-    function addUser(user: any, isFriend: any = false) {
+    function addUser(user: any, isFriend = false) {
         const location = userGroupLocation(user);
         if (!location) {
             return;
@@ -122,24 +122,22 @@ export function mergeGroupInstances(
         }
     }
 
-    Object.values(friendsById || {}).forEach((friend: any) =>
-        addUser(friend, true)
-    );
+    Object.values(friendsById || {}).forEach((friend) => addUser(friend, true));
     if (currentUserSnapshot) {
         addUser(currentUserSnapshot, false);
     }
 
     return Array.from(byLocation.values())
-        .map((row: any) => ({
+        .map((row) => ({
             ...row,
             friendCount: row.friendCount || row.users.length,
-            users: [...row.users].sort((left: any, right: any) =>
+            users: [...row.users].sort((left, right) =>
                 String(left?.displayName || left?.id || '').localeCompare(
                     String(right?.displayName || right?.id || '')
                 )
             )
         }))
-        .sort((left: any, right: any) => {
+        .sort((left, right) => {
             if (currentLocationKey && left.location === currentLocationKey) {
                 return -1;
             }

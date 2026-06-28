@@ -10,8 +10,8 @@ import { Sidebar, SidebarInset, SidebarProvider } from '@/ui/shadcn/sidebar';
 import { AppNavMenu } from './AppNavMenu';
 
 export function AppSidebar({ children }: any) {
-    const navbarOpen = useShellStore((state: any) => state.navbarOpen);
-    const navbarWidth = useShellStore((state: any) => state.navbarWidth);
+    const navbarOpen = useShellStore((state) => state.navbarOpen);
+    const navbarWidth = useShellStore((state) => state.navbarWidth);
     const resizeCleanupRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {

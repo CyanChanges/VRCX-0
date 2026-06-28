@@ -22,12 +22,10 @@ export function useFriendLogResolvedNames(
     currentUserId: any,
     rows: any[]
 ): ResolveDisplayName {
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
     const friendRosterLastLoadedAt = useFriendRosterStore(
-        (state: any) => state.lastLoadedAt
+        (state) => state.lastLoadedAt
     );
     const [namesById, setNamesById] = useState<Record<string, string>>({});
     const attemptedRef = useRef<Set<string>>(new Set());

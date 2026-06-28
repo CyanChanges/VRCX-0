@@ -97,6 +97,7 @@ type CurrentUserSnapshotState = Record<string, unknown> & {
     status?: unknown;
     platform?: unknown;
     last_platform?: unknown;
+    tags?: string[];
     presence?: Record<string, unknown> & {
         platform?: unknown;
     };

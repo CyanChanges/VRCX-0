@@ -42,12 +42,10 @@ function splitGroupEvents(events: any) {
     }
 
     upcoming.sort(
-        (left: any, right: any) =>
+        (left, right) =>
             eventTimeMs(left?.startsAt) - eventTimeMs(right?.startsAt)
     );
-    past.sort(
-        (left: any, right: any) => eventEndTimeMs(right) - eventEndTimeMs(left)
-    );
+    past.sort((left, right) => eventEndTimeMs(right) - eventEndTimeMs(left));
 
     return { upcoming, past };
 }
@@ -182,7 +180,7 @@ export function GroupEventSummary({
 
     return (
         <div className="flex flex-col gap-2">
-            {rows.map((event: any, index: any) => {
+            {rows.map((event, index) => {
                 const bannerUrl = eventBannerUrl(event, group);
                 return (
                     <Button

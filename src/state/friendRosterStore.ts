@@ -246,10 +246,9 @@ function buildBucketIds(
 ): string[] {
     return friendIds
         .filter(
-            (friendId: any) =>
-                friendsById[friendId]?.stateBucket === stateBucket
+            (friendId) => friendsById[friendId]?.stateBucket === stateBucket
         )
-        .sort((leftId: any, rightId: any) =>
+        .sort((leftId, rightId) =>
             compareFriendEntries(friendsById[leftId], friendsById[rightId])
         );
 }
@@ -343,10 +342,10 @@ const initialState: Pick<
     offlineIds: []
 };
 
-export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
+export const useFriendRosterStore = create<FriendRosterStore>((set) => ({
     ...initialState,
-    setRosterLoading(currentUserId: any, detail: any = '') {
-        set((state: any) => {
+    setRosterLoading(currentUserId, detail = '') {
+        set((state) => {
             const normalizedCurrentUserId =
                 normalizeUserId(currentUserId) || null;
             const isSameUser =
@@ -386,7 +385,7 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
         activeIds,
         offlineIds,
         detail = ''
-    }: any) {
+    }) {
         const sourceFriendsById =
             friendsById && typeof friendsById === 'object' ? friendsById : {};
         // Guard against an empty `[]` ordering blanking a populated roster.
@@ -426,7 +425,7 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
             offlineIds: ordering.offlineIds
         });
     },
-    setRosterSeedSnapshot({ currentUserId, friendsById, detail = '' }: any) {
+    setRosterSeedSnapshot({ currentUserId, friendsById, detail = '' }) {
         const normalizedFriendsById =
             normalizeRosterSnapshotFriends(friendsById);
         const ordering = buildRosterOrdering(normalizedFriendsById);
@@ -442,8 +441,8 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
             offlineIds: ordering.offlineIds
         });
     },
-    setRosterError(detail: any) {
-        set((state: any) => ({
+    setRosterError(detail) {
+        set((state) => ({
             ...state,
             loadStatus: 'error',
             detail,
@@ -456,8 +455,8 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
         stateBucket,
         stateBucketAuthority,
         detail = ''
-    }: any) {
-        set((state: any) => {
+    }) {
+        set((state) => {
             const normalizedUserId = normalizeUserId(userId || patch?.id);
             if (!normalizedUserId) {
                 return state;
@@ -470,7 +469,7 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
                 stateBucketAuthority,
                 existingEntry
             });
-            const mergedUser: any = {
+            const mergedUser = {
                 ...(existingEntry ??
                     createFallbackFriendUser(normalizedUserId, existingEntry)),
                 ...(patch && typeof patch === 'object' ? patch : {}),
@@ -486,7 +485,7 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
                     friendNumber: 0
                 }
             );
-            const friendsById: any = {
+            const friendsById = {
                 ...state.friendsById,
                 [normalizedUserId]: normalizedEntry
             };
@@ -505,15 +504,15 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
             };
         });
     },
-    applyFriendPatches(patches: any[] = [], detail: any = '') {
-        set((state: any) => {
+    applyFriendPatches(patches: any[] = [], detail = '') {
+        set((state) => {
             if (!Array.isArray(patches) || patches.length === 0) {
                 return state;
             }
 
             let changed = false;
             let orderingDirty = false;
-            const friendsById: any = { ...state.friendsById };
+            const friendsById = { ...state.friendsById };
 
             for (const entry of patches) {
                 const patch =
@@ -534,7 +533,7 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
                     stateBucketAuthority: entry?.stateBucketAuthority,
                     existingEntry
                 });
-                const mergedUser: any = {
+                const mergedUser = {
                     ...(existingEntry ??
                         createFallbackFriendUser(
                             normalizedUserId,
@@ -580,14 +579,14 @@ export const useFriendRosterStore = create<FriendRosterStore>((set: any) => ({
             };
         });
     },
-    removeFriend(userId: any, detail: any = '') {
-        set((state: any) => {
+    removeFriend(userId, detail = '') {
+        set((state) => {
             const normalizedUserId = normalizeUserId(userId);
             if (!normalizedUserId || !state.friendsById[normalizedUserId]) {
                 return state;
             }
 
-            const friendsById: any = { ...state.friendsById };
+            const friendsById = { ...state.friendsById };
             delete friendsById[normalizedUserId];
 
             return {

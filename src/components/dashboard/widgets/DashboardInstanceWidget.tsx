@@ -44,7 +44,7 @@ import { DashboardWidgetHeader } from './DashboardWidgetHeader';
 import { buildFavoriteIdSet, joinCompactParts } from './dashboardWidgetUtils';
 
 const ALL_COLUMNS = DASHBOARD_INSTANCE_WIDGET_COLUMN_DEFINITIONS.map(
-    (column: any) => column.key
+    (column) => column.key
 );
 const DEFAULT_COLUMNS = DASHBOARD_INSTANCE_WIDGET_DEFAULT_COLUMNS;
 
@@ -121,7 +121,7 @@ function resolveLanguageEntries(friend: any) {
 
     return [
         ...profileRows,
-        ...values.map((entry: any) => {
+        ...values.map((entry) => {
             const key =
                 typeof entry === 'string'
                     ? entry
@@ -140,12 +140,12 @@ function resolveLanguageEntries(friend: any) {
             return { key, value };
         })
     ]
-        .map((entry: any) => ({
+        .map((entry) => ({
             key: normalizeString(entry.key),
             value: normalizeString(entry.value),
             code: languageCodeLabel(entry.key)
         }))
-        .filter((entry: any) => entry.key);
+        .filter((entry) => entry.key);
 }
 
 function getNextColumnConfig(config: any, activeColumns: any, columnKey: any) {
@@ -190,14 +190,12 @@ function DashboardInstanceSettingsMenu({
             <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuGroup>
                     {DASHBOARD_INSTANCE_WIDGET_COLUMN_DEFINITIONS.map(
-                        (column: any) => (
+                        (column) => (
                             <DropdownMenuCheckboxItem
                                 key={column.key}
                                 checked={activeColumns.includes(column.key)}
                                 disabled={column.required}
-                                onSelect={(event: any) =>
-                                    event.preventDefault()
-                                }
+                                onSelect={(event) => event.preventDefault()}
                                 onCheckedChange={() =>
                                     configUpdater(
                                         getNextColumnConfig(
@@ -412,24 +410,22 @@ export function DashboardInstanceWidget({
     configUpdater = null
 }: any) {
     const { t } = useTranslation();
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentUserLocation = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot?.location || ''
+        (state) => state.auth.currentUserSnapshot?.location || ''
     );
-    const isGameRunning = useRuntimeStore((state: any) =>
+    const isGameRunning = useRuntimeStore((state) =>
         Boolean(state.gameState.isGameRunning)
     );
     const addGameLogEventCount = useRuntimeStore(
-        (state: any) => state.runtimeEvents.addGameLogEvent.count
+        (state) => state.runtimeEvents.addGameLogEvent.count
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
     const remoteFavoriteFriendIds = useFavoriteStore(
-        (state: any) => state.favoriteFriendIds
+        (state) => state.favoriteFriendIds
     );
     const localFriendFavorites = useFavoriteStore(
-        (state: any) => state.localFriendFavorites
+        (state) => state.localFriendFavorites
     );
 
     const [instanceSnapshot, setInstanceSnapshot] = useState<any>({
@@ -493,7 +489,7 @@ export function DashboardInstanceWidget({
                 currentUserId,
                 currentLocation: currentUserLocation
             })
-            .then((result: any) => {
+            .then((result) => {
                 if (!active) {
                     return;
                 }
@@ -507,7 +503,7 @@ export function DashboardInstanceWidget({
                         : 'Using runtime location while local game-log history catches up.'
                 );
             })
-            .catch((error: any) => {
+            .catch((error) => {
                 if (!active) {
                     return;
                 }
@@ -542,7 +538,7 @@ export function DashboardInstanceWidget({
 
     const enrichedRows = useMemo(
         () =>
-            rows.map((row: any) => {
+            rows.map((row) => {
                 const normalizedUserId = normalizeString(row.userId);
                 const friend = normalizedUserId
                     ? friendsById[normalizedUserId]

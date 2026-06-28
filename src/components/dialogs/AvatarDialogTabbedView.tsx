@@ -31,7 +31,7 @@ import {
 } from './EntityDialogScaffold';
 
 function firstArray(...values: any[]) {
-    return values.find((value: any) => Array.isArray(value)) || [];
+    return values.find((value) => Array.isArray(value)) || [];
 }
 
 function normalizeEntityId(value: any) {
@@ -40,11 +40,7 @@ function normalizeEntityId(value: any) {
         : String(value ?? '').trim();
 }
 
-function resolveAvatarDialogTab(
-    tabs: any,
-    preferred: any,
-    fallback: any = 'info'
-) {
+function resolveAvatarDialogTab(tabs: any, preferred: any, fallback = 'info') {
     return tabs.some((tab: any) => tab.value === preferred)
         ? preferred
         : fallback;
@@ -384,7 +380,7 @@ export function AvatarDialogTabbedView({
     }
 
     useEffect(() => {
-        setGalleryIndex((index: any) =>
+        setGalleryIndex((index) =>
             Math.min(index, Math.max(0, galleryImages.length - 1))
         );
     }, [galleryImages.length]);
@@ -395,7 +391,7 @@ export function AvatarDialogTabbedView({
     }, [avatar.id]);
 
     useEffect(() => {
-        setActiveTab((tab: any) => resolveAvatarDialogTab(tabs, tab));
+        setActiveTab((tab) => resolveAvatarDialogTab(tabs, tab));
     }, [hasGalleryTab]);
 
     function openAvatarAuthor() {

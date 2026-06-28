@@ -44,13 +44,11 @@ function PreviousInstancesPanel({
 }: any) {
     const { t } = useTranslation();
 
-    const confirm = useModalStore((state: any) => state.confirm);
+    const confirm = useModalStore((state) => state.confirm);
     const currentEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const [rows, setRows] = useState<any[]>([]);
     const [search, setSearch] = useState('');
     const [sortKey, setSortKey] = useState('date');
@@ -69,7 +67,7 @@ function PreviousInstancesPanel({
     const filteredRows = useMemo(() => {
         const query = search.trim().toLowerCase();
         const nextRows = query
-            ? rows.filter((row: any) => rowSearchText(row).includes(query))
+            ? rows.filter((row) => rowSearchText(row).includes(query))
             : rows;
         return sortPreviousInstanceRows(nextRows, sortKey, sortDesc);
     }, [rows, search, sortDesc, sortKey]);
@@ -81,7 +79,7 @@ function PreviousInstancesPanel({
                 setSortDesc(true);
                 return;
             }
-            setSortDesc((value: any) => !value);
+            setSortDesc((value) => !value);
             return;
         }
         setSortKey(nextKey);
@@ -133,7 +131,7 @@ function PreviousInstancesPanel({
                     location
                 });
             }
-            setRows((current: any) => {
+            setRows((current) => {
                 const nextRows = current.filter((item: any) => item !== row);
                 onRowsChange?.(nextRows);
                 return nextRows;
@@ -189,12 +187,10 @@ function PreviousInstancesPanel({
             currentPageIndex={currentPageIndex}
             totalPages={totalPages}
             onPreviousPage={() =>
-                setPageIndex((value: any) => Math.max(0, value - 1))
+                setPageIndex((value) => Math.max(0, value - 1))
             }
             onNextPage={() =>
-                setPageIndex((value: any) =>
-                    Math.min(totalPages - 1, value + 1)
-                )
+                setPageIndex((value) => Math.min(totalPages - 1, value + 1))
             }
             onClose={onClose}
             currentUserId={currentUserId}

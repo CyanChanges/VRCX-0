@@ -49,7 +49,7 @@ function contentTagsFromCsv(value: any) {
         new Set(
             String(value || '')
                 .split(',')
-                .map((entry: any) => normalizeTagName(entry, 'content_'))
+                .map((entry) => normalizeTagName(entry, 'content_'))
                 .filter(Boolean)
         )
     );

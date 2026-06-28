@@ -52,7 +52,7 @@ export function useUserDialogModerationState({
                   userId: normalizedUserId
               });
         localModerationPromise
-            .then((entry: any) => {
+            .then((entry) => {
                 if (active && moderationRevisionRef.current === revision) {
                     setModerationState({
                         block: Boolean(entry?.block),
@@ -89,7 +89,7 @@ export function useUserDialogModerationState({
             userId: normalizedCurrentUserId,
             endpoint: currentEndpoint
         })
-            .then((response: any) => {
+            .then((response) => {
                 if (!active) {
                     return;
                 }

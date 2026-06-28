@@ -169,7 +169,7 @@ function matchesPromptPattern(pattern: unknown, value: unknown): boolean {
     return new RegExp(pattern.source, flags).test(String(value ?? ''));
 }
 
-export const useModalStore = create<ModalStore>((set: any, get: any) => {
+export const useModalStore = create<ModalStore>((set, get) => {
     let pendingAlert: ModalResolver | null = null;
     let pendingPrompt: ModalResolver | null = null;
     let pendingBoop: ModalResolver | null = null;
@@ -345,7 +345,7 @@ export const useModalStore = create<ModalStore>((set: any, get: any) => {
             });
         },
         updatePromptValue(value: any) {
-            set((state: any) => ({
+            set((state) => ({
                 promptDialog: {
                     ...state.promptDialog,
                     value
@@ -353,7 +353,7 @@ export const useModalStore = create<ModalStore>((set: any, get: any) => {
             }));
         },
         updateOtpValue(value: any) {
-            set((state: any) => ({
+            set((state) => ({
                 otpDialog: {
                     ...state.otpDialog,
                     value

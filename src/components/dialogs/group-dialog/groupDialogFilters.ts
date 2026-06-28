@@ -19,7 +19,7 @@ export function filterGroupPosts(posts: any, queryValue: any) {
         return posts;
     }
     return posts.filter((post: any) =>
-        [post?.title, post?.text, post?.authorId].some((value: any) =>
+        [post?.title, post?.text, post?.authorId].some((value) =>
             String(value || '')
                 .toLowerCase()
                 .includes(query)
@@ -38,7 +38,7 @@ export function filterGroupMembers(members: any, queryValue: any) {
             member?.displayName,
             member?.userId,
             member?.user?.id
-        ].some((value: any) =>
+        ].some((value) =>
             String(value || '')
                 .toLowerCase()
                 .includes(query)

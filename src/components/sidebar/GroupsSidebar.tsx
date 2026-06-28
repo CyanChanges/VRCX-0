@@ -53,7 +53,7 @@ function GroupHeaderRow({ row, onToggleGroup }: any) {
     return (
         <Collapsible
             open={isOpen}
-            onOpenChange={(nextOpen: any) => {
+            onOpenChange={(nextOpen) => {
                 if (nextOpen !== isOpen) {
                     onToggleGroup(row.groupId);
                 }
@@ -165,9 +165,8 @@ function resolveGroupIconUrl(instance: any) {
         instance?.instance?.imageUrl
     ];
     return (
-        candidates.find(
-            (value: any) => typeof value === 'string' && value.trim()
-        ) || ''
+        candidates.find((value) => typeof value === 'string' && value.trim()) ||
+        ''
     );
 }
 
@@ -193,7 +192,7 @@ function groupInstances(instances: any, groupOrder: any[] = []) {
         }
         groups.get(groupId).push(instance);
     }
-    return Array.from(groups.entries()).sort((left: any, right: any) => {
+    return Array.from(groups.entries()).sort((left, right) => {
         const leftOrder = groupOrder.indexOf(left[0]);
         const rightOrder = groupOrder.indexOf(right[0]);
         if (leftOrder >= 0 && rightOrder >= 0) {
@@ -222,9 +221,7 @@ function GroupInstanceRow({ instance, currentUserId, friendsMap }: any) {
         128
     );
     const location = resolveLocation(instance);
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
     const userCount =
         instance?.userCount ??
         instance?.n_users ??
@@ -381,23 +378,21 @@ function GroupInstanceRow({ instance, currentUserId, friendsMap }: any) {
 
 export function GroupsSidebar() {
     const groupInstancesState = useRuntimeStore(
-        (state: any) => state.groupInstances
+        (state) => state.groupInstances
     );
-    const groupOrder = useRuntimeStore((state: any) =>
+    const groupOrder = useRuntimeStore((state) =>
         state.groupInstances.userId === state.auth.currentUserId &&
         state.groupInstances.endpoint === state.auth.currentUserEndpoint
             ? state.groupInstances.groupOrder
             : EMPTY_GROUP_ORDER
     );
-    const status = useRuntimeStore((state: any) => state.groupInstances.status);
-    const error = useRuntimeStore((state: any) => state.groupInstances.error);
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
+    const status = useRuntimeStore((state) => state.groupInstances.status);
+    const error = useRuntimeStore((state) => state.groupInstances.error);
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
     const currentEndpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
+        (state) => state.auth.currentUserEndpoint
     );
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
     const instances =
         groupInstancesState.userId === currentUserId &&
         groupInstancesState.endpoint === currentEndpoint
@@ -405,10 +400,10 @@ export function GroupsSidebar() {
             : [];
     const [collapsedGroups, setCollapsedGroups] = useState(() => new Set());
     const preferencesHydrated = usePreferencesStore(
-        (state: any) => state.preferencesHydrated
+        (state) => state.preferencesHydrated
     );
     const showAgeGatedInstancesPreference = usePreferencesStore(
-        (state: any) => state.isAgeGatedInstancesVisible
+        (state) => state.isAgeGatedInstancesVisible
     );
     const showAgeGatedInstances =
         preferencesHydrated && showAgeGatedInstancesPreference;
@@ -431,7 +426,7 @@ export function GroupsSidebar() {
     );
 
     function toggleGroup(groupId: any) {
-        setCollapsedGroups((current: any) => {
+        setCollapsedGroups((current) => {
             const next = new Set(current);
             if (next.has(groupId)) {
                 next.delete(groupId);
@@ -445,7 +440,7 @@ export function GroupsSidebar() {
     const virtualRows = useMemo(() => {
         const nextRows = [];
 
-        groups.forEach(([groupId, groupRows]: any, index: any) => {
+        groups.forEach(([groupId, groupRows], index) => {
             const name = resolveGroupName(groupRows[0], groupId);
             const isCollapsed = collapsedGroups.has(groupId);
             nextRows.push({

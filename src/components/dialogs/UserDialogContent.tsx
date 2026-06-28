@@ -164,7 +164,7 @@ export function UserDialogContent({
     useEffect(
         () =>
             subscribeRecentActions(() => {
-                setRecentActionVersion((version: any) => version + 1);
+                setRecentActionVersion((version) => version + 1);
             }),
         []
     );

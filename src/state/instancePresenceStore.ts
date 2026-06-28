@@ -26,10 +26,10 @@ function endpointFromKey(key: string): string {
 }
 
 export const useInstancePresenceStore = create<InstancePresenceStoreState>(
-    (set: any) => ({
+    (set) => ({
         ...initialState,
         upsertInstancePresence(input: any) {
-            set((state: any) => {
+            set((state) => {
                 const key = instancePresenceKey(input.endpoint, input.location);
                 const fact = buildInstancePresenceFact(input);
                 if (!key || !fact) {

@@ -39,13 +39,11 @@ import {
 
 export function NoteExportDialog({ open, onOpenChange }: any) {
     const { t } = useTranslation();
-    const friendsById = useFriendRosterStore((state: any) => state.friendsById);
+    const friendsById = useFriendRosterStore((state) => state.friendsById);
     const orderedFriendIds = useFriendRosterStore(
-        (state: any) => state.orderedFriendIds
+        (state) => state.orderedFriendIds
     );
-    const openImagePreview = useModalStore(
-        (state: any) => state.openImagePreview
-    );
+    const openImagePreview = useModalStore((state) => state.openImagePreview);
     const cancelRef = useRef(false);
     const refreshRequestRef = useRef(0);
     const [rows, setRows] = useState<any[]>([]);

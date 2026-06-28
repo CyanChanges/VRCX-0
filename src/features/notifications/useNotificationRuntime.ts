@@ -9,19 +9,15 @@ import {
 } from './notificationRows';
 
 export function useNotificationRuntime() {
-    const currentUserId = useRuntimeStore(
-        (state: any) => state.auth.currentUserId
-    );
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
+    const currentUserId = useRuntimeStore((state) => state.auth.currentUserId);
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
     const currentUserLocationTag = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot?.$locationTag
+        (state) => state.auth.currentUserSnapshot?.$locationTag
     );
     const currentUserLocation = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot?.location
+        (state) => state.auth.currentUserSnapshot?.location
     );
-    const isLocalUserVrcPlusSupporter = useRuntimeStore((state: any) =>
+    const isLocalUserVrcPlusSupporter = useRuntimeStore((state) =>
         Boolean(
             state.auth.currentUserSnapshot?.$isVRCPlus ||
             state.auth.currentUserSnapshot?.tags?.includes?.(
@@ -31,19 +27,19 @@ export function useNotificationRuntime() {
         )
     );
     const currentLocation = useRuntimeStore(
-        (state: any) => state.gameState.currentLocation
+        (state) => state.gameState.currentLocation
     );
     const currentDestination = useRuntimeStore(
-        (state: any) => state.gameState.currentDestination
+        (state) => state.gameState.currentDestination
     );
     const groupInstancesEndpoint = useRuntimeStore(
-        (state: any) => state.groupInstances.endpoint
+        (state) => state.groupInstances.endpoint
     );
     const groupInstancesUserId = useRuntimeStore(
-        (state: any) => state.groupInstances.userId
+        (state) => state.groupInstances.userId
     );
     const groupInstances = useRuntimeStore(
-        (state: any) => state.groupInstances.instances
+        (state) => state.groupInstances.instances
     );
 
     const groupInstanceRows =
@@ -77,7 +73,7 @@ export function useNotificationRuntime() {
         () =>
             checkCanInvite(currentInviteLocation, {
                 cachedInstances,
-                currentUserId,
+                currentUserId: currentUserId!,
                 lastLocationStr: currentInviteLocation
             }),
         [cachedInstances, currentInviteLocation, currentUserId]

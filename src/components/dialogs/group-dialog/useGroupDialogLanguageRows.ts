@@ -31,7 +31,7 @@ export function useGroupDialogLanguageRows({ currentEndpoint, group }: any) {
         constants: vrchatConfigConstants
     });
     const languageOptionsMap = new Map(
-        languageOptions.map((option: any) => [option.key, option])
+        languageOptions.map((option) => [option.key, option])
     );
     return normalizeGroupLanguages(group, languageOptionsMap);
 }

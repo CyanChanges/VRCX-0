@@ -159,7 +159,7 @@ export function DataTableColumnDndProvider({
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 modifiers={[restrictToHorizontalAxis]}
-                onDragEnd={(event: any) => {
+                onDragEnd={(event) => {
                     moveColumnByDrag(table, event.active?.id, event.over?.id);
                 }}
             >
@@ -314,8 +314,8 @@ export function DataTablePagination({
         : table?.getState?.().pagination?.pageSize;
     const pageSizeOptions = Array.isArray(pageSizes)
         ? pageSizes
-              .map((value: any) => Number.parseInt(value, 10))
-              .filter((value: any) => Number.isFinite(value) && value > 0)
+              .map((value) => Number.parseInt(value, 10))
+              .filter((value) => Number.isFinite(value) && value > 0)
         : [];
     const pageSizeSelectVisible = Boolean(
         pageSizeOptions.length &&
@@ -339,7 +339,7 @@ export function DataTablePagination({
                         </SelectTrigger>
                         <SelectContent align="end">
                             <SelectGroup>
-                                {pageSizeOptions.map((size: any) => (
+                                {pageSizeOptions.map((size) => (
                                     <SelectItem key={size} value={String(size)}>
                                         {size}
                                     </SelectItem>
@@ -467,7 +467,7 @@ export function DataTableView({
                         <DataTableHeader table={table} />
                         <TableBody>
                             {table.getRowModel().rows.length > 0 ? (
-                                table.getRowModel().rows.map((row: any) => (
+                                table.getRowModel().rows.map((row) => (
                                     <TableRow key={row.id}>
                                         <DataTableColumnSortableContext
                                             table={table}

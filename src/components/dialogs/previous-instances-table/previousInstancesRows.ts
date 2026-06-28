@@ -47,7 +47,7 @@ export function rowOwnerUserId(row: any) {
 export function rowLocationObject(row: any) {
     const location = rowLocation(row);
     const ownerUserId = rowOwnerUserId(row);
-    const baseLocation: any = {
+    const baseLocation = {
         ...parseLocation(location),
         tag: location,
         location,
@@ -145,28 +145,24 @@ export function sortPreviousInstanceRows(
         return [...(Array.isArray(rows) ? rows : [])];
     }
     const direction = sortDesc ? -1 : 1;
-    return [...(Array.isArray(rows) ? rows : [])].sort(
-        (left: any, right: any) => {
-            let result = 0;
-            if (sortKey === 'duration') {
-                result = rowDurationValue(left) - rowDurationValue(right);
-            } else if (sortKey === 'location') {
-                result = rowInstanceText(left).localeCompare(
-                    rowInstanceText(right)
-                );
-            } else if (sortKey === 'creator') {
-                result = rowCreatorText(left).localeCompare(
-                    rowCreatorText(right)
-                );
-            } else {
-                result = createdTime(left) - createdTime(right);
-            }
-            if (result === 0 && sortKey !== 'date') {
-                result = createdTime(left) - createdTime(right);
-            }
-            return result * direction;
+    return [...(Array.isArray(rows) ? rows : [])].sort((left, right) => {
+        let result = 0;
+        if (sortKey === 'duration') {
+            result = rowDurationValue(left) - rowDurationValue(right);
+        } else if (sortKey === 'location') {
+            result = rowInstanceText(left).localeCompare(
+                rowInstanceText(right)
+            );
+        } else if (sortKey === 'creator') {
+            result = rowCreatorText(left).localeCompare(rowCreatorText(right));
+        } else {
+            result = createdTime(left) - createdTime(right);
         }
-    );
+        if (result === 0 && sortKey !== 'date') {
+            result = createdTime(left) - createdTime(right);
+        }
+        return result * direction;
+    });
 }
 
 export function normalizePlayerRows(players: any) {
@@ -177,8 +173,7 @@ export function normalizePlayerRows(players: any) {
               ? players
               : [];
     return [...rows].sort(
-        (left: any, right: any) =>
-            Number(right?.time || 0) - Number(left?.time || 0)
+        (left, right) => Number(right?.time || 0) - Number(left?.time || 0)
     );
 }
 
@@ -206,7 +201,7 @@ export function normalizeInfoChartRows(
     knownUsersById: any = {}
 ) {
     return (Array.isArray(rows) ? rows : [])
-        .map((row: any) => {
+        .map((row) => {
             const durationMs = Math.max(0, Number(row?.time || 0));
             const leaveMs = new Date(
                 row?.created_at || row?.createdAt || 0

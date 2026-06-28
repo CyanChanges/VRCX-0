@@ -312,7 +312,7 @@ export function createAvatarDialogActions({
         }
     }
 
-    async function refreshAvatarSnapshot({ force = false }: any = {}) {
+    async function refreshAvatarSnapshot({ force = false } = {}) {
         const nextAvatar = await avatarProfileRepository.getAvatarProfile({
             avatarId: avatar.id,
             endpoint: currentEndpoint,

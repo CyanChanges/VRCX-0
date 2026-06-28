@@ -51,8 +51,8 @@ const EXPLICIT_TAGS = new Set([
     'debug_allowed',
     'feature_avatar_scaling_disabled',
     'feature_focus_view_disabled',
-    ...CONTENT_TAGS.map(([, tag]: any) => tag),
-    ...FEATURE_TAGS.map(([, tag]: any) => tag)
+    ...CONTENT_TAGS.map(([, tag]) => tag),
+    ...FEATURE_TAGS.map(([, tag]) => tag)
 ]);
 
 function isManagedWorldTag(tag: any) {
@@ -93,35 +93,33 @@ function createWorldTagsDraft(tags: any[] = []) {
         thirdPerson: !values.includes('feature_third_person_view_disabled')
     };
     draft.authorTags = values
-        .filter((tag: any) => tag.startsWith('author_tag_'))
-        .map((tag: any) => tag.slice('author_tag_'.length))
+        .filter((tag) => tag.startsWith('author_tag_'))
+        .map((tag) => tag.slice('author_tag_'.length))
         .join(',');
     draft.contentTags = values
         .filter(
-            (tag: any) =>
+            (tag) =>
                 tag.startsWith('content_') &&
-                !CONTENT_TAGS.some(([, fixedTag]: any) => fixedTag === tag)
+                !CONTENT_TAGS.some(([, fixedTag]) => fixedTag === tag)
         )
-        .map((tag: any) => tag.slice('content_'.length))
+        .map((tag) => tag.slice('content_'.length))
         .join(',');
     return draft;
 }
 
 function buildWorldTags(draft: any, baseTags: any[] = []) {
     const tags = Array.isArray(baseTags)
-        ? baseTags
-              .map(String)
-              .filter((tag: any) => tag && !isManagedWorldTag(tag))
+        ? baseTags.map(String).filter((tag) => tag && !isManagedWorldTag(tag))
         : [];
     for (const tag of String(draft.authorTags || '')
         .split(',')
-        .map((value: any) => value.trim())
+        .map((value) => value.trim())
         .filter(Boolean)) {
         pushUnique(tags, `author_tag_${tag}`);
     }
     for (const tag of String(draft.contentTags || '')
         .split(',')
-        .map((value: any) => value.trim())
+        .map((value) => value.trim())
         .filter(Boolean)) {
         if (!['horror', 'gore', 'violence', 'adult', 'sex'].includes(tag)) {
             pushUnique(tags, `content_${tag}`);
@@ -177,7 +175,7 @@ function WorldDetailsDialog({
     }, [open, world]);
 
     function updateDraft(patch: any) {
-        setDraft((current: any) => ({ ...current, ...patch }));
+        setDraft((current) => ({ ...current, ...patch }));
     }
 
     return (
@@ -203,7 +201,7 @@ function WorldDetailsDialog({
                                 id="world-details-name"
                                 value={draft.name}
                                 disabled={saving}
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     updateDraft({ name: event.target.value })
                                 }
                             />
@@ -218,7 +216,7 @@ function WorldDetailsDialog({
                                 value={draft.description}
                                 disabled={saving}
                                 className="field-sizing-fixed max-h-56 min-h-32 resize-y overflow-y-auto"
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     updateDraft({
                                         description: event.target.value
                                     })
@@ -237,7 +235,7 @@ function WorldDetailsDialog({
                                     inputMode="numeric"
                                     value={draft.capacity}
                                     disabled={saving}
-                                    onChange={(event: any) =>
+                                    onChange={(event) =>
                                         updateDraft({
                                             capacity: event.target.value
                                         })
@@ -257,7 +255,7 @@ function WorldDetailsDialog({
                                     inputMode="numeric"
                                     value={draft.recommendedCapacity}
                                     disabled={saving}
-                                    onChange={(event: any) =>
+                                    onChange={(event) =>
                                         updateDraft({
                                             recommendedCapacity:
                                                 event.target.value
@@ -274,7 +272,7 @@ function WorldDetailsDialog({
                                 id="world-details-preview"
                                 value={draft.previewYoutubeId}
                                 disabled={saving}
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     updateDraft({
                                         previewYoutubeId: event.target.value
                                     })
@@ -345,7 +343,7 @@ function WorldTagsDialog({
                             id="world-tag-avatar-scaling-disabled"
                             checked={draft.avatarScalingDisabled}
                             disabled={saving}
-                            onCheckedChange={(checked: any) =>
+                            onCheckedChange={(checked) =>
                                 updateDraft({
                                     avatarScalingDisabled: checked === true
                                 })
@@ -360,7 +358,7 @@ function WorldTagsDialog({
                             id="world-tag-focus-view-disabled"
                             checked={draft.focusViewDisabled}
                             disabled={saving}
-                            onCheckedChange={(checked: any) =>
+                            onCheckedChange={(checked) =>
                                 updateDraft({
                                     focusViewDisabled: checked === true
                                 })
@@ -375,7 +373,7 @@ function WorldTagsDialog({
                             id="world-tag-debug-allowed"
                             checked={draft.debugAllowed}
                             disabled={saving}
-                            onCheckedChange={(checked: any) =>
+                            onCheckedChange={(checked) =>
                                 updateDraft({ debugAllowed: checked === true })
                             }
                         />
@@ -393,7 +391,7 @@ function WorldTagsDialog({
                             value={draft.authorTags}
                             disabled={saving}
                             className="resize-none"
-                            onChange={(event: any) =>
+                            onChange={(event) =>
                                 updateDraft({ authorTags: event.target.value })
                             }
                         />
@@ -406,13 +404,13 @@ function WorldTagsDialog({
                             data-slot="checkbox-group"
                             className="grid grid-cols-2 gap-2"
                         >
-                            {CONTENT_TAGS.map(([key, , label]: any) => (
+                            {CONTENT_TAGS.map(([key, , label]) => (
                                 <Field key={key} orientation="horizontal">
                                     <Checkbox
                                         id={`world-content-tag-${key}`}
                                         checked={draft[key]}
                                         disabled={saving}
-                                        onCheckedChange={(checked: any) =>
+                                        onCheckedChange={(checked) =>
                                             updateDraft({
                                                 [key]: checked === true
                                             })
@@ -439,7 +437,7 @@ function WorldTagsDialog({
                                 value={draft.contentTags}
                                 disabled={saving}
                                 className="resize-none"
-                                onChange={(event: any) =>
+                                onChange={(event) =>
                                     updateDraft({
                                         contentTags: event.target.value
                                     })
@@ -455,13 +453,13 @@ function WorldTagsDialog({
                             data-slot="checkbox-group"
                             className="grid grid-cols-2 gap-2"
                         >
-                            {FEATURE_TAGS.map(([key, , label]: any) => (
+                            {FEATURE_TAGS.map(([key, , label]) => (
                                 <Field key={key} orientation="horizontal">
                                     <Checkbox
                                         id={`world-feature-tag-${key}`}
                                         checked={draft[key]}
                                         disabled={saving}
-                                        onCheckedChange={(checked: any) =>
+                                        onCheckedChange={(checked) =>
                                             updateDraft({
                                                 [key]: checked === true
                                             })
@@ -519,7 +517,7 @@ function WorldAllowedDomainsDialog({
     }, [open, world?.id, world?.urlList]);
 
     function updateDomain(index: any, value: any) {
-        setUrlList((current: any) =>
+        setUrlList((current) =>
             current.map((domain: any, currentIndex: any) =>
                 currentIndex === index ? value : domain
             )
@@ -540,7 +538,7 @@ function WorldAllowedDomainsDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <FieldGroup className="gap-2">
-                    {urlList.map((domain: any, index: any) => (
+                    {urlList.map((domain, index) => (
                         <Field key={index}>
                             <FieldLabel
                                 htmlFor={`world-allowed-domain-${index}`}
@@ -554,7 +552,7 @@ function WorldAllowedDomainsDialog({
                                     id={`world-allowed-domain-${index}`}
                                     value={domain}
                                     disabled={saving}
-                                    onChange={(event: any) =>
+                                    onChange={(event) =>
                                         updateDomain(index, event.target.value)
                                     }
                                 />
@@ -565,7 +563,7 @@ function WorldAllowedDomainsDialog({
                                         disabled={saving}
                                         aria-label={`Remove domain ${index + 1}`}
                                         onClick={() =>
-                                            setUrlList((current: any) =>
+                                            setUrlList((current) =>
                                                 current.filter(
                                                     (
                                                         _: any,
@@ -587,7 +585,7 @@ function WorldAllowedDomainsDialog({
                         variant="outline"
                         disabled={saving}
                         onClick={() =>
-                            setUrlList((current: any) => [...current, ''])
+                            setUrlList((current) => [...current, ''])
                         }
                     >
                         {t('dialog.world.action.add_domain')}
@@ -600,7 +598,7 @@ function WorldAllowedDomainsDialog({
                         onClick={() =>
                             onSave?.(
                                 urlList
-                                    .map((value: any) => value.trim())
+                                    .map((value) => value.trim())
                                     .filter(Boolean)
                             )
                         }

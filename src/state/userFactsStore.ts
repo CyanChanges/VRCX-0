@@ -20,10 +20,10 @@ function endpointFromKey(key: string): string {
     return key.split('::')[0] || 'default';
 }
 
-export const useUserFactsStore = create<UserFactsStoreState>((set: any) => ({
+export const useUserFactsStore = create<UserFactsStoreState>((set) => ({
     ...initialState,
     replaceUserFacts(users: any) {
-        set((state: any) => {
+        set((state) => {
             const list = Array.isArray(users) ? users : [];
             if (list.length === 0) {
                 return state;

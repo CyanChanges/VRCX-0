@@ -48,10 +48,10 @@ const initialState: SessionSnapshot = {
     transportStatus: 'disconnected'
 };
 
-export const useSessionStore = create<SessionState>((set: any) => ({
+export const useSessionStore = create<SessionState>((set) => ({
     ...initialState,
     setSessionState(patch: any) {
-        set((state: any) => ({ ...state, ...patch }));
+        set((state) => ({ ...state, ...patch }));
     },
     resetSessionState() {
         set(initialState);

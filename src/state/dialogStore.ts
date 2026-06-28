@@ -19,6 +19,7 @@ interface ActiveDialog {
     description?: string;
     payload?: unknown;
     crumb?: DialogBreadcrumb;
+    body?: unknown;
     [key: string]: unknown;
 }
 
@@ -76,10 +77,10 @@ function isSameEntity(
     );
 }
 
-export const useDialogStore = create<DialogStoreState>((set: any) => ({
+export const useDialogStore = create<DialogStoreState>((set) => ({
     ...initialState,
-    openDialog(dialog: any) {
-        set((state: any) => ({
+    openDialog(dialog) {
+        set((state) => ({
             activeDialog: dialog,
             breadcrumbs: dialog?.crumb
                 ? [...state.breadcrumbs, dialog.crumb]
@@ -112,7 +113,7 @@ export const useDialogStore = create<DialogStoreState>((set: any) => ({
         ) {
             return;
         }
-        set((state: any) => ({
+        set((state) => ({
             activeDialog: isSameEntity(
                 state.activeDialog,
                 normalizedKind,
@@ -151,12 +152,12 @@ export const useDialogStore = create<DialogStoreState>((set: any) => ({
         set({ breadcrumbs });
     },
     pushBreadcrumb(crumb: any) {
-        set((state: any) => ({
+        set((state) => ({
             breadcrumbs: [...state.breadcrumbs, crumb]
         }));
     },
     popToBreadcrumb(index: any) {
-        set((state: any) => ({
+        set((state) => ({
             activeDialog:
                 dialogFromBreadcrumb(state.breadcrumbs[index]) ??
                 state.activeDialog,

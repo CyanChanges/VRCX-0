@@ -47,8 +47,8 @@ function registryRestoreError(error: any, t: any) {
 
 export function RegistryBackupDialog({ open, onOpenChange }: any) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const prompt = useModalStore((state: any) => state.prompt);
+    const confirm = useModalStore((state) => state.confirm);
+    const prompt = useModalStore((state) => state.prompt);
     const refreshRequestRef = useRef(0);
     const [backups, setBackups] = useState<any[]>([]);
     const [selectedKey, setSelectedKey] = useState('');

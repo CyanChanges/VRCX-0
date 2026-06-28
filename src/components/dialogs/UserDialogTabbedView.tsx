@@ -148,7 +148,7 @@ export function UserDialogTabbedView({
     const { copyUserText, openDiscordProfile } =
         useUserDialogClipboardActions();
     const currentUserSnapshot = useRuntimeStore(
-        (state: any) => state.auth.currentUserSnapshot
+        (state) => state.auth.currentUserSnapshot
     );
 
     useEffect(() => {
@@ -160,7 +160,7 @@ export function UserDialogTabbedView({
         };
     }, []);
 
-    const tabData: any = useUserDialogTabData({
+    const tabData = useUserDialogTabData({
         profile,
         reloadToken,
         isCurrentUser,
@@ -286,7 +286,7 @@ export function UserDialogTabbedView({
     const currentAvatarDisplayName = String(
         profile.currentAvatarName || profile.avatarName || ''
     ).trim();
-    const currentAvatarDialogArgs: any = {
+    const currentAvatarDialogArgs = {
         avatarId: currentAvatarTarget,
         ...(currentAvatarDisplayName
             ? {
@@ -305,7 +305,7 @@ export function UserDialogTabbedView({
         typeof profile.fallbackAvatar === 'string'
             ? profile.fallbackAvatar.trim()
             : '';
-    const fallbackAvatarDialogArgs: any = {
+    const fallbackAvatarDialogArgs = {
         avatarId: fallbackAvatarTarget,
         title: 'Fallback Avatar'
     };
@@ -402,7 +402,7 @@ export function UserDialogTabbedView({
         changeTab('instance-history', { allowHidden: true });
     }
 
-    const headerModel: any = {
+    const headerModel = {
         actionStatus,
         avatarOverrideState,
         canInviteFromCurrentLocation,
@@ -433,7 +433,7 @@ export function UserDialogTabbedView({
         userUrl,
         estimatedOnlineDurationMs
     };
-    const headerCommands: any = {
+    const headerCommands = {
         onAvatarOverride,
         onBoop,
         onCopyUserId: () => {
@@ -495,7 +495,7 @@ export function UserDialogTabbedView({
         onToggleSelfSharedConnections,
         onUnfriend
     };
-    const tabsModel: any = {
+    const tabsModel = {
         root: {
             activeTab,
             tabCounts,
@@ -580,7 +580,7 @@ export function UserDialogTabbedView({
             moderationState
         }
     };
-    const tabsCommands: any = {
+    const tabsCommands = {
         changeAvatarReleaseStatus,
         changeAvatarSort,
         changeTab,

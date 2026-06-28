@@ -23,10 +23,8 @@ type FriendRosterSeedState = {
 };
 
 export function useUserHoverCardData({ userId, seed }: any) {
-    const endpoint = useRuntimeStore(
-        (state: any) => state.auth.currentUserEndpoint
-    );
-    const trustColor = usePreferencesStore((state: any) => state.trustColor);
+    const endpoint = useRuntimeStore((state) => state.auth.currentUserEndpoint);
+    const trustColor = usePreferencesStore((state) => state.trustColor);
 
     const normalizedInputUserId = normalizeId(userId);
     const shouldUseRosterSeed = !seed && Boolean(normalizedInputUserId);

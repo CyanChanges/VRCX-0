@@ -29,7 +29,7 @@ export function normalizeInviteMessageRows(value: any, messageType: any) {
           ? value.messages
           : value && typeof value === 'object'
             ? Object.values(value).filter(
-                  (row: any) => row && typeof row === 'object'
+                  (row) => row && typeof row === 'object'
               )
             : [];
 

@@ -77,10 +77,10 @@ function enqueueConfigWrite(queueRef: any, key: any, write: any, onError: any) {
 function usePresenceOptions() {
     const { t } = useTranslation();
     const favoriteFriendGroups = useFavoriteStore(
-        (state: any) => state.favoriteFriendGroups
+        (state) => state.favoriteFriendGroups
     );
     const localFriendFavoriteGroups = useFavoriteStore(
-        (state: any) => state.localFriendFavoriteGroups
+        (state) => state.localFriendFavoriteGroups
     );
 
     const groupOptions = useMemo(

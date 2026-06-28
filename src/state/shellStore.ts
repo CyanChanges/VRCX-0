@@ -191,13 +191,13 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         set({ navbarWidth: normalizeNavbarWidth(navbarWidth) });
     },
     toggleNavbar() {
-        set((state: any) => ({ navbarOpen: !state.navbarOpen }));
+        set((state) => ({ navbarOpen: !state.navbarOpen }));
     },
     setFriendsSidebarOpen(friendsSidebarOpen: any) {
         set({ friendsSidebarOpen: Boolean(friendsSidebarOpen) });
     },
     toggleFriendsSidebar() {
-        set((state: any) => ({
+        set((state) => ({
             friendsSidebarOpen: !state.friendsSidebarOpen
         }));
     },
@@ -228,7 +228,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         displayVRCPlusIconsAsAvatar,
         hideNicknames
     }: any = {}) {
-        set((state: any) => ({
+        set((state) => ({
             displayVRCPlusIconsAsAvatar:
                 displayVRCPlusIconsAsAvatar === undefined
                     ? state.displayVRCPlusIconsAsAvatar
@@ -278,7 +278,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         if (!index) {
             return;
         }
-        set((state: any) =>
+        set((state) =>
             isCurrentMenuRoute(index) || state.notifiedMenus.includes(index)
                 ? {}
                 : {
@@ -291,7 +291,7 @@ export const useShellStore = create<ShellStore>((set, get) => ({
         if (!index) {
             return;
         }
-        set((state: any) => ({
+        set((state) => ({
             notifiedMenus: state.notifiedMenus.filter(
                 (item: any) => item !== index
             )

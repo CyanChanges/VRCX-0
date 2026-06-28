@@ -69,7 +69,7 @@ export function NotificationDrawerList({
                                         </span>
                                         <span>({items.length})</span>
                                     </div>
-                                    {items.map((entry: any) => (
+                                    {items.map((entry) => (
                                         <NotificationDrawerRow
                                             key={`${bucket}:${entry.notification.id}`}
                                             notification={entry.notification}

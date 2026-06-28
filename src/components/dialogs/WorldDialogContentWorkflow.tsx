@@ -300,7 +300,7 @@ export function WorldDialogContentWorkflow({
         world.imageUrl || world.thumbnailImageUrl,
         512
     );
-    const worldForView: any = {
+    const worldForView = {
         ...world,
         $isCached: worldSideData.cache.inCache,
         $cacheSize: worldSideData.cache.cacheSize,

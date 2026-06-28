@@ -200,7 +200,7 @@ export function useUserDialogGroupActions({
                 )
             );
             const failed = results.filter(
-                (result: any) => result.status === 'rejected'
+                (result) => result.status === 'rejected'
             ).length;
             if (failed) {
                 toast.error(
@@ -248,7 +248,7 @@ export function useUserDialogGroupActions({
                 )
             );
             const failed = results.filter(
-                (entry: any) => entry.status === 'rejected'
+                (entry) => entry.status === 'rejected'
             ).length;
             if (failed) {
                 toast.error(

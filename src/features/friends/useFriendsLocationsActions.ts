@@ -39,8 +39,8 @@ export function useFriendsLocationsActions({
     setCollapsedFavoriteGroups: Dispatch<SetStateAction<Set<unknown>>>;
 }) {
     const { t } = useTranslation();
-    const confirm = useModalStore((state: any) => state.confirm);
-    const boopPrompt = useModalStore((state: any) => state.boopPrompt);
+    const confirm = useModalStore((state) => state.confirm);
+    const boopPrompt = useModalStore((state) => state.boopPrompt);
 
     function toggleFavoriteGroup(groupKey: any) {
         setCollapsedFavoriteGroups((current: any) => {

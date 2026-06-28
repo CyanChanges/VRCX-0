@@ -123,9 +123,7 @@ function GroupCalendarDayButton({
 
 export function GroupCalendarDialog({ open, onOpenChange }: any) {
     const { t, i18n } = useTranslation();
-    const weekStartsOn = usePreferencesStore(
-        (state: any) => state.weekStartsOn
-    );
+    const weekStartsOn = usePreferencesStore((state) => state.weekStartsOn);
     const calendarTimeZone = useMemo(() => getLocalTimeZone(), []);
     const calendarLocale = useMemo(
         () => calendarLocaleForLanguage(i18n.resolvedLanguage || i18n.language),

@@ -85,7 +85,7 @@ function ResizableTableHeadContent({ header, dragHandleProps }: any) {
                         header.column.getIsResizing() ? 'bg-primary' : ''
                     )}
                     onMouseDown={header.getResizeHandler()}
-                    onKeyDown={(event: any) =>
+                    onKeyDown={(event) =>
                         resizeHeaderFromKeyboard(event, header)
                     }
                     onTouchStart={header.getResizeHandler()}
@@ -120,7 +120,7 @@ function SortableResizableTableHead({ header, className = '', style }: any) {
         isDragging
     } = useSortable({ id: header.column.id });
 
-    const dragHandleProps: any = {
+    const dragHandleProps = {
         ...attributes,
         ...listeners,
         ref: setActivatorNodeRef,
