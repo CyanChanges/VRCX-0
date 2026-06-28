@@ -336,7 +336,7 @@ export function AppMenuBar({
                                 {t(
                                     navbarOpen
                                         ? 'nav_tooltip.collapse_nav'
-                                        : 'nav_tooltip.expand_bar'
+                                        : 'nav_tooltip.expand_nav'
                                 )}
                             </MenuItem>
                             <MenuItem onSelect={() => onToggleRightSidebar?.()}>

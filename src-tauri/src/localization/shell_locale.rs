@@ -224,6 +224,40 @@ fn locale_key(catalog: &ShellLocaleCatalog, language: &str) -> String {
 mod tests {
     use super::*;
 
+    const MACOS_MENU_KEYS: &[&str] = &[
+        "nativeShell.menu.app.title",
+        "nativeShell.menu.app.about",
+        "nativeShell.menu.app.settings",
+        "nativeShell.menu.app.checkUpdates",
+        "nativeShell.menu.app.restart",
+        "nativeShell.menu.app.startBackgroundMode",
+        "nativeShell.menu.app.logout",
+        "nativeShell.menu.app.quit",
+        "nativeShell.menu.view.title",
+        "nativeShell.menu.view.notificationCenter",
+        "nativeShell.menu.view.quickSearch",
+        "nativeShell.menu.view.directAccess",
+        "nativeShell.menu.view.toggleNav",
+        "nativeShell.menu.view.toggleFriendsSidebar",
+        "nativeShell.menu.view.customNav",
+        "nativeShell.menu.view.themes",
+        "nativeShell.menu.view.zoomIn",
+        "nativeShell.menu.view.zoomOut",
+        "nativeShell.menu.view.resetZoom",
+        "nativeShell.menu.tools.title",
+        "nativeShell.menu.tools.allTools",
+        "nativeShell.menu.help.title",
+        "nativeShell.menu.help.changelog",
+        "nativeShell.menu.help.keyboardShortcuts",
+        "nativeShell.menu.help.reportIssue",
+        "nativeShell.menu.help.github",
+        "nativeShell.menu.help.discord",
+        "nativeShell.menu.help.qqGroup",
+        "nativeShell.menu.help.openDevtools",
+        "nativeShell.menu.help.supportVrcx",
+    ];
+    const MACOS_MENU_LOCALES: &[&str] = &["en", "ja", "ko", "zh-CN", "zh-TW"];
+
     #[test]
     fn routes_chinese_script_and_region_variants() {
         assert_eq!(
@@ -243,6 +277,50 @@ mod tests {
     #[test]
     fn unsupported_locale_falls_back_to_english() {
         assert_eq!(tray_labels_for_language("not-real").open, "Open VRCX-0");
+    }
+
+    #[test]
+    fn includes_macos_menu_labels_for_core_shell_locales() {
+        let catalog = catalog();
+        for locale in MACOS_MENU_LOCALES {
+            let values = catalog
+                .locales
+                .get(*locale)
+                .unwrap_or_else(|| panic!("{locale} locale is missing"));
+            for key in MACOS_MENU_KEYS {
+                let value = values
+                    .get(*key)
+                    .unwrap_or_else(|| panic!("{locale} is missing {key}"));
+                assert!(
+                    !value.trim().is_empty(),
+                    "{locale} has an empty {key} translation"
+                );
+                assert_ne!(
+                    value.as_str(),
+                    *key,
+                    "{locale} uses the raw {key} key as text"
+                );
+            }
+        }
+
+        assert_eq!(
+            localized_text(catalog, "ko", "nativeShell.menu.view.toggleFriendsSidebar"),
+            Some("친구 사이드바 전환")
+        );
+        assert_eq!(
+            localized_text(catalog, "ko", "nativeShell.menu.help.supportVrcx"),
+            Some("VRCX-0 후원")
+        );
+    }
+
+    #[test]
+    fn non_core_macos_menu_locale_falls_back_to_english() {
+        let catalog = catalog();
+        assert!(
+            localized_text(catalog, "cs", "nativeShell.menu.app.about").is_none(),
+            "non-core shell menu locales should rely on the fallback locale"
+        );
+        assert_eq!(text("cs", "nativeShell.menu.app.about"), "About VRCX-0");
     }
 
     #[cfg(target_os = "macos")]
