@@ -117,20 +117,20 @@ export async function setZoomLevelPreference(value: string | number) {
 
 export async function setNavbarCollapsedPreference(collapsed: boolean) {
     const isCollapsed = collapsed;
-    useShellStore.getState().setSidebarOpen(!isCollapsed);
+    useShellStore.getState().setNavbarOpen(!isCollapsed);
     await configRepository.setBool('navIsCollapsed', isCollapsed);
     patchPreferences({ navIsCollapsed: isCollapsed });
 }
 
-export async function setRightSidebarOpenPreference(open: boolean) {
+export async function setFriendsSidebarOpenPreference(open: boolean) {
     const isOpen = open;
-    useShellStore.getState().setRightSidebarOpen(isOpen);
+    useShellStore.getState().setFriendsSidebarOpen(isOpen);
     await configRepository.setBool('rightSidebarOpen', isOpen);
 }
 
 export async function setNavWidthPreference(value: string | number) {
     const width = normalizeNavbarWidth(value);
-    useShellStore.getState().setNavWidth(width);
+    useShellStore.getState().setNavbarWidth(width);
     await configRepository.setInt('VRCX_navPanelWidth', width);
     patchPreferences({ navPanelWidth: width });
     return width;

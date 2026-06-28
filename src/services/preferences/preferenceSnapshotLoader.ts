@@ -54,7 +54,7 @@ export async function loadPreferenceSnapshot() {
     const [
         navIsCollapsed,
         navPanelWidth,
-        rightSidebarOpen,
+        friendsSidebarOpen,
         notificationLayout,
         dataTableStriped,
         tableDensity,
@@ -288,9 +288,9 @@ export async function loadPreferenceSnapshot() {
         configRepository.getBool('discordWorldNameAsDiscordStatus', false)
     ]);
 
-    useShellStore.getState().setSidebarOpen(!navIsCollapsed);
-    useShellStore.getState().setNavWidth(navPanelWidth);
-    useShellStore.getState().setRightSidebarOpen(rightSidebarOpen);
+    useShellStore.getState().setNavbarOpen(!navIsCollapsed);
+    useShellStore.getState().setNavbarWidth(navPanelWidth);
+    useShellStore.getState().setFriendsSidebarOpen(friendsSidebarOpen);
     useShellStore
         .getState()
         .setNotificationLayout(

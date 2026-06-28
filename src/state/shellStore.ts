@@ -35,7 +35,7 @@ type ShellStore = {
     vrcUnseenNotificationCount: number;
     trayIconNotify: boolean;
     setNavbarOpen(navbarOpen: unknown): void;
-    setNavbarWidth(navbarWidth: unknown): void;
+    setNavbarWidth(navbarWidth: number): void;
     toggleNavbar(): void;
     setFriendsSidebarOpen(friendsSidebarOpen: unknown): void;
     toggleFriendsSidebar(): void;

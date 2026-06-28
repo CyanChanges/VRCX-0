@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { setRightSidebarOpenPreference } from '@/services/preferencesService';
+import { setFriendsSidebarOpenPreference } from '@/services/preferencesService';
 import { useShellStore } from '@/state/shellStore';
 
 import { getDefaultHiddenSidePanelPath } from './sidePanelRoutes';
@@ -111,7 +111,7 @@ export function useRightFriendsSidebarVisibility(pathname: any) {
                 writeSidePanelRouteOpenState(routeKey, open);
                 return;
             }
-            void setRightSidebarOpenPreference(open);
+            void setFriendsSidebarOpenPreference(open);
         },
         [routeKey]
     );

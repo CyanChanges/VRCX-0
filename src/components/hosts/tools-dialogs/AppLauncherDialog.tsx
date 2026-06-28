@@ -116,7 +116,13 @@ function applyPickedTarget(
     });
 }
 
-export function AppLauncherDialog({ open, onOpenChange }: any) {
+export function AppLauncherDialog({
+    open,
+    onOpenChange
+}: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
     const { t } = useTranslation();
     const [snapshot, setSnapshot] = useState<AppLauncherSnapshot | null>(null);
     const [loading, setLoading] = useState(false);
